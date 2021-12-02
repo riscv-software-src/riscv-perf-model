@@ -37,3 +37,8 @@ make olympia
 make regress
 
 ```
+
+# Limitaions
+
+1. The model is not trace-driven nor execution-driven ... yet.  Will be working on adding support for a true decoder and STF trace reading ([STF](https://github.com/sparcians/stf_lib))
+2. Rename doesn't actually rename.  In fact, there are no operand dependencies supported... yet.  Again, need a decoder and a real trace

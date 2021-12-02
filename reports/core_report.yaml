@@ -1,0 +1,25 @@
+#
+# Create report in one format.  OUT_FORMAT can be one of the following:
+# - text
+# - html
+# - csv
+# - json
+# - json_detailed
+# - json_reduced
+# - python
+#
+content:
+  # Report1: Start from time/inst == 0 and collect everything
+  report:
+    pattern:   top
+    def_file:  core_stats.yaml
+    dest_file: %OUT_BASE%.%OUT_FORMAT%
+    format:    %OUT_FORMAT%
+  # Report1: Start from inst == 500K and
+  report:
+    pattern:   top
+    def_file:  core_stats.yaml
+    dest_file: %OUT_BASE%_delayed.%OUT_FORMAT%
+    format:    %OUT_FORMAT%
+    trigger:
+      start:  top.cpu.core0.rob.stats.total_number_retired>=500K

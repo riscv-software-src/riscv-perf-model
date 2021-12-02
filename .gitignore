@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# build directories
+[Rr]elease
+[Dd]ebug
+[Pp]rofile
+
+# Backup files
+*~

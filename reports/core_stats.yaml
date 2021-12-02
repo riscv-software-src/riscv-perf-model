@@ -1,0 +1,7 @@
+#
+# Auto populate the report with stats that are not marked hidden
+# https://sparcians.github.io/map/classsparta_1_1InstrumentationNode.html#a855b6ecdd93e412052ae264032002ce1
+#
+content:
+    autopopulate:
+         attributes: "!=vis:hidden"

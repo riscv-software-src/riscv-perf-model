@@ -1,5 +1,5 @@
 # olympia
-A RISC-V CPU Trace-Drirven Performance Model based on the Sparta Modeling Framework.
+Currently an extraction of the Map/Spara Example Performance Model based on the Sparta Modeling Framework.  Intentions to expand to a fully featured Core/MSS performance model are in the works.
 
 # Build Directions
 

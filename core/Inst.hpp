@@ -18,9 +18,9 @@
 namespace olympia_core
 {
     /*!
-    * \class Inst
-    * \brief Example instruction that flows through the example/CoreModel
-    */
+     * \class Inst
+     * \brief Example instruction that flows through the example/CoreModel
+     */
 
     // Forward declaration of the Pair Definition class is must as we are friending it.
     class InstPairDef;
@@ -62,11 +62,11 @@ namespace olympia_core
         using InstStatus = sparta::SharedData<Status>;
 
         Inst(const sparta::decode::DecoderBase & static_inst,
-                    TargetUnit unit,
-                    uint32_t execute_time,
-                    bool isStore,
-                    const sparta::Clock * clk,
-                    Status state) :
+             TargetUnit unit,
+             uint32_t execute_time,
+             bool isStore,
+             const sparta::Clock * clk,
+             Status state) :
             static_inst_(static_inst),
             unit_(unit),
             execute_time_(execute_time),
@@ -75,14 +75,14 @@ namespace olympia_core
             status_state_(state) {}
 
         Inst(const StaticInfo & info,
-                    const sparta::Clock * clk,
-                    Status state = Status::FETCHED) :
+             const sparta::Clock * clk,
+             Status state = Status::FETCHED) :
             Inst(info.decode_base,
-                        info.unit,
-                        info.execute_time,
-                        info.is_store_inst,
-                        clk,
-                        state)
+                 info.unit,
+                 info.execute_time,
+                 info.is_store_inst,
+                 clk,
+                 state)
         {}
 
         const sparta::decode::DecoderBase & getStaticInst() const {
@@ -90,7 +90,8 @@ namespace olympia_core
         }
 
         const Status & getStatus() const {
-            return status_state_.getEnumValue();
+            return status_state_;
+            //return status_state_.getEnumValue();
         }
 
         bool getCompletedStatus() const {
@@ -98,7 +99,8 @@ namespace olympia_core
         }
 
         void setStatus(Status status) {
-            status_state_.setValue(status);
+            //status_state_.setValue(status);
+            status_state_ = status;
             status_.write(status);
             if(getStatus() == olympia_core::Inst::Status::COMPLETED) {
                 if(ev_retire_ != 0) {
@@ -158,7 +160,8 @@ namespace olympia_core
         bool is_speculative_ = false; // Is this instruction soon to be flushed?
         sparta::Scheduleable * ev_retire_ = nullptr;
         InstStatus status_;
-        sparta::State<Status> status_state_;
+        Status     status_state_;
+        //sparta::State<Status> status_state_;
     };
 
     extern sparta::SpartaSharedPointerAllocator<Inst> inst_allocator;
@@ -227,9 +230,9 @@ namespace olympia_core
     }
 
     /*!
-    * \class InstPairDef
-    * \brief Pair Definition class of the Example instruction that flows through the example/CoreModel
-    */
+     * \class InstPairDef
+     * \brief Pair Definition class of the Example instruction that flows through the example/CoreModel
+     */
     // This is the definition of the PairDefinition class of Inst.
     // This PairDefinition class could be named anything but it needs to
     // inherit publicly from sparta::PairDefinition templatized on the actual class Inst.

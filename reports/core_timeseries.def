@@ -1,0 +1,8 @@
+content:
+  report:
+    pattern: _global
+    def_file: core_stats.yaml
+    dest_file: %OUT_BASE%_time_series_all.csv
+    format: csv
+    trigger:
+      update-count: top.cpu.core0.rob.stats.total_number_retired %TS_PERIOD%

@@ -45,6 +45,8 @@ add_compile_options ( -Werror
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set(SPARTA_BUILD_TYPE "release")
+  target_link_options    (olympia PUBLIC -flto)
+  target_compile_options (olympia PUBLIC -flto)
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
   set(SPARTA_BUILD_TYPE "debug")
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")

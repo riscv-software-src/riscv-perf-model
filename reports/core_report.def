@@ -15,11 +15,11 @@ content:
     def_file:  core_stats.yaml
     dest_file: %OUT_BASE%.%OUT_FORMAT%
     format:    %OUT_FORMAT%
-  # Report1: Start from inst == 500K and
+  # Report1: Start from inst == INST_START
   report:
     pattern:   top
     def_file:  core_stats.yaml
     dest_file: %OUT_BASE%_delayed.%OUT_FORMAT%
     format:    %OUT_FORMAT%
     trigger:
-      start:  top.cpu.core0.rob.stats.total_number_retired>=500K
+      start:   cpu.core0.rob.stats.total_number_retired >= %INST_START%

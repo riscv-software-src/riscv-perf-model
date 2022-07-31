@@ -18,9 +18,9 @@ sparta_named_test(random_ipc_1M  olympia -i 1M -p top.cpu.core0.fetch.params.fet
 
 # This command will use a report definition file to generate a text form of a report
 sparta_named_test(olympia_report_text olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc true
-  --report-yaml-replacements OUT_BASE max_ipc_report OUT_FORMAT text
+  --report-yaml-replacements OUT_BASE max_ipc_report OUT_FORMAT text INST_START 1000
   --report-search-dir reports
-  --report reports/core_report.yaml)
+  --report reports/core_report.def)
 
 # This command will use core_stats.yaml directly to generate a text form of a report at the "top" node
 sparta_named_test(olympia_report_text_direct olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc true

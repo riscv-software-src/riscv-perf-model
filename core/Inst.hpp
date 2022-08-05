@@ -1,15 +1,17 @@
 // <Inst.h> -*- C++ -*-
 
-
 #pragma once
 
-#include "sparta/decode/DecoderBase.hpp"
 #include "sparta/memory/AddressTypes.hpp"
 #include "sparta/resources/SharedData.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
+
+#include "mavis/OpcodeInfo.h"
+
+#include "InstArchInfo.hpp"
 
 #include <cstdlib>
 #include <ostream>
@@ -28,7 +30,13 @@ namespace olympia_core
     class Inst {
     public:
 
-        // The modeler needs to alias a type called "SpartaPairDefinitionType" to the Pair Definition class  of itself
+        // Used by Mavis
+        using InstPtr = sparta::SpartaSharedPointer<Inst>;
+        using PtrType = InstPtr;
+
+        // The modeler needs to alias a type called
+        // "SpartaPairDefinitionType" to the Pair Definition class of
+        // itself
         using SpartaPairDefinitionType = InstPairDef;
 
         enum class Status : std::uint16_t{
@@ -42,52 +50,29 @@ namespace olympia_core
             __LAST
         };
 
-        enum class TargetUnit : std::uint16_t{
-            ALU0,
-            ALU1,
-            FPU,
-            BR,
-            LSU,
-            ROB, // Instructions that go right to retire
-            N_TARGET_UNITS
-        };
-
-        struct StaticInfo {
-            sparta::decode::DecoderBase decode_base;
-            TargetUnit unit;
-            uint32_t execute_time;
-            bool is_store_inst;
-        };
-
         using InstStatus = sparta::SharedData<Status>;
 
-        Inst(const sparta::decode::DecoderBase & static_inst,
-             TargetUnit unit,
-             uint32_t execute_time,
-             bool isStore,
-             const sparta::Clock * clk,
-             Status state) :
-            static_inst_(static_inst),
-            unit_(unit),
-            execute_time_(execute_time),
-            isStoreInst_(isStore),
-            status_("inst_status", clk, state),
-            status_state_(state) {}
+        /*!
+         * \brief Construct an Instruction
+         * \param opcode_info    Mavis Opcode information
+         * \param inst_arch_info Pointer to the static data of instruction
+         * \param clk            Core clock
+         *
+         * Called by Mavis when an opcode is decoded to a particular
+         * instruction.
+        */
+        Inst(const mavis::OpcodeInfo::PtrType& opcode_info,
+             const InstArchInfo::PtrType     & inst_arch_info,
+             const sparta::Clock             * clk) :
+            opcode_info_    (opcode_info),
+            inst_arch_info_ (inst_arch_info),
+            status_("inst_status", clk, Status::FETCHED),
+            status_state_(Status::FETCHED)
+        { }
 
-        Inst(const StaticInfo & info,
-             const sparta::Clock * clk,
-             Status state = Status::FETCHED) :
-            Inst(info.decode_base,
-                 info.unit,
-                 info.execute_time,
-                 info.is_store_inst,
-                 clk,
-                 state)
-        {}
-
-        const sparta::decode::DecoderBase & getStaticInst() const {
-            return static_inst_;
-        }
+        // This is needed by Mavis as an optimization.  Try NOT to
+        // implement it and let the compiler do it for us for speed.
+        Inst(const Inst& other) = default;
 
         const Status & getStatus() const {
             return status_state_;
@@ -109,8 +94,8 @@ namespace olympia_core
             }
         }
 
-        const TargetUnit& getUnit() const {
-            return unit_;
+        InstArchInfo::TargetUnit getUnit() const {
+            return inst_arch_info_->getTargetUnit();
         }
 
         void setLast(bool last, sparta::Scheduleable * rob_retire_event) {
@@ -139,67 +124,39 @@ namespace olympia_core
             is_speculative_ = spec;
         }
 
-        const char* getMnemonic() const { return static_inst_.mnemonic; }
-        uint32_t getOpCode() const { return static_inst_.encoding; }
-        uint64_t getVAdr() const { return vaddr_; }
-        uint64_t getRAdr() const { return vaddr_ | 0x3000; } // faked
-        uint64_t getParentId() const { return 0; }
-        uint32_t getExecuteTime() const { return execute_time_; }
-        bool isSpeculative() const { return is_speculative_; }
-        bool isStoreInst() const { return isStoreInst_; }
+        // Opcode information
+        std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
+        std::string getDisasm()   const { return opcode_info_->dasmString(); }
+        uint32_t    getOpCode()   const { return opcode_info_->getOpcode(); }
+
+        // Static instruction information
+        bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
+        uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
+
+        uint64_t    getVAdr() const        { return vaddr_; }
+        uint64_t    getRAdr() const        { return vaddr_ | 0x3000; } // faked
+        bool        isSpeculative() const  { return is_speculative_; }
 
     private:
+        mavis::OpcodeInfo::PtrType opcode_info_;
+        InstArchInfo::PtrType      inst_arch_info_;
 
-        const sparta::decode::DecoderBase static_inst_;
-        TargetUnit unit_;
-        const uint32_t execute_time_ = 0;
-        bool isStoreInst_ = false;
-        sparta::memory::addr_t vaddr_ = 0;
-        bool is_last_ = false;
-        uint64_t unique_id_ = 0; // Supplied by Fetch
-        bool is_speculative_ = false; // Is this instruction soon to be flushed?
+        sparta::memory::addr_t vaddr_     = 0;
+        bool                   is_last_   = false;
+        uint64_t               unique_id_ = 0; // Supplied by Fetch
+        bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
         sparta::Scheduleable * ev_retire_ = nullptr;
-        InstStatus status_;
-        Status     status_state_;
-        //sparta::State<Status> status_state_;
+        InstStatus             status_;
+        Status                 status_state_;
     };
-
-    extern sparta::SpartaSharedPointerAllocator<Inst> inst_allocator;
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
         os << inst.getMnemonic();
         return os;
     }
 
-    using InstPtr = sparta::SpartaSharedPointer<Inst>;
-    inline std::ostream & operator<<(std::ostream & os, const InstPtr & inst) {
+    inline std::ostream & operator<<(std::ostream & os, const Inst::InstPtr & inst) {
         os << *inst;
-        return os;
-    }
-
-    inline std::ostream & operator<<(std::ostream & os, const Inst::TargetUnit & unit) {
-        switch(unit) {
-            case Inst::TargetUnit::ALU0:
-                os << "ALU0";
-                break;
-            case Inst::TargetUnit::ALU1:
-                os << "ALU1";
-                break;
-            case Inst::TargetUnit::FPU:
-                os << "FPU";
-                break;
-            case Inst::TargetUnit::BR:
-                os << "BR";
-                break;
-            case Inst::TargetUnit::LSU:
-                os << "LSU";
-                break;
-            case Inst::TargetUnit::ROB:
-                os << "ROB";
-                break;
-            case Inst::TargetUnit::N_TARGET_UNITS:
-                throw sparta::SpartaException("N_TARGET_UNITS cannot be a valid enum state.");
-        }
         return os;
     }
 
@@ -252,4 +209,12 @@ namespace olympia_core
                               SPARTA_ADDPAIR("raddr",    &Inst::getRAdr, std::ios::hex),
                               SPARTA_ADDPAIR("vaddr",    &Inst::getVAdr, std::ios::hex));
     };
+
+    // Instruction allocators
+    using InstAllocator         = sparta::SpartaSharedPointerAllocator<Inst>;
+    using InstArchInfoAllocator = sparta::SpartaSharedPointerAllocator<InstArchInfo>;
+
+    extern InstAllocator         inst_allocator;
+    extern InstArchInfoAllocator inst_arch_info_allocator;
+
 }

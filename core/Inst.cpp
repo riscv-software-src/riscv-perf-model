@@ -4,6 +4,7 @@
 
 namespace olympia_core
 {
-    // This pipeline supports around 135 outstanding example instructions.
-    sparta::SpartaSharedPointerAllocator<Inst> inst_allocator(300, 250);
+    // This pipeline supports around 250 outstanding instructions.
+    InstAllocator         inst_allocator(300, 250);
+    InstArchInfoAllocator inst_arch_info_allocator(300, 250);
 }

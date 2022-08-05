@@ -21,6 +21,8 @@
 
 namespace olympia_core
 {
+    class InstGenerator;
+
     /**
      * @file   Fetch.h
      * @brief The Fetch block -- gets new instructions to send down the pipe
@@ -52,8 +54,6 @@ namespace olympia_core
             }
 
             PARAMETER(uint32_t, num_to_fetch, 4, "Number of instructions to fetch")
-            PARAMETER(uint32_t, inst_rand_seed, 0xdeadbeef, "Seed for random instruction fetch")
-            PARAMETER(bool, fetch_max_ipc, false, "Fetch tries to maximize IPC by distributing insts")
         };
 
         /**
@@ -65,18 +65,15 @@ namespace olympia_core
         Fetch(sparta::TreeNode * name,
               const FetchParameterSet * p);
 
-        ~Fetch() {
-            debug_logger_ << getContainer()->getLocation()
-                          << ": "
-                          << inst_allocator.getNumAllocated()
-                          << " Inst objects allocated/created"
-                          << std::endl;
-        }
+        ~Fetch() {}
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char * name;
 
     private:
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Ports
 
         // Internal DataOutPort to the decode unit's fetch queue
         sparta::DataOutPort<InstGroupPtr> out_fetch_queue_write_ {&unit_port_set_, "out_fetch_queue_write"};
@@ -89,6 +86,8 @@ namespace olympia_core
         sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Instruction fetch
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
 
@@ -97,6 +96,9 @@ namespace olympia_core
 
         // Current "PC"
         uint64_t vaddr_ = 0x1000;
+
+        // Instruction generation
+        InstGenerator * inst_generator_ = nullptr;
 
         // Fetch instruction event, triggered when there are credits
         // from decode.  The callback set is either to fetch random
@@ -114,7 +116,6 @@ namespace olympia_core
 
         // Read data from a trace at random or at MaxIPC and send it
         // through
-        template<bool MaxIPC>
         void fetchInstruction_();
 
         // Receive flush from retire

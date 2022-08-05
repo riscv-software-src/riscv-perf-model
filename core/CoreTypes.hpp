@@ -8,7 +8,7 @@
 namespace olympia_core
 {
     //! Instruction Queue
-    typedef sparta::Queue<InstPtr> InstQueue;
+    typedef sparta::Queue<Inst::InstPtr> InstQueue;
 
     namespace message_categories {
         const std::string INFO = "info";

@@ -28,6 +28,7 @@ add_executable(olympia
   core/InstGroup.cpp
   core/ROB.cpp
   core/LSU.cpp
+  core/MavisUnit.cpp
   core/Preloader.cpp
   core/CPU.cpp
   core/CPUFactory.cpp
@@ -59,7 +60,7 @@ endif()
 set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg -g -ftime-trace")
 
 # Include directories
-include_directories (core mss)
+include_directories (core mss mavis)
 include_directories (SYSTEM ${SPARTA_BASE})
 include_directories (SYSTEM ${SPARTA_BASE}/simdb/include)
 

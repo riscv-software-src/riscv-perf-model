@@ -18,7 +18,7 @@ namespace olympia_core
     {
         in_execute_inst_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Execute, getInstsFromDispatch_,
-                                                                    InstPtr));
+                                                                    Inst::InstPtr));
 
         in_reorder_flush_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Execute, flushInst_,
@@ -44,7 +44,7 @@ namespace olympia_core
 
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
-    void Execute::getInstsFromDispatch_(const InstPtr & ex_inst)
+    void Execute::getInstsFromDispatch_(const Inst::InstPtr & ex_inst)
     {
         // Insert at the end if we are doing in order issue or if the scheduler is empty
         if (in_order_issue_ == true || ready_queue_.size() == 0) {
@@ -80,7 +80,7 @@ namespace olympia_core
         sparta_assert_context(unit_busy_ == false && ready_queue_.size() > 0,
                             "Somehow we're issuing on a busy unit or empty ready_queue");
         // Issue the first instruction
-        InstPtr & ex_inst_ptr = ready_queue_.front();
+        Inst::InstPtr & ex_inst_ptr = ready_queue_.front();
         auto & ex_inst = *ex_inst_ptr;
         ex_inst.setStatus(Inst::Status::SCHEDULED);
         const uint32_t exe_time =
@@ -103,7 +103,7 @@ namespace olympia_core
     }
 
     // Called by the scheduler, scheduled by complete_inst_.
-    void Execute::completeInst_(const InstPtr & ex_inst) {
+    void Execute::completeInst_(const Inst::InstPtr & ex_inst) {
         if(SPARTA_EXPECT_FALSE(info_logger_)) {
             info_logger_ << "Completing inst: " << ex_inst;
         }
@@ -141,7 +141,7 @@ namespace olympia_core
 
         // Cancel outstanding instructions awaiting completion and
         // instructions on their way to issue
-        auto cancel_critera = [criteria](const InstPtr & inst) -> bool {
+        auto cancel_critera = [criteria](const Inst::InstPtr & inst) -> bool {
             if(inst->getUniqueID() >= uint64_t(criteria)) {
                 return true;
             }

@@ -72,7 +72,7 @@ namespace olympia_core
             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
         // Ready queue
-        typedef std::list<InstPtr> ReadyQueue;
+        typedef std::list<Inst::InstPtr> ReadyQueue;
         ReadyQueue  ready_queue_;
 
         // busy signal for the attached alu
@@ -82,19 +82,19 @@ namespace olympia_core
         const uint32_t execute_time_;
         const uint32_t scheduler_size_;
         const bool in_order_issue_;
-        sparta::collection::IterableCollector<std::list<InstPtr>>
+        sparta::collection::IterableCollector<std::list<Inst::InstPtr>>
         ready_queue_collector_ {getContainer(), "scheduler_queue",
                 &ready_queue_, scheduler_size_};
 
         // Events used to issue and complete the instruction
         sparta::UniqueEvent<> issue_inst_{&unit_event_set_, getName() + "_issue_inst",
                 CREATE_SPARTA_HANDLER(Execute, issueInst_)};
-        sparta::PayloadEvent<InstPtr> complete_inst_{
+        sparta::PayloadEvent<Inst::InstPtr> complete_inst_{
             &unit_event_set_, getName() + "_complete_inst",
-                CREATE_SPARTA_HANDLER_WITH_DATA(Execute, completeInst_, InstPtr)};
+            CREATE_SPARTA_HANDLER_WITH_DATA(Execute, completeInst_, Inst::InstPtr)};
 
         // A pipeline collector
-        sparta::collection::Collectable<InstPtr> collected_inst_;
+        sparta::collection::Collectable<Inst::InstPtr> collected_inst_;
 
         // Counter
         sparta::Counter total_insts_issued_{
@@ -110,13 +110,12 @@ namespace olympia_core
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         void issueInst_();
-        void getInstsFromDispatch_(const InstPtr&);
+        void getInstsFromDispatch_(const Inst::InstPtr&);
 
         // Used to complete the inst in the FPU
-        void completeInst_(const InstPtr&);
+        void completeInst_(const Inst::InstPtr&);
 
         // Used to flush the ALU
         void flushInst_(const FlushManager::FlushingCriteria & criteria);
     };
 } // namespace olympia_core
-

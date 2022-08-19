@@ -1,0 +1,1038 @@
+[
+    {
+        "mnemonic" : "beq",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bne",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "blt",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bge",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bltu",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bgeu",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "jalr",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "jal",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lui",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "auipc",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "addi",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "nop",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "mv",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "cmov",
+        "dispatch" : ["iex"],
+        "pipe" : ["cmov"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "slli",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "slti",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sltiu",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "xori",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "srli",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "srai",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ori",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "andi",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "add",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sub",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sll",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "slt",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sltu",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "xor",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "srl",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sra",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "or",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "and",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "addiw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "slliw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "srliw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sraiw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "addw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "subw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sllw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "srlw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sraw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lb",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lh",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lw",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ld",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lbu",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lhu",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lwu",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sb",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sw",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sd",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fence",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fence.i",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "mul",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    },
+    {
+        "mnemonic" : "mulh",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    },
+    {
+        "mnemonic" : "mulhsu",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    },
+    {
+        "mnemonic" : "mulhu",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    },
+    {
+        "mnemonic" : "div",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "divu",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "rem",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "remu",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "mulw",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    },
+    {
+        "mnemonic" : "divw",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "divuw",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "remw",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "remuw",
+        "dispatch" : ["iex"],
+        "pipe" : ["div"],
+        "latency" : 23
+    },
+    {
+        "mnemonic" : "amoadd.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoxor.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoor.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoand.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amomin.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amomax.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amominu.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amomaxu.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoswap.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lr.w",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sc.w",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoadd.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoxor.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoor.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoand.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amomin.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amomax.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amominu.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amomaxu.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "amoswap.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "lr.d",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sc.d",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ecall",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ebreak",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "uret",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sret",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "mret",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "dret",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sfence.vma",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "wfi",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "csrrw",
+        "dispatch" : ["iex"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "csrrs",
+        "dispatch" : ["iex"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "csrrc",
+        "dispatch" : ["iex"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "csrrwi",
+        "dispatch" : ["iex"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "csrrsi",
+        "dispatch" : ["iex"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "csrrci",
+        "dispatch" : ["iex"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "cflush.d.l1",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "cdiscard.d.l1",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "cflush.i.l1",
+        "dispatch" : ["rob"],
+        "pipe" : ["sys"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fadd.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["faddsub"],
+        "latency" : 4
+    },
+    {
+        "mnemonic" : "fsub.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["faddsub"],
+        "latency" : 4
+    },
+    {
+        "mnemonic" : "fmul.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["mul"],
+        "latency" : 4
+    },
+    {
+        "mnemonic" : "fdiv.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["div"],
+        "latency" : 30
+    },
+    {
+        "mnemonic" : "fsgnj.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fsgnjn.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fsgnjx.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmin.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmax.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fsqrt.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["div"],
+        "latency" : 24
+    },
+    {
+        "mnemonic" : "fadd.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["faddsub"],
+        "latency" : 4
+    },
+    {
+        "mnemonic" : "fsub.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["faddsub"],
+        "latency" : 4
+    },
+    {
+        "mnemonic" : "fmul.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["mul"],
+        "latency" : 4
+    },
+    {
+        "mnemonic" : "fdiv.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["div"],
+        "latency" : 63
+    },
+    {
+        "mnemonic" : "fsgnj.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fsgnjn.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fsgnjx.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmin.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmax.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.s.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.d.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["float"],
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fsqrt.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["div"],
+        "latency" : 63
+    },
+    {
+        "mnemonic" : "fle.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "flt.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "feq.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fle.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "flt.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "feq.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.w.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.wu.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.l.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.lu.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmv.x.w",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fclass.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.w.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.wu.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.l.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.lu.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmv.x.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fclass.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.s.w",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.s.wu",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.s.l",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.s.lu",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmv.w.x",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.d.w",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.d.wu",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.d.l",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fcvt.d.lu",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 2
+    },
+    {
+        "mnemonic" : "fmv.d.x",
+        "dispatch" : ["iex"],
+        "pipe" : ["i2f"],
+        "transfer" : true,
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "flw",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fld",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fsw",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fsd",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "fmadd.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fmsub.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fnmsub.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fnmadd.s",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fmadd.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fmsub.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fnmsub.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    },
+    {
+        "mnemonic" : "fnmadd.d",
+        "dispatch" : ["fex"],
+        "pipe" : ["fmac"],
+        "latency" : 6
+    }
+]

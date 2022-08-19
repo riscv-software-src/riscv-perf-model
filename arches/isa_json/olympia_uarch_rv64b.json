@@ -1,0 +1,212 @@
+[
+    {
+        "mnemonic" : "rol",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh2add",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ror",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "clz",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "xnor",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh3add",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ctzw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh1add.uw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "packuw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "orn",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "cpop",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    },
+    {
+        "mnemonic" : "rori",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "ctz",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sext.h",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "rorw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sext.b",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "slli.uw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "andn",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "add.uw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "packu",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "packw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "roriw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh3add.uw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "pack",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh2add.uw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "minu",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "rolw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "min",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "gorci",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "clzw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "maxu",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "sh1add",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "max",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "grevi",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "cpopw",
+        "dispatch" : ["iex"],
+        "pipe" : ["mul"],
+        "latency" : 3
+    }
+]

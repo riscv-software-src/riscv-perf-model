@@ -5,6 +5,7 @@
 //! \brief A functiona unit of Mavis, placed in the Sparta Tree for any unit to grab/use
 //!
 
+#include "mavis/Mavis.h"
 #include "MavisUnit.hpp"
 
 namespace olympia_core
@@ -59,14 +60,12 @@ namespace olympia_core
      */
     MavisUnit::MavisUnit(sparta::TreeNode *n, const MavisParameters* p) :
         sparta::Unit(n),
-        isa_file_path_(p->isa_file_path),
-        uarch_file_path_(p->uarch_file_path),
         pseudo_file_path_(std::string(p->pseudo_file_path).empty() ? p->uarch_file_path : p->pseudo_file_path),
-        mavis_facade_ (getISAFiles(n, isa_file_path_, pseudo_file_path_),
-                       getUArchFiles(n, p, uarch_file_path_, pseudo_file_path_),
-                       mavis_uid_list_, getUArchAnnotationOverrides(p),
-                       InstPtrAllocator<InstAllocator>        (inst_allocator),
-                       InstPtrAllocator<InstArchInfoAllocator>(inst_arch_info_allocator))
+        mavis_facade_ (new MavisType(getISAFiles(n, p->isa_file_path, pseudo_file_path_),
+                                     getUArchFiles(n, p, p->uarch_file_path, pseudo_file_path_),
+                                     mavis_uid_list_, getUArchAnnotationOverrides(p),
+                                     InstPtrAllocator<InstAllocator>        (inst_allocator),
+                                     InstPtrAllocator<InstArchInfoAllocator>(inst_arch_info_allocator)))
     {}
 
     /**

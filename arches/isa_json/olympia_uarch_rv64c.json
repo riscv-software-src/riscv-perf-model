@@ -1,0 +1,218 @@
+[
+    {
+        "mnemonic" : "c.addi4spn",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.fld",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.lw",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.ld",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.fsd",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.sw",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.sd",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.addi",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.addi16sp",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.jr",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.addiw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.jalr",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.li",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.lui",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.srli",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.srai",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.andi",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.sub",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.xor",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.or",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.and",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.subw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.addw",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.j",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.beqz",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.bnez",
+        "dispatch" : ["iex"],
+        "pipe" : ["branch"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.slli",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.fldsp",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.lwsp",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.ldsp",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.mv",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.ebreak",
+        "dispatch" : ["rob"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.add",
+        "dispatch" : ["iex"],
+        "pipe" : ["int"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.fsdsp",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.swsp",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "c.sdsp",
+        "dispatch" : ["lsu"],
+        "pipe" : ["lsu"],
+        "latency" : 1
+    }
+]

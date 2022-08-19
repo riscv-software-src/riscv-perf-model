@@ -72,8 +72,9 @@ target_link_directories (olympia PUBLIC
 target_link_libraries (olympia ${Sparta_LIBS})
 
 # Create a few links like reports and arch directories
-file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports ${CMAKE_CURRENT_BINARY_DIR}/reports SYMBOLIC)
-file(CREATE_LINK ${PROJECT_SOURCE_DIR}/archs   ${CMAKE_CURRENT_BINARY_DIR}/archs SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 
 # Add testing, but do not build as part of the 'all' target
 add_subdirectory (test EXCLUDE_FROM_ALL)

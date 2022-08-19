@@ -2,7 +2,7 @@
 
 //!
 //! \file MavisUnit.hpp
-//! \brief A functiona unit of Mavis, placed in the Sparta Tree for any unit to grab/use
+//! \brief A functional unit of Mavis, placed in the Sparta Tree for any unit to grab/use
 //!
 
 #pragma once
@@ -15,11 +15,17 @@
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
-#include "mavis/Mavis.h"
 #include "mavis/DecoderTypes.h"
 
 #include "Inst.hpp"
 #include "InstAllocation.hpp"
+
+// To reduce compile time and binary bloat, foward declare Mavis
+template<typename InstType,
+         typename AnnotationType,
+         typename InstTypeAllocator,
+         typename AnnotationTypeAllocator>
+class Mavis;
 
 namespace olympia_core
 {
@@ -44,7 +50,7 @@ namespace olympia_core
             {}
 
             PARAMETER(std::string,   isa_file_path,    "mavis_isa_files", "Where are the mavis isa files?")
-            PARAMETER(std::string,   uarch_file_path,  "arch/isa_json", "Where are the mavis uarch files?")
+            PARAMETER(std::string,   uarch_file_path,  "arches/isa_json", "Where are the mavis uarch files?")
             PARAMETER(std::string,   pseudo_file_path,  "", "Where are the mavis pseudo isa/usarch files? (default: uarch_file_path)")
             PARAMETER(std::string,   uarch_overrides_json, "", "JSON uArch overrides")
             PARAMETER(std::vector<std::string>, uarch_overrides, {}, R"(uArch overrides.
@@ -71,7 +77,7 @@ namespace olympia_core
 
         // Access the mavis facade
         MavisType* getFacade() {
-            return &mavis_facade_;
+            return mavis_facade_.get();
         }
 
     private:
@@ -81,10 +87,8 @@ namespace olympia_core
             { "nop",             MAVIS_UID_NOP },
                 };
 
-        std::string     isa_file_path_;         ///< Path to mavis ISA JSON files
-        std::string     uarch_file_path_;       ///< Path to olympia uArch JSON files
-        std::string     pseudo_file_path_;      ///< Path to olympia pseudo ISA/uArch JSON files
-        MavisType       mavis_facade_;          ///< Mavis facade object
+        const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
+        std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object
     };
 
     MavisType *getMavis(sparta::TreeNode *);

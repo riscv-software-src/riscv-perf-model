@@ -20,19 +20,21 @@
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
-#include "CustomHistogramStats.hpp"
+#include "SimulationConfiguration.hpp"
 
 #include "BIU.hpp"
 #include "MSS.hpp"
 
 OlympiaSim::OlympiaSim(const std::string& topology,
                        sparta::Scheduler & scheduler,
-                       uint32_t num_cores,
-                       uint64_t instruction_limit,
-                       bool show_factories) :
+                       const uint32_t num_cores,
+                       const std::string workload,
+                       const uint64_t instruction_limit,
+                       const bool show_factories) :
     sparta::app::Simulation("sparta_olympia_core", &scheduler),
     cpu_topology_(topology),
     num_cores_(num_cores),
+    workload_(workload),
     instruction_limit_(instruction_limit),
     show_factories_(show_factories)
 {
@@ -69,8 +71,15 @@ void OlympiaSim::buildTree_()
                                                                     cpu_factory);
     to_delete_.emplace_back(cpu_tn);
 
+    cpu_tn->addExtensionFactory("simulation_configuration", [=](){return new olympia_core::SimulationConfiguration;});
+
     // Tell the factory to build the resources now
     cpu_factory->buildTree(getRoot());
+
+    // Set the workload in the simulation configuration
+    auto extension = sparta::notNull(cpu_tn->getExtension("simulation_configuration"));
+    auto workload  = extension->getParameters()->getParameter("workload");
+    workload->setValueFromString(workload_);
 
     // Print the registered factories for debug
     if(show_factories_){

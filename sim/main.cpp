@@ -16,9 +16,8 @@ const char USAGE[] =
     "Usage:\n"
     "    [-i insts] [-r RUNTIME] [--show-tree] [--show-dag]\n"
     "    [-p PATTERN VAL] [-c FILENAME]\n"
-    "    [--node-config-file PATTERN FILENAME]\n"
     "    [-l PATTERN CATEGORY DEST]\n"
-    "    [-h]\n"
+    "    [-h,--help] <workload [stf trace or JSON]>\n"
     "\n";
 
 constexpr char VERSION_VARNAME[] = "version"; //!< Name of option to show version
@@ -28,6 +27,8 @@ int main(int argc, char **argv)
 {
     uint64_t ilimit = 0;
     uint32_t num_cores = 1;
+    std::string workload;
+    const char * WORKLOAD = "workload";
 
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "on";
@@ -58,12 +59,14 @@ int main(int argc, char **argv)
              sparta::app::named_value<uint32_t>("CORES", &num_cores)->default_value(1),
              "The number of cores in simulation", "The number of cores in simulation")
             ("show-factories",
-             "Show the registered factories");
+             "Show the registered factories")
+            (WORKLOAD,
+             sparta::app::named_value<std::string>(WORKLOAD, &workload),
+             "Specifies the instruction workload (trace, JSON)");
 
         // Add any positional command-line options
-        // po::positional_options_description& pos_opts = cls.getPositionalOptions();
-        // (void)pos_opts;
-        // pos_opts.add(TRACE_POS_VARNAME, -1); // example
+        po::positional_options_description& pos_opts = cls.getPositionalOptions();
+        pos_opts.add(WORKLOAD, -1);
 
         // Parse command line options and configure simulator
         int err_code = 0;
@@ -77,13 +80,20 @@ int main(int argc, char **argv)
             show_factories = true;
         }
 
+        if(workload.empty()) {
+            std::cerr << "ERROR: Missing a workload to run.  Can be a trace or JSON file" << std::endl;
+            std::cerr << USAGE;
+            return -1;
+        }
+
         // Create the simulator
         sparta::Scheduler scheduler;
         OlympiaSim sim("core_topology_1",
-                             scheduler,
-                             num_cores, // cores
-                             ilimit,
-                             show_factories); // run for ilimit instructions
+                       scheduler,
+                       num_cores, // cores
+                       workload,
+                       ilimit,
+                       show_factories); // run for ilimit instructions
 
         cls.populateSimulation(&sim);
 

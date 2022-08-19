@@ -67,6 +67,12 @@ namespace olympia_core
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_));
 
         in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
+
+        // Get the CPU Node
+        auto cpu_node = node->getParent()->getParent();
+        auto extension = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
+        auto workload  = extension->getParameters()->getParameter("workload");
+        std::cout << "Running '" << workload->getValueAsString() << "'..."  << std::endl;
     }
 
     // Called when decode has room

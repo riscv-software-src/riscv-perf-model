@@ -16,18 +16,22 @@ public:
 
     /*!
      * \brief Construct OlympiaSim
+     * \param topology  The CPU topology to instantiate
+     * \param scheduler The Scheduler used in simulation
      * \param num_cores Number of cores to instantiate any nodes
      *                  created which match the description as they
      *                  are created
+     * \param workload The workload to run (JSON, stf trace)
      * \param instruction_limit The maximum number of instructions to
      *                          run.  0 means no limit
      * \param show_factories Print the registered factories to stdout
      */
     OlympiaSim(const std::string& topology,
                sparta::Scheduler & scheduler,
-               uint32_t num_cores=1,
-               uint64_t instruction_limit=0,
-               bool show_factories = false);
+               const uint32_t num_cores,
+               const std::string workload,
+               const uint64_t instruction_limit=0,
+               const bool show_factories = false);
 
     // Tear it down
     virtual ~OlympiaSim();
@@ -60,6 +64,9 @@ private:
 
     //! Number of cores in this simulator. Temporary startup option
     const uint32_t num_cores_;
+
+    //! Workload
+    const std::string workload_;
 
     //! Instruction limit (set up -i option on command line)
     const uint64_t instruction_limit_;

@@ -114,7 +114,7 @@ namespace olympia_core{
         static auto allocateTopology(const std::string& topology) -> CPUTopology*;
 
         //! Public members used by CPUFactory to build and bind tree
-        uint32_t num_cores;
+        uint32_t num_cores = 1;
         std::unique_ptr<CPUFactories> factories;
         std::string topology_name;
         std::vector<UnitInfo> units;
@@ -124,7 +124,8 @@ namespace olympia_core{
     /**
      * @brief CoreTopology_1 topology class
      */
-    class CoreTopology_1 : public CPUTopology{
+    class CoreTopology_1 : public CPUTopology
+    {
     public:
 
         /**

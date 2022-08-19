@@ -95,7 +95,7 @@ namespace olympia_core
         uint32_t credits_inst_queue_ = 0;
 
         // Current "PC"
-        uint64_t vaddr_ = 0x1000;
+        uint64_t vaddr_ = 0;
 
         // Instruction generation
         InstGenerator * inst_generator_ = nullptr;

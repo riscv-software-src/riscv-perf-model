@@ -4,6 +4,11 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(olympia CXX)
 
+add_compile_options ( -Werror
+  -Wall -Wextra -Winline -Winit-self -Wno-unused-function
+  -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
+  -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
+
 if (NOT SPARTA_BASE)
   message (FATAL_ERROR "Need to define the location of the Sparta: cmake <args> -DSPARTA_BASE=\"/path/to/sparta\"")
 endif ()
@@ -26,6 +31,7 @@ add_executable(olympia
   core/Execute.cpp
   core/Inst.cpp
   core/InstGroup.cpp
+  core/InstGenerator.cpp
   core/ROB.cpp
   core/LSU.cpp
   core/MavisUnit.cpp
@@ -39,10 +45,6 @@ add_executable(olympia
   sim/main.cpp
   )
 
-add_compile_options ( -Werror
-  -Wall -Wextra -Winline -Winit-self -Wno-unused-function
-  -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
-  -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set(SPARTA_BUILD_TYPE "release")
@@ -60,6 +62,7 @@ endif()
 
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg -g -ftime-trace")
+set(CMAKE_CXX_FLAGS_FASTDEBUG "-g")
 
 # Include directories
 include_directories (core mss mavis)

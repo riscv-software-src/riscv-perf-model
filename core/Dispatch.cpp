@@ -302,7 +302,7 @@ namespace olympia_core
                 }
                 break;
             default:
-                sparta_assert(!"Should not have gotten here");
+                sparta_assert(false, "Unknown target for instruction: " << ex_inst);
             }
 
             if(dispatched) {

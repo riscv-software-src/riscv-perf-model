@@ -107,7 +107,7 @@ namespace olympia_core
             }
         }
 
-        void setVAdr(uint64_t vaddr) {
+        void setVAddr(uint64_t vaddr) {
             vaddr_ = vaddr;
         }
 

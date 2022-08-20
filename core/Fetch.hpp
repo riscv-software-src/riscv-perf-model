@@ -65,7 +65,7 @@ namespace olympia_core
         Fetch(sparta::TreeNode * name,
               const FetchParameterSet * p);
 
-        ~Fetch() {}
+        ~Fetch();
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char * name;
@@ -94,22 +94,22 @@ namespace olympia_core
         // Number of credits from decode that fetch has
         uint32_t credits_inst_queue_ = 0;
 
-        // Current "PC"
-        uint64_t vaddr_ = 0;
+        // Unit's clock
+        const sparta::Clock * my_clk_ = nullptr;
 
         // Instruction generation
-        InstGenerator * inst_generator_ = nullptr;
+        std::unique_ptr<InstGenerator> inst_generator_;
 
         // Fetch instruction event, triggered when there are credits
         // from decode.  The callback set is either to fetch random
         // instructions or a perfect IPC set
         std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
 
-        // A pipeline collector
-        sparta::collection::Collectable<uint64_t> next_pc_;
-
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
+
+        // Fire Fetch up
+        void initialize_();
 
         // Receive the number of free credits from decode
         void receiveFetchQueueCredits_(const uint32_t &);

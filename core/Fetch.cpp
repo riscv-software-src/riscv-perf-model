@@ -8,12 +8,44 @@
 #include <algorithm>
 #include "Fetch.hpp"
 #include "InstGenerator.hpp"
+#include "MavisUnit.hpp"
 
 #include "sparta/events/StartupEvent.hpp"
 
 namespace olympia_core
 {
     const char * Fetch::name = "fetch";
+
+    Fetch::Fetch(sparta::TreeNode * node,
+                 const FetchParameterSet * p) :
+        sparta::Unit(node),
+        num_insts_to_fetch_(p->num_to_fetch),
+        my_clk_(getClock())
+    {
+        in_fetch_queue_credits_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
+
+        fetch_inst_event_.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_random",
+                                                                     CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
+        // Schedule a single event to start reading from a trace file
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
+
+        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
+
+    }
+
+    Fetch::~Fetch() {}
+
+    void Fetch::initialize_()
+    {
+        // Get the CPU Node
+        auto cpu_node   = getContainer()->getParent()->getParent();
+        auto extension  = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
+        auto workload   = extension->getParameters()->getParameter("workload");
+        inst_generator_ = InstGenerator::createGenerator(getMavis(getContainer()), workload->getValueAsString());
+
+        fetch_inst_event_->schedule(1);
+    }
 
     // Fetch a random instruction or MaxIPC
     void Fetch::fetchInstruction_()
@@ -26,17 +58,19 @@ namespace olympia_core
         InstGroupPtr insts_to_send = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         for(uint32_t i = 0; i < upper; ++i)
         {
-            Inst::InstPtr ex_inst = inst_generator_->getNextInst();
-            ex_inst->setUniqueID(++next_inst_id_);
-            ex_inst->setVAdr(vaddr_);
-            ex_inst->setSpeculative(speculative_path_);
-            insts_to_send->emplace_back(ex_inst);
+            Inst::InstPtr ex_inst = inst_generator_->getNextInst(my_clk_);
+            if(SPARTA_EXPECT_TRUE(nullptr != ex_inst))
+            {
+                ex_inst->setSpeculative(speculative_path_);
+                insts_to_send->emplace_back(ex_inst);
 
-            if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                info_logger_ << "Sending: " << ex_inst << " down the pipe";
+                if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                    info_logger_ << "Sending: " << ex_inst << " down the pipe";
+                }
             }
-
-            vaddr_ += 4;
+            else {
+                break;
+            }
         }
 
         out_fetch_queue_write_.send(insts_to_send);
@@ -50,29 +84,6 @@ namespace olympia_core
             info_logger_ << "Fetch: send num_inst=" << insts_to_send->size()
                          << " instructions, remaining credit=" << credits_inst_queue_;
         }
-    }
-
-    Fetch::Fetch(sparta::TreeNode * node,
-                 const FetchParameterSet * p) :
-        sparta::Unit(node),
-        num_insts_to_fetch_(p->num_to_fetch),
-        next_pc_(node, "next_pc", &vaddr_)
-    {
-        in_fetch_queue_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
-
-        fetch_inst_event_.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_random",
-                                                                     CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
-        // Schedule a single event to start reading from a trace file
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_));
-
-        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
-
-        // Get the CPU Node
-        auto cpu_node = node->getParent()->getParent();
-        auto extension = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
-        auto workload  = extension->getParameters()->getParameter("workload");
-        std::cout << "Running '" << workload->getValueAsString() << "'..."  << std::endl;
     }
 
     // Called when decode has room
@@ -94,9 +105,6 @@ namespace olympia_core
             info_logger_ << "Fetch: receive flush on new_addr=0x"
                          << std::hex << new_addr << std::dec;
         }
-
-        // New address to fetch from
-        vaddr_ = new_addr;
 
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();

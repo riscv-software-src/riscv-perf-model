@@ -33,13 +33,9 @@ namespace olympia_core
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, fpuCredits_, uint32_t));
         in_fpu_credits_.enableCollection(node);
 
-        in_alu0_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, alu0Credits_, uint32_t));
-        in_alu0_credits_.enableCollection(node);
-
-        in_alu1_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, alu1Credits_, uint32_t));
-        in_alu1_credits_.enableCollection(node);
+        in_alu_credits_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, aluCredits_, uint32_t));
+        in_alu_credits_.enableCollection(node);
 
         in_br_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, brCredits_, uint32_t));
@@ -75,23 +71,13 @@ namespace olympia_core
         }
     }
 
-    void Dispatch::alu0Credits_ (const uint32_t& credits) {
-        credits_alu0_ += credits;
+    void Dispatch::aluCredits_ (const uint32_t& credits) {
+        credits_alu_ += credits;
         if (credits_rob_ >0 && dispatch_queue_.size() > 0) {
             ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
         }
         if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "ALU0 got " << credits << " credits, total: " << credits_alu0_;
-        }
-    }
-
-    void Dispatch::alu1Credits_ (const uint32_t& credits) {
-        credits_alu1_ += credits;
-        if (credits_rob_ >0 && dispatch_queue_.size() > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "ALU1 got " << credits << " credits, total: " << credits_alu1_;
+            info_logger_ << "ALU got " << credits << " credits, total: " << credits_alu_;
         }
     }
 
@@ -118,7 +104,7 @@ namespace olympia_core
     void Dispatch::robCredits_(const uint32_t&) {
         uint32_t nc = in_reorder_credits_.pullData();
         credits_rob_ += nc;
-        if (((credits_fpu_ > 0)|| (credits_alu0_ > 0) || (credits_alu1_ > 0) || (credits_br_ > 0))
+        if (((credits_fpu_ > 0)|| (credits_alu_ > 0) || (credits_br_ > 0))
             && dispatch_queue_.size() > 0) {
             ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
         }
@@ -132,7 +118,7 @@ namespace olympia_core
             dispatch_queue_.push(i);
         }
 
-        if (((credits_fpu_ > 0)|| (credits_alu0_ > 0) || (credits_alu1_ > 0) || (credits_br_ > 0) || credits_lsu_ > 0)
+        if (((credits_fpu_ > 0)|| (credits_alu_ > 0) || (credits_br_ > 0) || credits_lsu_ > 0)
             && credits_rob_ >0) {
             ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
         }
@@ -146,8 +132,7 @@ namespace olympia_core
         out_dispatch_queue_credits_.send(dispatch_queue_.size());
         dispatch_queue_.clear();
         credits_fpu_  += out_fpu_write_.cancel();
-        credits_alu0_ += out_alu0_write_.cancel();
-        credits_alu1_ += out_alu1_write_.cancel();
+        credits_alu_ += out_alu_write_.cancel();
         credits_br_   += out_br_write_.cancel();
         credits_lsu_  += out_lsu_write_.cancel();
         out_reorder_write_.cancel();
@@ -204,47 +189,25 @@ namespace olympia_core
                     }
                 }
                 break;
-            case InstArchInfo::TargetUnit::ALU0:
+            case InstArchInfo::TargetUnit::ALU:
                 {
-                    if(credits_alu0_ > 0) {
-                        --credits_alu0_;
+                    if(credits_alu_ > 0) {
+                        --credits_alu_;
                         dispatched = true;
-                        //out_alu0_write_.send(ex_inst_ptr);  // <- This will cause an assert in the Port!
-                        out_alu0_write_.send(ex_inst_ptr, 1);
-                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU0)];
-                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU0)));
-                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU0)));
-                        ++(alu0_context_.context(0));
+                        //out_alu_write_.send(ex_inst_ptr);  // <- This will cause an assert in the Port!
+                        out_alu_write_.send(ex_inst_ptr, 1);
+                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU)];
+                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU)));
+                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU)));
+                        ++(alu_context_.context(0));
 
                         if(SPARTA_EXPECT_FALSE(info_logger_)) {
                             info_logger_ << "Sending instruction: "
-                                         << ex_inst_ptr << " to ALU0 ";
+                                         << ex_inst_ptr << " to ALU ";
                         }
                     }
                     else {
-                        current_stall_ = ALU0_BUSY;
-                        keep_dispatching = false;
-                    }
-                }
-                break;
-            case InstArchInfo::TargetUnit::ALU1:
-                {
-                    if(credits_alu1_ > 0)
-                    {
-                        --credits_alu1_;
-                        dispatched = true;
-                        out_alu1_write_.send(ex_inst_ptr, 1);
-                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU1)];
-                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU1)));
-                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU1)));
-
-                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                            info_logger_ << "Sending instruction: "
-                                         << ex_inst_ptr << " to ALU1 ";
-                        }
-                    }
-                    else {
-                        current_stall_ = ALU0_BUSY;
+                        current_stall_ = ALU_BUSY;
                         keep_dispatching = false;
                     }
                 }
@@ -313,8 +276,7 @@ namespace olympia_core
                 if(SPARTA_EXPECT_FALSE(info_logger_)) {
                     info_logger_ << "Could not dispatch: "
                                    << ex_inst_ptr
-                                 << " ALU0_B(" << std::boolalpha << (credits_alu0_ == 0)
-                                 << ") ALU1_B(" << (credits_alu1_ == 0)
+                                 << " ALU_B(" << std::boolalpha << (credits_alu_ == 0)
                                  << ") FPU_B(" <<  (credits_fpu_ == 0)
                                  << ") BR_B(" <<  (credits_br_ == 0) << ")";
                 }

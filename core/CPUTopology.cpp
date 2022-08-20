@@ -59,19 +59,11 @@ olympia_core::CoreTopology_1::CoreTopology_1(){
             &factories->dispatch_rf
         },
         {
-            "alu0",
+            "alu",
             "cpu.core*",
             "ALU Unit 0",
             "alu",
             0,
-            &factories->execute_rf
-        },
-        {
-            "alu1",
-            "cpu.core*",
-            "ALU Unit 1",
-            "alu",
-            1,
             &factories->execute_rf
         },
         {
@@ -184,20 +176,12 @@ olympia_core::CoreTopology_1::CoreTopology_1(){
             "cpu.core*.fpu.ports.out_scheduler_credits"
         },
         {
-            "cpu.core*.dispatch.ports.out_alu0_write",
-            "cpu.core*.alu0.ports.in_execute_write"
+            "cpu.core*.dispatch.ports.out_alu_write",
+            "cpu.core*.alu.ports.in_execute_write"
         },
         {
-            "cpu.core*.dispatch.ports.in_alu0_credits",
-            "cpu.core*.alu0.ports.out_scheduler_credits"
-        },
-        {
-            "cpu.core*.dispatch.ports.out_alu1_write",
-            "cpu.core*.alu1.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_alu1_credits",
-            "cpu.core*.alu1.ports.out_scheduler_credits"
+            "cpu.core*.dispatch.ports.in_alu_credits",
+            "cpu.core*.alu.ports.out_scheduler_credits"
         },
         {
             "cpu.core*.dispatch.ports.out_br_write",
@@ -253,11 +237,7 @@ olympia_core::CoreTopology_1::CoreTopology_1(){
         },
         {
             "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.alu0.ports.in_reorder_flush"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.alu1.ports.in_reorder_flush"
+            "cpu.core*.alu.ports.in_reorder_flush"
         },
         {
             "cpu.core*.flushmanager.ports.out_retire_flush",

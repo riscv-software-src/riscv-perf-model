@@ -1,247 +1,247 @@
 [
     {
         "mnemonic" : "beq",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bne",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "blt",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bge",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bltu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bgeu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "jalr",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "jal",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "lui",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "auipc",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "addi",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "nop",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "mv",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "cmov",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["cmov"],
         "latency" : 1
     },
     {
         "mnemonic" : "slli",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "slti",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sltiu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "xori",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "srli",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "srai",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "ori",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "andi",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "add",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sub",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sll",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "slt",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sltu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "xor",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "srl",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sra",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "or",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "and",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "addiw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "slliw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "srliw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sraiw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "addw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "subw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sllw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "srlw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sraw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
@@ -325,79 +325,79 @@
     },
     {
         "mnemonic" : "mul",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     },
     {
         "mnemonic" : "mulh",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     },
     {
         "mnemonic" : "mulhsu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     },
     {
         "mnemonic" : "mulhu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     },
     {
         "mnemonic" : "div",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "divu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "rem",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "remu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "mulw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     },
     {
         "mnemonic" : "divw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "divuw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "remw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
     {
         "mnemonic" : "remuw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["div"],
         "latency" : 23
     },
@@ -463,7 +463,7 @@
     },
     {
         "mnemonic" : "sc.w",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
@@ -529,7 +529,7 @@
     },
     {
         "mnemonic" : "sc.d",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
@@ -583,37 +583,37 @@
     },
     {
         "mnemonic" : "csrrw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["sys"],
         "latency" : 1
     },
     {
         "mnemonic" : "csrrs",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["sys"],
         "latency" : 1
     },
     {
         "mnemonic" : "csrrc",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["sys"],
         "latency" : 1
     },
     {
         "mnemonic" : "csrrwi",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["sys"],
         "latency" : 1
     },
     {
         "mnemonic" : "csrrsi",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["sys"],
         "latency" : 1
     },
     {
         "mnemonic" : "csrrci",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["sys"],
         "latency" : 1
     },
@@ -637,328 +637,328 @@
     },
     {
         "mnemonic" : "fadd.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["faddsub"],
         "latency" : 4
     },
     {
         "mnemonic" : "fsub.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["faddsub"],
         "latency" : 4
     },
     {
         "mnemonic" : "fmul.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["mul"],
         "latency" : 4
     },
     {
         "mnemonic" : "fdiv.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["div"],
         "latency" : 30
     },
     {
         "mnemonic" : "fsgnj.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fsgnjn.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fsgnjx.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fmin.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fmax.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fsqrt.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["div"],
         "latency" : 24
     },
     {
         "mnemonic" : "fadd.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["faddsub"],
         "latency" : 4
     },
     {
         "mnemonic" : "fsub.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["faddsub"],
         "latency" : 4
     },
     {
         "mnemonic" : "fmul.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["mul"],
         "latency" : 4
     },
     {
         "mnemonic" : "fdiv.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["div"],
         "latency" : 63
     },
     {
         "mnemonic" : "fsgnj.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fsgnjn.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fsgnjx.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fmin.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fmax.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.s.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.d.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["float"],
         "latency" : 2
     },
     {
         "mnemonic" : "fsqrt.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["div"],
         "latency" : 63
     },
     {
         "mnemonic" : "fle.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "flt.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "feq.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fle.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "flt.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "feq.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.w.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.wu.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.l.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.lu.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fmv.x.w",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fclass.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.w.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.wu.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.l.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.lu.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fmv.x.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fclass.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.s.w",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.s.wu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.s.l",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.s.lu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fmv.w.x",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.d.w",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.d.wu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.d.l",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.d.lu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fmv.d.x",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["i2f"],
         "transfer" : true,
         "latency" : 1
@@ -989,49 +989,49 @@
     },
     {
         "mnemonic" : "fmadd.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fmsub.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fnmsub.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fnmadd.s",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fmadd.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fmsub.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fnmsub.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     },
     {
         "mnemonic" : "fnmadd.d",
-        "dispatch" : ["fex"],
+        "dispatch" : ["fpu"],
         "pipe" : ["fmac"],
         "latency" : 6
     }

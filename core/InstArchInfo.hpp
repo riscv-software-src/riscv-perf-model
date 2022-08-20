@@ -12,6 +12,7 @@
 
 #include <string>
 #include <cinttypes>
+#include <map>
 
 #include "sparta/utils/SpartaSharedPointer.hpp"
 
@@ -35,27 +36,25 @@ namespace olympia_core
         using PtrType = sparta::SpartaSharedPointer<InstArchInfo>;
 
         enum class TargetUnit : std::uint16_t{
-            ALU0,
-            ALU1,
+            ALU,
             FPU,
             BR,
             LSU,
             ROB, // Instructions that go right to retire
             N_TARGET_UNITS,
-            UNKNONW = N_TARGET_UNITS
+            UNKNOWN = N_TARGET_UNITS
         };
+        using TargetUnitMap = std::map<std::string, TargetUnit>;
 
         // Called by Mavis during its initialization
         explicit InstArchInfo(const nlohmann::json& jobj)
         {
-            (void)jobj;
+            update(jobj);
         }
 
         // Called by Mavis if, during initialization, changes are
         // dynamically made to an instruction.
-        void update(const nlohmann::json& jobj) {
-            (void)jobj;
-        }
+        void update(const nlohmann::json& jobj);
 
         //! Return the target unit for this instruction type
         TargetUnit getTargetUnit() const { return tgt_unit_; }
@@ -67,18 +66,15 @@ namespace olympia_core
         bool       isLoadStore() const { return is_load_store_; }
 
     private:
-        TargetUnit tgt_unit_ = TargetUnit::UNKNONW;
+        TargetUnit tgt_unit_ = TargetUnit::UNKNOWN;
         uint32_t   execute_time_ = 0;
         bool       is_load_store_ = false;
     };
 
     inline std::ostream & operator<<(std::ostream & os, const InstArchInfo::TargetUnit & unit) {
         switch(unit) {
-            case InstArchInfo::TargetUnit::ALU0:
-                os << "ALU0";
-                break;
-            case InstArchInfo::TargetUnit::ALU1:
-                os << "ALU1";
+            case InstArchInfo::TargetUnit::ALU:
+                os << "ALU";
                 break;
             case InstArchInfo::TargetUnit::FPU:
                 os << "FPU";

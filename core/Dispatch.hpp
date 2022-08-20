@@ -73,15 +73,13 @@ namespace olympia_core
         sparta::DataInPort<InstGroupPtr>           in_dispatch_queue_write_   {&unit_port_set_, "in_dispatch_queue_write", 1};
         sparta::DataOutPort<uint32_t>              out_dispatch_queue_credits_{&unit_port_set_, "out_dispatch_queue_credits"};
         sparta::DataOutPort<InstQueue::value_type> out_fpu_write_             {&unit_port_set_, "out_fpu_write"};
-        sparta::DataOutPort<InstQueue::value_type> out_alu0_write_            {&unit_port_set_, "out_alu0_write", false}; // Do not assume zero-cycle delay
-        sparta::DataOutPort<InstQueue::value_type> out_alu1_write_            {&unit_port_set_, "out_alu1_write", false}; // Do not assume zero-cycle delay
+        sparta::DataOutPort<InstQueue::value_type> out_alu_write_            {&unit_port_set_, "out_alu_write", false}; // Do not assume zero-cycle delay
         sparta::DataOutPort<InstQueue::value_type> out_br_write_              {&unit_port_set_, "out_br_write", false}; // Do not assume zero-cycle delay
         sparta::DataOutPort<InstQueue::value_type> out_lsu_write_             {&unit_port_set_, "out_lsu_write", false};
         sparta::DataOutPort<InstGroupPtr>          out_reorder_write_         {&unit_port_set_, "out_reorder_buffer_write"};
 
         sparta::DataInPort<uint32_t> in_fpu_credits_ {&unit_port_set_, "in_fpu_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_alu0_credits_ {&unit_port_set_, "in_alu0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_alu1_credits_ {&unit_port_set_, "in_alu1_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_alu_credits_ {&unit_port_set_, "in_alu_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_br_credits_ {&unit_port_set_, "in_br_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_lsu_credits_ {&unit_port_set_, "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
@@ -96,8 +94,7 @@ namespace olympia_core
         const uint32_t num_to_dispatch_;
         uint32_t credits_rob_ = 0;
         uint32_t credits_fpu_ = 0;
-        uint32_t credits_alu0_ = 0;
-        uint32_t credits_alu1_ = 0;
+        uint32_t credits_alu_ = 0;
         uint32_t credits_br_ = 0;
         uint32_t credits_lsu_ = 0;
 
@@ -106,8 +103,7 @@ namespace olympia_core
 
         // Tick callbacks assigned to Ports -- zero cycle
         void fpuCredits_ (const uint32_t&);
-        void alu0Credits_(const uint32_t&);
-        void alu1Credits_(const uint32_t&);
+        void aluCredits_(const uint32_t&);
         void brCredits_(const uint32_t&);
         void lsuCredits_ (const uint32_t&);
         void robCredits_(const uint32_t&);
@@ -124,8 +120,7 @@ namespace olympia_core
         enum StallReason {
             NOT_STALLED,     // Made forward progress (dipatched all instructions or no instructions)
             NO_ROB_CREDITS,  // No credits from the ROB
-            ALU0_BUSY,       // Could not send any or all instructions -- ALU0 busy
-            ALU1_BUSY,       // Could not send any or all instructions -- ALU1 busy
+            ALU_BUSY,       // Could not send any or all instructions -- ALU busy
             FPU_BUSY,        // Could not send any or all instructions -- FPU busy
             LSU_BUSY,
             BR_BUSY,       // Could not send any or all instructions -- BR busy
@@ -143,11 +138,8 @@ namespace olympia_core
             sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
                                "No credits from ROB",
                                sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_alu0_busy",
-                               "ALU0 busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_alu1_busy",
-                               "ALU1 busy",
+            sparta::CycleCounter(getStatisticSet(), "stall_alu_busy",
+                               "ALU busy",
                                sparta::Counter::COUNT_NORMAL, getClock()),
             sparta::CycleCounter(getStatisticSet(), "stall_fpu_busy",
                                "FPU busy",
@@ -163,10 +155,8 @@ namespace olympia_core
         std::array<sparta::Counter,
                    static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS)>
         unit_distribution_ {{
-            sparta::Counter(getStatisticSet(), "count_alu0_insts",
-                          "Total ALU0 insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_alu1_insts",
-                          "Total ALU1 insts", sparta::Counter::COUNT_NORMAL),
+            sparta::Counter(getStatisticSet(), "count_alu_insts",
+                          "Total ALU insts", sparta::Counter::COUNT_NORMAL),
             sparta::Counter(getStatisticSet(), "count_fpu_insts",
                           "Total FPU insts", sparta::Counter::COUNT_NORMAL),
             sparta::Counter(getStatisticSet(), "count_br_insts",
@@ -207,12 +197,12 @@ namespace olympia_core
         // than other ContextCounters; they are not automatically expanded to
         // include per-context information in reports, since that is redundant
         // information.
-        sparta::ContextCounter<sparta::Counter> alu0_context_ {
+        sparta::ContextCounter<sparta::Counter> alu_context_ {
             getStatisticSet(),
-            "context_count_alu0_insts",
-            "ALU0 instruction count",
+            "context_count_alu_insts",
+            "ALU instruction count",
             1,
-            "dispatch_alu0_inst_count",
+            "dispatch_alu_inst_count",
             sparta::CounterBase::COUNT_NORMAL,
             sparta::InstrumentationNode::VIS_NORMAL
         };
@@ -220,7 +210,7 @@ namespace olympia_core
         sparta::StatisticDef total_insts_{
             getStatisticSet(), "count_total_insts_dispatched",
             "Total number of instructions dispatched",
-            getStatisticSet(), "count_alu0_insts + count_alu1_insts + count_fpu_insts + count_lsu_insts"
+            getStatisticSet(), "count_alu_insts + count_fpu_insts + count_lsu_insts"
         };
     };
 }

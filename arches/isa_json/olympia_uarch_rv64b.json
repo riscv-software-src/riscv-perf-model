@@ -1,211 +1,211 @@
 [
     {
         "mnemonic" : "rol",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sh2add",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "ror",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "clz",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "xnor",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sh3add",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "ctzw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sh1add.uw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "packuw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "orn",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "cpop",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     },
     {
         "mnemonic" : "rori",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "ctz",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sext.h",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "rorw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sext.b",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "slli.uw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "andn",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "add.uw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "packu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "packw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "roriw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sh3add.uw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "pack",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sh2add.uw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "minu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "rolw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "min",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "gorci",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "clzw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "maxu",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "sh1add",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "max",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "grevi",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["int"],
         "latency" : 1
     },
     {
         "mnemonic" : "cpopw",
-        "dispatch" : ["iex"],
+        "dispatch" : ["alu"],
         "pipe" : ["mul"],
         "latency" : 3
     }

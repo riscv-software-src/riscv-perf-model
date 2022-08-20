@@ -150,16 +150,6 @@ namespace olympia_core
         Status                 status_state_;
     };
 
-    inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
-        os << inst.getMnemonic();
-        return os;
-    }
-
-    inline std::ostream & operator<<(std::ostream & os, const Inst::InstPtr & inst) {
-        os << *inst;
-        return os;
-    }
-
     inline std::ostream & operator<<(std::ostream & os, const Inst::Status & status) {
         switch(status) {
             case Inst::Status::FETCHED:
@@ -183,6 +173,16 @@ namespace olympia_core
             case Inst::Status::__LAST:
                 throw sparta::SpartaException("__LAST cannot be a valid enum state.");
         }
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
+        os << "uid: " << inst.getUniqueID() << inst.getStatus() << " '" << inst.getDisasm() << "' ";
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os, const Inst::InstPtr & inst) {
+        os << *inst;
         return os;
     }
 

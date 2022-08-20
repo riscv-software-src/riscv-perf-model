@@ -30,6 +30,7 @@ add_executable(olympia
   core/Dispatch.cpp
   core/Execute.cpp
   core/Inst.cpp
+  core/InstArchInfo.cpp
   core/InstGroup.cpp
   core/InstGenerator.cpp
   core/ROB.cpp

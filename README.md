@@ -40,51 +40,51 @@ make regress
 
 # Limitations
 
-1. The model is not trace-driven nor execution-driven ... yet.  Will be working on adding support for a true decoder and STF trace reading ([STF](https://github.com/sparcians/stf_lib))
+1. The model is not trace-driven nor execution-driven.  Support for running traces coming soon
 2. Rename doesn't actually rename.  In fact, there are no operand dependencies supported... yet.  Again, need a decoder and a real trace
 
-# Examples
+# Example Usage
 
-## Simple Running
-
-```
 ################################################################################
-# Get help messages
+## Get help messages
+```
 ./olympia --help                  # Full help
 ./olympia --help-brief            # Brief help
 ./olympia --help-topic topics     # Topics to get detailed help on
 ./olympia --help-topic parameters # Help on parameters
+```
 
 ################################################################################
-# Get simulation layout
+## Get simulation layout
+```
 ./olympia --show-tree       --no-run # Show the full tree; do not run the simulator
 ./olympia --show-parameters --no-run # Show the parameter tree; do not run the simulator
 ./olympia --show-loggers    --no-run # Show the loggers; do not run the simulator
 # ... more --show options; see help
+```
 
 ################################################################################
-# Running
+## Running
 
-# Run indefintely with random instruction generation
-./olympia
+```
+# Run a given JSON "trace" file
+./olympia ../traces/add_mul_add.json
 
-# Run indefintely with perfect fetching and maximum IPC
-./olympia -p top.cpu.core0.fetch.params.fetch_max_ipc true
+# Run a given STF trace file
+./olympia ../traces/dhrystone.zstf
 
-# Run with perfect fetching, etc for 2 million instructions
-./olympia -i2M -p top.cpu.core0.fetch.params.fetch_max_ipc true
+# Run a given STF trace file only 100K instructions
+./olympia -i100K ../traces/dhrystone.zstf
 
-# Run with perfect fetching, etc for 2 million instructions
-./olympia -i2M -p top.cpu.core0.fetch.params.fetch_max_ipc true
-
-# Run with perfect fetching, etc for 2M instructions, generate a
+# Run a given STF trace file and generate a
 # generic full simulation report
-./olympia -i2M -p top.cpu.core0.fetch.params.fetch_max_ipc true --report-all
-
+./olympia ../traces/dhrystone.zstf --report-all dhry_report.out
+```
 
 ############################
-# Generate and consume Configuration Files
+## Generate and consume Configuration Files
 
+```
 # Generate a baseline config
 ./olympia --write-final-config baseline.yaml --no-run
 
@@ -94,10 +94,11 @@ dyff between baseline.yaml max_ipc.yaml
 
 # Use the configuration file generated
 ./olympia -c max_ipc.yaml -i1M
+```
 
 ############################
-# Generate logs
-
+## Generate logs
+```
 # Log of all messages, different outputs
 ./olympia -i1K --auto-summar off -p top.cpu.core0.fetch.params.fetch_max_ipc true \
    -l top info all_messages.log.basic   \
@@ -110,10 +111,10 @@ dyff between baseline.yaml max_ipc.yaml
    -l top.*.*.rob    info rob.log    \
    -l top.*.*.decode info decode_rob.log \
    -l top.*.*.rob    info decode_rob.log
-
+```
 ############################
-# Generate reports
-
+## Generate reports
+```
 # Run with 1M instructions, generate a report from the top of the tree
 # with stats that are not hidden; turn off the auto reporting
 cat reports/core_stats.yaml
@@ -130,10 +131,11 @@ cat reports/core_stats.yaml
 
 # Generate a report in HTML format
 ./olympia -i1M --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
+```
 
 ############################
-# Generate more complex reports
-
+## Generate more complex reports
+```
 # Using a report definition file, program the report collection to
 # start after 500K instructions
 cat reports/core_report.def
@@ -154,14 +156,14 @@ cat reports/core_timeseries.def
        OUT_BASE my_report               \
        TS_PERIOD 10K
 python3 ./reports/plot_ts.y my_report_time_series_all.csv
+```
 
 ############################
-# Generate and view a pipeout
+## Generate and view a pipeout
+```
 ./olympia -i1M --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
 
 # Launch the viewer
 # *** MacOS use pythonw
 python  $MAP_BASE/helios/pipeViewer/pipe_view/argos.py -d pipeout_1K -l ../layouts/core.alf
-
-
 ```

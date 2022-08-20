@@ -45,7 +45,6 @@ make regress
 
 # Example Usage
 
-################################################################################
 ## Get help messages
 ```
 ./olympia --help                  # Full help
@@ -54,7 +53,6 @@ make regress
 ./olympia --help-topic parameters # Help on parameters
 ```
 
-################################################################################
 ## Get simulation layout
 ```
 ./olympia --show-tree       --no-run # Show the full tree; do not run the simulator
@@ -63,7 +61,6 @@ make regress
 # ... more --show options; see help
 ```
 
-################################################################################
 ## Running
 
 ```
@@ -81,7 +78,6 @@ make regress
 ./olympia ../traces/dhrystone.zstf --report-all dhry_report.out
 ```
 
-############################
 ## Generate and consume Configuration Files
 
 ```
@@ -96,7 +92,6 @@ dyff between baseline.yaml max_ipc.yaml
 ./olympia -c max_ipc.yaml -i1M
 ```
 
-############################
 ## Generate logs
 ```
 # Log of all messages, different outputs
@@ -112,7 +107,6 @@ dyff between baseline.yaml max_ipc.yaml
    -l top.*.*.decode info decode_rob.log \
    -l top.*.*.rob    info decode_rob.log
 ```
-############################
 ## Generate reports
 ```
 # Run with 1M instructions, generate a report from the top of the tree
@@ -133,7 +127,6 @@ cat reports/core_stats.yaml
 ./olympia -i1M --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
 ```
 
-############################
 ## Generate more complex reports
 ```
 # Using a report definition file, program the report collection to
@@ -158,7 +151,6 @@ cat reports/core_timeseries.def
 python3 ./reports/plot_ts.y my_report_time_series_all.csv
 ```
 
-############################
 ## Generate and view a pipeout
 ```
 ./olympia -i1M --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off

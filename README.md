@@ -89,7 +89,7 @@ make regress
 dyff between baseline.yaml max_ipc.yaml
 
 # Use the configuration file generated
-./olympia -c max_ipc.yaml -i1M
+./olympia -c max_ipc.yaml -i1M ../traces/dhrystone.zstf
 ```
 
 ## Generate logs

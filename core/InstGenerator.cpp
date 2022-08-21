@@ -10,13 +10,13 @@ namespace olympia
     {
         const std::string json_ext = "json";
         if((filename.size() > json_ext.size()) && filename.substr(filename.size()-json_ext.size()) == json_ext) {
-            std::cout << "-- JSON file input detected" << std::endl;
+            std::cout << "olympia: JSON file input detected" << std::endl;
             return std::unique_ptr<InstGenerator>(new JSONInstGenerator(mavis_facade, filename));
         }
 
         const std::string stf_ext = "stf";  // Should cover both zstf and stf
         if((filename.size() > stf_ext.size()) && filename.substr(filename.size()-stf_ext.size()) == stf_ext) {
-            std::cout << "-- STF file input detected" << std::endl;
+            std::cout << "olympia: STF file input detected" << std::endl;
             return std::unique_ptr<InstGenerator>(new TraceInstGenerator(mavis_facade, filename));
         }
 

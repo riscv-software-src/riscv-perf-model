@@ -69,9 +69,9 @@ namespace olympia_core
         // Here we give cache the higher priority
 
         // DL1 cache config
-        const uint64_t dl1_line_size = p->dl1_line_size;
-        const uint64_t dl1_size_kb = p->dl1_size_kb;
-        const uint64_t dl1_associativity = p->dl1_associativity;
+        const uint32_t dl1_line_size = p->dl1_line_size;
+        const uint32_t dl1_size_kb = p->dl1_size_kb;
+        const uint32_t dl1_associativity = p->dl1_associativity;
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                          (dl1_associativity));
         dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));

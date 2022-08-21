@@ -285,7 +285,7 @@ namespace olympia_core
         }
 
         if(!insts_dispatched->empty()) {
-            out_dispatch_queue_credits_.send(insts_dispatched->size());
+            out_dispatch_queue_credits_.send(static_cast<uint32_t>(insts_dispatched->size()));
             out_reorder_write_.send(insts_dispatched);
         }
 

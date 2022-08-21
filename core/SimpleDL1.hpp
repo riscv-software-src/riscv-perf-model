@@ -81,11 +81,11 @@ namespace olympia_core
             return true;
         }
 
-        private:
-        uint32_t line_size_;
-        bool valid_;
+    private:
+        uint64_t line_size_ = 0;
+        bool valid_ = false;
 
-        }; // class SimpleCacheLine
+    }; // class SimpleCacheLine
 
     class SimpleDL1 : public sparta::cache::SimpleCache2<SimpleCacheLine>,
                       public sparta::TreeNode,
@@ -164,4 +164,3 @@ namespace olympia_core
     }; // class SimpleDL1
 
 } // namespace olympia_core
-

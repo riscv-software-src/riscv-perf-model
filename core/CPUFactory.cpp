@@ -80,7 +80,7 @@ auto olympia_core::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
 
         // Set the TLBs and preload
         auto core_tree_node = root_node->getChild(std::string("cpu.core") +
-                                                  sparta::utils::uint32_to_str(num_of_cores));
+                                                  std::to_string(num_of_cores));
         sparta_assert(core_tree_node != nullptr);
         (core_tree_node->getChild("lsu")->getResourceAs<olympia_core::LSU>())->
             setTLB(*private_nodes_.at(num_of_cores)->getResourceAs<olympia_core::SimpleTLB>());

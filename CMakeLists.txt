@@ -89,9 +89,9 @@ add_subdirectory (test EXCLUDE_FROM_ALL)
 target_link_directories (olympia PUBLIC
   ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}
   ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}/simdb
-  ${STF_LINK_LIBS}
   )
-target_link_libraries (olympia ${Sparta_LIBS})
+
+target_link_libraries (olympia ${Sparta_LIBS} ${STF_LINK_LIBS})
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)

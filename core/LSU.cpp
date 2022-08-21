@@ -635,7 +635,7 @@ namespace olympia_core
     bool LSU::MMULookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const Inst::InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t vaddr = inst_ptr->getVAdr();
+        uint64_t vaddr = inst_ptr->getTargetVAddr();
 
         bool tlb_hit = false;
 
@@ -705,7 +705,7 @@ namespace olympia_core
         }
 
         // Reload TLB entry
-        reloadTLB_(inst_ptr->getVAdr());
+        reloadTLB_(inst_ptr->getTargetVAddr());
 
         // Update issue priority & Schedule an instruction (re-)issue event
         updateIssuePriorityAfterTLBReload_(inst_ptr);

@@ -153,7 +153,7 @@ namespace olympia_core
                     out_retire_flush_.send(ex_inst.getUniqueID());
 
                     // Redirect fetch
-                    out_fetch_flush_redirect_.send(ex_inst.getVAdr() + 4);
+                    out_fetch_flush_redirect_.send(ex_inst.getTargetVAddr() + 4);
 
                     ++num_flushes_;
                     break;

@@ -29,10 +29,9 @@ namespace olympia_core
     ////////////////////////////////////////////////////////////////////////////////
     // JSON Inst Generator
     JSONInstGenerator::JSONInstGenerator(MavisType * mavis_facade,
-                                         const std::string & filename)
+                                         const std::string & filename) :
+        InstGenerator(mavis_facade)
     {
-        mavis_facade_ = mavis_facade;
-
         std::ifstream fs;
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
         fs.exceptions(exceptionMask);
@@ -98,7 +97,7 @@ namespace olympia_core
 
         if (jinst.find("vaddr") != jinst.end()) {
             uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
-            inst->setVAddr(vaddr);
+            inst->setTargetVAddr(vaddr);
         }
 
         ++curr_inst_index_;
@@ -108,4 +107,73 @@ namespace olympia_core
         return inst;
 
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // STF Inst Generator
+    TraceInstGenerator::TraceInstGenerator(MavisType * mavis_facade,
+                                           const std::string & filename) :
+        InstGenerator(mavis_facade)
+    {
+        std::ifstream fs;
+        std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
+        fs.exceptions(exceptionMask);
+
+        try {
+            fs.open(filename);
+        } catch (const std::ifstream::failure &) {
+            std::cerr << "ERROR: Issues opening " << filename << std::endl;
+            throw;
+        }
+
+        // If true, search for an stf-pte file alongside this trace.
+        constexpr bool CHECK_FOR_STF_PTE = false;
+
+        // Filter out mode change events regardless of skip_nonuser_mode
+        // value. Required for traces that stay in machine mode the entire
+        // time
+        constexpr bool FILTER_MODE_CHANGE_EVENTS = true;
+        constexpr bool SKIP_NONUSER_MODE         = true;
+        constexpr size_t BUFFER_SIZE             = 4096;
+        reader_.reset(new stf::STFInstReader(filename,
+                                             SKIP_NONUSER_MODE,
+                                             CHECK_FOR_STF_PTE,
+                                             FILTER_MODE_CHANGE_EVENTS,
+                                             BUFFER_SIZE));
+
+        next_it_ = reader_->begin();
+    }
+
+    Inst::InstPtr TraceInstGenerator::getNextInst(const sparta::Clock * clk)
+    {
+        mavis::Opcode opcode = next_it_->opcode();
+
+        try {
+            Inst::InstPtr inst = mavis_facade_->makeInst(opcode, clk);
+            inst->setPC(next_it_->pc());
+            if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
+            {
+                using VectorAddrType = std::vector<sparta::memory::addr_t>;
+                VectorAddrType addrs;
+                std::for_each(next_it_->getMemoryAccesses().begin(),
+                              next_it_->getMemoryAccesses().end(),
+                              [&addrs] (const auto & ma) {
+                                  addrs.emplace_back(ma.getAddress());
+                              });
+                inst->setTargetVAddr(addrs.front());
+                //For misaligns, more than 1 address is provided
+                //inst->setVAddrVector(std::move(addrs));
+            }
+            ++next_it_;
+            return inst;
+        }
+        catch(std::exception & excpt) {
+            std::cerr << "ERROR: Mavis failed decoding: 0x"
+                      << std::hex << opcode << " for STF It PC: 0x"
+                      << next_it_->pc() << " STFID: " << next_it_->index() << ": err: "
+                      << excpt.what() << std::endl;
+            throw;
+        }
+        return nullptr;
+    }
+
 }

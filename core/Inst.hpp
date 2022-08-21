@@ -107,45 +107,52 @@ namespace olympia_core
             }
         }
 
-        void setVAddr(uint64_t vaddr) {
-            vaddr_ = vaddr;
-        }
+        // Set the instructions unique ID.  This ID in constantly
+        // incremented and does not repeat.  The same instruction in a
+        // trace can have different unique IDs (due to flushing)
+        void     setUniqueID(uint64_t uid) { unique_id_ = uid; }
+        uint64_t getUniqueID() const       { return unique_id_; }
 
-        void setUniqueID(uint64_t uid) {
-            unique_id_ = uid;
-        }
+        // Set the instruction's Program ID.  This ID is specific to
+        // an instruction's retire pointer.  The same instruction in a
+        // trace will have the same program ID (as compared to
+        // UniqueID).
+        void seProgramID(uint64_t prog_id) { program_id_ = prog_id; }
 
-        // This is a function which will be added in the SPARTA_ADDPAIRs API.
-        uint64_t getUniqueID() const {
-            return unique_id_;
-        }
+        // Set the instruction's PC
+        void setPC(sparta::memory::addr_t inst_pc) { inst_pc_ = inst_pc; }
+        sparta::memory::addr_t getPC() const       { return inst_pc_; }
 
-        void setSpeculative(bool spec) {
-            is_speculative_ = spec;
-        }
+        // Set the instruction's target PC (branch target or load/store target)
+        void     setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
+        sparta::memory::addr_t getTargetVAddr() const                { return target_vaddr_; }
+
+        // TBD -- add branch prediction
+        void setSpeculative(bool spec) { is_speculative_ = spec; }
 
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
         std::string getDisasm()   const { return opcode_info_->dasmString(); }
-        uint32_t    getOpCode()   const { return opcode_info_->getOpcode(); }
+        uint32_t    getOpCode()   const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
         // Static instruction information
         bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
-        uint64_t    getVAdr() const        { return vaddr_; }
-        uint64_t    getRAdr() const        { return vaddr_ | 0x3000; } // faked
+        uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
 
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType      inst_arch_info_;
 
-        sparta::memory::addr_t vaddr_     = 0;
-        bool                   is_last_   = false;
-        uint64_t               unique_id_ = 0; // Supplied by Fetch
+        sparta::memory::addr_t inst_pc_       = 0; // Instruction's PC
+        sparta::memory::addr_t target_vaddr_  = 0; // Instruction's Target PC (for branches, loads/stores)
+        bool                   is_last_       = false;
+        uint64_t               unique_id_     = 0; // Supplied by Fetch
+        uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
-        sparta::Scheduleable * ev_retire_ = nullptr;
+        sparta::Scheduleable * ev_retire_    = nullptr;
         InstStatus             status_;
         Status                 status_state_;
     };
@@ -177,7 +184,8 @@ namespace olympia_core
     }
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
-        os << "uid: " << inst.getUniqueID() << inst.getStatus() << " '" << inst.getDisasm() << "' ";
+        os << "uid: " << inst.getUniqueID() << inst.getStatus()
+           << std::hex << inst.getPC() << std::dec << " '" << inst.getDisasm() << "' ";
         return os;
     }
 
@@ -200,14 +208,14 @@ namespace olympia_core
         InstPairDef() : PairDefinition<Inst>(){
             SPARTA_INVOKE_PAIRS(Inst);
         }
-        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",      &Inst::getUniqueID),
-                              SPARTA_ADDPAIR("uid",      &Inst::getUniqueID),
-                              SPARTA_ADDPAIR("mnemonic", &Inst::getMnemonic),
-                              SPARTA_ADDPAIR("complete", &Inst::getCompletedStatus),
-                              SPARTA_ADDPAIR("unit",     &Inst::getUnit),
-                              SPARTA_ADDPAIR("latency",  &Inst::getExecuteTime),
-                              SPARTA_ADDPAIR("raddr",    &Inst::getRAdr, std::ios::hex),
-                              SPARTA_ADDPAIR("vaddr",    &Inst::getVAdr, std::ios::hex));
+        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",       &Inst::getUniqueID),
+                              SPARTA_ADDPAIR("uid",       &Inst::getUniqueID),
+                              SPARTA_ADDPAIR("mnemonic",  &Inst::getMnemonic),
+                              SPARTA_ADDPAIR("complete",  &Inst::getCompletedStatus),
+                              SPARTA_ADDPAIR("unit",      &Inst::getUnit),
+                              SPARTA_ADDPAIR("latency",   &Inst::getExecuteTime),
+                              SPARTA_ADDPAIR("raddr",     &Inst::getRAdr, std::ios::hex),
+                              SPARTA_ADDPAIR("tgt_vaddr", &Inst::getTargetVAddr, std::ios::hex))
     };
 
     // Instruction allocators

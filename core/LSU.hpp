@@ -328,7 +328,7 @@ namespace olympia_core
             SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &LoadStoreInstInfo::getInstUniqueID),
                                   SPARTA_ADDPAIR("rank",  &LoadStoreInstInfo::getPriority),
                                   SPARTA_ADDPAIR("state", &LoadStoreInstInfo::getState),
-                                  SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr));
+                                  SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr))
         };
 
         void setTLB(SimpleTLB& tlb)

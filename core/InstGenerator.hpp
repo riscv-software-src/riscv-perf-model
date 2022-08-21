@@ -14,6 +14,8 @@
 #include "MavisUnit.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
 
+#include "stf-inc/stf_inst_reader.hpp"
+
 namespace nlohmann {
     using json = class nlohmann::basic_json<>;
 }
@@ -31,12 +33,9 @@ namespace olympia_core
     class InstGenerator
     {
     public:
+        InstGenerator(MavisType * mavis_facade) : mavis_facade_(mavis_facade) {}
         virtual ~InstGenerator() {}
-        virtual Inst::InstPtr getNextInst(const sparta::Clock * clk) {
-            sparta_assert(false, "The base generator does nothing");
-            return nullptr;
-        }
-
+        virtual Inst::InstPtr getNextInst(const sparta::Clock * clk) = 0;
         static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
                                                               const std::string & filename);
 
@@ -59,17 +58,19 @@ namespace olympia_core
         uint64_t                        n_insts_ = 0;
     };
 
-    // Generates instructions from an STF Trace file (TBD)
+    // Generates instructions from an STF Trace file
     class TraceInstGenerator : public InstGenerator
     {
     public:
         TraceInstGenerator(MavisType * mavis_facade,
-                           const std::string &)
-        {
-            mavis_facade_ = mavis_facade;
-        }
-        Inst::InstPtr getNextInst(const sparta::Clock * clk) override final {
-            return InstGenerator::getNextInst(clk);
-        }
+                           const std::string &);
+
+        Inst::InstPtr getNextInst(const sparta::Clock * clk) override final;
+
+    private:
+        std::unique_ptr<stf::STFInstReader> reader_;
+
+        // Always points to the *next* stf inst
+        stf::STFInstReader::iterator next_it_;
     };
 }

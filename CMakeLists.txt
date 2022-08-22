@@ -22,7 +22,7 @@ set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
 include(${STF_LIB_BASE}/cmake/stf-config.cmake)
 
-# Use ccache if we've got it.
+# Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)
 if (CCACHE_PROGRAM)
   set_property (GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
@@ -71,7 +71,7 @@ endif()
 
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg -g -ftime-trace")
-set(CMAKE_CXX_FLAGS_FASTDEBUG "-g")
+set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 
 # Include directories
 include_directories (core mss)

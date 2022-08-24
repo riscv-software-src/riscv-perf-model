@@ -52,7 +52,7 @@ namespace olympia
         }
         else {
             // Stick the instructions in a random position in the ready queue
-            uint64_t issue_pos = std::rand() % ready_queue_.size();
+            uint64_t issue_pos = uint64_t(std::rand()) % ready_queue_.size();
              if (issue_pos == ready_queue_.size()-1) {
                  ready_queue_.emplace_back(ex_inst);
              }

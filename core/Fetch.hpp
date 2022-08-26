@@ -121,9 +121,6 @@ namespace olympia_core
         // Receive flush from retire
         void flushFetch_(const uint64_t & new_addr);
 
-        // A unique instruction ID
-        uint64_t next_inst_id_ = 0;
-
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
     };

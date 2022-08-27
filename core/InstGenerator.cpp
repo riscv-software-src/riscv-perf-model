@@ -142,6 +142,10 @@ namespace olympia
 
     InstPtr TraceInstGenerator::getNextInst(const sparta::Clock * clk)
     {
+        if(SPARTA_EXPECT_FALSE(next_it_ == reader_->end())) {
+            return nullptr;
+        }
+
         mavis::Opcode opcode = next_it_->opcode();
 
         try {

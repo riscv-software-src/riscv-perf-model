@@ -1,5 +1,12 @@
 # olympia
-Currently an extraction of the Map/Spara Example Performance Model based on the Sparta Modeling Framework.  Intentions to expand to a fully featured Core/MSS performance model are in the works.
+
+An extraction of the Map/Spara Example Performance Model based on the
+Sparta Modeling Framework, Olympia is a fully-features OoO CPU
+performance model for the RISC-V community.
+
+Olympia is a _trace-driven_ simulator runnig instructions streams
+defined in either JSON format or
+[STF](https://github.com/sparcians/stf_spec).
 
 # Build Directions
 
@@ -65,7 +72,7 @@ make regress
 
 ```
 # Run a given JSON "trace" file
-./olympia ../traces/add_mul_add.json
+./olympia ../traces/example_json.json
 
 # Run a given STF trace file
 ./olympia ../traces/dhrystone.zstf

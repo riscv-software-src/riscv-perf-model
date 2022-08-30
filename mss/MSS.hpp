@@ -52,7 +52,7 @@ namespace olympia_mss
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::SyncInPort<olympia_core::InstPtr> in_mss_req_sync_
+        sparta::SyncInPort<olympia::InstPtr> in_mss_req_sync_
             {&unit_port_set_, "in_mss_req_sync", getClock()};
 
 
@@ -85,7 +85,7 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Receive new MSS request from BIU
-        void getReqFromBIU_(const olympia_core::InstPtr &);
+        void getReqFromBIU_(const olympia::InstPtr &);
 
         // Handle MSS request
         void handle_MSS_req_();

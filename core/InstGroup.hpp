@@ -7,7 +7,7 @@
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     //! \brief An instruction group is the data type passed between units
     //!

@@ -9,7 +9,7 @@
 #include "sparta/simulation/ResourceTreeNode.hpp"
 #include "CPUTopology.hpp"
 
-namespace olympia_core{
+namespace olympia{
 
 /**
  * @file  CPUFactory.h
@@ -92,4 +92,4 @@ private:
      */
     std::vector<std::unique_ptr<sparta::ResourceTreeNode>> to_delete_;
 }; // class CPUFactory
-}  // namespace olympia_core
+}  // namespace olympia

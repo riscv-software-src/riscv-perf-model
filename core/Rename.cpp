@@ -11,7 +11,7 @@
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/report/DatabaseInterface.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     const char Rename::name[] = "rename";
 

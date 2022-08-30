@@ -5,7 +5,7 @@
 #include "sparta/app/Simulation.hpp"
 #include "sparta/trigger/ExpiringExpressionTrigger.hpp"
 
-namespace olympia_core{ class CPUFactory; }
+namespace olympia{ class CPUFactory; }
 
 /*!
  * \brief OlympiaSim which builds the model and configures it
@@ -67,7 +67,7 @@ private:
     /*!
      * \brief Get the factory for topology build
      */
-    auto getCPUFactory_() -> olympia_core::CPUFactory*;
+    auto getCPUFactory_() -> olympia::CPUFactory*;
 
     /*!
      * \brief Optional flag to print registered factories to console

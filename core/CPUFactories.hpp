@@ -18,7 +18,7 @@
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
 
-namespace olympia_core{
+namespace olympia{
 
     /**
      * @file  CPUFactories.h
@@ -32,36 +32,36 @@ namespace olympia_core{
     struct CPUFactories{
 
         //! \brief Resouce Factory to build a Core Unit
-        sparta::ResourceFactory<olympia_core::Core,
-                                olympia_core::Core::CoreParameterSet> core_rf;
+        sparta::ResourceFactory<olympia::Core,
+                                olympia::Core::CoreParameterSet> core_rf;
 
         //! \brief Resouce Factory to build a Fetch Unit
-        sparta::ResourceFactory<olympia_core::Fetch,
-                                olympia_core::Fetch::FetchParameterSet> fetch_rf;
+        sparta::ResourceFactory<olympia::Fetch,
+                                olympia::Fetch::FetchParameterSet> fetch_rf;
 
         //! \brief Resouce Factory to build a Decode Unit
-        sparta::ResourceFactory<olympia_core::Decode,
-                                olympia_core::Decode::DecodeParameterSet> decode_rf;
+        sparta::ResourceFactory<olympia::Decode,
+                                olympia::Decode::DecodeParameterSet> decode_rf;
 
         //! \brief Resouce Factory to build a Rename Unit
-        sparta::ResourceFactory<olympia_core::Rename,
-                                olympia_core::Rename::RenameParameterSet> rename_rf;
+        sparta::ResourceFactory<olympia::Rename,
+                                olympia::Rename::RenameParameterSet> rename_rf;
 
         //! \brief Resouce Factory to build a Dispatch Unit
-        sparta::ResourceFactory<olympia_core::Dispatch,
-                                olympia_core::Dispatch::DispatchParameterSet> dispatch_rf;
+        sparta::ResourceFactory<olympia::Dispatch,
+                                olympia::Dispatch::DispatchParameterSet> dispatch_rf;
 
         //! \brief Resouce Factory to build a Execute Unit
-        sparta::ResourceFactory<olympia_core::Execute,
-                                olympia_core::Execute::ExecuteParameterSet> execute_rf;
+        sparta::ResourceFactory<olympia::Execute,
+                                olympia::Execute::ExecuteParameterSet> execute_rf;
 
         //! \brief Resouce Factory to build a LSU Unit
-        sparta::ResourceFactory<olympia_core::LSU,
-                                olympia_core::LSU::LSUParameterSet> lsu_rf;
+        sparta::ResourceFactory<olympia::LSU,
+                                olympia::LSU::LSUParameterSet> lsu_rf;
 
         //! \brief Resouce Factory to build a TLB Unit
-        sparta::ResourceFactory<olympia_core::SimpleTLB,
-                                olympia_core::SimpleTLB::TLBParameterSet> tlb_rf;
+        sparta::ResourceFactory<olympia::SimpleTLB,
+                                olympia::SimpleTLB::TLBParameterSet> tlb_rf;
 
         //! \brief Resouce Factory to build a BIU Unit
         sparta::ResourceFactory<olympia_mss::BIU,
@@ -72,15 +72,15 @@ namespace olympia_core{
                                 olympia_mss::MSS::MSSParameterSet> mss_rf;
 
         //! \brief Resouce Factory to build a ROB Unit
-        sparta::ResourceFactory<olympia_core::ROB,
-                                olympia_core::ROB::ROBParameterSet> rob_rf;
+        sparta::ResourceFactory<olympia::ROB,
+                                olympia::ROB::ROBParameterSet> rob_rf;
 
         //! \brief Resouce Factory to build a Flush Unit
-        sparta::ResourceFactory<olympia_core::FlushManager,
-                                olympia_core::FlushManager::FlushManagerParameters> flushmanager_rf;
+        sparta::ResourceFactory<olympia::FlushManager,
+                                olympia::FlushManager::FlushManagerParameters> flushmanager_rf;
 
         //! \brief Resouce Factory to build a Preloader Unit
-        sparta::ResourceFactory<olympia_core::Preloader,
-                                olympia_core::Preloader::PreloaderParameterSet> preloader_rf;
+        sparta::ResourceFactory<olympia::Preloader,
+                                olympia::Preloader::PreloaderParameterSet> preloader_rf;
     }; // struct CPUFactories
-}  // namespace olympia_core
+}  // namespace olympia

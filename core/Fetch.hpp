@@ -19,7 +19,7 @@
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     /**
      * @file   Fetch.h

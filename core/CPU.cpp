@@ -4,10 +4,10 @@
 #include "CPU.hpp"
 
 //! \brief Name of this resource. Required by sparta::UnitFactory
-constexpr char olympia_core::CPU::name[];
+constexpr char olympia::CPU::name[];
 
 //! \brief Constructor of this CPU Unit
-olympia_core::CPU::CPU(sparta::TreeNode* node, const olympia_core::CPU::CPUParameterSet* params) :
+olympia::CPU::CPU(sparta::TreeNode* node, const olympia::CPU::CPUParameterSet* params) :
     sparta::Unit{node},
     fastpoll_{params->fastpoll},
     out_of_order_execution_{params->out_of_order_execution},
@@ -20,4 +20,4 @@ olympia_core::CPU::CPU(sparta::TreeNode* node, const olympia_core::CPU::CPUParam
     vpclass_{params->vpclass}{}
 
 //! \brief Destructor of this CPU Unit
-olympia_core::CPU::~CPU() = default;
+olympia::CPU::~CPU() = default;

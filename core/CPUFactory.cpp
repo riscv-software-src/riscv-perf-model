@@ -8,21 +8,21 @@
 /**
  * @brief Constructor for CPUFactory
  */
-olympia_core::CPUFactory::CPUFactory() :
-    sparta::ResourceFactory<olympia_core::CPU, olympia_core::CPU::CPUParameterSet>(){}
+olympia::CPUFactory::CPUFactory() :
+    sparta::ResourceFactory<olympia::CPU, olympia::CPU::CPUParameterSet>(){}
 
 /**
  * @brief Destructor for CPUFactory
  */
-olympia_core::CPUFactory::~CPUFactory() = default;
+olympia::CPUFactory::~CPUFactory() = default;
 
 /**
  * @brief Set the user-defined topology for this microarchitecture
  */
-auto olympia_core::CPUFactory::setTopology(const std::string& topology,
+auto olympia::CPUFactory::setTopology(const std::string& topology,
                                            const uint32_t num_cores) -> void{
     sparta_assert(!topology_);
-    topology_.reset(olympia_core::CPUTopology::allocateTopology(topology));
+    topology_.reset(olympia::CPUTopology::allocateTopology(topology));
     topology_->setName(topology);
     topology_->setNumCores(num_cores);
 }
@@ -30,8 +30,8 @@ auto olympia_core::CPUFactory::setTopology(const std::string& topology,
 /**
  * @brief Implemenation : Build the device tree by instantiating resource nodes
  */
-auto olympia_core::CPUFactory::buildTree_(sparta::RootTreeNode* root_node,
-                                          const std::vector<olympia_core::CPUTopology::UnitInfo>& units) -> void{
+auto olympia::CPUFactory::buildTree_(sparta::RootTreeNode* root_node,
+                                          const std::vector<olympia::CPUTopology::UnitInfo>& units) -> void{
     std::string parent_name, human_name, node_name, replace_with;
     for(std::size_t num_of_cores = 0; num_of_cores < topology_->num_cores; ++num_of_cores){
         for(const auto& unit : units){
@@ -62,8 +62,8 @@ auto olympia_core::CPUFactory::buildTree_(sparta::RootTreeNode* root_node,
 /**
  * @brief Implementation : Bind all the ports between different units and set TLBs and preload
  */
-auto olympia_core::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
-                                         const std::vector<olympia_core::CPUTopology::PortConnectionInfo>& ports) -> void{
+auto olympia::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
+                                         const std::vector<olympia::CPUTopology::PortConnectionInfo>& ports) -> void{
     std::string out_port_name, in_port_name,replace_with;
     for(std::size_t num_of_cores = 0; num_of_cores < topology_->num_cores; ++num_of_cores){
         for(const auto& port : ports){
@@ -80,9 +80,9 @@ auto olympia_core::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
         auto core_tree_node = root_node->getChild(std::string("cpu.core") +
             sparta::utils::uint32_to_str(num_of_cores));
         sparta_assert(core_tree_node != nullptr);
-        (core_tree_node->getChild("lsu")->getResourceAs<olympia_core::LSU>())->
-            setTLB(*private_nodes_.at(num_of_cores)->getResourceAs<olympia_core::SimpleTLB>());
-        (core_tree_node->getChild("preloader")->getResourceAs<olympia_core::Preloader>())->
+        (core_tree_node->getChild("lsu")->getResourceAs<olympia::LSU>())->
+            setTLB(*private_nodes_.at(num_of_cores)->getResourceAs<olympia::SimpleTLB>());
+        (core_tree_node->getChild("preloader")->getResourceAs<olympia::Preloader>())->
             preload();
     }
 }
@@ -90,7 +90,7 @@ auto olympia_core::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
 /**
  * @brief Build the device tree by instantiating resource nodes
  */
-auto olympia_core::CPUFactory::buildTree(sparta::RootTreeNode* root_node) -> void{
+auto olympia::CPUFactory::buildTree(sparta::RootTreeNode* root_node) -> void{
     sparta_assert(topology_);
     buildTree_(root_node, topology_->units);
 }
@@ -98,7 +98,7 @@ auto olympia_core::CPUFactory::buildTree(sparta::RootTreeNode* root_node) -> voi
 /**
  * @brief Bind all the ports between different units and set TLBs and preload
  */
-auto olympia_core::CPUFactory::bindTree(sparta::RootTreeNode* root_node) -> void{
+auto olympia::CPUFactory::bindTree(sparta::RootTreeNode* root_node) -> void{
     sparta_assert(topology_);
     bindTree_(root_node, topology_->port_connections);
 }
@@ -106,6 +106,6 @@ auto olympia_core::CPUFactory::bindTree(sparta::RootTreeNode* root_node) -> void
 /**
  * @brief Get the list of resources instantiated in this topology
  */
-auto olympia_core::CPUFactory::getResourceNames() const -> const std::vector<std::string>&{
+auto olympia::CPUFactory::getResourceNames() const -> const std::vector<std::string>&{
     return resource_names_;
 }

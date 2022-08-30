@@ -5,7 +5,7 @@
 #include "sparta/resources/Queue.hpp"
 #include "Inst.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     //! Instruction Queue
     typedef sparta::Queue<InstPtr> InstQueue;

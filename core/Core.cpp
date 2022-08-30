@@ -7,7 +7,7 @@
 
 #include "Core.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     Core::Core(sparta::TreeNode * node, // TreeNode which owns this. Publish child nodes to this
                const CoreParameterSet * p) : // Core::ParameterSet, not generic SPARTA set

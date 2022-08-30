@@ -4,7 +4,7 @@
 
 #include "Execute.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     const char Execute::name[] = "execute";
     Execute::Execute(sparta::TreeNode * node,

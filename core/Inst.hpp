@@ -15,7 +15,7 @@
 #include <ostream>
 #include <map>
 
-namespace olympia_core
+namespace olympia
 {
     /*!
      * \class Inst
@@ -95,14 +95,14 @@ namespace olympia_core
         }
 
         bool getCompletedStatus() const {
-            return getStatus() == olympia_core::Inst::Status::COMPLETED;
+            return getStatus() == olympia::Inst::Status::COMPLETED;
         }
 
         void setStatus(Status status) {
             //status_state_.setValue(status);
             status_state_ = status;
             status_.write(status);
-            if(getStatus() == olympia_core::Inst::Status::COMPLETED) {
+            if(getStatus() == olympia::Inst::Status::COMPLETED) {
                 if(ev_retire_ != 0) {
                     ev_retire_->schedule();
                 }
@@ -117,7 +117,7 @@ namespace olympia_core
             ev_retire_ = rob_retire_event;
             is_last_ = last;
 
-            if(status_.isValidNS() && status_.readNS() == olympia_core::Inst::Status::COMPLETED) {
+            if(status_.isValidNS() && status_.readNS() == olympia::Inst::Status::COMPLETED) {
                 ev_retire_->schedule();
             }
         }

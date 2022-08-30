@@ -3,7 +3,7 @@
 #include "sparta/app/Simulation.hpp"
 #include "cache/preload/PreloadableIF.hpp"
 
-namespace olympia_core
+namespace olympia
 {
     constexpr char Preloader::name[];
     void Preloader::preload()
@@ -36,4 +36,4 @@ namespace olympia_core
         }
         sparta_assert(preloaded_atleast_one, "Failed to preload the packet to any cache");
     }
-} // namespace olympia_core
+} // namespace olympia

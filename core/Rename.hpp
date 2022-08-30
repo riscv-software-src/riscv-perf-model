@@ -14,7 +14,7 @@
 #include "FlushManager.hpp"
 #include "InstGroup.hpp"
 
-namespace olympia_core
+namespace olympia
 {
 
     /**

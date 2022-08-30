@@ -11,7 +11,7 @@
 #include "sparta/simulation/RootTreeNode.hpp"
 #include "sparta/simulation/ResourceTreeNode.hpp"
 
-namespace olympia_core{
+namespace olympia{
 
 /**
  * @file  CPUTopology.h
@@ -132,4 +132,4 @@ public:
      */
     CoreTopology_1();
 }; // class CoreTopology_1
-}  // namespace olympia_core
+}  // namespace olympia

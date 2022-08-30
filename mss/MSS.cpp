@@ -15,7 +15,7 @@ namespace olympia_mss
         mss_latency_(p->mss_latency)
     {
         in_mss_req_sync_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia_core::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia::InstPtr));
         in_mss_req_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
 
@@ -30,7 +30,7 @@ namespace olympia_mss
     ////////////////////////////////////////////////////////////////////////////////
 
     // Receive new MSS request from BIU
-    void MSS::getReqFromBIU_(const olympia_core::InstPtr & inst_ptr)
+    void MSS::getReqFromBIU_(const olympia::InstPtr & inst_ptr)
     {
         sparta_assert((inst_ptr != nullptr), "MSS is not handling a valid request!");
 

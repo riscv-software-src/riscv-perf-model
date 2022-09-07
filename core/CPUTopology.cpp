@@ -25,121 +25,121 @@ olympia::CoreTopology_1::CoreTopology_1(){
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
             &factories->flushmanager_rf
-            },
-            {
-                "fetch",
-                "cpu.core*",
-                "Fetch Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->fetch_rf
-            },
-            {
-                "decode",
-                "cpu.core*",
-                "Decode Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->decode_rf
-            },
-            {
-                "rename",
-                "cpu.core*",
-                "Rename Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->rename_rf
-            },
-            {
-                "dispatch",
-                "cpu.core*",
-                "Dispatch Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->dispatch_rf
-            },
-            {
-                "alu0",
-                "cpu.core*",
-                "ALU Unit 0",
-                "alu",
-                0,
-                &factories->execute_rf
-            },
-            {
-                "alu1",
-                "cpu.core*",
-                "ALU Unit 1",
-                "alu",
-                1,
-                &factories->execute_rf
-            },
-            {
-                "fpu",
-                "cpu.core*",
-                "FPU Unit",
-                "alu",
-                2,
-                &factories->execute_rf
-            },
-            {
-                "br",
-                "cpu.core*",
-                "BR Unit",
-                "alu",
-                3,
-                &factories->execute_rf
-            },
-            {
-                "lsu",
-                "cpu.core*",
-                "Load-Store Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->lsu_rf
-            },
-            {
-                "tlb",
-                "cpu.core*.lsu",
-                "TLB Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->tlb_rf,
-                true
-            },
-            {
-                "biu",
-                "cpu.core*",
-                "Bus Interface Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->biu_rf
-            },
-            {
-                "mss",
-                "cpu.core*",
-                "Memory Sub-System",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->mss_rf
-            },
-            {
-                "rob",
-                "cpu.core*",
-                "ROB Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->rob_rf
-            },
-            {
-                "preloader",
-                "cpu.core*",
-                "Preloader Facility",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->preloader_rf
-            }
-        };
+        },
+        {
+            "fetch",
+            "cpu.core*",
+            "Fetch Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->fetch_rf
+        },
+        {
+            "decode",
+            "cpu.core*",
+            "Decode Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->decode_rf
+        },
+        {
+            "rename",
+            "cpu.core*",
+            "Rename Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->rename_rf
+        },
+        {
+            "dispatch",
+            "cpu.core*",
+            "Dispatch Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->dispatch_rf
+        },
+        {
+            "alu",
+            "cpu.core*",
+            "ALU Unit 0",
+            "alu",
+            0,
+            &factories->execute_rf
+        },
+        {
+            "fpu",
+            "cpu.core*",
+            "FPU Unit",
+            "alu",
+            2,
+            &factories->execute_rf
+        },
+        {
+            "br",
+            "cpu.core*",
+            "BR Unit",
+            "alu",
+            3,
+            &factories->execute_rf
+        },
+        {
+            "lsu",
+            "cpu.core*",
+            "Load-Store Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->lsu_rf
+        },
+        {
+            "tlb",
+            "cpu.core*.lsu",
+            "TLB Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->tlb_rf,
+            true
+        },
+        {
+            "biu",
+            "cpu.core*",
+            "Bus Interface Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->biu_rf
+        },
+        {
+            "mss",
+            "cpu.core*",
+            "Memory Sub-System",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->mss_rf
+        },
+        {
+            "rob",
+            "cpu.core*",
+            "ROB Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->rob_rf
+        },
+        {
+            "preloader",
+            "cpu.core*",
+            "Preloader Facility",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->preloader_rf
+        },
+        {
+            "mavis",
+            "cpu.core*",  // Each core can have its own decoder
+            "Mavis Decoding Functional Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->mavis_rf
+        }
+    };
 
     //! Instantiating ports of this topology
     port_connections = {
@@ -176,20 +176,12 @@ olympia::CoreTopology_1::CoreTopology_1(){
             "cpu.core*.fpu.ports.out_scheduler_credits"
         },
         {
-            "cpu.core*.dispatch.ports.out_alu0_write",
-            "cpu.core*.alu0.ports.in_execute_write"
+            "cpu.core*.dispatch.ports.out_alu_write",
+            "cpu.core*.alu.ports.in_execute_write"
         },
         {
-            "cpu.core*.dispatch.ports.in_alu0_credits",
-            "cpu.core*.alu0.ports.out_scheduler_credits"
-        },
-        {
-            "cpu.core*.dispatch.ports.out_alu1_write",
-            "cpu.core*.alu1.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_alu1_credits",
-            "cpu.core*.alu1.ports.out_scheduler_credits"
+            "cpu.core*.dispatch.ports.in_alu_credits",
+            "cpu.core*.alu.ports.out_scheduler_credits"
         },
         {
             "cpu.core*.dispatch.ports.out_br_write",
@@ -245,11 +237,7 @@ olympia::CoreTopology_1::CoreTopology_1(){
         },
         {
             "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.alu0.ports.in_reorder_flush"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.alu1.ports.in_reorder_flush"
+            "cpu.core*.alu.ports.in_reorder_flush"
         },
         {
             "cpu.core*.flushmanager.ports.out_retire_flush",

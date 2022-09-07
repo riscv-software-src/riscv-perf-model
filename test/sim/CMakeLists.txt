@@ -8,24 +8,27 @@ sparta_regress (olympia)
 
 # Create a few links like reports and arch directories for the testers
 file(CREATE_LINK ${SIM_BASE}/reports ${CMAKE_CURRENT_BINARY_DIR}/reports SYMBOLIC)
-file(CREATE_LINK ${SIM_BASE}/archs   ${CMAKE_CURRENT_BINARY_DIR}/archs SYMBOLIC)
+file(CREATE_LINK ${SIM_BASE}/arches  ${CMAKE_CURRENT_BINARY_DIR}/arches SYMBOLIC)
+file(CREATE_LINK ${SIM_BASE}/traces  ${CMAKE_CURRENT_BINARY_DIR}/traces SYMBOLIC)
 
 # Tests
-sparta_named_test(max_ipc_1M     olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc true)
-sparta_named_test(random_ipc_1M  olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc false)
+sparta_named_test(olympia_json_test olympia --workload traces/add_mul_add.json)
 
 # Test report generation
 
 # This command will use a report definition file to generate a text form of a report
-sparta_named_test(olympia_report_text olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc true
-  --report-yaml-replacements OUT_BASE max_ipc_report OUT_FORMAT text INST_START 1000
+sparta_named_test(olympia_json_test_report_text olympia
+  --report-yaml-replacements OUT_BASE json_test_report OUT_FORMAT text INST_START 0
   --report-search-dir reports
-  --report reports/core_report.def)
+  --report reports/core_report.def
+  --workload traces/add_mul_add.json)
 
 # This command will use core_stats.yaml directly to generate a text form of a report at the "top" node
-sparta_named_test(olympia_report_text_direct olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc true
-  --report "top" reports/core_stats.yaml core_stats.text text)
+sparta_named_test(olympia_json_test_report_text_direct olympia
+  --report "top" reports/core_stats.yaml core_stats.text text
+  --workload traces/add_mul_add.json)
 
 # This command will use core_stats.yaml directly to generate an html form of a report at the "top" node
-sparta_named_test(olympia_report_html olympia -i 1M -p top.cpu.core0.fetch.params.fetch_max_ipc true
-  --report "top" reports/core_stats.yaml core_stats.html html)
+sparta_named_test(olympia_json_test_report_html olympia
+  --report "top" reports/core_stats.yaml core_stats.html html
+  --workload traces/add_mul_add.json)

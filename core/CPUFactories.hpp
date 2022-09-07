@@ -17,6 +17,7 @@
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
+#include "MavisUnit.hpp"
 
 namespace olympia{
 
@@ -82,5 +83,9 @@ namespace olympia{
         //! \brief Resouce Factory to build a Preloader Unit
         sparta::ResourceFactory<olympia::Preloader,
                                 olympia::Preloader::PreloaderParameterSet> preloader_rf;
+
+        //! \brief Set up the Mavis Decode functional unit
+        sparta::ResourceFactory<olympia::MavisUnit,
+                                olympia::MavisUnit::MavisParameters> mavis_rf;
     }; // struct CPUFactories
 }  // namespace olympia

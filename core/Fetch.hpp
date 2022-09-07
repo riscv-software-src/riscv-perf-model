@@ -21,6 +21,8 @@
 
 namespace olympia
 {
+    class InstGenerator;
+
     /**
      * @file   Fetch.h
      * @brief The Fetch block -- gets new instructions to send down the pipe
@@ -52,8 +54,6 @@ namespace olympia
             }
 
             PARAMETER(uint32_t, num_to_fetch, 4, "Number of instructions to fetch")
-            PARAMETER(uint32_t, inst_rand_seed, 0xdeadbeef, "Seed for random instruction fetch")
-            PARAMETER(bool, fetch_max_ipc, false, "Fetch tries to maximize IPC by distributing insts")
         };
 
         /**
@@ -65,18 +65,15 @@ namespace olympia
         Fetch(sparta::TreeNode * name,
               const FetchParameterSet * p);
 
-        ~Fetch() {
-            debug_logger_ << getContainer()->getLocation()
-                          << ": "
-                          << inst_allocator.getNumAllocated()
-                          << " Inst objects allocated/created"
-                          << std::endl;
-        }
+        ~Fetch();
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char * name;
 
     private:
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Ports
 
         // Internal DataOutPort to the decode unit's fetch queue
         sparta::DataOutPort<InstGroupPtr> out_fetch_queue_write_ {&unit_port_set_, "out_fetch_queue_write"};
@@ -89,39 +86,42 @@ namespace olympia
         sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Instruction fetch
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
 
         // Number of credits from decode that fetch has
         uint32_t credits_inst_queue_ = 0;
 
-        // Current "PC"
-        uint64_t vaddr_ = 0x1000;
+        // Unit's clock
+        const sparta::Clock * my_clk_ = nullptr;
+
+        // Instruction generation
+        std::unique_ptr<InstGenerator> inst_generator_;
 
         // Fetch instruction event, triggered when there are credits
         // from decode.  The callback set is either to fetch random
         // instructions or a perfect IPC set
         std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
 
-        // A pipeline collector
-        sparta::collection::Collectable<uint64_t> next_pc_;
-
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
+
+        // Fire Fetch up
+        void initialize_();
 
         // Receive the number of free credits from decode
         void receiveFetchQueueCredits_(const uint32_t &);
 
-        // Read data from a trace at random or at MaxIPC and send it
-        // through
-        template<bool MaxIPC>
+        // Read data from a trace
         void fetchInstruction_();
 
         // Receive flush from retire
         void flushFetch_(const uint64_t & new_addr);
 
         // A unique instruction ID
-        uint64_t next_inst_id_ = 0;
+        // uint64_t next_inst_id_ = 0;
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

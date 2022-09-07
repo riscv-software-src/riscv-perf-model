@@ -4,6 +4,11 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(olympia CXX)
 
+add_compile_options ( -Werror
+  -Wall -Wextra -Winline -Winit-self -Wno-unused-function
+  -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
+  -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
+
 if (NOT SPARTA_BASE)
   message (FATAL_ERROR "Need to define the location of the Sparta: cmake <args> -DSPARTA_BASE=\"/path/to/sparta\"")
 endif ()
@@ -25,9 +30,12 @@ add_executable(olympia
   core/Dispatch.cpp
   core/Execute.cpp
   core/Inst.cpp
+  core/InstArchInfo.cpp
   core/InstGroup.cpp
+  core/InstGenerator.cpp
   core/ROB.cpp
   core/LSU.cpp
+  core/MavisUnit.cpp
   core/Preloader.cpp
   core/CPU.cpp
   core/CPUFactory.cpp
@@ -38,15 +46,13 @@ add_executable(olympia
   sim/main.cpp
   )
 
-add_compile_options ( -Werror
-  -Wall -Wextra -Winline -Winit-self -Wno-unused-function
-  -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
-  -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set(SPARTA_BUILD_TYPE "release")
   target_link_options    (olympia PUBLIC -flto)
   target_compile_options (olympia PUBLIC -flto)
+elseif (CMAKE_BUILD_TYPE MATCHES "^[Ff]ast[Dd]ebug")
+  set(SPARTA_BUILD_TYPE "release")
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
   set(SPARTA_BUILD_TYPE "debug")
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")
@@ -57,9 +63,10 @@ endif()
 
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg -g -ftime-trace")
+set(CMAKE_CXX_FLAGS_FASTDEBUG "-g")
 
 # Include directories
-include_directories (core mss)
+include_directories (core mss mavis)
 include_directories (SYSTEM ${SPARTA_BASE})
 include_directories (SYSTEM ${SPARTA_BASE}/simdb/include)
 
@@ -71,8 +78,10 @@ target_link_directories (olympia PUBLIC
 target_link_libraries (olympia ${Sparta_LIBS})
 
 # Create a few links like reports and arch directories
-file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports ${CMAKE_CURRENT_BINARY_DIR}/reports SYMBOLIC)
-file(CREATE_LINK ${PROJECT_SOURCE_DIR}/archs   ${CMAKE_CURRENT_BINARY_DIR}/archs SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
 
 # Add testing, but do not build as part of the 'all' target
 add_subdirectory (test EXCLUDE_FROM_ALL)

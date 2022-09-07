@@ -144,7 +144,7 @@ namespace olympia
                 }
 
                 // This is rare for the example
-                if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == Inst::TargetUnit::ROB))
+                if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
                 {
                     if(SPARTA_EXPECT_FALSE(info_logger_)) {
                         info_logger_ << "Instigating flush... " << ex_inst;

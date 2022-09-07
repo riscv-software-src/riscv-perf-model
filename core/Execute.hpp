@@ -91,7 +91,7 @@ namespace olympia
                 CREATE_SPARTA_HANDLER(Execute, issueInst_)};
         sparta::PayloadEvent<InstPtr> complete_inst_{
             &unit_event_set_, getName() + "_complete_inst",
-                CREATE_SPARTA_HANDLER_WITH_DATA(Execute, completeInst_, InstPtr)};
+            CREATE_SPARTA_HANDLER_WITH_DATA(Execute, completeInst_, InstPtr)};
 
         // A pipeline collector
         sparta::collection::Collectable<InstPtr> collected_inst_;
@@ -119,4 +119,3 @@ namespace olympia
         void flushInst_(const FlushManager::FlushingCriteria & criteria);
     };
 } // namespace olympia
-

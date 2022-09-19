@@ -69,9 +69,9 @@ namespace olympia
         // Here we give cache the higher priority
 
         // DL1 cache config
-        const uint64_t dl1_line_size = p->dl1_line_size;
-        const uint64_t dl1_size_kb = p->dl1_size_kb;
-        const uint64_t dl1_associativity = p->dl1_associativity;
+        const uint32_t dl1_line_size = p->dl1_line_size;
+        const uint32_t dl1_size_kb = p->dl1_size_kb;
+        const uint32_t dl1_associativity = p->dl1_associativity;
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                          (dl1_associativity));
         dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));
@@ -635,7 +635,7 @@ namespace olympia
     bool LSU::MMULookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t vaddr = inst_ptr->getVAdr();
+        uint64_t vaddr = inst_ptr->getTargetVAddr();
 
         bool tlb_hit = false;
 
@@ -705,7 +705,7 @@ namespace olympia
         }
 
         // Reload TLB entry
-        reloadTLB_(inst_ptr->getVAdr());
+        reloadTLB_(inst_ptr->getTargetVAddr());
 
         // Update issue priority & Schedule an instruction (re-)issue event
         updateIssuePriorityAfterTLBReload_(inst_ptr);

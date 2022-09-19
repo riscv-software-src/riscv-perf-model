@@ -14,7 +14,7 @@ namespace olympia
     public:
         SimpleTLBEntry() = delete;
 
-        SimpleTLBEntry(uint32_t page_size) :
+        SimpleTLBEntry(uint64_t page_size) :
             page_size_(page_size),
             valid_(false)
         {
@@ -80,8 +80,8 @@ namespace olympia
         }
 
     private:
-        uint32_t page_size_;
-        bool valid_;
+        uint64_t page_size_ = 0;
+        bool valid_ = false;
 
     };  // class SimpleTLBEntry
 
@@ -98,7 +98,7 @@ namespace olympia
             {}
             PARAMETER(uint64_t, tlb_page_size, 4096, "Page size in bytes (power of 2)")
             PARAMETER(uint64_t, tlb_num_of_entries, 32, "L1 TLB # of entries (power of 2)")
-            PARAMETER(uint64_t, tlb_associativity, 32, "L1 TLB associativity (power of 2)")
+            PARAMETER(uint32_t, tlb_associativity, 32, "L1 TLB associativity (power of 2)")
         };
         using Handle = std::shared_ptr<SimpleTLB>;
 
@@ -123,4 +123,3 @@ namespace olympia
     }; // class SimpleTLB
 
 } // namespace olympia
-

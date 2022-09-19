@@ -1,5 +1,12 @@
 # olympia
-Currently an extraction of the Map/Spara Example Performance Model based on the Sparta Modeling Framework.  Intentions to expand to a fully featured Core/MSS performance model are in the works.
+
+An extraction of the Map/Spara Example Performance Model based on the
+Sparta Modeling Framework, Olympia is a fully-features OoO CPU
+performance model for the RISC-V community.
+
+Olympia is a _trace-driven_ simulator runnig instructions streams
+defined in either JSON format or
+[STF](https://github.com/sparcians/stf_spec).
 
 # Build Directions
 
@@ -40,8 +47,11 @@ make regress
 
 # Limitations
 
-1. The model is not trace-driven nor execution-driven.  Support for running traces coming soon
-2. Rename doesn't actually rename.  In fact, there are no operand dependencies supported... yet.  Again, need a decoder and a real trace
+1. Rename doesn't actually rename.  In fact, there are no operand
+dependencies supported... yet.  This work to be done
+1. The model's topology is "fixed" meaning that a user cannot change
+fundamental attributes like number of ALU units, FPU, LS, etc
+
 
 # Example Usage
 
@@ -65,7 +75,7 @@ make regress
 
 ```
 # Run a given JSON "trace" file
-./olympia ../traces/add_mul_add.json
+./olympia ../traces/example_json.json
 
 # Run a given STF trace file
 ./olympia ../traces/dhrystone.zstf
@@ -95,13 +105,13 @@ dyff between baseline.yaml max_ipc.yaml
 ## Generate logs
 ```
 # Log of all messages, different outputs
-./olympia -i1K --auto-summar off -p top.cpu.core0.fetch.params.fetch_max_ipc true \
+./olympia -i1K --auto-summary off ../traces/dhrystone.zstf \
    -l top info all_messages.log.basic   \
    -l top info all_messages.log.verbose \
    -l top info all_messages.log.raw
 
 # Different logs, some shared
-./olympia -i1K --auto-summar off -p top.cpu.core0.fetch.params.fetch_max_ipc true \
+./olympia -i1K --auto-summary off ../traces/dhrystone.zstf \
    -l top.*.*.decode info decode.log \
    -l top.*.*.rob    info rob.log    \
    -l top.*.*.decode info decode_rob.log \
@@ -112,19 +122,19 @@ dyff between baseline.yaml max_ipc.yaml
 # Run with 1M instructions, generate a report from the top of the tree
 # with stats that are not hidden; turn off the auto reporting
 cat reports/core_stats.yaml
-./olympia -i1M --auto-summary off  --report "top" reports/core_stats.yaml my_full_report.txt text
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_full_report.txt text
 
 # Generate a report only for decode in text form
-./olympia -i1M --auto-summary off  --report "top.cpu.core0.decode" reports/core_stats.yaml my_decode_report.txt text
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top.cpu.core0.decode" reports/core_stats.yaml my_decode_report.txt text
 
 # Generate a report in JSON format
-./olympia -i1M --auto-summary off  --report "top" reports/core_stats.yaml my_json_report.json json
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_json_report.json json
 
 # Generate a report in CSV format
-./olympia -i1M --auto-summary off  --report "top" reports/core_stats.yaml my_csv_report.csv csv
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_csv_report.csv csv
 
 # Generate a report in HTML format
-./olympia -i1M --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
 ```
 
 ## Generate more complex reports
@@ -132,7 +142,7 @@ cat reports/core_stats.yaml
 # Using a report definition file, program the report collection to
 # start after 500K instructions
 cat reports/core_report.def
-./olympia -i1M --auto-summary off    \
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off    \
    --report reports/core_report.yaml \
    --report-search reports           \
    --report-yaml-replacements        \
@@ -142,7 +152,7 @@ cat reports/core_report.def
 
 # Generate a time-series report -- capture all stats every 10K instructions
 cat reports/core_timeseries.def
-./olympia -i1M --auto-summary off       \
+./olympia -i1M ../traces/dhrystone.zstf --auto-summary off       \
    --report reports/core_timeseries.def \
    --report-search reports              \
    --report-yaml-replacements           \
@@ -153,7 +163,7 @@ python3 ./reports/plot_ts.y my_report_time_series_all.csv
 
 ## Generate and view a pipeout
 ```
-./olympia -i1M --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
+./olympia -i1M ../traces/dhrystone.zstf --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
 
 # Launch the viewer
 # *** MacOS use pythonw

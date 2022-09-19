@@ -47,9 +47,9 @@ namespace olympia
             // Parameters for the TLB cache
             PARAMETER(bool, tlb_always_hit, false, "L1 TLB will always hit")
             // Parameters for the DL1 cache
-            PARAMETER(uint64_t, dl1_line_size, 64, "DL1 line size (power of 2)")
-            PARAMETER(uint64_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
-            PARAMETER(uint64_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
+            PARAMETER(uint32_t, dl1_line_size, 64, "DL1 line size (power of 2)")
+            PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
+            PARAMETER(uint32_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(bool, dl1_always_hit, false, "DL1 will always hit")
             // Parameters for event scheduling
             PARAMETER(uint32_t, issue_latency, 1, "Instruction issue latency")
@@ -213,7 +213,7 @@ namespace olympia
                                   SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrIsReady),
                                   SPARTA_ADDPAIR("mmu",   &MemoryAccessInfo::getMMUState),
                                   SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
-                                  SPARTA_FLATTEN(         &MemoryAccessInfo::getInstPtr));
+                                  SPARTA_FLATTEN(         &MemoryAccessInfo::getInstPtr))
         };
 
         // Forward declaration of the Pair Definition class is must as we are friending it.
@@ -328,7 +328,7 @@ namespace olympia
             SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &LoadStoreInstInfo::getInstUniqueID),
                                   SPARTA_ADDPAIR("rank",  &LoadStoreInstInfo::getPriority),
                                   SPARTA_ADDPAIR("state", &LoadStoreInstInfo::getState),
-                                  SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr));
+                                  SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr))
         };
 
         void setTLB(SimpleTLB& tlb)

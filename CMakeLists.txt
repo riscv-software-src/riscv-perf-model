@@ -9,12 +9,20 @@ add_compile_options ( -Werror
   -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
   -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
 
+################################################################################
+# Set up Sparta
 if (NOT SPARTA_BASE)
   message (FATAL_ERROR "Need to define the location of the Sparta: cmake <args> -DSPARTA_BASE=\"/path/to/sparta\"")
 endif ()
 include (${SPARTA_BASE}/cmake/sparta-config.cmake)
 
-# Use ccache if we've got it.
+################################################################################
+# Set up STF library
+set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
+set (DISABLE_STF_DOXYGEN ON)
+include(${STF_LIB_BASE}/cmake/stf-config.cmake)
+
+# Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)
 if (CCACHE_PROGRAM)
   set_property (GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
@@ -63,25 +71,39 @@ endif()
 
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg -g -ftime-trace")
-set(CMAKE_CXX_FLAGS_FASTDEBUG "-g")
+set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
+
+# Remove -pedantic from the STF compiler options -- issues with clang
+# on MacOS and variatic macros (like SPARTA_ADDPAIR)
+if (CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+  get_target_property(_target_cxx_flags olympia COMPILE_OPTIONS)
+  list(REMOVE_ITEM _target_cxx_flags -pedantic)
+  set_target_properties(olympia PROPERTIES COMPILE_OPTIONS "${_target_cxx_flags}")
+endif()
 
 # Include directories
-include_directories (core mss mavis)
+include_directories (core mss)
+include_directories (SYSTEM mavis)
+include_directories (SYSTEM stf_lib)
 include_directories (SYSTEM ${SPARTA_BASE})
 include_directories (SYSTEM ${SPARTA_BASE}/simdb/include)
 
-# Sparta linking
+# Add STF library to the build
+add_subdirectory (${STF_LIB_BASE})
+
+# Add testing, but do not build as part of the 'all' target
+add_subdirectory (test EXCLUDE_FROM_ALL)
+
+# Sparta/STF linking
 target_link_directories (olympia PUBLIC
   ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}
   ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}/simdb
   )
-target_link_libraries (olympia ${Sparta_LIBS})
+
+target_link_libraries (olympia ${Sparta_LIBS} ${STF_LINK_LIBS})
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
-
-# Add testing, but do not build as part of the 'all' target
-add_subdirectory (test EXCLUDE_FROM_ALL)

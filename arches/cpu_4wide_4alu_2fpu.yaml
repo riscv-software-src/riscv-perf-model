@@ -1,0 +1,6 @@
+
+include: four_wide.yaml
+
+top.cpu.extension.pipe_topology:
+  num_alu: 4
+  num_fpu: 2

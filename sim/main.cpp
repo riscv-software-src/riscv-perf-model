@@ -5,7 +5,6 @@
 
 #include "OlympiaSim.hpp" // Core model example simulator
 
-#include "sparta/parsers/ConfigEmitterYAML.hpp"
 #include "sparta/app/CommandLineSimulator.hpp"
 #include "sparta/app/MultiDetailOptions.hpp"
 #include "sparta/sparta.hpp"
@@ -20,8 +19,7 @@ const char USAGE[] =
     "    [-h,--help] <workload [stf trace or JSON]>\n"
     "\n";
 
-constexpr char VERSION_VARNAME[] = "version"; //!< Name of option to show version
-
+constexpr char VERSION_VARNAME[] = "version,v"; //!< Name of option to show version
 
 int main(int argc, char **argv)
 {
@@ -32,9 +30,13 @@ int main(int argc, char **argv)
 
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "on";
+    DEFAULTS.arch_search_dirs = {"arches"}; // Where --arch will be resolved by default
 
-    sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("sparta_core_example",
+    sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("Olympia RISC-V Perf Model ",
                                                                    argc, argv, "", "", {});
+    const bool show_field_names = true;
+    sparta::SimulationInfo::getInstance().write(std::cout, "# ", "\n", show_field_names);
+    std::cout << "# Sparta Version: " << sparta::SimulationInfo::sparta_version << std::endl;
 
     // try/catch block to ensure proper destruction of the cls/sim classes in
     // the event of an error
@@ -80,7 +82,7 @@ int main(int argc, char **argv)
             show_factories = true;
         }
 
-        if(workload.empty()) {
+        if(workload.empty() && (0 == vm.count("no-run"))) {
             std::cerr << "ERROR: Missing a workload to run.  Can be a trace or JSON file" << std::endl;
             std::cerr << USAGE;
             return -1;

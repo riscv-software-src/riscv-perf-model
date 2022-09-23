@@ -11,6 +11,10 @@ defined in either JSON format or
 # Build Directions
 
 1. Download and build Sparta.  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/master/sparta)
+1. Clone olympia
+   ```
+   git clone --recursive git@github.com:riscv-software-src/riscv-perf-model.git
+   ```
 1. Build Olympia
 
 ```

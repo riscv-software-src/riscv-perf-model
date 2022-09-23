@@ -52,9 +52,9 @@ make regress
 # Limitations
 
 1. Rename doesn't actually rename.  In fact, there are no operand
-dependencies supported... yet.  This work to be done
+dependencies supported... yet.  (This work to be done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
 1. The model's topology is "fixed" meaning that a user cannot change
-fundamental attributes like number of ALU units, FPU, LS, etc
+fundamental attributes like number of ALU units, FPU, LS, etc (This work to be done)[https://github.com/riscv-software-src/riscv-perf-model/issues/5]
 
 
 # Example Usage

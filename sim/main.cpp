@@ -80,7 +80,7 @@ int main(int argc, char **argv)
             show_factories = true;
         }
 
-        if(workload.empty()) {
+        if(workload.empty() && (vm.count("no-run") == 0)) {
             std::cerr << "ERROR: Missing a workload to run.  Can be a trace or JSON file" << std::endl;
             std::cerr << USAGE;
             return -1;

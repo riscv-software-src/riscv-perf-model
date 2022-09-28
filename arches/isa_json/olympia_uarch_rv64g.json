@@ -1,49 +1,49 @@
 [
     {
         "mnemonic" : "beq",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bne",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "blt",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bge",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bltu",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "bgeu",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "jalr",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },
     {
         "mnemonic" : "jal",
-        "dispatch" : ["alu"],
+        "dispatch" : ["branch"],
         "pipe" : ["branch"],
         "latency" : 1
     },

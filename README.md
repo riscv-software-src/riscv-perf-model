@@ -147,7 +147,7 @@ cat reports/core_stats.yaml
 # start after 500K instructions
 cat reports/core_report.def
 ./olympia -i1M ../traces/dhrystone.zstf --auto-summary off    \
-   --report reports/core_report.yaml \
+   --report reports/core_report.def  \
    --report-search reports           \
    --report-yaml-replacements        \
        OUT_BASE my_report            \

@@ -1,10 +1,10 @@
 # olympia
 
 An extraction of the Map/Spara Example Performance Model based on the
-Sparta Modeling Framework, Olympia is a fully-features OoO CPU
+Sparta Modeling Framework, Olympia is a fully-featured OoO RISC-V CPU
 performance model for the RISC-V community.
 
-Olympia is a _trace-driven_ simulator runnig instructions streams
+Olympia is a _trace-driven_ simulator running instructions streams
 defined in either JSON format or
 [STF](https://github.com/sparcians/stf_spec).
 

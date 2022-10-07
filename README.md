@@ -99,11 +99,11 @@ fundamental attributes like number of ALU units, FPU, LS, etc (This work to be d
 ./olympia --write-final-config baseline.yaml --no-run
 
 # Generate a config with a parameter change
-./olympia -p top.cpu.core0.fetch.params.fetch_max_ipc true --write-final-config max_ipc.yaml --no-run
-dyff between baseline.yaml max_ipc.yaml
+./olympia -p top.cpu.core0.lsu.params.tlb_always_hit true --write-final-config always_hit_DL1.yaml --no-run
+dyff between baseline.yaml always_hit_DL1.yaml
 
 # Use the configuration file generated
-./olympia -c max_ipc.yaml -i1M ../traces/dhrystone.zstf
+./olympia -c always_hit_DL1.yaml -i1M ../traces/dhrystone.zstf
 ```
 
 ## Generate logs

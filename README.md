@@ -1,6 +1,6 @@
 # olympia
 
-An extraction of the Map/Spara Example Performance Model based on the
+An extraction of the Map/Sparta Example Performance Model based on the
 Sparta Modeling Framework, Olympia is a fully-featured OoO RISC-V CPU
 performance model for the RISC-V community.
 

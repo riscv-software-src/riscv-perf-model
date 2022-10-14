@@ -111,6 +111,10 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
         // We're not busy anymore
         unit_busy_ = false;
+
+        // Count the instruction as completely executed
+        ++total_insts_executed_;
+
         // Schedule issue if we have instructions to issue
         if (ready_queue_.size() > 0) {
             issue_inst_.schedule(sparta::Clock::Cycle(0));

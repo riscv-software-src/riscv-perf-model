@@ -1,16 +1,20 @@
 # olympia
 
-An extraction of the Map/Spara Example Performance Model based on the
-Sparta Modeling Framework, Olympia is a fully-features OoO CPU
+An extraction of the Map/Sparta Example Performance Model based on the
+Sparta Modeling Framework, Olympia is a fully-featured OoO RISC-V CPU
 performance model for the RISC-V community.
 
-Olympia is a _trace-driven_ simulator runnig instructions streams
+Olympia is a _trace-driven_ simulator running instructions streams
 defined in either JSON format or
 [STF](https://github.com/sparcians/stf_spec).
 
 # Build Directions
 
 1. Download and build Sparta.  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/master/sparta)
+1. Clone olympia
+   ```
+   git clone --recursive git@github.com:riscv-software-src/riscv-perf-model.git
+   ```
 1. Build Olympia
 
 ```
@@ -48,9 +52,9 @@ make regress
 # Limitations
 
 1. Rename doesn't actually rename.  In fact, there are no operand
-dependencies supported... yet.  This work to be done
+dependencies supported... yet.  (This work to be done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
 1. The model's topology is "fixed" meaning that a user cannot change
-fundamental attributes like number of ALU units, FPU, LS, etc
+fundamental attributes like number of ALU units, FPU, LS, etc (This work to be done)[https://github.com/riscv-software-src/riscv-perf-model/issues/5]
 
 
 # Example Usage
@@ -95,11 +99,11 @@ fundamental attributes like number of ALU units, FPU, LS, etc
 ./olympia --write-final-config baseline.yaml --no-run
 
 # Generate a config with a parameter change
-./olympia -p top.cpu.core0.fetch.params.fetch_max_ipc true --write-final-config max_ipc.yaml --no-run
-dyff between baseline.yaml max_ipc.yaml
+./olympia -p top.cpu.core0.lsu.params.tlb_always_hit true --write-final-config always_hit_DL1.yaml --no-run
+dyff between baseline.yaml always_hit_DL1.yaml
 
 # Use the configuration file generated
-./olympia -c max_ipc.yaml -i1M ../traces/dhrystone.zstf
+./olympia -c always_hit_DL1.yaml -i1M ../traces/dhrystone.zstf
 ```
 
 ## Generate logs
@@ -143,7 +147,7 @@ cat reports/core_stats.yaml
 # start after 500K instructions
 cat reports/core_report.def
 ./olympia -i1M ../traces/dhrystone.zstf --auto-summary off    \
-   --report reports/core_report.yaml \
+   --report reports/core_report.def  \
    --report-search reports           \
    --report-yaml-replacements        \
        OUT_BASE my_report            \

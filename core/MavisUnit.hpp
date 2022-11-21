@@ -14,6 +14,7 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
 
 #include "mavis/DecoderTypes.h"
 
@@ -90,6 +91,9 @@ namespace olympia
         const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
         std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object
     };
+
+    using MavisFactoy = sparta::ResourceFactory<MavisUnit,
+                                                MavisUnit::MavisParameters>;
 
     MavisType *getMavis(sparta::TreeNode *);
 

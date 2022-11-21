@@ -16,6 +16,8 @@
 #include "sparta/log/MessageSource.hpp"
 #include "sparta/statistics/Counter.hpp"
 #include "sparta/statistics/ContextCounter.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
+
 #include "test/ContextCounter/WeightedContextCounter.hpp"
 
 #include "CoreTypes.hpp"
@@ -213,4 +215,7 @@ namespace olympia
             getStatisticSet(), "count_alu_insts + count_fpu_insts + count_lsu_insts"
         };
     };
+
+    using DispatchFactory = sparta::ResourceFactory<olympia::Dispatch,
+                                                    olympia::Dispatch::DispatchParameterSet>;
 }

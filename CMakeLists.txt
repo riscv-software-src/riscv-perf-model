@@ -31,29 +31,9 @@ endif ()
 
 set (SIM_BASE ${PROJECT_SOURCE_DIR})
 add_executable(olympia
-  core/Core.cpp
-  core/Fetch.cpp
-  core/Decode.cpp
-  core/Rename.cpp
-  core/Dispatch.cpp
-  core/Execute.cpp
-  core/Inst.cpp
-  core/InstArchInfo.cpp
-  core/InstGroup.cpp
-  core/InstGenerator.cpp
-  core/ROB.cpp
-  core/LSU.cpp
-  core/MavisUnit.cpp
-  core/Preloader.cpp
-  core/CPU.cpp
-  core/CPUFactory.cpp
-  core/CPUTopology.cpp
-  mss/BIU.cpp
-  mss/MSS.cpp
   sim/OlympiaSim.cpp
   sim/main.cpp
   )
-
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set(SPARTA_BUILD_TYPE "release")
@@ -88,6 +68,10 @@ include_directories (SYSTEM stf_lib)
 include_directories (SYSTEM ${SPARTA_BASE})
 include_directories (SYSTEM ${SPARTA_BASE}/simdb/include)
 
+# The Core and MSS
+add_subdirectory(core)
+add_subdirectory(mss)
+
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})
 
@@ -100,7 +84,7 @@ target_link_directories (olympia PUBLIC
   ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}/simdb
   )
 
-target_link_libraries (olympia ${Sparta_LIBS} ${STF_LINK_LIBS})
+target_link_libraries (olympia core mss ${Sparta_LIBS} ${STF_LINK_LIBS})
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)

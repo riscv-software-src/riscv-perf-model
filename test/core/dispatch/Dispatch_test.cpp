@@ -1,6 +1,7 @@
 
 #include "Dispatch.hpp"
 #include "MavisUnit.hpp"
+#include "CPUTopology.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"
@@ -30,6 +31,11 @@ TEST_INIT
 // Set up the Mavis decoder globally for the testing
 olympia::InstAllocator inst_allocator(2000, 1000);
 
+//
+// Simple Dispatch Simulator.
+//
+// SourceUnit -> Dispatch -> 1..* SinkUnits
+//
 class DispatchSim : public sparta::app::Simulation
 {
 public:
@@ -38,22 +44,16 @@ public:
                 const std::string & mavis_isa_files,
                 const std::string & mavis_uarch_files,
                 const std::string & output_file,
-                const std::string & json_input_file,
+                const std::string & input_file,
                 const bool vector_enabled) :
         sparta::app::Simulation("DispatchSim", sched),
+        input_file_(input_file),
         test_tap_(getRoot(), "info", output_file)
     {
-        // if(!json_input_file.empty()) {
-        //     inst_generator_.reset(new olympia::JSONInstGenerator(mavis_facade_, json_input_file));
-        // }
     }
 
     ~DispatchSim() {
         getRoot()->enterTeardown();
-    }
-
-    olympia::Dispatch * getDispatchBlock() {
-        return dispatch_;
     }
 
     void runRaw(uint64_t run_time) override final
@@ -79,13 +79,15 @@ private:
                                                                  "Mavis Unit",
                                                                  &mavis_fact));
 
-        // Create a Source Unit
-        tns_to_delete_.emplace_back(new sparta::ResourceTreeNode(rtn,
-                                                                 core_test::SourceUnit::name,
-                                                                 sparta::TreeNode::GROUP_NAME_NONE,
-                                                                 sparta::TreeNode::GROUP_IDX_NONE,
-                                                                 "Source Unit",
-                                                                 &source_fact));
+        // Create a Source Unit -- this would represent Rename
+        sparta::ResourceTreeNode * src_unit  = nullptr;
+        tns_to_delete_.emplace_back(src_unit = new sparta::ResourceTreeNode(rtn,
+                                                                            core_test::SourceUnit::name,
+                                                                            sparta::TreeNode::GROUP_NAME_NONE,
+                                                                            sparta::TreeNode::GROUP_IDX_NONE,
+                                                                            "Source Unit",
+                                                                            &source_fact));
+        src_unit->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
 
         // Create Dispatch
         tns_to_delete_.emplace_back(disp = new sparta::ResourceTreeNode(rtn,
@@ -95,58 +97,60 @@ private:
                                                                         "Test Dispatch",
                                                                         &dispatch_fact));
 
-        // Create SinkUnit, one per execution unit
-        tns_to_delete_.emplace_back(new sparta::ResourceTreeNode(rtn,
-                                                                 core_test::SinkUnit::name,
-                                                                 sparta::TreeNode::GROUP_NAME_NONE,
-                                                                 sparta::TreeNode::GROUP_IDX_NONE,
-                                                                 "Sink Unit",
-                                                                 &sink_fact));
-
-        rtn->addExtensionFactory("pipe_assignments",
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::ExecutionPipeAssignments();});
-
-        rtn->addExtensionFactory("issue_queue_assignments",
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::IssueQueueAssignments();});
-
-        rtn->addExtensionFactory("vector",
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::VectorExtension();});
-
-        rtn->addExtensionFactory("pipeline_assignments",
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::PipelineAssignments();});
-
-        rtn->addExtensionFactory("simulation_configuration",
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
-        auto issueq_assignments = rtn->getExtension("issue_queue_assignments");
-        sparta_assert(nullptr != issueq_assignments,
-                      "Issue queue assignments are null.  Are you missing the issue queue extensions?");
-        auto issueq_ext_params = issueq_assignments->getParameters();
-        num_vex_units_ = issueq_ext_params->getParameterValueAs<uint32_t>("num_vex_issue_queues");
-
-        // Create the three issue queues and the rob (as an IssueBlock)
-        for(std::string unit : supported_scalar_units)
-        {
-            std::ostringstream name;
-            name << unit << "_issue";
-
-            tns_to_delete_.emplace_back(new sparta::ResourceTreeNode(rtn, name.str(),
-                                                                     sparta::TreeNode::GROUP_NAME_NONE,
-                                                                     sparta::TreeNode::GROUP_IDX_NONE,
-                                                                     name.str(), &issue_fact));
-        }
-
-        sparta::ResourceTreeNode * rob;
+        // Create SinkUnit that represents the ROB
+        sparta::ResourceTreeNode * rob  = nullptr;
         tns_to_delete_.emplace_back(rob = new sparta::ResourceTreeNode(rtn,
-                                                                       "retire",
+                                                                       "rob",
                                                                        sparta::TreeNode::GROUP_NAME_NONE,
                                                                        sparta::TreeNode::GROUP_IDX_NONE,
-                                                                       "ROB Issue",
-                                                                       &issue_fact));
+                                                                       "Sink Unit",
+                                                                       &sink_fact));
         auto * rob_params = rob->getParameterSet();
-        rob_params->getParameter("purpose")->setValueFromString("rob");
-        rob_params->getParameter("dispWidth")->setValueFromString
-            (disp->getParameterSet()->getParameter("main_dispWidth")->getValueAsString());
+        // Set the "ROB" to accept a group of instructions
+        rob_params->getParameter("purpose")->setValueFromString("grp");
 
+
+        //
+        // Set up the execution blocks (sans LSU)
+        //
+        rtn->addExtensionFactory(olympia::CoreExtensions::name,
+                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
+        auto core_extension           = rtn->getExtension(olympia::CoreExtensions::name);
+        auto core_extension_params    = sparta::notNull(core_extension)->getParameters();
+        auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
+        auto execution_topology       = sparta::notNull(execution_topology_param)->
+            getValueAs<olympia::CoreExtensions::ExecutionTopology>();
+
+        sparta::ResourceTreeNode * exe_unit = nullptr;
+        for (auto exe_unit_pair : execution_topology)
+        {
+            const std::string name(exe_unit_pair[0]);
+            auto exe_idx = (unsigned int) std::stoul(exe_unit_pair[1]);
+            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << name);
+            --exe_idx; // 0-index based
+
+            // Create N units (alu0, alu1, etc)
+            tns_to_delete_.emplace_back(exe_unit = new sparta::ResourceTreeNode(rtn,
+                                                                                name,
+                                                                                name,
+                                                                                exe_idx,
+                                                                                name,
+                                                                                &sink_fact));
+            auto exe_params = exe_unit->getParameterSet();
+            // Set the "exe unit" to accept a single instruction
+            exe_params->getParameter("purpose")->setValueFromString("single");
+            exe_units_.emplace_back(exe_unit);
+        }
+
+        // Create the LSU sink separately
+        tns_to_delete_.emplace_back(exe_unit = new sparta::ResourceTreeNode(rtn,
+                                                                            "lsu",
+                                                                            sparta::TreeNode::GROUP_NAME_NONE,
+                                                                            sparta::TreeNode::GROUP_IDX_NONE,
+                                                                            "Sink Unit",
+                                                                            &sink_fact));
+        auto * exe_params = exe_unit->getParameterSet();
+        exe_params->getParameter("purpose")->setValueFromString("single");
     }
 
     void configureTree_()  override { }
@@ -155,38 +159,36 @@ private:
     {
         auto * root_node = getRoot();
 
-        // Create the Mavis Unit
         // Bind the source unit to dispatch
-        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_dispatch_append0"),
-                     root_node->getChildAs<sparta::Port>("source_unit.ports.out_dispatch_write0"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_dispatch_append1"),
-                     root_node->getChildAs<sparta::Port>("source_unit.ports.out_dispatch_write1"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_dispatch_credits0"),
-                     root_node->getChildAs<sparta::Port>("source_unit.ports.in_dispatch_credits0"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_dispatch_credits1"),
-                     root_node->getChildAs<sparta::Port>("source_unit.ports.in_dispatch_credits1"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_dispatch_queue_write"),
+                     root_node->getChildAs<sparta::Port>("source_unit.ports.out_instgrp_write"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_dispatch_queue_credits"),
+                     root_node->getChildAs<sparta::Port>("source_unit.ports.in_credits"));
 
-        // Bind the issue blocks to dispatch
-        for(std::string unit : supported_scalar_units)
+        // Bind the "ROB" (simple SinkUnit that accepts instruction
+        // groups) to Dispatch
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_reorder_buffer_write"),
+                     root_node->getChildAs<sparta::Port>("rob.ports.in_sink_inst_grp"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_reorder_buffer_credits"),
+                     root_node->getChildAs<sparta::Port>("rob.ports.out_sink_credits"));
+
+        // Bind the "exe" SinkUnit blocks to dispatch
+        for(auto exe_unit : exe_units_)
         {
-            sparta::bind(root_node->getChildAs<sparta::Port>("dispatch."+unit+".ports.out_issue"),
-                         root_node->getChildAs<sparta::Port>(unit+"_issue.ports.in_issue_inst"));
+            const std::string unit_name = exe_unit->getName() + std::to_string(exe_unit->getGroupIdx());
+            sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_"+unit_name+"_write"),
+                         root_node->getChildAs<sparta::Port>(unit_name + ".ports.in_sink_inst"));
 
-            sparta::bind(root_node->getChildAs<sparta::Port>("dispatch."+unit+".ports.in_issue_credits"),
-                         root_node->getChildAs<sparta::Port>(unit+"_issue.ports.out_issue_credits"));
+            sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_"+unit_name+"_credits"),
+                         root_node->getChildAs<sparta::Port>(unit_name+".ports.out_sink_credits"));
         }
 
-        // TODO: Don't hook up these pipes for dual pipeline test (ROB append should happen in Decode)
-        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_rob_issue"),
-                     root_node->getChildAs<sparta::Port>("retire.ports.in_issue_inst"));
+        // Bind the "LSU" SinkUnit to Dispatch
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_lsu_write"),
+                     root_node->getChildAs<sparta::Port>("lsu.ports.in_sink_inst"));
 
-        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_rob_credits"),
-                     root_node->getChildAs<sparta::Port>("retire.ports.out_rob_credits"));
-
-        dispatch_    = root_node->getChild("dispatch")->getResourceAs<olympia::Dispatch>();
-        source_unit_ = root_node->getChild("source_unit")->getResourceAs<core_test::SourceUnit>();
-        source_unit_->setInstGenerator(inst_generator_.get());
-
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_lsu_credits"),
+                     root_node->getChildAs<sparta::Port>("lsu.ports.out_sink_credits"));
     }
 
     olympia::DispatchFactory     dispatch_fact;
@@ -195,12 +197,9 @@ private:
     core_test::SinkUnitFactory   sink_fact;
 
     std::vector<std::unique_ptr<sparta::TreeNode>> tns_to_delete_;
+    std::vector<sparta::ResourceTreeNode*>         exe_units_;
 
-    olympia::Dispatch     * dispatch_ = nullptr;
-    core_test::SourceUnit * source_unit_ = nullptr;
-    core_test::SinkUnit   * sink_unit_   = nullptr;
-
-    std::unique_ptr<olympia::InstGenerator> inst_generator_;
+    const std::string input_file_;
     sparta::log::Tap test_tap_;
 };
 
@@ -217,7 +216,7 @@ void runTest(int argc, char **argv)
 {
     DEFAULTS.auto_summary_default = "off";
     std::vector<std::string> datafiles;
-    std::string json_input_file;
+    std::string input_file;
     bool enable_vector;
 
     sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
@@ -226,8 +225,8 @@ void runTest(int argc, char **argv)
         ("output_file",
          sparta::app::named_value<std::vector<std::string>>("output_file", &datafiles),
          "Specifies the output file")
-        ("json-file,j",
-         sparta::app::named_value<std::string>("JSON_INPUT", &json_input_file)->default_value(""),
+        ("input-file",
+         sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
          "Provide a JSON instruction stream",
          "Provide a JSON file with instructions to run through Execute")
         ("enable_vector",
@@ -245,12 +244,12 @@ void runTest(int argc, char **argv)
     sparta_assert(false == datafiles.empty(), "Need an output file as the last argument of the test");
 
     sparta::Scheduler sched;
-    DispatchSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], json_input_file, enable_vector);
+    DispatchSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file, enable_vector);
 
     cls.populateSimulation(&sim);
     cls.runSimulator(&sim);
 
-    EXPECT_FILES_EQUAL(datafiles[0], datafiles[0] + ".EXPECTED");
+    EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
 }
 
 int main(int argc, char **argv)
@@ -258,5 +257,5 @@ int main(int argc, char **argv)
     runTest(argc, argv);
 
     REPORT_ERROR;
-    return ERROR_CODE;
+    return (int)ERROR_CODE;
 }

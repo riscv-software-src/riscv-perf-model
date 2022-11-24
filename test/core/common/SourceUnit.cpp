@@ -7,7 +7,7 @@ namespace core_test
 {
     void SourceUnit::injectInsts()
     {
-        sparta_assert(dut_credits_ > 0);
+        sparta_assert(dut_credits_ > 0, "Can't inject instructions with no credits!");
 
         olympia::InstGroupPtr  inst_groups(new olympia::InstGroup);
         olympia::Inst::PtrType dinst;
@@ -53,6 +53,7 @@ namespace core_test
 
         // Send inst group to the DUT
         if (!inst_groups->empty()) {
+            info_logger_ << "Sending group: " << inst_groups;
             out_instgrp_write_.send(inst_groups);
         }
     }

@@ -34,6 +34,7 @@ namespace core_test
             {
             }
             PARAMETER(std::string, test_type, "single", "Test mode to run: single or multiple")
+            PARAMETER(std::string, input_file, "", "Input file: STF or JSON")
         };
 
         SourceUnit(sparta::TreeNode * n,
@@ -42,12 +43,13 @@ namespace core_test
             test_type_(params->test_type),
             mavis_facade_(olympia::getMavis(n))
         {
+            sparta_assert(mavis_facade_ != nullptr, "Could not find the Mavis Unit");
             in_credits_.
                 registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(SourceUnit, inCredits<0>, uint32_t));
-        }
 
-        void setInstGenerator(olympia::InstGenerator * inst_gen) {
-            inst_generator_ = inst_gen;
+            if(params->input_file != "") {
+                inst_generator_ = olympia::InstGenerator::createGenerator(mavis_facade_, params->input_file);
+            }
         }
 
         void injectInsts();
@@ -74,7 +76,7 @@ namespace core_test
         uint32_t dut_credits_{0};
 
         olympia::MavisType     * mavis_facade_ = nullptr;
-        olympia::InstGenerator * inst_generator_ = nullptr;
+        std::unique_ptr<olympia::InstGenerator> inst_generator_;
 
         sparta::SingleCycleUniqueEvent<> ev_gen_insts_{&unit_event_set_, "gen_inst",
                                                        CREATE_SPARTA_HANDLER(SourceUnit, injectInsts)};

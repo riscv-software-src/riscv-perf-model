@@ -28,12 +28,13 @@ namespace core_test
                 sparta::ParameterSet(n)
             { }
             PARAMETER(uint32_t, sink_queue_size, 10, "Sink queue size for testing")
-            PARAMETER(std::string, purpose, "sink", "Purpose of this SinkUnit: grp, single")
+            PARAMETER(std::string, purpose, "grp", "Purpose of this SinkUnit: grp, single")
         };
 
         SinkUnit(sparta::TreeNode * n, const SinkUnitParameters * params) :
             sparta::Unit(n),
-            credits_(params->sink_queue_size)
+            credits_(params->sink_queue_size),
+            credits_to_send_back_(credits_)
         {
             if(params->purpose == "grp") {
                 in_sink_inst_.registerConsumerHandler

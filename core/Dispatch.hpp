@@ -1,6 +1,4 @@
 // <Dispatch.h> -*- C++ -*-
-
-
 #pragma once
 
 #include <string>
@@ -20,6 +18,7 @@
 
 #include "test/ContextCounter/WeightedContextCounter.hpp"
 
+#include "Dispatcher.hpp"
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
@@ -68,6 +67,9 @@ namespace olympia
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
 
+        //! \brief Called by the Dispatchers to indicate when they are ready
+        void scheduleDispatchSession();
+
     private:
         InstQueue dispatch_queue_;
 
@@ -82,9 +84,12 @@ namespace olympia
 
         sparta::DataInPort<uint32_t> in_fpu_credits_ {&unit_port_set_,    "in_fpu0_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_alu_credits_ {&unit_port_set_,    "in_alu0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_br_credits_ {&unit_port_set_,     "in_br0_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_br_credits_  {&unit_port_set_,     "in_br0_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_lsu_credits_ {&unit_port_set_,    "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
+
+        std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
+        Dispatcher * blocking_dispatcher_ = nullptr;
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
@@ -96,19 +101,11 @@ namespace olympia
 
         const uint32_t num_to_dispatch_;
         uint32_t credits_rob_ = 0;
-        uint32_t credits_fpu_ = 0;
-        uint32_t credits_alu_ = 0;
-        uint32_t credits_br_ = 0;
-        uint32_t credits_lsu_ = 0;
 
         // Send rename initial credits
         void sendInitialCredits_();
 
         // Tick callbacks assigned to Ports -- zero cycle
-        void fpuCredits_ (const uint32_t&);
-        void aluCredits_(const uint32_t&);
-        void brCredits_(const uint32_t&);
-        void lsuCredits_ (const uint32_t&);
         void robCredits_(const uint32_t&);
 
         // Dispatch instructions
@@ -131,6 +128,7 @@ namespace olympia
         };
 
         StallReason current_stall_ = NOT_STALLED;
+        friend std::ostream&operator<<(std::ostream &, const Dispatch::StallReason &);
 
         // Counters -- this is only supported in C++11 -- uses
         // Counter's move semantics
@@ -156,7 +154,7 @@ namespace olympia
         }};
 
         std::array<sparta::Counter,
-                   static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS)>
+                   InstArchInfo::N_TARGET_UNITS>
         unit_distribution_ {{
             sparta::Counter(getStatisticSet(), "count_alu_insts",
                           "Total ALU insts", sparta::Counter::COUNT_NORMAL),
@@ -177,7 +175,7 @@ namespace olympia
         {getStatisticSet(),
                 "count_insts_per_unit",
                 "Unit distributions",
-                static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS),
+                InstArchInfo::N_TARGET_UNITS,
                 "dispatch_inst_count",
                 sparta::Counter::COUNT_NORMAL,
                 sparta::InstrumentationNode::VIS_NORMAL};
@@ -191,7 +189,7 @@ namespace olympia
             getStatisticSet(),
             "weighted_count_insts_per_unit",
             "Weighted unit distributions",
-            static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS),
+            InstArchInfo::N_TARGET_UNITS,
             sparta::CounterBase::COUNT_NORMAL,
             sparta::InstrumentationNode::VIS_NORMAL
         };
@@ -219,4 +217,32 @@ namespace olympia
 
     using DispatchFactory = sparta::ResourceFactory<olympia::Dispatch,
                                                     olympia::Dispatch::DispatchParameterSet>;
+
+    inline std::ostream&operator<<(std::ostream &os, const Dispatch::StallReason & stall)
+    {
+        switch(stall)
+        {
+            case Dispatch::StallReason::NOT_STALLED:
+                os << "NOT_STALLED";
+                break;
+            case Dispatch::StallReason::NO_ROB_CREDITS:
+                os << "NO_ROB_CREDITS";
+                break;
+            case Dispatch::StallReason::ALU_BUSY:
+                os << "ALU_BUSY";
+                break;
+            case Dispatch::StallReason::FPU_BUSY:
+                os << "FPU_BUSY";
+                break;
+            case Dispatch::StallReason::LSU_BUSY:
+                os << "LSU_BUSY";
+                break;
+            case Dispatch::StallReason::BR_BUSY:
+                os << "BR_BUSY";
+                break;
+            case Dispatch::StallReason::N_STALL_REASONS:
+                sparta_assert(false, "How'd we get here?");
+        }
+        return os;
+    }
 }

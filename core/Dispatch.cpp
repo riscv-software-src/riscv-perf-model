@@ -1,7 +1,5 @@
 // <Dispatch.cpp> -*- C++ -*-
 
-
-
 #include <algorithm>
 #include "Dispatch.hpp"
 #include "sparta/events/StartupEvent.hpp"
@@ -29,21 +27,32 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, dispatchQueueAppended_,
                                                                     InstGroupPtr));
 
-        in_fpu_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, fpuCredits_, uint32_t));
         in_fpu_credits_.enableCollection(node);
-
-        in_alu_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, aluCredits_, uint32_t));
         in_alu_credits_.enableCollection(node);
-
-        in_br_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, brCredits_, uint32_t));
         in_br_credits_.enableCollection(node);
-
-        in_lsu_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, lsuCredits_, uint32_t));
         in_lsu_credits_.enableCollection(node);
+
+        dispatchers_[InstArchInfo::TargetUnit::ALU].emplace_back(new Dispatcher("alu",
+                                                                                this,
+                                                                                info_logger_,
+                                                                                in_alu_credits_,
+                                                                                out_alu_write_));
+        dispatchers_[InstArchInfo::TargetUnit::FPU].emplace_back(new Dispatcher("fpu",
+                                                                                this,
+                                                                                info_logger_,
+                                                                                in_fpu_credits_,
+                                                                                out_fpu_write_));
+        dispatchers_[InstArchInfo::TargetUnit::BR].emplace_back(new Dispatcher("br",
+                                                                               this,
+                                                                               info_logger_,
+                                                                               in_br_credits_,
+                                                                               out_br_write_));
+
+        dispatchers_[InstArchInfo::TargetUnit::LSU].emplace_back(new Dispatcher("lsu",
+                                                                                this,
+                                                                                info_logger_,
+                                                                                in_lsu_credits_,
+                                                                                out_lsu_write_));
 
         in_reorder_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, robCredits_, uint32_t));
@@ -53,7 +62,31 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, handleFlush_, FlushManager::FlushingCriteria));
         in_reorder_flush_.enableCollection(node);
 
+        blocking_dispatcher_ = dispatchers_[InstArchInfo::TargetUnit::ALU][0].get();
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Dispatch, sendInitialCredits_));
+    }
+
+    void Dispatch::scheduleDispatchSession()
+    {
+        if(credits_rob_ > 0 && (dispatch_queue_.size() > 0))
+        {
+            if(blocking_dispatcher_)
+            {
+                if(blocking_dispatcher_->canAccept()) {
+                    blocking_dispatcher_ = nullptr;
+                    ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
+                }
+                else if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                    info_logger_ << "dispatcher '" << blocking_dispatcher_->getName() << "' is blocking dispatching";
+                }
+            }
+            else {
+                ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
+            }
+        }
+        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
+            info_logger_ << "no rob credits or no instructions to process";
+        }
     }
 
     void Dispatch::sendInitialCredits_()
@@ -61,53 +94,10 @@ namespace olympia
         out_dispatch_queue_credits_.send(dispatch_queue_.capacity());
     }
 
-    void Dispatch::fpuCredits_ (const uint32_t& credits) {
-        credits_fpu_ += credits;
-        if (credits_rob_ >0 && dispatch_queue_.size() > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "FPU got " << credits << " credits, total: " << credits_fpu_;
-        }
-    }
-
-    void Dispatch::aluCredits_ (const uint32_t& credits) {
-        credits_alu_ += credits;
-        if (credits_rob_ >0 && dispatch_queue_.size() > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "ALU got " << credits << " credits, total: " << credits_alu_;
-        }
-    }
-
-    void Dispatch::brCredits_ (const uint32_t& credits) {
-        credits_br_ += credits;
-        if (credits_rob_ >0 && dispatch_queue_.size() > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "BR got " << credits << " credits, total: " << credits_br_;
-        }
-    }
-
-    void Dispatch::lsuCredits_(const uint32_t& credits) {
-        credits_lsu_ += credits;
-        if (credits_rob_ >0 && dispatch_queue_.size() > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "LSU got " << credits << " credits, total: " << credits_lsu_;
-        }
-    }
-
     void Dispatch::robCredits_(const uint32_t&) {
         uint32_t nc = in_reorder_credits_.pullData();
         credits_rob_ += nc;
-        if (((credits_fpu_ > 0)|| (credits_alu_ > 0) || (credits_br_ > 0))
-            && dispatch_queue_.size() > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
+        scheduleDispatchSession();
         if(SPARTA_EXPECT_FALSE(info_logger_)) {
             info_logger_ << "ROB got " << nc << " credits, total: " << credits_rob_;
         }
@@ -120,28 +110,7 @@ namespace olympia
         for(auto & i : *in_dispatch_queue_write_.pullData()) {
             dispatch_queue_.push(i);
         }
-
-        if (((credits_fpu_ > 0)|| (credits_alu_ > 0) || (credits_br_ > 0) || credits_lsu_ > 0)
-            && credits_rob_ > 0) {
-            ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-        }
-        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "no credits in any unit -- not dispatching";
-        }
-    }
-
-    void Dispatch::handleFlush_(const FlushManager::FlushingCriteria & criteria)
-    {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got a flush call for " << criteria;
-        }
-        out_dispatch_queue_credits_.send(dispatch_queue_.size());
-        dispatch_queue_.clear();
-        credits_fpu_  += out_fpu_write_.cancel();
-        credits_alu_ += out_alu_write_.cancel();
-        credits_br_   += out_br_write_.cancel();
-        credits_lsu_  += out_lsu_write_.cancel();
-        out_reorder_write_.cancel();
+        scheduleDispatchSession();
     }
 
     void Dispatch::dispatchInstructions_()
@@ -171,107 +140,47 @@ namespace olympia
             bool dispatched = false;
             InstPtr & ex_inst_ptr = dispatch_queue_.access(0);
             Inst & ex_inst = *ex_inst_ptr;
+            const auto target_unit = ex_inst.getUnit();
 
-            switch(ex_inst.getUnit())
+            sparta_assert(target_unit != InstArchInfo::TargetUnit::UNKNOWN,
+                          "Have an instruction that doesn't know where to go: " << ex_inst);
+
+            if(SPARTA_EXPECT_FALSE(target_unit == InstArchInfo::TargetUnit::ROB))
             {
-            case InstArchInfo::TargetUnit::FPU:
+                ex_inst.setStatus(Inst::Status::COMPLETED);
+                // Indicate that this instruction was dispatched
+                // -- it goes right to the ROB
+                dispatched = true;
+            }
+            else {
+                auto & dispatchers = dispatchers_[target_unit];
+                for(auto & disp : dispatchers)
                 {
-                    if(credits_fpu_ > 0) {
-                        --credits_fpu_;
-                        dispatched = true;
-                        out_fpu_write_.send(ex_inst_ptr);
-                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::FPU)];
-                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::FPU)));
-                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::FPU)));
-
-                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                            info_logger_ << "Sending instruction: "
-                                         << ex_inst_ptr << " to FPU ";
-                        }
-                    }
-                    else {
-                        current_stall_ = FPU_BUSY;
-                        keep_dispatching = false;
-                    }
-                }
-                break;
-            case InstArchInfo::TargetUnit::ALU:
-                {
-                    if(credits_alu_ > 0) {
-                        --credits_alu_;
-                        dispatched = true;
-                        //out_alu_write_.send(ex_inst_ptr);  // <- This will cause an assert in the Port!
-                        out_alu_write_.send(ex_inst_ptr, 1);
-                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU)];
-                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU)));
-                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::ALU)));
-                        ++(alu_context_.context(0));
-
-                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                            info_logger_ << "Sending instruction: "
-                                         << ex_inst_ptr << " to ALU ";
-                        }
-                    }
-                    else {
-                        current_stall_ = ALU_BUSY;
-                        keep_dispatching = false;
-                    }
-                }
-                break;
-             case InstArchInfo::TargetUnit::BR:
-                {
-                    if(credits_br_ > 0)
+                    if(disp->canAccept())
                     {
-                        --credits_br_;
-                        dispatched = true;
-                        out_br_write_.send(ex_inst_ptr, 1);
-                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::BR)];
-                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::BR)));
-                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::BR)));
+                        disp->acceptInst(ex_inst_ptr);
+                        ++unit_distribution_[target_unit];
+                        ++(unit_distribution_context_.context(target_unit));
+                        ++(weighted_unit_distribution_context_.context(target_unit));
 
                         if(SPARTA_EXPECT_FALSE(info_logger_)) {
                             info_logger_ << "Sending instruction: "
-                                         << ex_inst_ptr << " to BR ";
+                                         << ex_inst_ptr << " to " << disp->getName();
                         }
-                    }
-                    else {
-                        current_stall_ = BR_BUSY;
-                        keep_dispatching = false;
-                    }
-                }
-                break;
-             case InstArchInfo::TargetUnit::LSU:
-                {
-                    if(credits_lsu_ > 0)
-                    {
-                        --credits_lsu_;
                         dispatched = true;
-                        out_lsu_write_.send(ex_inst_ptr, 1);
-                        ++unit_distribution_[static_cast<uint32_t>(InstArchInfo::TargetUnit::LSU)];
-                        ++(unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::LSU)));
-                        ++(weighted_unit_distribution_context_.context(static_cast<uint32_t>(InstArchInfo::TargetUnit::LSU)));
-
-                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                            info_logger_ << "sending instruction: "
-                                         << ex_inst_ptr << " to LSU ";
-                        }
+                        break;
                     }
                     else {
-                        current_stall_ = LSU_BUSY;
-                        keep_dispatching = false;
+                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                            info_logger_ << disp->getName() << " cannot accept inst: " << ex_inst_ptr;
+                        }
+                        blocking_dispatcher_ = disp.get();
                     }
                 }
-                break;
-             case InstArchInfo::TargetUnit::ROB:
-                {
-                    ex_inst.setStatus(Inst::Status::COMPLETED);
-                    // Indicate that this instruction was dispatched
-                    // -- it goes right to the ROB
-                    dispatched = true;
+                if(false == dispatched) {
+                    current_stall_ = BR_BUSY;
+                    keep_dispatching = false;
                 }
-                break;
-            default:
-                sparta_assert(false, "Unknown target for instruction: " << ex_inst);
             }
 
             if(dispatched) {
@@ -281,10 +190,7 @@ namespace olympia
             } else {
                 if(SPARTA_EXPECT_FALSE(info_logger_)) {
                     info_logger_ << "Could not dispatch: "
-                                   << ex_inst_ptr
-                                 << " ALU_B(" << std::boolalpha << (credits_alu_ == 0)
-                                 << ") FPU_B(" <<  (credits_fpu_ == 0)
-                                 << ") BR_B(" <<  (credits_br_ == 0) << ")";
+                                 << ex_inst_ptr << " stall: " << current_stall_;
                 }
                 break;
             }
@@ -300,5 +206,15 @@ namespace olympia
         }
 
         stall_counters_[current_stall_].startCounting();
+    }
+
+    void Dispatch::handleFlush_(const FlushManager::FlushingCriteria & criteria)
+    {
+        if(SPARTA_EXPECT_FALSE(info_logger_)) {
+            info_logger_ << "Got a flush call for " << criteria;
+        }
+        out_dispatch_queue_credits_.send(dispatch_queue_.size());
+        dispatch_queue_.clear();
+        out_reorder_write_.cancel();
     }
 }

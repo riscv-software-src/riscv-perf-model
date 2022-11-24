@@ -113,14 +113,20 @@ namespace olympia
         }
     }
 
-    void Dispatch::dispatchQueueAppended_(const InstGroupPtr &) {
+    void Dispatch::dispatchQueueAppended_(const InstGroupPtr &inst_grp) {
+        if(SPARTA_EXPECT_FALSE(info_logger_)) {
+            info_logger_ << "queue appended: " << inst_grp;
+        }
         for(auto & i : *in_dispatch_queue_write_.pullData()) {
             dispatch_queue_.push(i);
         }
 
         if (((credits_fpu_ > 0)|| (credits_alu_ > 0) || (credits_br_ > 0) || credits_lsu_ > 0)
-            && credits_rob_ >0) {
+            && credits_rob_ > 0) {
             ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
+        }
+        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
+            info_logger_ << "no credits in any unit -- not dispatching";
         }
     }
 

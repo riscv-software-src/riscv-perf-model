@@ -10,6 +10,7 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/RootTreeNode.hpp"
 #include "sparta/simulation/ResourceTreeNode.hpp"
+#include "sparta/simulation/TreeNodeExtensions.hpp"
 
 namespace olympia{
 
@@ -119,7 +120,38 @@ namespace olympia{
         std::string topology_name;
         std::vector<UnitInfo> units;
         std::vector<PortConnectionInfo> port_connections;
+
     }; // class CPUTopology
+
+    class CoreExtensions : public sparta::ExtensionsParamsOnly
+    {
+    public:
+        static constexpr char name[] = "core_extensions";
+
+        using ExecutionTopology      = std::vector<std::vector<std::string>>;
+        using ExecutionTopologyParam = sparta::Parameter<ExecutionTopology>;
+
+        CoreExtensions() : sparta::ExtensionsParamsOnly() {}
+        virtual ~CoreExtensions() {}
+
+        void postCreate() override {
+            sparta::ParameterSet * ps = getParameters();
+
+            //
+            // Example of an execution topology:
+            //  [["alu", "1"], ["fpu", "1"], ["br",  "1"]]
+            //
+            //  LSU is its own entity at this time
+            //
+            execution_topology_.
+                reset(new ExecutionTopologyParam("execution_topology", ExecutionTopology(),
+                                                 "Topology Post Dispatch -- the execution pipes. "
+                                                 "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
+        }
+    private:
+        std::unique_ptr<ExecutionTopologyParam> execution_topology_;
+
+    };
 
     /**
      * @brief CoreTopology_1 topology class

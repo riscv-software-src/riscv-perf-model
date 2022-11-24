@@ -153,6 +153,8 @@ namespace olympia
                 dispatched = true;
             }
             else {
+                // Get the dispatchers used to dispatch the target.
+                // Find a ready-to-go dispatcher
                 auto & dispatchers = dispatchers_[target_unit];
                 for(auto & disp : dispatchers)
                 {
@@ -178,7 +180,7 @@ namespace olympia
                     }
                 }
                 if(false == dispatched) {
-                    current_stall_ = BR_BUSY;
+                    current_stall_ = static_cast<StallReason>(target_unit);
                     keep_dispatching = false;
                 }
             }

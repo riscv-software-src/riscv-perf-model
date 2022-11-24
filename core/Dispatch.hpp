@@ -118,12 +118,12 @@ namespace olympia
         ///////////////////////////////////////////////////////////////////////
         // Stall counters
         enum StallReason {
+            ALU_BUSY = InstArchInfo::TargetUnit::ALU, // Could not send any or all instructions -- ALU busy
+            FPU_BUSY = InstArchInfo::TargetUnit::FPU, // Could not send any or all instructions -- FPU busy
+            BR_BUSY  = InstArchInfo::TargetUnit::BR,  // Could not send any or all instructions -- BR busy
+            LSU_BUSY = InstArchInfo::TargetUnit::LSU,
+            NO_ROB_CREDITS = InstArchInfo::TargetUnit::ROB,  // No credits from the ROB
             NOT_STALLED,     // Made forward progress (dipatched all instructions or no instructions)
-            NO_ROB_CREDITS,  // No credits from the ROB
-            ALU_BUSY,       // Could not send any or all instructions -- ALU busy
-            FPU_BUSY,        // Could not send any or all instructions -- FPU busy
-            LSU_BUSY,
-            BR_BUSY,       // Could not send any or all instructions -- BR busy
             N_STALL_REASONS
         };
 
@@ -133,40 +133,40 @@ namespace olympia
         // Counters -- this is only supported in C++11 -- uses
         // Counter's move semantics
         std::array<sparta::CycleCounter, N_STALL_REASONS> stall_counters_{{
-            sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
-                               "Dispatch not stalled, all instructions dispatched",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
-                               "No credits from ROB",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_alu_busy",
-                               "ALU busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_fpu_busy",
-                               "FPU busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_lsu_busy",
-                               "LSU busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_br_busy",
-                               "BR busy",
-                               sparta::Counter::COUNT_NORMAL, getClock())
-        }};
+                sparta::CycleCounter(getStatisticSet(), "stall_alu_busy",
+                                     "ALU busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_fpu_busy",
+                                     "FPU busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_br_busy",
+                                     "BR busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_lsu_busy",
+                                     "LSU busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
+                                     "No credits from ROB",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
+                                     "Dispatch not stalled, all instructions dispatched",
+                                     sparta::Counter::COUNT_NORMAL, getClock())
+            }};
 
         std::array<sparta::Counter,
                    InstArchInfo::N_TARGET_UNITS>
         unit_distribution_ {{
-            sparta::Counter(getStatisticSet(), "count_alu_insts",
-                          "Total ALU insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_fpu_insts",
-                          "Total FPU insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_br_insts",
-                          "Total BR insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_lsu_insts",
-                          "Total LSU insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_rob_insts",
-                          "Total ROB insts", sparta::Counter::COUNT_NORMAL)
-        }};
+                sparta::Counter(getStatisticSet(), "count_alu_insts",
+                                "Total ALU insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_fpu_insts",
+                                "Total FPU insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_br_insts",
+                                "Total BR insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_lsu_insts",
+                                "Total LSU insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_rob_insts",
+                                "Total ROB insts", sparta::Counter::COUNT_NORMAL)
+            }};
 
         // As an example, this is a context counter that does the same
         // thing as the unit_distribution counter, albeit a little

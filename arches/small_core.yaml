@@ -8,3 +8,9 @@ top.cpu:
   rename.num_to_rename: 2
   dispatch.num_to_dispatch: 2
   rob.num_to_retire:    2
+
+top.cpu.extension.pipe_topology:
+  [["alu", "2"].
+   ["fpu", "1"],
+   ["br",  "1"],
+   ["lsu", "1"]]

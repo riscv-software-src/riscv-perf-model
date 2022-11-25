@@ -15,9 +15,19 @@ namespace olympia
 {
     class Dispatch;
 
+    /*!
+     * \class Dispatcher
+     * \brief Class that "connects" Dispatch to an execution unit.
+     *
+     * See https://github.com/riscv-software-src/riscv-perf-model/discussions/7
+     *
+     * This class connects to an execution unit and handles credits
+     * and instruction transfers.
+     */
     class Dispatcher
     {
     public:
+        // Create a dispatcher
         Dispatcher(const std::string            & name,
                    Dispatch                     * dispatch,
                    sparta::log::MessageSource   & info_logger,
@@ -32,7 +42,7 @@ namespace olympia
                 registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatcher, receiveCredits_, uint32_t));
         }
 
-
+        // Get the name of this Dispatcher
         const std::string & getName() const {
             return name_;
         }
@@ -45,7 +55,10 @@ namespace olympia
         // Have this dispatcher accecpt the new instruction
         void acceptInst(const InstPtr & inst) {
             sparta_assert(unit_credits_ != 0, "Dispatcher " << name_
-                          << " cannot accept the given instruction: " << inst)
+                          << " cannot accept the given instruction: " << inst);
+            if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                info_logger_ << name_ << ": dispatching " << inst;
+            }
             out_inst_->send(inst);
             --unit_credits_;
         }

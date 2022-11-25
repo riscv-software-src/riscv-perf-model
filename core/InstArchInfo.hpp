@@ -41,7 +41,8 @@ namespace olympia
             BR,
             LSU,
             ROB, // Instructions that go right to retire
-            UNKNOWN
+            NONE,
+            UNKNOWN = NONE
         };
         static constexpr uint32_t N_TARGET_UNITS = static_cast<uint32_t>(TargetUnit::UNKNOWN);
 
@@ -91,7 +92,7 @@ namespace olympia
                 os << "ROB";
                 break;
             case InstArchInfo::TargetUnit::UNKNOWN:
-                throw sparta::SpartaException("Got UNKNOWN target unit.");
+                throw sparta::SpartaException("Got UNKNOWN/NONE target unit.");
         }
         return os;
     }

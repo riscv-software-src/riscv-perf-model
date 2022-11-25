@@ -87,7 +87,7 @@ namespace olympia
         sparta::DataOutPort<InstGroupPtr>          out_reorder_write_ {&unit_port_set_, "out_reorder_buffer_write"};
 
         std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
-        Dispatcher * blocking_dispatcher_ = nullptr;
+        InstArchInfo::TargetUnit blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_

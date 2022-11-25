@@ -41,30 +41,31 @@ namespace olympia
             const auto tgt_name   = exe_unit_pair[0];
             const auto unit_count = exe_unit_pair[1];
 
-            auto exe_idx = (unsigned int) std::stoul(unit_count);
+            const auto exe_idx = (unsigned int) std::stoul(unit_count);
             sparta_assert(exe_idx > 0, "Expected more than 0 units! " << name);
-            --exe_idx; // 0-index
-            const std::string unit_name = tgt_name + std::to_string(exe_idx);
+            for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
+            {
+                const std::string unit_name = tgt_name + std::to_string(unit_num);
 
-            // Create an InPort and an OutPort for credits and
-            // instruction send
-            auto & in_credit_port = in_credit_ports_.emplace_back
-                (new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_"+unit_name+"_credits"));
-            in_credit_port->enableCollection(node);
+                // Create an InPort and an OutPort for credits and
+                // instruction send
+                auto & in_credit_port = in_credit_ports_.emplace_back
+                    (new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_"+unit_name+"_credits"));
+                in_credit_port->enableCollection(node);
 
-            auto & out_inst_port = out_inst_ports_.emplace_back
-                (new sparta::DataOutPort<InstQueue::value_type>(&unit_port_set_, "out_"+unit_name+"_write"));
+                auto & out_inst_port = out_inst_ports_.emplace_back
+                    (new sparta::DataOutPort<InstQueue::value_type>(&unit_port_set_, "out_"+unit_name+"_write"));
 
-            // Create a Dispatcher for this target type
-            const auto target_itr = InstArchInfo::dispatch_target_map.find(tgt_name);
-            sparta_assert(target_itr != InstArchInfo::dispatch_target_map.end(),
-                          "Unknown target unit: " << tgt_name << " when parsing the execution_topology extension");
-            dispatchers_[target_itr->second].emplace_back(new Dispatcher(unit_name,
-                                                                         this,
-                                                                         info_logger_,
-                                                                         in_credit_port.get(),
-                                                                         out_inst_port.get()));
-
+                // Create a Dispatcher for this target type
+                const auto target_itr = InstArchInfo::dispatch_target_map.find(tgt_name);
+                sparta_assert(target_itr != InstArchInfo::dispatch_target_map.end(),
+                              "Unknown target unit: " << tgt_name << " when parsing the execution_topology extension");
+                dispatchers_[target_itr->second].emplace_back(new Dispatcher(unit_name,
+                                                                             this,
+                                                                             info_logger_,
+                                                                             in_credit_port.get(),
+                                                                             out_inst_port.get()));
+            }
         }
 
         // Special case for the LSU
@@ -83,7 +84,7 @@ namespace olympia
                                                                     FlushManager::FlushingCriteria));
         in_reorder_flush_.enableCollection(node);
 
-        blocking_dispatcher_ = dispatchers_[InstArchInfo::TargetUnit::ALU][0].get();
+        blocking_dispatcher_ = InstArchInfo::TargetUnit::ALU;
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Dispatch, sendInitialCredits_));
     }
 
@@ -91,14 +92,21 @@ namespace olympia
     {
         if(credits_rob_ > 0 && (dispatch_queue_.size() > 0))
         {
-            if(blocking_dispatcher_)
+            // See if the one of the original blocking dispatcher
+            // types is still blocking.
+            if(blocking_dispatcher_ != InstArchInfo::TargetUnit::NONE)
             {
-                if(blocking_dispatcher_->canAccept()) {
-                    blocking_dispatcher_ = nullptr;
-                    ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
-                }
-                else if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "dispatcher '" << blocking_dispatcher_->getName() << "' is blocking dispatching";
+                auto & dispatchers = dispatchers_[blocking_dispatcher_];
+                for(auto & disp : dispatchers)
+                {
+                    if(disp->canAccept()) {
+                        blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
+                        ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
+                        break;
+                    }
+                    else if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                        info_logger_ << "dispatcher '" << disp->getName() << "' still cannot accept an inst";
+                    }
                 }
             }
             else {
@@ -197,7 +205,7 @@ namespace olympia
                         if(SPARTA_EXPECT_FALSE(info_logger_)) {
                             info_logger_ << disp->getName() << " cannot accept inst: " << ex_inst_ptr;
                         }
-                        blocking_dispatcher_ = disp.get();
+                        blocking_dispatcher_ = target_unit;
                     }
                 }
                 if(false == dispatched) {

@@ -1,7 +1,7 @@
 
 #include "Dispatch.hpp"
 #include "MavisUnit.hpp"
-#include "CPUTopology.hpp"
+#include "CoreUtils.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"
@@ -109,19 +109,18 @@ private:
         // Set the "ROB" to accept a group of instructions
         rob_params->getParameter("purpose")->setValueFromString("grp");
 
+        // Must add the CoreExtensions factory so the simulator knows
+        // how to interpret the config file extension parameter.
+        // Otherwise, the framework will add any "unnamed" extensions
+        // as strings.
+        rtn->addExtensionFactory(olympia::CoreExtensions::name,
+                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
 
+        sparta::ResourceTreeNode * exe_unit = nullptr;
         //
         // Set up the execution blocks (sans LSU)
         //
-        rtn->addExtensionFactory(olympia::CoreExtensions::name,
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
-        auto core_extension           = rtn->getExtension(olympia::CoreExtensions::name);
-        auto core_extension_params    = sparta::notNull(core_extension)->getParameters();
-        auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
-        auto execution_topology       = sparta::notNull(execution_topology_param)->
-            getValueAs<olympia::CoreExtensions::ExecutionTopology>();
-
-        sparta::ResourceTreeNode * exe_unit = nullptr;
+        auto execution_topology = olympia::coreutils::getExecutionTopology(rtn);
         for (auto exe_unit_pair : execution_topology)
         {
             const std::string name(exe_unit_pair[0]);

@@ -33,8 +33,10 @@ int main(int argc, char **argv)
     DEFAULTS.arch_arg_default = "small_core";
     DEFAULTS.arch_search_dirs = {"arches"}; // Where --arch will be resolved by default
 
+    const std::string olympia_version = " " + std::string(OLYMPIA_VERSION);
     sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("Olympia RISC-V Perf Model ",
-                                                                   argc, argv, "", "", {});
+                                                                   argc, argv, olympia_version.c_str(),
+                                                                   "", {});
     const bool show_field_names = true;
     sparta::SimulationInfo::getInstance().write(std::cout, "# ", "\n", show_field_names);
     std::cout << "# Sparta Version: " << sparta::SimulationInfo::sparta_version << std::endl;

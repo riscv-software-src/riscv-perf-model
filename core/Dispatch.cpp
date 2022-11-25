@@ -1,9 +1,10 @@
 // <Dispatch.cpp> -*- C++ -*-
 
 #include <algorithm>
+#include "CoreUtils.hpp"
 #include "Dispatch.hpp"
+
 #include "sparta/events/StartupEvent.hpp"
-#include "CPUTopology.hpp"
 
 namespace olympia
 {
@@ -28,11 +29,7 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, dispatchQueueAppended_,
                                                                     InstGroupPtr));
 
-        auto core_extension           = node->getParent()->getExtension(olympia::CoreExtensions::name);
-        auto core_extension_params    = sparta::notNull(core_extension)->getParameters();
-        auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
-        auto execution_topology       = sparta::notNull(execution_topology_param)->
-            getValueAs<olympia::CoreExtensions::ExecutionTopology>();
+        auto execution_topology = coreutils::getExecutionTopology(node->getParent());
 
         // Create Disptchers for ALU, FPU, BR -- one to many of them
         // depending on the execution_topology extension

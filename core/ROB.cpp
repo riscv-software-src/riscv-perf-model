@@ -130,7 +130,7 @@ namespace olympia
                 }
 
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
-                    std::cout << "Retired " << num_retired_.get()
+                    std::cout << "olympia: Retired " << num_retired_.get()
                               << " instructions in " << getClock()->currentCycle()
                               << " cycles.  Period IPC: " << period_ipc_si_.getValue()
                               << " overall IPC: " << overall_ipc_si_.getValue()

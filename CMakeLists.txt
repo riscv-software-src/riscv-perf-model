@@ -30,6 +30,8 @@ if (CCACHE_PROGRAM)
 endif ()
 
 set (SIM_BASE ${PROJECT_SOURCE_DIR})
+set (OLYMPIA_VERSION "v0.1.0")
+add_definitions(-DOLYMPIA_VERSION=\"${OLYMPIA_VERSION}\")
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set(SPARTA_BUILD_TYPE "release")

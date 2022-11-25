@@ -56,7 +56,7 @@
     {
         "mnemonic" : "c.jr",
         "dispatch" : ["alu"],
-        "pipe" : ["branch"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
@@ -68,7 +68,7 @@
     {
         "mnemonic" : "c.jalr",
         "dispatch" : ["alu"],
-        "pipe" : ["branch"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
@@ -140,19 +140,19 @@
     {
         "mnemonic" : "c.j",
         "dispatch" : ["alu"],
-        "pipe" : ["branch"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "c.beqz",
         "dispatch" : ["alu"],
-        "pipe" : ["branch"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "c.bnez",
         "dispatch" : ["alu"],
-        "pipe" : ["branch"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {

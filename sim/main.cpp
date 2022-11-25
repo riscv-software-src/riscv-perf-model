@@ -30,6 +30,7 @@ int main(int argc, char **argv)
 
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "on";
+    DEFAULTS.arch_arg_default = "small_core";
     DEFAULTS.arch_search_dirs = {"arches"}; // Where --arch will be resolved by default
 
     sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("Olympia RISC-V Perf Model ",

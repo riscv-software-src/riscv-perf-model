@@ -10,6 +10,7 @@
 #include "sparta/utils/StringUtils.hpp"
 
 #include "Core.hpp"
+#include "CPUTopology.hpp"
 #include "CPUFactory.hpp"
 #include "Fetch.hpp"
 #include "Decode.hpp"

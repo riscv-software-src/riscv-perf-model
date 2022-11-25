@@ -61,8 +61,7 @@ namespace olympia
          * register the TypedPorts that this unit will need to perform
          * work.
          */
-        Dispatch(sparta::TreeNode * node,
-               const DispatchParameterSet * p);
+        Dispatch(sparta::TreeNode * node, const DispatchParameterSet * p);
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
@@ -76,17 +75,16 @@ namespace olympia
         // Ports
         sparta::DataInPort<InstGroupPtr>           in_dispatch_queue_write_   {&unit_port_set_, "in_dispatch_queue_write", 1};
         sparta::DataOutPort<uint32_t>              out_dispatch_queue_credits_{&unit_port_set_, "out_dispatch_queue_credits"};
-        sparta::DataOutPort<InstQueue::value_type> out_fpu_write_             {&unit_port_set_, "out_fpu0_write"};
-        sparta::DataOutPort<InstQueue::value_type> out_alu_write_             {&unit_port_set_, "out_alu0_write", false}; // Do not assume zero-cycle delay
-        sparta::DataOutPort<InstQueue::value_type> out_br_write_              {&unit_port_set_, "out_br0_write", false}; // Do not assume zero-cycle delay
-        sparta::DataOutPort<InstQueue::value_type> out_lsu_write_             {&unit_port_set_, "out_lsu_write", false};
-        sparta::DataOutPort<InstGroupPtr>          out_reorder_write_         {&unit_port_set_, "out_reorder_buffer_write"};
 
-        sparta::DataInPort<uint32_t> in_fpu_credits_ {&unit_port_set_,    "in_fpu0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_alu_credits_ {&unit_port_set_,    "in_alu0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_br_credits_  {&unit_port_set_,     "in_br0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_lsu_credits_ {&unit_port_set_,    "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
+        // Dynamic ports for execution resources (based on core
+        // extension's execution_topology)
+        std::vector<std::unique_ptr<sparta::DataInPort<uint32_t>>>               in_credit_ports_;
+        std::vector<std::unique_ptr<sparta::DataOutPort<InstQueue::value_type>>> out_inst_ports_;
+
+        sparta::DataInPort<uint32_t>               in_lsu_credits_    {&unit_port_set_, "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataOutPort<InstQueue::value_type> out_lsu_write_     {&unit_port_set_, "out_lsu_write", false};
+        sparta::DataInPort<uint32_t>               in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
+        sparta::DataOutPort<InstGroupPtr>          out_reorder_write_ {&unit_port_set_, "out_reorder_buffer_write"};
 
         std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
         Dispatcher * blocking_dispatcher_ = nullptr;

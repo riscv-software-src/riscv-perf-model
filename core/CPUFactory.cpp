@@ -56,6 +56,12 @@ auto olympia::CPUFactory::buildTree_(sparta::RootTreeNode* root_node,
             }
             to_delete_.emplace_back(rtn);
             resource_names_.emplace_back(node_name);
+            // Add an extensions factory to create CoreExtensions when
+            // encountered in a YAML topo file.  This class establishes the
+            // type of the parameters defined in the CoreExtensions.  If not
+            // defined, any unknown extensions are considered pure strings.
+            rtn->addExtensionFactory(olympia::CoreExtensions::name,
+                                     [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
         }
     }
 }

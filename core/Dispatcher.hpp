@@ -21,14 +21,14 @@ namespace olympia
         Dispatcher(const std::string            & name,
                    Dispatch                     * dispatch,
                    sparta::log::MessageSource   & info_logger,
-                   sparta::DataInPort<uint32_t> & in_credits,
-                   sparta::DataOutPort<InstQueue::value_type> & out_inst) :
+                   sparta::DataInPort<uint32_t> * in_credits,
+                   sparta::DataOutPort<InstQueue::value_type> * out_inst) :
             name_(name),
             dispatch_(dispatch),
             info_logger_(info_logger),
             out_inst_(out_inst)
         {
-            in_credits.
+            in_credits->
                 registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatcher, receiveCredits_, uint32_t));
         }
 
@@ -46,7 +46,7 @@ namespace olympia
         void acceptInst(const InstPtr & inst) {
             sparta_assert(unit_credits_ != 0, "Dispatcher " << name_
                           << " cannot accept the given instruction: " << inst)
-            out_inst_.send(inst);
+            out_inst_->send(inst);
             --unit_credits_;
         }
 
@@ -57,7 +57,7 @@ namespace olympia
         Dispatch                   * dispatch_ = nullptr;
         sparta::log::MessageSource & info_logger_;
 
-        sparta::DataOutPort<InstQueue::value_type> & out_inst_;
+        sparta::DataOutPort<InstQueue::value_type> * out_inst_;
 
         // Receive credits from the execution block
         void receiveCredits_(const uint32_t & credits);

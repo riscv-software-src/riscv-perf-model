@@ -123,6 +123,17 @@ namespace olympia{
 
     }; // class CPUTopology
 
+    //
+    // \class CoreExtensions
+    // \brief Common extensions for a specific core
+    //
+    // Similar to Parameters, Extensions allow the modeler to provide
+    // common "preferences" to any node (and it's children).  For
+    // example, the topology of the execution units: the number of
+    // ALUs.  Both Dispatch and Execute (as well as testers) need to
+    // know this information.
+    //
+    //
     class CoreExtensions : public sparta::ExtensionsParamsOnly
     {
     public:

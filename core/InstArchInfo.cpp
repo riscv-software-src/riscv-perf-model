@@ -5,10 +5,10 @@
 
 namespace olympia
 {
-    const InstArchInfo::TargetUnitMap dispatch_target_map = {
+    const InstArchInfo::TargetUnitMap InstArchInfo::dispatch_target_map = {
         {"alu",      InstArchInfo::TargetUnit::ALU},
         {"fpu",      InstArchInfo::TargetUnit::FPU},
-        {"branch",   InstArchInfo::TargetUnit::BR},
+        {"br",       InstArchInfo::TargetUnit::BR},
         {"lsu",      InstArchInfo::TargetUnit::LSU},
         {"rob",      InstArchInfo::TargetUnit::ROB},
         {"invalid",  InstArchInfo::TargetUnit::UNKNOWN},

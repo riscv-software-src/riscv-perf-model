@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "Dispatch.hpp"
 #include "sparta/events/StartupEvent.hpp"
+#include "CPUTopology.hpp"
 
 namespace olympia
 {
@@ -27,39 +28,59 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, dispatchQueueAppended_,
                                                                     InstGroupPtr));
 
-        in_fpu_credits_.enableCollection(node);
-        in_alu_credits_.enableCollection(node);
-        in_br_credits_.enableCollection(node);
-        in_lsu_credits_.enableCollection(node);
+        auto core_extension           = node->getParent()->getExtension(olympia::CoreExtensions::name);
+        auto core_extension_params    = sparta::notNull(core_extension)->getParameters();
+        auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
+        auto execution_topology       = sparta::notNull(execution_topology_param)->
+            getValueAs<olympia::CoreExtensions::ExecutionTopology>();
 
-        dispatchers_[InstArchInfo::TargetUnit::ALU].emplace_back(new Dispatcher("alu",
-                                                                                this,
-                                                                                info_logger_,
-                                                                                in_alu_credits_,
-                                                                                out_alu_write_));
-        dispatchers_[InstArchInfo::TargetUnit::FPU].emplace_back(new Dispatcher("fpu",
-                                                                                this,
-                                                                                info_logger_,
-                                                                                in_fpu_credits_,
-                                                                                out_fpu_write_));
-        dispatchers_[InstArchInfo::TargetUnit::BR].emplace_back(new Dispatcher("br",
-                                                                               this,
-                                                                               info_logger_,
-                                                                               in_br_credits_,
-                                                                               out_br_write_));
+        // Create Disptchers for ALU, FPU, BR -- one to many of them
+        // depending on the execution_topology extension
+        for (auto exe_unit_pair : execution_topology)
+        {
+            const auto tgt_name   = exe_unit_pair[0];
+            const auto unit_count = exe_unit_pair[1];
 
+            auto exe_idx = (unsigned int) std::stoul(unit_count);
+            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << name);
+            --exe_idx; // 0-index
+            const std::string unit_name = tgt_name + std::to_string(exe_idx);
+
+            // Create an InPort and an OutPort for credits and
+            // instruction send
+            auto & in_credit_port = in_credit_ports_.emplace_back
+                (new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_"+unit_name+"_credits"));
+            in_credit_port->enableCollection(node);
+
+            auto & out_inst_port = out_inst_ports_.emplace_back
+                (new sparta::DataOutPort<InstQueue::value_type>(&unit_port_set_, "out_"+unit_name+"_write"));
+
+            // Create a Dispatcher for this target type
+            const auto target_itr = InstArchInfo::dispatch_target_map.find(tgt_name);
+            sparta_assert(target_itr != InstArchInfo::dispatch_target_map.end(),
+                          "Unknown target unit: " << tgt_name << " when parsing the execution_topology extension");
+            dispatchers_[target_itr->second].emplace_back(new Dispatcher(unit_name,
+                                                                         this,
+                                                                         info_logger_,
+                                                                         in_credit_port.get(),
+                                                                         out_inst_port.get()));
+
+        }
+
+        // Special case for the LSU
         dispatchers_[InstArchInfo::TargetUnit::LSU].emplace_back(new Dispatcher("lsu",
                                                                                 this,
                                                                                 info_logger_,
-                                                                                in_lsu_credits_,
-                                                                                out_lsu_write_));
+                                                                                &in_lsu_credits_,
+                                                                                &out_lsu_write_));
 
         in_reorder_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, robCredits_, uint32_t));
         in_reorder_credits_.enableCollection(node);
 
         in_reorder_flush_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, handleFlush_, FlushManager::FlushingCriteria));
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, handleFlush_,
+                                                                    FlushManager::FlushingCriteria));
         in_reorder_flush_.enableCollection(node);
 
         blocking_dispatcher_ = dispatchers_[InstArchInfo::TargetUnit::ALU][0].get();

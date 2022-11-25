@@ -46,6 +46,7 @@ namespace olympia
         static constexpr uint32_t N_TARGET_UNITS = static_cast<uint32_t>(TargetUnit::UNKNOWN);
 
         using TargetUnitMap = std::map<std::string, TargetUnit>;
+        static const TargetUnitMap dispatch_target_map;
 
         // Called by Mavis during its initialization
         explicit InstArchInfo(const nlohmann::json& jobj)

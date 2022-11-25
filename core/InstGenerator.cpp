@@ -100,6 +100,7 @@ namespace olympia
         ++curr_inst_index_;
         if (inst != nullptr) {
             inst->setUniqueID(++unique_id_);
+            inst->setProgramID(++unique_id_);
         }
         return inst;
 
@@ -151,6 +152,8 @@ namespace olympia
         try {
             InstPtr inst = mavis_facade_->makeInst(opcode, clk);
             inst->setPC(next_it_->pc());
+            inst->setUniqueID(++unique_id_);
+            inst->setProgramID(++unique_id_);
             if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
             {
                 using VectorAddrType = std::vector<sparta::memory::addr_t>;

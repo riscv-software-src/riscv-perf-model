@@ -3,7 +3,10 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 #include "CoreTypes.hpp"
+
+#include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 
@@ -38,4 +41,20 @@ namespace olympia
     };
     extern sparta::SpartaSharedPointerAllocator<InstGroup> instgroup_allocator;
     using InstGroupPtr = sparta::SpartaSharedPointer<InstGroup>;
+
+    inline std::ostream & operator<<(std::ostream & os, const InstGroup & inst_grp) {
+        std::string next = "";
+        std::stringstream str;
+        for(auto inst : inst_grp) {
+            str << next << HEX8(inst->getPC())
+               << " UID(" << inst->getUniqueID() << ") "
+               << " PID(" << inst->getProgramID() << ") "
+               << " " << inst->getMnemonic();
+            next = ", ";
+        }
+        return (os << str.str());
+    }
+    inline std::ostream & operator<<(std::ostream & os, const InstGroupPtr & inst_grp_ptr) {
+        return os << *inst_grp_ptr;
+    }
 }

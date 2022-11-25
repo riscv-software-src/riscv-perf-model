@@ -116,7 +116,8 @@ namespace olympia
         // an instruction's retire pointer.  The same instruction in a
         // trace will have the same program ID (as compared to
         // UniqueID).
-        void seProgramID(uint64_t prog_id) { program_id_ = prog_id; }
+        void     setProgramID(uint64_t prog_id) { program_id_ = prog_id; }
+        uint64_t getProgramID() const           { return program_id_; }
 
         // Set the instruction's PC
         void setPC(sparta::memory::addr_t inst_pc) { inst_pc_ = inst_pc; }
@@ -185,7 +186,7 @@ namespace olympia
     }
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
-        os << "uid: " << inst.getUniqueID() << inst.getStatus()
+        os << "uid: " << inst.getUniqueID() << " " << inst.getStatus() << " "
            << std::hex << inst.getPC() << std::dec << " '" << inst.getDisasm() << "' ";
         return os;
     }

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "sparta/app/Simulation.hpp"
-#include "sparta/trigger/ExpiringExpressionTrigger.hpp"
 
 namespace olympia{ class CPUFactory; }
 

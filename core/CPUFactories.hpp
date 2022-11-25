@@ -49,8 +49,7 @@ namespace olympia{
                                 olympia::Rename::RenameParameterSet> rename_rf;
 
         //! \brief Resouce Factory to build a Dispatch Unit
-        sparta::ResourceFactory<olympia::Dispatch,
-                                olympia::Dispatch::DispatchParameterSet> dispatch_rf;
+        DispatchFactory dispatch_rf;
 
         //! \brief Resouce Factory to build a Execute Unit
         sparta::ResourceFactory<olympia::Execute,
@@ -85,7 +84,6 @@ namespace olympia{
                                 olympia::Preloader::PreloaderParameterSet> preloader_rf;
 
         //! \brief Set up the Mavis Decode functional unit
-        sparta::ResourceFactory<olympia::MavisUnit,
-                                olympia::MavisUnit::MavisParameters> mavis_rf;
+        MavisFactoy  mavis_rf;
     }; // struct CPUFactories
 }  // namespace olympia

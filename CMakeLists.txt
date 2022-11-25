@@ -30,35 +30,9 @@ if (CCACHE_PROGRAM)
 endif ()
 
 set (SIM_BASE ${PROJECT_SOURCE_DIR})
-add_executable(olympia
-  core/Core.cpp
-  core/Fetch.cpp
-  core/Decode.cpp
-  core/Rename.cpp
-  core/Dispatch.cpp
-  core/Execute.cpp
-  core/Inst.cpp
-  core/InstArchInfo.cpp
-  core/InstGroup.cpp
-  core/InstGenerator.cpp
-  core/ROB.cpp
-  core/LSU.cpp
-  core/MavisUnit.cpp
-  core/Preloader.cpp
-  core/CPU.cpp
-  core/CPUFactory.cpp
-  core/CPUTopology.cpp
-  mss/BIU.cpp
-  mss/MSS.cpp
-  sim/OlympiaSim.cpp
-  sim/main.cpp
-  )
-
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set(SPARTA_BUILD_TYPE "release")
-  target_link_options    (olympia PUBLIC -flto)
-  target_compile_options (olympia PUBLIC -flto)
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Ff]ast[Dd]ebug")
   set(SPARTA_BUILD_TYPE "release")
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
@@ -69,8 +43,14 @@ else()
   message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|Debug|Profile")
 endif()
 
+# Sparta/STF linking
+link_directories (
+  ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}
+  ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}/simdb
+  )
+
 # Profile build flags
-set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg -g -ftime-trace")
+set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 
 # Remove -pedantic from the STF compiler options -- issues with clang
@@ -88,19 +68,26 @@ include_directories (SYSTEM stf_lib)
 include_directories (SYSTEM ${SPARTA_BASE})
 include_directories (SYSTEM ${SPARTA_BASE}/simdb/include)
 
+# The Core, MSS, and the simulator
+add_subdirectory(core)
+add_subdirectory(mss)
+
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})
 
 # Add testing, but do not build as part of the 'all' target
 add_subdirectory (test EXCLUDE_FROM_ALL)
 
-# Sparta/STF linking
-target_link_directories (olympia PUBLIC
-  ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}
-  ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}/simdb
+# The simulator
+add_executable(olympia
+  sim/OlympiaSim.cpp
+  sim/main.cpp
   )
-
-target_link_libraries (olympia ${Sparta_LIBS} ${STF_LINK_LIBS})
+target_link_libraries (olympia core mss ${Sparta_LIBS} ${STF_LINK_LIBS})
+if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
+  target_link_options    (olympia PUBLIC -flto)
+  target_compile_options (olympia PUBLIC -flto)
+endif()
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)

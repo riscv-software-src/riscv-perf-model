@@ -1,0 +1,16 @@
+
+#
+# Set up the pipeline for a 2-wide machine
+#
+top.cpu:
+  fetch.num_to_fetch:   2
+  decode.num_to_decode: 2
+  rename.num_to_rename: 2
+  dispatch.num_to_dispatch: 2
+  rob.num_to_retire:    2
+
+top.cpu.extension.pipe_topology:
+  [["alu", "2"].
+   ["fpu", "1"],
+   ["br",  "1"],
+   ["lsu", "1"]]

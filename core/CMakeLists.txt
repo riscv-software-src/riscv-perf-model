@@ -1,0 +1,20 @@
+project (core)
+add_library(core
+  Core.cpp
+  Fetch.cpp
+  Decode.cpp
+  Rename.cpp
+  Dispatch.cpp
+  Execute.cpp
+  Inst.cpp
+  InstArchInfo.cpp
+  InstGroup.cpp
+  InstGenerator.cpp
+  ROB.cpp
+  LSU.cpp
+  MavisUnit.cpp
+  Preloader.cpp
+  CPU.cpp
+  CPUFactory.cpp
+  CPUTopology.cpp
+  )

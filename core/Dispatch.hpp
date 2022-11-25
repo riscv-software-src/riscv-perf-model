@@ -16,6 +16,8 @@
 #include "sparta/log/MessageSource.hpp"
 #include "sparta/statistics/Counter.hpp"
 #include "sparta/statistics/ContextCounter.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
+
 #include "test/ContextCounter/WeightedContextCounter.hpp"
 
 #include "CoreTypes.hpp"
@@ -72,16 +74,16 @@ namespace olympia
         // Ports
         sparta::DataInPort<InstGroupPtr>           in_dispatch_queue_write_   {&unit_port_set_, "in_dispatch_queue_write", 1};
         sparta::DataOutPort<uint32_t>              out_dispatch_queue_credits_{&unit_port_set_, "out_dispatch_queue_credits"};
-        sparta::DataOutPort<InstQueue::value_type> out_fpu_write_             {&unit_port_set_, "out_fpu_write"};
-        sparta::DataOutPort<InstQueue::value_type> out_alu_write_            {&unit_port_set_, "out_alu_write", false}; // Do not assume zero-cycle delay
-        sparta::DataOutPort<InstQueue::value_type> out_br_write_              {&unit_port_set_, "out_br_write", false}; // Do not assume zero-cycle delay
+        sparta::DataOutPort<InstQueue::value_type> out_fpu_write_             {&unit_port_set_, "out_fpu0_write"};
+        sparta::DataOutPort<InstQueue::value_type> out_alu_write_             {&unit_port_set_, "out_alu0_write", false}; // Do not assume zero-cycle delay
+        sparta::DataOutPort<InstQueue::value_type> out_br_write_              {&unit_port_set_, "out_br0_write", false}; // Do not assume zero-cycle delay
         sparta::DataOutPort<InstQueue::value_type> out_lsu_write_             {&unit_port_set_, "out_lsu_write", false};
         sparta::DataOutPort<InstGroupPtr>          out_reorder_write_         {&unit_port_set_, "out_reorder_buffer_write"};
 
-        sparta::DataInPort<uint32_t> in_fpu_credits_ {&unit_port_set_, "in_fpu_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_alu_credits_ {&unit_port_set_, "in_alu_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_br_credits_ {&unit_port_set_, "in_br_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_lsu_credits_ {&unit_port_set_, "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_fpu_credits_ {&unit_port_set_,    "in_fpu0_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_alu_credits_ {&unit_port_set_,    "in_alu0_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_br_credits_ {&unit_port_set_,     "in_br0_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_lsu_credits_ {&unit_port_set_,    "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataInPort<uint32_t> in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
 
         // For flush
@@ -89,7 +91,8 @@ namespace olympia
              {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
         // Tick events
-        sparta::SingleCycleUniqueEvent<> ev_dispatch_insts_{&unit_event_set_, "dispatch_event", CREATE_SPARTA_HANDLER(Dispatch, dispatchInstructions_)};
+        sparta::SingleCycleUniqueEvent<> ev_dispatch_insts_{&unit_event_set_, "dispatch_event",
+                                                            CREATE_SPARTA_HANDLER(Dispatch, dispatchInstructions_)};
 
         const uint32_t num_to_dispatch_;
         uint32_t credits_rob_ = 0;
@@ -213,4 +216,7 @@ namespace olympia
             getStatisticSet(), "count_alu_insts + count_fpu_insts + count_lsu_insts"
         };
     };
+
+    using DispatchFactory = sparta::ResourceFactory<olympia::Dispatch,
+                                                    olympia::Dispatch::DispatchParameterSet>;
 }

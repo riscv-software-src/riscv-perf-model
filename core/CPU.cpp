@@ -8,16 +8,8 @@ constexpr char olympia::CPU::name[];
 
 //! \brief Constructor of this CPU Unit
 olympia::CPU::CPU(sparta::TreeNode* node, const olympia::CPU::CPUParameterSet* params) :
-    sparta::Unit{node},
-    fastpoll_{params->fastpoll},
-    out_of_order_execution_{params->out_of_order_execution},
-    superscalar_degree_{params->superscalar_degree},
-    nettype_{params->nettype},
-    ds_max_query_{params->ds_max_query},
-    max_pdq_priority_{params->max_pdq_priority},
-    ds_max_scans_{params->ds_max_scans},
-    frequency_ghz_{params->frequency_ghz},
-    vpclass_{params->vpclass}{}
+    sparta::Unit{node}
+{}
 
 //! \brief Destructor of this CPU Unit
 olympia::CPU::~CPU() = default;

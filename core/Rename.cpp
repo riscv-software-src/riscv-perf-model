@@ -11,6 +11,16 @@
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/report/DatabaseInterface.hpp"
 
+namespace
+{
+    inline olympia::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
+    {
+        const bool is_float = (reg.operand_type == mavis::InstMetaData::OperandTypes::SINGLE) ||
+                              (reg.operand_type == mavis::InstMetaData::OperandTypes::DOUBLE);
+        return is_float ? olympia::RegFile::RF_FLOAT : olympia::RegFile::RF_INTEGER;
+    }
+}
+
 namespace olympia
 {
     const char Rename::name[] = "rename";
@@ -79,21 +89,49 @@ namespace olympia
 
     void Rename::renameInstructions_()
     {
-
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
 
         if(num_rename > 0)
         {
-
+            // Pick instructions from uop queue to rename
             InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-            for(uint32_t i = 0; i < num_rename; ++i) {
-                insts->emplace_back(uop_queue_.read(0));
+            for(uint32_t i = 0; i < num_rename; ++i)
+            {
+                // Pick the oldest
+                const auto & renaming_inst = uop_queue_.read(0);
                 if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << ": sending inst to dispatch: " << uop_queue_.read(0);
+                    info_logger_ << ": sending inst to dispatch: " << renaming_inst;
                 }
+
+                // TODO: Register renaming for sources
+                const auto & srcs = renaming_inst->getSourceOpInfoList();
+                for(const auto & src : srcs)
+                {
+                    const auto rf  = determineRegisterFile(src);
+                    const auto num = src.field_value;
+                    if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                        info_logger_ << ":\treading " << rf << "[" << num << "]";
+                    }
+                }
+
+                // TODO: Register renaming for destinations
+                const auto & dests = renaming_inst->getDestOpInfoList();
+                for(const auto & dest : dests)
+                {
+                    const auto rf  = determineRegisterFile(dest);
+                    const auto num = dest.field_value;
+                    if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                        info_logger_ << ":\twriting " << rf << "[" << num << "]";
+                    }
+                }
+
+                // Remove it from uop queue
+                insts->emplace_back(uop_queue_.read(0));
                 uop_queue_.pop();
             }
+
+            // Send renamed instructions to dispatch
             out_dispatch_queue_write_.send(insts);
             credits_dispatch_ -= num_rename;
 

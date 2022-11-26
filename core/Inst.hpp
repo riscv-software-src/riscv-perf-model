@@ -135,6 +135,11 @@ namespace olympia
         std::string getDisasm()   const { return opcode_info_->dasmString(); }
         uint32_t    getOpCode()   const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
+        // Operand information
+        using OpInfoList = mavis::DecodedInstructionInfo::OpInfoList;
+        const OpInfoList& getSourceOpInfoList() const { return opcode_info_->getSourceOpInfoList(); }
+        const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
+
         // Static instruction information
         bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }

@@ -1,3 +1,5 @@
+// <CoreTypes.hpp> -*- C++ -*-
+
 #pragma once
 
 #include <vector>
@@ -9,10 +11,4 @@ namespace olympia
 {
     //! Instruction Queue
     typedef sparta::Queue<InstPtr> InstQueue;
-
-    namespace message_categories {
-        const std::string INFO = "info";
-        // More can be added here, with any identifier...
-    }
-
 }

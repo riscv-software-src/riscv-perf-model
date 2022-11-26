@@ -1,12 +1,14 @@
 // <CPUTopology.cpp> -*- C++ -*-
 
 #include "CPUTopology.hpp"
+#include "CoreUtils.hpp"
+
 #include "sparta/utils/SpartaException.hpp"
 
 /**
  * @br0ief Constructor for CPUTopology_1
  */
-olympia::CoreTopology_1::CoreTopology_1(){
+olympia::CoreTopologySimple::CoreTopologySimple(){
 
     //! Instantiating units of this topology
     units = {
@@ -59,26 +61,10 @@ olympia::CoreTopology_1::CoreTopology_1(){
             &factories->dispatch_rf
         },
         {
-            "alu",
+            "execute",
             "cpu.core*",
-            "ALU0 Unit",
-            "alu",
-            0,
-            &factories->execute_rf
-        },
-        {
-            "fpu",
-            "cpu.core*",
-            "FPU Unit",
-            "fpu",
-            0,
-            &factories->execute_rf
-        },
-        {
-            "br",
-            "cpu.core*",
-            "BR0 Unit",
-            "br",
+            "Execution Pipes",
+            "execute",
             0,
             &factories->execute_rf
         },
@@ -168,30 +154,6 @@ olympia::CoreTopology_1::CoreTopology_1(){
             "cpu.core*.dispatch.ports.out_dispatch_queue_credits"
         },
         {
-            "cpu.core*.dispatch.ports.out_fpu0_write",
-            "cpu.core*.fpu0.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_fpu0_credits",
-            "cpu.core*.fpu0.ports.out_scheduler_credits"
-        },
-        {
-            "cpu.core*.dispatch.ports.out_alu0_write",
-            "cpu.core*.alu0.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_alu0_credits",
-            "cpu.core*.alu0.ports.out_scheduler_credits"
-        },
-        {
-            "cpu.core*.dispatch.ports.out_br0_write",
-            "cpu.core*.br0.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_br0_credits",
-            "cpu.core*.br0.ports.out_scheduler_credits"
-        },
-        {
             "cpu.core*.dispatch.ports.out_lsu_write",
             "cpu.core*.lsu.ports.in_lsu_insts"
         },
@@ -237,14 +199,6 @@ olympia::CoreTopology_1::CoreTopology_1(){
         },
         {
             "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.alu0.ports.in_reorder_flush"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.fpu0.ports.in_reorder_flush"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
             "cpu.core*.dispatch.ports.in_reorder_flush"
         },
         {
@@ -270,17 +224,68 @@ olympia::CoreTopology_1::CoreTopology_1(){
     };
 }
 
+// Called by CPUFactory
+void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
+{
+    auto bind_ports =
+        [root_node] (const std::string & left, const std::string & right) {
+            sparta::bind(root_node->getChildAs<sparta::Port>(left),
+                         root_node->getChildAs<sparta::Port>(right));
+        };
+
+    // For each core, hook up the Dispatch/FlushManager block to the Execution
+    // pipes based on that core's topology.
+    for(uint32_t core_num = 0; core_num < num_cores; ++core_num)
+    {
+        const std::string core_node = "cpu.core"+std::to_string(core_num);
+        const auto dispatch_ports     = core_node + ".dispatch.ports";
+        const auto flushmanager_ports = core_node + ".flushmanager.ports";
+
+        auto execution_topology = olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
+        for (auto exe_unit_pair : execution_topology)
+        {
+            const auto tgt_name   = exe_unit_pair[0];
+            const auto unit_count = exe_unit_pair[1];
+            const auto exe_idx    = (unsigned int) std::stoul(unit_count);
+            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
+            for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
+            {
+                const std::string unit_name = tgt_name + std::to_string(unit_num);
+
+                // Bind credits
+                const std::string exe_credits_out =
+                    core_node + ".execute." + unit_name + ".ports.out_scheduler_credits";
+                const std::string disp_credits_in = dispatch_ports + ".in_" + unit_name + "_credits";
+                bind_ports(exe_credits_out, disp_credits_in);
+
+                // Bind instruction transfer
+                const std::string exe_inst_in   =
+                    core_node + ".execute." + unit_name + ".ports.in_execute_write";
+                const std::string disp_inst_out = dispatch_ports + ".out_" + unit_name + "_write";
+                bind_ports(exe_inst_in, disp_inst_out);
+
+                // Bind flushing
+                const std::string exe_flush_in =
+                    core_node + ".execute." +  unit_name + ".ports.in_reorder_flush";;
+                const std::string flush_manager = flushmanager_ports + ".out_retire_flush";
+                bind_ports(exe_flush_in, flush_manager);
+            }
+        }
+    }
+}
+
 /**
  * @br0ief Static method to allocate memory for topology
  */
-auto olympia::CPUTopology::allocateTopology(const std::string& topology) -> olympia::CPUTopology*{
-    CPUTopology* new_topology {nullptr};
-    if(topology == "core_topology_1"){
-        new_topology = new olympia::CoreTopology_1();
+std::unique_ptr<olympia::CPUTopology> olympia::CPUTopology::allocateTopology(const std::string& topology)
+{
+    std::unique_ptr<CPUTopology> new_topology;
+    if(topology == "simple"){
+        new_topology.reset(new olympia::CoreTopologySimple());
     }
     else{
-        throw sparta::SpartaException("This topology in unrecognized.");
+        throw sparta::SpartaException("This topology in unrecognized: ") << topology;
     }
-    sparta_assert(new_topology);
+    sparta_assert(nullptr != new_topology);
     return new_topology;
 }

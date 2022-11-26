@@ -35,16 +35,19 @@ namespace olympia
     public:
         using PtrType = sparta::SpartaSharedPointer<InstArchInfo>;
 
-        enum class TargetUnit : std::uint16_t{
+        enum TargetUnit : std::uint16_t{
             ALU,
             FPU,
             BR,
             LSU,
             ROB, // Instructions that go right to retire
-            N_TARGET_UNITS,
-            UNKNOWN = N_TARGET_UNITS
+            NONE,
+            UNKNOWN = NONE
         };
+        static constexpr uint32_t N_TARGET_UNITS = static_cast<uint32_t>(TargetUnit::UNKNOWN);
+
         using TargetUnitMap = std::map<std::string, TargetUnit>;
+        static const TargetUnitMap dispatch_target_map;
 
         // Called by Mavis during its initialization
         explicit InstArchInfo(const nlohmann::json& jobj)
@@ -88,8 +91,8 @@ namespace olympia
             case InstArchInfo::TargetUnit::ROB:
                 os << "ROB";
                 break;
-            case InstArchInfo::TargetUnit::N_TARGET_UNITS:
-                throw sparta::SpartaException("N_TARGET_UNITS cannot be a valid enum state.");
+            case InstArchInfo::TargetUnit::UNKNOWN:
+                throw sparta::SpartaException("Got UNKNOWN/NONE target unit.");
         }
         return os;
     }

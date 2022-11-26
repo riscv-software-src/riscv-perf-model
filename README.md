@@ -1,12 +1,21 @@
 # olympia
 
-An extraction of the Map/Sparta Example Performance Model based on the
-Sparta Modeling Framework, Olympia is a fully-featured OoO RISC-V CPU
-performance model for the RISC-V community.
+Olympia is a Performance Model for the RISC-V community as an
+_example_ of an Out-of-Order RISC-V CPU Performance Model based on the
+[Sparta Modeling
+Framework](https://github.com/sparcians/map/tree/master/sparta).
 
-Olympia is a _trace-driven_ simulator running instructions streams
-defined in either JSON format or
-[STF](https://github.com/sparcians/stf_spec).
+Olympia's intent is to provide a basis for RISC-V CPU development
+enabling the community to build upon Olympia, extending its
+functionality in areas like branch prediction, prefetching/caching
+concepts, application profiling, middle-core design, etc.
+
+Currently, Olympia is a _trace-driven_ simulator running instructions
+streams provided in either [JSON
+format](https://github.com/riscv-software-src/riscv-perf-model/tree/master/traces#json-inputs)
+or [STF](https://github.com/sparcians/stf_spec).  However, extending
+Olympia with a functional back-end to run applications natively is
+under development.
 
 # Build Directions
 
@@ -51,15 +60,13 @@ make regress
 
 # Limitations
 
-1. Rename doesn't actually rename.  In fact, there are no operand
-dependencies supported... yet.  (This work to be done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
-1. The model's topology is "fixed" meaning that a user cannot change
-fundamental attributes like number of ALU units, FPU, LS, etc (This work to be done)[https://github.com/riscv-software-src/riscv-perf-model/issues/5]
-
+Rename doesn't actually rename.  In fact, there are no operand
+dependencies supported... yet.  (This work to be
+done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
 
 # Example Usage
 
-## Get help messages
+## Get Help Messages
 ```
 ./olympia --help                  # Full help
 ./olympia --help-brief            # Brief help
@@ -67,7 +74,7 @@ fundamental attributes like number of ALU units, FPU, LS, etc (This work to be d
 ./olympia --help-topic parameters # Help on parameters
 ```
 
-## Get simulation layout
+## Get Simulation Layout
 ```
 ./olympia --show-tree       --no-run # Show the full tree; do not run the simulator
 ./olympia --show-parameters --no-run # Show the parameter tree; do not run the simulator
@@ -92,7 +99,7 @@ fundamental attributes like number of ALU units, FPU, LS, etc (This work to be d
 ./olympia ../traces/dhrystone.zstf --report-all dhry_report.out
 ```
 
-## Generate and consume Configuration Files
+## Generate and Consume Configuration Files
 
 ```
 # Generate a baseline config
@@ -106,7 +113,7 @@ dyff between baseline.yaml always_hit_DL1.yaml
 ./olympia -c always_hit_DL1.yaml -i1M ../traces/dhrystone.zstf
 ```
 
-## Generate logs
+## Generate Logs
 ```
 # Log of all messages, different outputs
 ./olympia -i1K --auto-summary off ../traces/dhrystone.zstf \
@@ -121,7 +128,7 @@ dyff between baseline.yaml always_hit_DL1.yaml
    -l top.*.*.decode info decode_rob.log \
    -l top.*.*.rob    info decode_rob.log
 ```
-## Generate reports
+## Generate Reports
 ```
 # Run with 1M instructions, generate a report from the top of the tree
 # with stats that are not hidden; turn off the auto reporting
@@ -141,7 +148,7 @@ cat reports/core_stats.yaml
 ./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
 ```
 
-## Generate more complex reports
+## Generate More Complex Reports
 ```
 # Using a report definition file, program the report collection to
 # start after 500K instructions
@@ -165,7 +172,24 @@ cat reports/core_timeseries.def
 python3 ./reports/plot_ts.y my_report_time_series_all.csv
 ```
 
-## Generate and view a pipeout
+## Experimenting with Architectures
+```
+# By default, olympia uses the small_core architecture
+./olympia -i1M  ../traces/dhrystone.zstf --auto-summary off --report-all report_small.out
+
+# Use the medium sized core
+cat arches/medium_core.yaml  # Example the medium core
+./olympia -i1M  ../traces/dhrystone.zstf --arch medium_core --auto-summary off --report-all report_medium.out
+diff -y -W 150 report_small.out report_medium.out
+
+# Use the big core
+cat arches/big_core.yaml  # Example the medium core
+./olympia -i1M  ../traces/dhrystone.zstf --arch big_core --auto-summary off --report-all report_big.out
+diff -y -W 150 report_medium.out report_big.out
+
+```
+
+## Generate and View a Pipeout
 ```
 ./olympia -i1M ../traces/dhrystone.zstf --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
 

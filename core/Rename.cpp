@@ -90,7 +90,7 @@ namespace olympia
             for(uint32_t i = 0; i < num_rename; ++i) {
                 insts->emplace_back(uop_queue_.read(0));
                 if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << ": sending inst to dispatch: " << uop_queue_.read(0);
+                    info_logger_ << "Renamed: " << uop_queue_.read(0);
                 }
                 uop_queue_.pop();
             }

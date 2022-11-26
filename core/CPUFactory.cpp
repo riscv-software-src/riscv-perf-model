@@ -20,9 +20,9 @@ olympia::CPUFactory::~CPUFactory() = default;
  * @brief Set the user-defined topology for this microarchitecture
  */
 auto olympia::CPUFactory::setTopology(const std::string& topology,
-                                           const uint32_t num_cores) -> void{
+                                      const uint32_t num_cores) -> void{
     sparta_assert(!topology_);
-    topology_.reset(olympia::CPUTopology::allocateTopology(topology));
+    topology_ = olympia::CPUTopology::allocateTopology(topology);
     topology_->setName(topology);
     topology_->setNumCores(num_cores);
 }
@@ -56,6 +56,12 @@ auto olympia::CPUFactory::buildTree_(sparta::RootTreeNode* root_node,
             }
             to_delete_.emplace_back(rtn);
             resource_names_.emplace_back(node_name);
+            // Add an extensions factory to create CoreExtensions when
+            // encountered in a YAML topo file.  This class establishes the
+            // type of the parameters defined in the CoreExtensions.  If not
+            // defined, any unknown extensions are considered pure strings.
+            rtn->addExtensionFactory(olympia::CoreExtensions::name,
+                                     [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
         }
     }
 }
@@ -67,8 +73,10 @@ auto olympia::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
                                     const std::vector<olympia::CPUTopology::PortConnectionInfo>& ports) -> void
 {
     std::string out_port_name, in_port_name,replace_with;
-    for(std::size_t num_of_cores = 0; num_of_cores < topology_->num_cores; ++num_of_cores){
-        for(const auto& port : ports){
+    for(std::size_t num_of_cores = 0; num_of_cores < topology_->num_cores; ++num_of_cores)
+    {
+        for(const auto& port : ports)
+        {
             out_port_name = port.output_port_name;
             in_port_name = port.input_port_name;
             replace_with = std::to_string(num_of_cores);
@@ -105,6 +113,7 @@ auto olympia::CPUFactory::bindTree(sparta::RootTreeNode* root_node) -> void
 {
     sparta_assert(topology_);
     bindTree_(root_node, topology_->port_connections);
+    topology_->bindTree(root_node);
 }
 
 /**

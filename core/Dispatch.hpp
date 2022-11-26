@@ -1,6 +1,4 @@
 // <Dispatch.h> -*- C++ -*-
-
-
 #pragma once
 
 #include <string>
@@ -20,6 +18,7 @@
 
 #include "test/ContextCounter/WeightedContextCounter.hpp"
 
+#include "Dispatcher.hpp"
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
@@ -62,11 +61,13 @@ namespace olympia
          * register the TypedPorts that this unit will need to perform
          * work.
          */
-        Dispatch(sparta::TreeNode * node,
-               const DispatchParameterSet * p);
+        Dispatch(sparta::TreeNode * node, const DispatchParameterSet * p);
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
+
+        //! \brief Called by the Dispatchers to indicate when they are ready
+        void scheduleDispatchSession();
 
     private:
         InstQueue dispatch_queue_;
@@ -74,17 +75,19 @@ namespace olympia
         // Ports
         sparta::DataInPort<InstGroupPtr>           in_dispatch_queue_write_   {&unit_port_set_, "in_dispatch_queue_write", 1};
         sparta::DataOutPort<uint32_t>              out_dispatch_queue_credits_{&unit_port_set_, "out_dispatch_queue_credits"};
-        sparta::DataOutPort<InstQueue::value_type> out_fpu_write_             {&unit_port_set_, "out_fpu0_write"};
-        sparta::DataOutPort<InstQueue::value_type> out_alu_write_             {&unit_port_set_, "out_alu0_write", false}; // Do not assume zero-cycle delay
-        sparta::DataOutPort<InstQueue::value_type> out_br_write_              {&unit_port_set_, "out_br0_write", false}; // Do not assume zero-cycle delay
-        sparta::DataOutPort<InstQueue::value_type> out_lsu_write_             {&unit_port_set_, "out_lsu_write", false};
-        sparta::DataOutPort<InstGroupPtr>          out_reorder_write_         {&unit_port_set_, "out_reorder_buffer_write"};
 
-        sparta::DataInPort<uint32_t> in_fpu_credits_ {&unit_port_set_,    "in_fpu0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_alu_credits_ {&unit_port_set_,    "in_alu0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_br_credits_ {&unit_port_set_,     "in_br0_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_lsu_credits_ {&unit_port_set_,    "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<uint32_t> in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
+        // Dynamic ports for execution resources (based on core
+        // extension's execution_topology)
+        std::vector<std::unique_ptr<sparta::DataInPort<uint32_t>>>               in_credit_ports_;
+        std::vector<std::unique_ptr<sparta::DataOutPort<InstQueue::value_type>>> out_inst_ports_;
+
+        sparta::DataInPort<uint32_t>               in_lsu_credits_    {&unit_port_set_, "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
+        sparta::DataOutPort<InstQueue::value_type> out_lsu_write_     {&unit_port_set_, "out_lsu_write", false};
+        sparta::DataInPort<uint32_t>               in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
+        sparta::DataOutPort<InstGroupPtr>          out_reorder_write_ {&unit_port_set_, "out_reorder_buffer_write"};
+
+        std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
+        InstArchInfo::TargetUnit blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
@@ -96,19 +99,11 @@ namespace olympia
 
         const uint32_t num_to_dispatch_;
         uint32_t credits_rob_ = 0;
-        uint32_t credits_fpu_ = 0;
-        uint32_t credits_alu_ = 0;
-        uint32_t credits_br_ = 0;
-        uint32_t credits_lsu_ = 0;
 
         // Send rename initial credits
         void sendInitialCredits_();
 
         // Tick callbacks assigned to Ports -- zero cycle
-        void fpuCredits_ (const uint32_t&);
-        void aluCredits_(const uint32_t&);
-        void brCredits_(const uint32_t&);
-        void lsuCredits_ (const uint32_t&);
         void robCredits_(const uint32_t&);
 
         // Dispatch instructions
@@ -121,54 +116,55 @@ namespace olympia
         ///////////////////////////////////////////////////////////////////////
         // Stall counters
         enum StallReason {
+            ALU_BUSY = InstArchInfo::TargetUnit::ALU, // Could not send any or all instructions -- ALU busy
+            FPU_BUSY = InstArchInfo::TargetUnit::FPU, // Could not send any or all instructions -- FPU busy
+            BR_BUSY  = InstArchInfo::TargetUnit::BR,  // Could not send any or all instructions -- BR busy
+            LSU_BUSY = InstArchInfo::TargetUnit::LSU,
+            NO_ROB_CREDITS = InstArchInfo::TargetUnit::ROB,  // No credits from the ROB
             NOT_STALLED,     // Made forward progress (dipatched all instructions or no instructions)
-            NO_ROB_CREDITS,  // No credits from the ROB
-            ALU_BUSY,       // Could not send any or all instructions -- ALU busy
-            FPU_BUSY,        // Could not send any or all instructions -- FPU busy
-            LSU_BUSY,
-            BR_BUSY,       // Could not send any or all instructions -- BR busy
             N_STALL_REASONS
         };
 
         StallReason current_stall_ = NOT_STALLED;
+        friend std::ostream&operator<<(std::ostream &, const Dispatch::StallReason &);
 
         // Counters -- this is only supported in C++11 -- uses
         // Counter's move semantics
         std::array<sparta::CycleCounter, N_STALL_REASONS> stall_counters_{{
-            sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
-                               "Dispatch not stalled, all instructions dispatched",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
-                               "No credits from ROB",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_alu_busy",
-                               "ALU busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_fpu_busy",
-                               "FPU busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_lsu_busy",
-                               "LSU busy",
-                               sparta::Counter::COUNT_NORMAL, getClock()),
-            sparta::CycleCounter(getStatisticSet(), "stall_br_busy",
-                               "BR busy",
-                               sparta::Counter::COUNT_NORMAL, getClock())
-        }};
+                sparta::CycleCounter(getStatisticSet(), "stall_alu_busy",
+                                     "ALU busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_fpu_busy",
+                                     "FPU busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_br_busy",
+                                     "BR busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_lsu_busy",
+                                     "LSU busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
+                                     "No credits from ROB",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
+                                     "Dispatch not stalled, all instructions dispatched",
+                                     sparta::Counter::COUNT_NORMAL, getClock())
+            }};
 
         std::array<sparta::Counter,
-                   static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS)>
+                   InstArchInfo::N_TARGET_UNITS>
         unit_distribution_ {{
-            sparta::Counter(getStatisticSet(), "count_alu_insts",
-                          "Total ALU insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_fpu_insts",
-                          "Total FPU insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_br_insts",
-                          "Total BR insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_lsu_insts",
-                          "Total LSU insts", sparta::Counter::COUNT_NORMAL),
-            sparta::Counter(getStatisticSet(), "count_rob_insts",
-                          "Total ROB insts", sparta::Counter::COUNT_NORMAL)
-        }};
+                sparta::Counter(getStatisticSet(), "count_alu_insts",
+                                "Total ALU insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_fpu_insts",
+                                "Total FPU insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_br_insts",
+                                "Total BR insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_lsu_insts",
+                                "Total LSU insts", sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_rob_insts",
+                                "Total ROB insts", sparta::Counter::COUNT_NORMAL)
+            }};
 
         // As an example, this is a context counter that does the same
         // thing as the unit_distribution counter, albeit a little
@@ -177,7 +173,7 @@ namespace olympia
         {getStatisticSet(),
                 "count_insts_per_unit",
                 "Unit distributions",
-                static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS),
+                InstArchInfo::N_TARGET_UNITS,
                 "dispatch_inst_count",
                 sparta::Counter::COUNT_NORMAL,
                 sparta::InstrumentationNode::VIS_NORMAL};
@@ -191,7 +187,7 @@ namespace olympia
             getStatisticSet(),
             "weighted_count_insts_per_unit",
             "Weighted unit distributions",
-            static_cast<uint32_t>(InstArchInfo::TargetUnit::N_TARGET_UNITS),
+            InstArchInfo::N_TARGET_UNITS,
             sparta::CounterBase::COUNT_NORMAL,
             sparta::InstrumentationNode::VIS_NORMAL
         };
@@ -219,4 +215,32 @@ namespace olympia
 
     using DispatchFactory = sparta::ResourceFactory<olympia::Dispatch,
                                                     olympia::Dispatch::DispatchParameterSet>;
+
+    inline std::ostream&operator<<(std::ostream &os, const Dispatch::StallReason & stall)
+    {
+        switch(stall)
+        {
+            case Dispatch::StallReason::NOT_STALLED:
+                os << "NOT_STALLED";
+                break;
+            case Dispatch::StallReason::NO_ROB_CREDITS:
+                os << "NO_ROB_CREDITS";
+                break;
+            case Dispatch::StallReason::ALU_BUSY:
+                os << "ALU_BUSY";
+                break;
+            case Dispatch::StallReason::FPU_BUSY:
+                os << "FPU_BUSY";
+                break;
+            case Dispatch::StallReason::LSU_BUSY:
+                os << "LSU_BUSY";
+                break;
+            case Dispatch::StallReason::BR_BUSY:
+                os << "BR_BUSY";
+                break;
+            case Dispatch::StallReason::N_STALL_REASONS:
+                sparta_assert(false, "How'd we get here?");
+        }
+        return os;
+    }
 }

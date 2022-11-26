@@ -57,7 +57,7 @@ namespace olympia
             fetch_queue_.push(i);
 
             if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                info_logger_ << "Got inst: " << i;
+                info_logger_ << "Received: " << i;
             }
         }
         if (uop_queue_credits_ > 0) {
@@ -90,7 +90,7 @@ namespace olympia
                 insts->emplace_back(fetch_queue_.read(0));
 
                 if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "Decoded inst: " << fetch_queue_.read(0);
+                    info_logger_ << "Decoded: " << fetch_queue_.read(0);
                 }
 
                 fetch_queue_.pop();

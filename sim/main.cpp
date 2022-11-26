@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
         // Create the simulator
         sparta::Scheduler scheduler;
-        OlympiaSim sim("core_topology_1",
+        OlympiaSim sim("core_topology_simple",
                        scheduler,
                        num_cores, // cores
                        workload,

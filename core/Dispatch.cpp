@@ -39,7 +39,7 @@ namespace olympia
             const auto unit_count = exe_unit_pair[1];
 
             const auto exe_idx = (unsigned int) std::stoul(unit_count);
-            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << name);
+            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
             for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
             {
                 const std::string unit_name = tgt_name + std::to_string(unit_num);

@@ -6,7 +6,7 @@
 /**
  * @br0ief Constructor for CPUTopology_1
  */
-olympia::CoreTopology_1::CoreTopology_1(){
+olympia::CoreTopologySimple::CoreTopologySimple(){
 
     //! Instantiating units of this topology
     units = {
@@ -59,26 +59,10 @@ olympia::CoreTopology_1::CoreTopology_1(){
             &factories->dispatch_rf
         },
         {
-            "alu",
+            "execute",
             "cpu.core*",
-            "ALU0 Unit",
-            "alu",
-            0,
-            &factories->execute_rf
-        },
-        {
-            "fpu",
-            "cpu.core*",
-            "FPU Unit",
-            "fpu",
-            0,
-            &factories->execute_rf
-        },
-        {
-            "br",
-            "cpu.core*",
-            "BR0 Unit",
-            "br",
+            "Execution Pipes",
+            "execute",
             0,
             &factories->execute_rf
         },
@@ -168,30 +152,6 @@ olympia::CoreTopology_1::CoreTopology_1(){
             "cpu.core*.dispatch.ports.out_dispatch_queue_credits"
         },
         {
-            "cpu.core*.dispatch.ports.out_fpu0_write",
-            "cpu.core*.fpu0.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_fpu0_credits",
-            "cpu.core*.fpu0.ports.out_scheduler_credits"
-        },
-        {
-            "cpu.core*.dispatch.ports.out_alu0_write",
-            "cpu.core*.alu0.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_alu0_credits",
-            "cpu.core*.alu0.ports.out_scheduler_credits"
-        },
-        {
-            "cpu.core*.dispatch.ports.out_br0_write",
-            "cpu.core*.br0.ports.in_execute_write"
-        },
-        {
-            "cpu.core*.dispatch.ports.in_br0_credits",
-            "cpu.core*.br0.ports.out_scheduler_credits"
-        },
-        {
             "cpu.core*.dispatch.ports.out_lsu_write",
             "cpu.core*.lsu.ports.in_lsu_insts"
         },
@@ -237,14 +197,6 @@ olympia::CoreTopology_1::CoreTopology_1(){
         },
         {
             "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.alu0.ports.in_reorder_flush"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
-            "cpu.core*.fpu0.ports.in_reorder_flush"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
             "cpu.core*.dispatch.ports.in_reorder_flush"
         },
         {
@@ -273,14 +225,15 @@ olympia::CoreTopology_1::CoreTopology_1(){
 /**
  * @br0ief Static method to allocate memory for topology
  */
-auto olympia::CPUTopology::allocateTopology(const std::string& topology) -> olympia::CPUTopology*{
-    CPUTopology* new_topology {nullptr};
-    if(topology == "core_topology_1"){
-        new_topology = new olympia::CoreTopology_1();
+std::unique_ptr<olympia::CPUTopology> olympia::CPUTopology::allocateTopology(const std::string& topology)
+{
+    std::unique_ptr<CPUTopology> new_topology;
+    if(topology == "core_topology_simple"){
+        new_topology.reset(new olympia::CoreTopologySimple());
     }
     else{
         throw sparta::SpartaException("This topology in unrecognized.");
     }
-    sparta_assert(new_topology);
+    sparta_assert(nullptr != new_topology);
     return new_topology;
 }

@@ -1,0 +1,12 @@
+
+#
+# Set up the pipeline for a 2-wide machine
+#
+#top.cpu:
+#  dispatch.num_to_dispatch: 2
+
+top.extension.core_extensions:
+  execution_topology:
+    [["alu", "10"],
+     ["fpu", "10"],
+     ["br",  "10"]]

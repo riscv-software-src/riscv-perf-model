@@ -20,9 +20,9 @@ olympia::CPUFactory::~CPUFactory() = default;
  * @brief Set the user-defined topology for this microarchitecture
  */
 auto olympia::CPUFactory::setTopology(const std::string& topology,
-                                           const uint32_t num_cores) -> void{
+                                      const uint32_t num_cores) -> void{
     sparta_assert(!topology_);
-    topology_.reset(olympia::CPUTopology::allocateTopology(topology));
+    topology_ = olympia::CPUTopology::allocateTopology(topology);
     topology_->setName(topology);
     topology_->setNumCores(num_cores);
 }

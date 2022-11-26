@@ -7,6 +7,7 @@ add_library(core
   Dispatch.cpp
   Dispatcher.cpp
   Execute.cpp
+  ExecutePipe.cpp
   Inst.cpp
   InstArchInfo.cpp
   InstGroup.cpp

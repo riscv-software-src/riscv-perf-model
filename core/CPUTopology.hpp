@@ -75,7 +75,7 @@ namespace olympia{
         //! \brief Structure to represent a port binding between units in device tree
         struct PortConnectionInfo{
 
-            //! Out port name of unit_1
+            //! Out port name of unit
             std::string output_port_name;
 
             //! In port name of next unit, unit_2
@@ -112,7 +112,7 @@ namespace olympia{
         /**
          * @brief Static method to allocate memory for topology
          */
-        static auto allocateTopology(const std::string& topology) -> CPUTopology*;
+        static std::unique_ptr<CPUTopology> allocateTopology(const std::string& topology);
 
         //! Public members used by CPUFactory to build and bind tree
         uint32_t num_cores = 1;
@@ -165,14 +165,14 @@ namespace olympia{
     };
 
     /**
-     * @brief CoreTopology_1 topology class
+     * @brief CoreTopologySimple topology class
      */
-    class CoreTopology_1 : public CPUTopology
+    class CoreTopologySimple : public CPUTopology
     {
     public:
         /**
          * @brief Constructor for CPUTopology
          */
-        CoreTopology_1();
-    }; // class CoreTopology_1
+        CoreTopologySimple();
+    }; // class CoreTopologySimple
 }  // namespace olympia

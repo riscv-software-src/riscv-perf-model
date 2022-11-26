@@ -95,6 +95,9 @@ namespace olympia{
          */
         CPUTopology() : factories{new CPUFactories()}{}
 
+        //! Virtual destructor
+        virtual ~CPUTopology() {}
+
         /**
          * @brief Set the name for this topoplogy
          */
@@ -113,6 +116,9 @@ namespace olympia{
          * @brief Static method to allocate memory for topology
          */
         static std::unique_ptr<CPUTopology> allocateTopology(const std::string& topology);
+
+        //! Post binding/final setup specific to a topology
+        virtual void bindTree(sparta::RootTreeNode* root_node) {}
 
         //! Public members used by CPUFactory to build and bind tree
         uint32_t num_cores = 1;
@@ -174,5 +180,9 @@ namespace olympia{
          * @brief Constructor for CPUTopology
          */
         CoreTopologySimple();
+
+        // Do some last-minute binding.  Called by CPUFactories
+        void bindTree(sparta::RootTreeNode* root_node) override final;
+
     }; // class CoreTopologySimple
 }  // namespace olympia

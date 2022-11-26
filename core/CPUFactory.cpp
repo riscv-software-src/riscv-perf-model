@@ -73,8 +73,10 @@ auto olympia::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
                                     const std::vector<olympia::CPUTopology::PortConnectionInfo>& ports) -> void
 {
     std::string out_port_name, in_port_name,replace_with;
-    for(std::size_t num_of_cores = 0; num_of_cores < topology_->num_cores; ++num_of_cores){
-        for(const auto& port : ports){
+    for(std::size_t num_of_cores = 0; num_of_cores < topology_->num_cores; ++num_of_cores)
+    {
+        for(const auto& port : ports)
+        {
             out_port_name = port.output_port_name;
             in_port_name = port.input_port_name;
             replace_with = std::to_string(num_of_cores);
@@ -111,6 +113,7 @@ auto olympia::CPUFactory::bindTree(sparta::RootTreeNode* root_node) -> void
 {
     sparta_assert(topology_);
     bindTree_(root_node, topology_->port_connections);
+    topology_->bindTree(root_node);
 }
 
 /**

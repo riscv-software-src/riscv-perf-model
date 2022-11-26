@@ -39,31 +39,4 @@ namespace olympia
             }
         }
     }
-
-
-    void ExecuteFactory::bindLate (sparta::TreeNode *node)
-    {
-        auto bind_ports =
-            [node] (const std::string & left, const std::string & right) {
-                sparta::bind(node->getParent()->getChildAs<sparta::Port>(left),
-                             node->getParent()->getChildAs<sparta::Port>(right));
-            };
-
-        // Bind all of the pipes created to Dispatch and Flushmanager
-        for(auto & exe_pipe_rtn : exe_pipe_tns_)
-        {
-            const std::string exe_credits_out = "execute." + exe_pipe_rtn->getName() +
-                ".ports.out_scheduler_credits";
-            const std::string disp_credits_in = "dispatch.ports.in_" + exe_pipe_rtn->getName() + "_credits";
-            bind_ports(exe_credits_out, disp_credits_in);
-
-            const std::string exe_inst_in   = "execute." + exe_pipe_rtn->getName() + ".ports.in_execute_write";
-            const std::string disp_inst_out = "dispatch.ports.out_" + exe_pipe_rtn->getName() + "_write";
-            bind_ports(exe_inst_in, disp_inst_out);
-
-            const std::string exe_flush_in = "execute." +  exe_pipe_rtn->getName() + ".ports.in_reorder_flush";;
-            const std::string flush_manager = "flushmanager.ports.out_retire_flush";
-            bind_ports(exe_flush_in, flush_manager);
-        }
-    }
 }

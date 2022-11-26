@@ -1,6 +1,8 @@
 // <CPUTopology.cpp> -*- C++ -*-
 
 #include "CPUTopology.hpp"
+#include "CoreUtils.hpp"
+
 #include "sparta/utils/SpartaException.hpp"
 
 /**
@@ -220,6 +222,56 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
         }
     };
+}
+
+// Called by CPUFactory
+void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
+{
+    auto bind_ports =
+        [root_node] (const std::string & left, const std::string & right) {
+            sparta::bind(root_node->getChildAs<sparta::Port>(left),
+                         root_node->getChildAs<sparta::Port>(right));
+        };
+
+    // For each core, hook up the Dispatch/FlushManager block to the Execution
+    // pipes based on that core's topology.
+    for(uint32_t core_num = 0; core_num < num_cores; ++core_num)
+    {
+        const std::string core_node = "cpu.core"+std::to_string(core_num);
+        const auto dispatch_ports     = core_node + ".dispatch.ports";
+        const auto flushmanager_ports = core_node + ".flushmanager.ports";
+
+        auto execution_topology = olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
+        for (auto exe_unit_pair : execution_topology)
+        {
+            const auto tgt_name   = exe_unit_pair[0];
+            const auto unit_count = exe_unit_pair[1];
+            const auto exe_idx    = (unsigned int) std::stoul(unit_count);
+            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
+            for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
+            {
+                const std::string unit_name = tgt_name + std::to_string(unit_num);
+
+                // Bind credits
+                const std::string exe_credits_out =
+                    core_node + ".execute." + unit_name + ".ports.out_scheduler_credits";
+                const std::string disp_credits_in = dispatch_ports + ".in_" + unit_name + "_credits";
+                bind_ports(exe_credits_out, disp_credits_in);
+
+                // Bind instruction transfer
+                const std::string exe_inst_in   =
+                    core_node + ".execute." + unit_name + ".ports.in_execute_write";
+                const std::string disp_inst_out = dispatch_ports + ".out_" + unit_name + "_write";
+                bind_ports(exe_inst_in, disp_inst_out);
+
+                // Bind flushing
+                const std::string exe_flush_in =
+                    core_node + ".execute." +  unit_name + ".ports.in_reorder_flush";;
+                const std::string flush_manager = flushmanager_ports + ".out_retire_flush";
+                bind_ports(exe_flush_in, flush_manager);
+            }
+        }
+    }
 }
 
 /**

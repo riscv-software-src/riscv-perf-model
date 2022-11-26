@@ -53,14 +53,6 @@ link_directories (
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 
-# Remove -pedantic from the STF compiler options -- issues with clang
-# on MacOS and variatic macros (like SPARTA_ADDPAIR)
-if (CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
-  get_target_property(_target_cxx_flags olympia COMPILE_OPTIONS)
-  list(REMOVE_ITEM _target_cxx_flags -pedantic)
-  set_target_properties(olympia PROPERTIES COMPILE_OPTIONS "${_target_cxx_flags}")
-endif()
-
 # Include directories
 include_directories (core mss)
 include_directories (SYSTEM mavis)

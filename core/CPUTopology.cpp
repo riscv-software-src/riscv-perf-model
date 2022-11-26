@@ -228,11 +228,11 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
 std::unique_ptr<olympia::CPUTopology> olympia::CPUTopology::allocateTopology(const std::string& topology)
 {
     std::unique_ptr<CPUTopology> new_topology;
-    if(topology == "core_topology_simple"){
+    if(topology == "simple"){
         new_topology.reset(new olympia::CoreTopologySimple());
     }
     else{
-        throw sparta::SpartaException("This topology in unrecognized.");
+        throw sparta::SpartaException("This topology in unrecognized: ") << topology;
     }
     sparta_assert(nullptr != new_topology);
     return new_topology;

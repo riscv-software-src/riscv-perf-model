@@ -223,6 +223,11 @@ namespace olympia
                 break;
             }
         }
+        for (auto & dispatchers : dispatchers_) {
+            for(auto & disp : dispatchers) {
+                disp->reset();
+            }
+        }
 
         if(!insts_dispatched->empty()) {
             out_dispatch_queue_credits_.send(static_cast<uint32_t>(insts_dispatched->size()));

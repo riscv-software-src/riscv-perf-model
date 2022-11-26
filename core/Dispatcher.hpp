@@ -49,22 +49,31 @@ namespace olympia
 
         // Can this dispatcher accept a new instruction?
         bool canAccept() const {
-            return unit_credits_ != 0;
+            // The dispatcher must be have enough credits in the
+            // execution pipe AND still has bandwidth
+            return (unit_credits_ != 0) && (num_can_dispatch_ != 0);
         }
 
         // Have this dispatcher accecpt the new instruction
         void acceptInst(const InstPtr & inst) {
             sparta_assert(unit_credits_ != 0, "Dispatcher " << name_
-                          << " cannot accept the given instruction: " << inst);
+                          << " cannot accept the given instruction (not enough credits): " << inst);
+            sparta_assert(num_can_dispatch_ != 0, "Dispatcher " << name_
+                          << " cannot accept the given instruction (already accepted an instruction)");
             if(SPARTA_EXPECT_FALSE(info_logger_)) {
                 info_logger_ << name_ << ": dispatching " << inst;
             }
             out_inst_->send(inst);
             --unit_credits_;
+            --num_can_dispatch_;
         }
+
+        // Reset the bandwidth
+        void reset() { num_can_dispatch_ = 1; }
 
     private:
         uint32_t unit_credits_ = 0;
+        uint32_t num_can_dispatch_ = 1;
 
         const std::string            name_;
         Dispatch                   * dispatch_ = nullptr;

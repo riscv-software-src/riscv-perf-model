@@ -34,7 +34,7 @@ namespace olympia
                                                                         unit_name,
                                                                         tgt_name,
                                                                         unit_num,
-                                                                        std::string(unit_num + " Execution Pipe"),
+                                                                        std::string(unit_name + " Execution Pipe"),
                                                                         &exe_pipe_fact_));
             }
         }

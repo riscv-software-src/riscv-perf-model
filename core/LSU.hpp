@@ -23,6 +23,7 @@
 #include "FlushManager.hpp"
 #include "SimpleTLB.hpp"
 #include "SimpleDL1.hpp"
+#include "LogUtils.hpp"
 
 namespace olympia
 {
@@ -66,16 +67,14 @@ namespace olympia
         LSU(sparta::TreeNode* node, const LSUParameterSet* p);
 
         ~LSU() {
-            debug_logger_ << getContainer()->getLocation()
-                          << ": "
-                          << load_store_info_allocator.getNumAllocated()
-                          << " LoadStoreInstInfo objects allocated/created"
-                          << std::endl;
-            debug_logger_ << getContainer()->getLocation()
-                          << ": "
-                          << memory_access_allocator.getNumAllocated()
-                          << " MemoryAccessInfo objects allocated/created"
-                          << std::endl;
+            DLOG(getContainer()->getLocation()
+                 << ": "
+                 << load_store_info_allocator.getNumAllocated()
+                 << " LoadStoreInstInfo objects allocated/created");
+            DLOG(getContainer()->getLocation()
+                 << ": "
+                 << memory_access_allocator.getNumAllocated()
+                 << " MemoryAccessInfo objects allocated/created");
         }
 
         //! name of this resource.

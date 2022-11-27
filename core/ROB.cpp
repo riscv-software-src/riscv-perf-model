@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include "ROB.hpp"
+#include "LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
 namespace olympia
@@ -58,7 +59,7 @@ namespace olympia
     /// Destroy!
     ROB::~ROB() {
         // Logging can be done from destructors in the correct simulator setup
-        info_logger_ << "ROB is destructing now, but you can still see this message";
+        ILOG("ROB is destructing now, but you can still see this message");
     }
 
     void ROB::sendInitialCredits_()
@@ -73,9 +74,7 @@ namespace olympia
             ev_retire_.schedule(sparta::Clock::Cycle(1));
         }
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Retire event";
-        }
+        ILOG("Retire event");
     }
 
     // An illustration of the use of the callback -- instead of
@@ -87,9 +86,7 @@ namespace olympia
         }
 
         ev_retire_.schedule(sparta::Clock::Cycle(0));
-        if(info_logger_) {
-            info_logger_ << "Retire appended";
-        }
+        ILOG("Retire appended");
     }
 
     void ROB::handleFlush_(const FlushManager::FlushingCriteria &)
@@ -102,9 +99,7 @@ namespace olympia
     void ROB::retireInstructions_() {
         const uint32_t num_to_retire = std::min(reorder_buffer_.size(), num_to_retire_);
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Retire event, num to retire: " << num_to_retire;
-        }
+        ILOG("Retire event, num to retire: " << num_to_retire);
 
         uint32_t retired_this_cycle = 0;
         for(uint32_t i = 0; i < num_to_retire; ++i)
@@ -112,7 +107,7 @@ namespace olympia
             auto & ex_inst_ptr = reorder_buffer_.access(0);
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
-                        "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
+                          "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
             if(ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
@@ -125,9 +120,7 @@ namespace olympia
                 ++retired_this_cycle;
                 reorder_buffer_.pop();
 
-                if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "Retiring " << ex_inst;
-                }
+                ILOG("Retiring " << ex_inst);
 
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()
@@ -146,9 +139,7 @@ namespace olympia
                 // This is rare for the example
                 if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
                 {
-                    if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                        info_logger_ << "Instigating flush... " << ex_inst;
-                    }
+                    ILOG("Instigating flush... " << ex_inst);
                     // Signal flush to the system
                     out_retire_flush_.send(ex_inst.getUniqueID());
 

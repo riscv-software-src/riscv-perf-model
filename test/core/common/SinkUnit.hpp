@@ -2,6 +2,7 @@
 #pragma once
 
 #include "core/InstGenerator.hpp"
+#include "core/LogUtils.hpp"
 
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/statistics/StatisticSet.hpp"
@@ -56,11 +57,11 @@ namespace core_test
             if constexpr(std::is_same_v<InstType, olympia::InstGroupPtr>)
             {
                 for(auto ptr : *inst_or_insts) {
-                    info_logger_ << "Instruction: '" << ptr << "' sinked";
+                    ILOG("Instruction: '" << ptr << "' sinked");
                 }
             }
             else {
-                info_logger_ << "Instruction: '" << inst_or_insts << "' sinked";
+                ILOG("Instruction: '" << inst_or_insts << "' sinked");
             }
             ++credits_to_send_back_;
             ev_return_credits_.schedule(1);

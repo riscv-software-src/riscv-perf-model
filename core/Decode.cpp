@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "Decode.hpp"
+#include "LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
 namespace olympia
@@ -41,9 +42,7 @@ namespace olympia
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
         }
 
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Received credits: " << uop_queue_credits_in_;
-        }
+        ILOG("Received credits: " << uop_queue_credits_in_);
     }
 
     // Called when the fetch buffer was appended by Fetch.  If decode
@@ -55,10 +54,7 @@ namespace olympia
         for(auto & i : *insts)
         {
             fetch_queue_.push(i);
-
-            if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                info_logger_ << "Received: " << i;
-            }
+            ILOG("Received: " << i);
         }
         if (uop_queue_credits_ > 0) {
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
@@ -68,9 +64,7 @@ namespace olympia
     // Handle incoming flush
     void Decode::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got a flush call for " << criteria;
-        }
+        ILOG("Got a flush call for " << criteria);
         fetch_queue_credits_outp_.send(fetch_queue_.size());
         fetch_queue_.clear();
     }
@@ -89,9 +83,7 @@ namespace olympia
             for(uint32_t i = 0; i < num_decode; ++i) {
                 insts->emplace_back(fetch_queue_.read(0));
 
-                if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "Decoded: " << fetch_queue_.read(0);
-                }
+                ILOG("Decoded: " << fetch_queue_.read(0));
 
                 fetch_queue_.pop();
             }

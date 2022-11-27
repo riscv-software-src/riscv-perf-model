@@ -3,6 +3,7 @@
 #include "sparta/utils/SpartaAssert.hpp"
 
 #include "ExecutePipe.hpp"
+#include "LogUtils.hpp"
 
 namespace olympia
 {
@@ -31,9 +32,7 @@ namespace olympia
         // insturction latency)
         complete_inst_ >> issue_inst_;
 
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "ExecutePipe construct: #" << node->getGroupIdx();
-        }
+        ILOG("ExecutePipe construct: #" << node->getGroupIdx());
 
     }
 
@@ -86,10 +85,8 @@ namespace olympia
         const uint32_t exe_time =
             ignore_inst_execute_time_ ? execute_time_ : ex_inst.getExecuteTime();
         collected_inst_.collectWithDuration(ex_inst, exe_time);
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Executing: " << ex_inst << " for "
-                         << exe_time + getClock()->currentCycle();
-        }
+        ILOG("Executing: " << ex_inst << " for "
+             << exe_time + getClock()->currentCycle());
         sparta_assert(exe_time != 0);
 
         ++total_insts_issued_;
@@ -104,9 +101,7 @@ namespace olympia
 
     // Called by the scheduler, scheduled by complete_inst_.
     void ExecutePipe::completeInst_(const InstPtr & ex_inst) {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Completing inst: " << ex_inst;
-        }
+        ILOG("Completing inst: " << ex_inst);
 
         ex_inst->setStatus(Inst::Status::COMPLETED);
         // We're not busy anymore
@@ -123,9 +118,7 @@ namespace olympia
 
     void ExecutePipe::flushInst_(const FlushManager::FlushingCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got flush for criteria: " << criteria;
-        }
+        ILOG("Got flush for criteria: " << criteria);
 
         // Flush instructions in the ready queue
         ReadyQueue::iterator it = ready_queue_.begin();

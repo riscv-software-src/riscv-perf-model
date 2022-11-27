@@ -7,6 +7,8 @@
 #include "cache/SimpleCache2.hpp"
 #include "cache/ReplacementIF.hpp"
 
+#include "LogUtils.hpp"
+
 namespace olympia
 {
     class SimpleTLBEntry : public sparta::cache::BasicCacheItem
@@ -114,7 +116,7 @@ namespace olympia
 
         void touch(const SimpleTLBEntry& entry)
         {
-            debug_logger_ << "TLB HIT";
+            DLOG("TLB HIT");
             touchMRU(entry);
             hits++;
         }

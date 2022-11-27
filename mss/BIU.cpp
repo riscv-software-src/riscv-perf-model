@@ -2,6 +2,7 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
 #include "BIU.hpp"
+#include "LogUtils.hpp"
 
 namespace olympia_mss
 {
@@ -24,9 +25,7 @@ namespace olympia_mss
         in_mss_ack_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "BIU construct: #" << node->getGroupIdx();
-        }
+        ILOG("BIU construct: #" << node->getGroupIdx());
     }
 
 
@@ -53,9 +52,7 @@ namespace olympia_mss
             // BIU could potentially send another request to MSS before the busy flag is set
         }
         else {
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "This request cannot be serviced right now, MSS is already busy!";
-            }
+            ILOG("This request cannot be serviced right now, MSS is already busy!");
         }
     }
 
@@ -65,9 +62,7 @@ namespace olympia_mss
         biu_busy_ = true;
         out_mss_req_sync_.send(biu_req_queue_.front(), biu_latency_);
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "BIU request is sent to MSS!";
-        }
+        ILOG("BIU request is sent to MSS!");
     }
 
     // Handle MSS Ack
@@ -83,9 +78,7 @@ namespace olympia_mss
             ev_handle_biu_req_.schedule(sparta::Clock::Cycle(0));
         }
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "MSS Ack is sent to LSU!";
-        }
+        ILOG("MSS Ack is sent to LSU!");
     }
 
     // Receive MSS access acknowledge
@@ -94,9 +87,7 @@ namespace olympia_mss
         if (done) {
             ev_handle_mss_ack_.schedule(sparta::Clock::Cycle(0));
 
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "MSS Ack is received!";
-            }
+            ILOG("MSS Ack is received!");
 
             return;
         }
@@ -118,9 +109,7 @@ namespace olympia_mss
         // Push new requests from back
         biu_req_queue_.emplace_back(inst_ptr);
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Append BIU request queue!";
-        }
+        ILOG("Append BIU request queue!");
     }
 
 }

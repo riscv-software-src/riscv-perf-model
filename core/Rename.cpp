@@ -55,9 +55,7 @@ namespace olympia
     // Handle incoming flush
     void Rename::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got a flush call for " << criteria;
-        }
+        ILOG("Got a flush call for " << criteria);
         out_uop_queue_credits_.send(uop_queue_.size());
         uop_queue_.clear();
     }
@@ -89,9 +87,7 @@ namespace olympia
             InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
             for(uint32_t i = 0; i < num_rename; ++i) {
                 insts->emplace_back(uop_queue_.read(0));
-                if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "Renamed: " << uop_queue_.read(0);
-                }
+                ILOG("Renamed: " << uop_queue_.read(0));
                 uop_queue_.pop();
             }
             out_dispatch_queue_write_.send(insts);

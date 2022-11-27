@@ -4,6 +4,7 @@
 #include "core/InstGenerator.hpp"
 #include "core/MavisUnit.hpp"
 #include "core/InstGroup.hpp"
+#include "core/LogUtils.hpp"
 
 #include "mavis/ExtractorDirectInfo.h"
 
@@ -56,7 +57,7 @@ namespace core_test
 
         template<uint32_t pipeline_id>
         void inCredits(const uint32_t & credits) {
-            info_logger_ << "Got credits from dut: " << credits;
+            ILOG("Got credits from dut: " << credits);
             dut_credits_ = credits;
 
             if(dut_credits_ > 0) {

@@ -110,8 +110,13 @@ namespace olympia
                 {
                     const auto rf  = determineRegisterFile(src);
                     const auto num = src.field_value;
+                    auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
+
+                    bitmask.set(num);
                     if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                        info_logger_ << ":\treading " << rf << "[" << num << "]";
+                        info_logger_ << ":\tsetup source register bit mask "
+                                     << sparta::printBitSet(bitmask)
+                                     << " for '" << rf << "' scoreboard";
                     }
                 }
 
@@ -121,8 +126,13 @@ namespace olympia
                 {
                     const auto rf  = determineRegisterFile(dest);
                     const auto num = dest.field_value;
+                    auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
+
+                    bitmask.set(num);
                     if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                        info_logger_ << ":\twriting " << rf << "[" << num << "]";
+                        info_logger_ << ":\tsetup destination register bit mask "
+                                     << sparta::printBitSet(bitmask)
+                                     << " for '" << rf << "' scoreboard";
                     }
                 }
 

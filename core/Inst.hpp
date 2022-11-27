@@ -4,14 +4,16 @@
 
 #include "sparta/memory/AddressTypes.hpp"
 #include "sparta/resources/SharedData.hpp"
+#include "sparta/resources/Scoreboard.hpp"
+#include "sparta/resources/Queue.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
-
 #include "mavis/OpcodeInfo.h"
 
 #include "InstArchInfo.hpp"
+#include "CoreTypes.hpp"
 
 #include <cstdlib>
 #include <ostream>
@@ -147,6 +149,14 @@ namespace olympia
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
 
+        // Rename information
+        RegisterBitMask & getSrcRegisterBitMask(const RegFile rf) {
+            return src_reg_bit_masks_[rf];
+        }
+        RegisterBitMask & getDestRegisterBitMask(const RegFile rf) {
+            return dest_reg_bit_masks_[rf];
+        }
+
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType      inst_arch_info_;
@@ -160,9 +170,15 @@ namespace olympia
         sparta::Scheduleable * ev_retire_    = nullptr;
         InstStatus             status_;
         Status                 status_state_;
+
+        // Rename information
+        using RegisterBitMaskArray = std::array<RegisterBitMask, N_REGFILES>;
+        RegisterBitMaskArray src_reg_bit_masks_;
+        RegisterBitMaskArray dest_reg_bit_masks_;
     };
 
     using InstPtr = Inst::PtrType;
+    using InstQueue = sparta::Queue<InstPtr>;
 
     inline std::ostream & operator<<(std::ostream & os, const Inst::Status & status) {
         switch(status) {

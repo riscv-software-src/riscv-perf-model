@@ -47,6 +47,5 @@ namespace olympia
         Core(sparta::TreeNode * node, const CoreParameterSet * params);
 
         ~Core() {}
-
     };
 }

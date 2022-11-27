@@ -1,50 +1,50 @@
 [
     {
         "mnemonic" : "beq",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "bne",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "blt",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "bge",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "bltu",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "bgeu",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "jalr",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {
         "mnemonic" : "jal",
-        "dispatch" : ["branch"],
-        "pipe" : ["branch"],
+        "dispatch" : ["br"],
+        "pipe" : ["br"],
         "latency" : 1
     },
     {

@@ -1,7 +1,7 @@
 
 #include "Dispatch.hpp"
 #include "MavisUnit.hpp"
-#include "CPUTopology.hpp"
+#include "CoreUtils.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"
@@ -109,37 +109,40 @@ private:
         // Set the "ROB" to accept a group of instructions
         rob_params->getParameter("purpose")->setValueFromString("grp");
 
+        // Must add the CoreExtensions factory so the simulator knows
+        // how to interpret the config file extension parameter.
+        // Otherwise, the framework will add any "unnamed" extensions
+        // as strings.
+        rtn->addExtensionFactory(olympia::CoreExtensions::name,
+                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
 
+        sparta::ResourceTreeNode * exe_unit = nullptr;
         //
         // Set up the execution blocks (sans LSU)
         //
-        rtn->addExtensionFactory(olympia::CoreExtensions::name,
-                                 [&]() -> sparta::TreeNode::ExtensionsBase * {return new olympia::CoreExtensions();});
-        auto core_extension           = rtn->getExtension(olympia::CoreExtensions::name);
-        auto core_extension_params    = sparta::notNull(core_extension)->getParameters();
-        auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
-        auto execution_topology       = sparta::notNull(execution_topology_param)->
-            getValueAs<olympia::CoreExtensions::ExecutionTopology>();
-
-        sparta::ResourceTreeNode * exe_unit = nullptr;
+        auto execution_topology = olympia::coreutils::getExecutionTopology(rtn);
         for (auto exe_unit_pair : execution_topology)
         {
-            const std::string name(exe_unit_pair[0]);
-            auto exe_idx = (unsigned int) std::stoul(exe_unit_pair[1]);
-            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << name);
-            --exe_idx; // 0-index based
+            const auto tgt_name   = exe_unit_pair[0];
+            const auto unit_count = exe_unit_pair[1];
+            const auto exe_idx    = (unsigned int) std::stoul(unit_count);
+            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
+            for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
+            {
+                const std::string unit_name = tgt_name + std::to_string(unit_num);
 
-            // Create N units (alu0, alu1, etc)
-            tns_to_delete_.emplace_back(exe_unit = new sparta::ResourceTreeNode(rtn,
-                                                                                name,
-                                                                                name,
-                                                                                exe_idx,
-                                                                                name,
-                                                                                &sink_fact));
-            auto exe_params = exe_unit->getParameterSet();
-            // Set the "exe unit" to accept a single instruction
-            exe_params->getParameter("purpose")->setValueFromString("single");
-            exe_units_.emplace_back(exe_unit);
+                // Create N units (alu0, alu1, etc)
+                tns_to_delete_.emplace_back(exe_unit = new sparta::ResourceTreeNode(rtn,
+                                                                                    unit_name,
+                                                                                    tgt_name,
+                                                                                    unit_num,
+                                                                                    unit_name + " Exe pipe",
+                                                                                    &sink_fact));
+                auto exe_params = exe_unit->getParameterSet();
+                // Set the "exe unit" to accept a single instruction
+                exe_params->getParameter("purpose")->setValueFromString("single");
+                exe_units_.emplace_back(exe_unit);
+            }
         }
 
         // Create the LSU sink separately
@@ -175,7 +178,7 @@ private:
         // Bind the "exe" SinkUnit blocks to dispatch
         for(auto exe_unit : exe_units_)
         {
-            const std::string unit_name = exe_unit->getName() + std::to_string(exe_unit->getGroupIdx());
+            const std::string unit_name = exe_unit->getName();
             sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_"+unit_name+"_write"),
                          root_node->getChildAs<sparta::Port>(unit_name + ".ports.in_sink_inst"));
 

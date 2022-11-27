@@ -75,7 +75,7 @@ namespace olympia{
         //! \brief Structure to represent a port binding between units in device tree
         struct PortConnectionInfo{
 
-            //! Out port name of unit_1
+            //! Out port name of unit
             std::string output_port_name;
 
             //! In port name of next unit, unit_2
@@ -95,6 +95,9 @@ namespace olympia{
          */
         CPUTopology() : factories{new CPUFactories()}{}
 
+        //! Virtual destructor
+        virtual ~CPUTopology() {}
+
         /**
          * @brief Set the name for this topoplogy
          */
@@ -112,7 +115,10 @@ namespace olympia{
         /**
          * @brief Static method to allocate memory for topology
          */
-        static auto allocateTopology(const std::string& topology) -> CPUTopology*;
+        static std::unique_ptr<CPUTopology> allocateTopology(const std::string& topology);
+
+        //! Post binding/final setup specific to a topology
+        virtual void bindTree(sparta::RootTreeNode* root_node) {}
 
         //! Public members used by CPUFactory to build and bind tree
         uint32_t num_cores = 1;
@@ -123,6 +129,17 @@ namespace olympia{
 
     }; // class CPUTopology
 
+    //
+    // \class CoreExtensions
+    // \brief Common extensions for a specific core
+    //
+    // Similar to Parameters, Extensions allow the modeler to provide
+    // common "preferences" to any node (and it's children).  For
+    // example, the topology of the execution units: the number of
+    // ALUs.  Both Dispatch and Execute (as well as testers) need to
+    // know this information.
+    //
+    //
     class CoreExtensions : public sparta::ExtensionsParamsOnly
     {
     public:
@@ -154,14 +171,18 @@ namespace olympia{
     };
 
     /**
-     * @brief CoreTopology_1 topology class
+     * @brief CoreTopologySimple topology class
      */
-    class CoreTopology_1 : public CPUTopology
+    class CoreTopologySimple : public CPUTopology
     {
     public:
         /**
          * @brief Constructor for CPUTopology
          */
-        CoreTopology_1();
-    }; // class CoreTopology_1
+        CoreTopologySimple();
+
+        // Do some last-minute binding.  Called by CPUFactories
+        void bindTree(sparta::RootTreeNode* root_node) override final;
+
+    }; // class CoreTopologySimple
 }  // namespace olympia

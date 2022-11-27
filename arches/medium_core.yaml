@@ -2,15 +2,17 @@
 #
 # Set up the pipeline for a 3-wide machine
 #
-top.cpu:
-  fetch.num_to_fetch:   3
-  decode.num_to_decode: 3
-  rename.num_to_rename: 3
-  dispatch.num_to_dispatch: 3
-  rob.num_to_retire:    3
+top.cpu.core0:
+  fetch.params.num_to_fetch:   3
+  decode.params.num_to_decode: 3
+  rename.params.num_to_rename: 3
+  dispatch.params.num_to_dispatch: 3
+  rob.params.num_to_retire:    3
+  lsu.params:
+    dl1_size_kb: 32
 
-top.cpu.extension.pipe_topology:
-  [["alu", "3"].
+top.cpu.core0.extension.core_extensions:
+  execution_topology:
+  [["alu", "3"],
    ["fpu", "2"],
-   ["br",  "1"],
-   ["lsu", "1"]]
+   ["br",  "1"]]

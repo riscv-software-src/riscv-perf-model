@@ -52,8 +52,7 @@ namespace olympia{
         DispatchFactory dispatch_rf;
 
         //! \brief Resouce Factory to build a Execute Unit
-        sparta::ResourceFactory<olympia::Execute,
-                                olympia::Execute::ExecuteParameterSet> execute_rf;
+        ExecuteFactory  execute_rf;
 
         //! \brief Resouce Factory to build a LSU Unit
         sparta::ResourceFactory<olympia::LSU,

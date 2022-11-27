@@ -1,3 +1,5 @@
+// <CoreTypes.hpp> -*- C++ -*-
+
 #pragma once
 
 #include "sparta/resources/Scoreboard.hpp"

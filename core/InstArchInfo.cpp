@@ -5,13 +5,14 @@
 
 namespace olympia
 {
-    const InstArchInfo::TargetUnitMap dispatch_target_map = {
-        {"alu",      InstArchInfo::TargetUnit::ALU},
-        {"fpu",      InstArchInfo::TargetUnit::FPU},
-        {"branch",   InstArchInfo::TargetUnit::BR},
-        {"lsu",      InstArchInfo::TargetUnit::LSU},
-        {"rob",      InstArchInfo::TargetUnit::ROB},
-        {"invalid",  InstArchInfo::TargetUnit::UNKNOWN},
+    const InstArchInfo::TargetUnitMap InstArchInfo::dispatch_target_map = {
+        {"alu",     InstArchInfo::TargetUnit::ALU},
+        {"fpu",     InstArchInfo::TargetUnit::FPU},
+        {"br",      InstArchInfo::TargetUnit::BR},
+        {"lsu",     InstArchInfo::TargetUnit::LSU},
+        {"rob",     InstArchInfo::TargetUnit::ROB},
+        {"none",    InstArchInfo::TargetUnit::NONE},
+        {"unknown", InstArchInfo::TargetUnit::UNKNOWN},
     };
 
     void InstArchInfo::update(const nlohmann::json& jobj)

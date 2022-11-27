@@ -5,7 +5,9 @@ add_library(core
   Decode.cpp
   Rename.cpp
   Dispatch.cpp
+  Dispatcher.cpp
   Execute.cpp
+  ExecutePipe.cpp
   Inst.cpp
   InstArchInfo.cpp
   InstGroup.cpp

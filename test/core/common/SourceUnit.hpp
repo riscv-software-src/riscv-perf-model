@@ -11,6 +11,7 @@
 #include "sparta/statistics/StatisticSet.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
+#include "sparta/utils/LogUtils.hpp"
 #include "sparta/ports/DataPort.hpp"
 
 #include <string>
@@ -56,7 +57,7 @@ namespace core_test
 
         template<uint32_t pipeline_id>
         void inCredits(const uint32_t & credits) {
-            info_logger_ << "Got credits from dut: " << credits;
+            ILOG("Got credits from dut: " << credits);
             dut_credits_ = credits;
 
             if(dut_credits_ > 0) {

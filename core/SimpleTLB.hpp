@@ -3,6 +3,8 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/MathUtils.hpp"
+#include "sparta/utils/LogUtils.hpp"
+
 #include "cache/BasicCacheItem.hpp"
 #include "cache/SimpleCache2.hpp"
 #include "cache/ReplacementIF.hpp"
@@ -114,7 +116,7 @@ namespace olympia
 
         void touch(const SimpleTLBEntry& entry)
         {
-            debug_logger_ << "TLB HIT";
+            DLOG("TLB HIT");
             touchMRU(entry);
             hits++;
         }

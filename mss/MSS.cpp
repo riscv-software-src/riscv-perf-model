@@ -1,5 +1,7 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
+
 #include "MSS.hpp"
 
 namespace olympia_mss
@@ -18,10 +20,7 @@ namespace olympia_mss
             (CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia::InstPtr));
         in_mss_req_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "MSS construct: #" << node->getGroupIdx();
-        }
+        ILOG("MSS construct: #" << node->getGroupIdx());
     }
 
 
@@ -44,9 +43,7 @@ namespace olympia_mss
             sparta_assert(false, "MSS can never receive requests from BIU when it's busy!");
         }
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "MSS is busy servicing your request......";
-        }
+        ILOG("MSS is busy servicing your request......");
     }
 
     // Handle MSS request
@@ -55,9 +52,7 @@ namespace olympia_mss
         mss_busy_ = false;
         out_mss_ack_sync_.send(true);
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "MSS is done!";
-        }
+        ILOG("MSS is done!");
     }
 
 

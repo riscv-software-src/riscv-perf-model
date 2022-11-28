@@ -65,9 +65,7 @@ namespace olympia
     // Handle incoming flush
     void Rename::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got a flush call for " << criteria;
-        }
+        ILOG("Got a flush call for " << criteria);
         out_uop_queue_credits_.send(uop_queue_.size());
         uop_queue_.clear();
     }
@@ -111,13 +109,10 @@ namespace olympia
                     const auto rf  = determineRegisterFile(src);
                     const auto num = src.field_value;
                     auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-
                     bitmask.set(num);
-                    if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                        info_logger_ << ":\tsetup source register bit mask "
-                                     << sparta::printBitSet(bitmask)
-                                     << " for '" << rf << "' scoreboard";
-                    }
+                    ILOG(":\tsetup source register bit mask "
+                         << sparta::printBitSet(bitmask)
+                         << " for '" << rf << "' scoreboard");
                 }
 
                 // TODO: Register renaming for destinations
@@ -127,13 +122,10 @@ namespace olympia
                     const auto rf  = determineRegisterFile(dest);
                     const auto num = dest.field_value;
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
-
                     bitmask.set(num);
-                    if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                        info_logger_ << ":\tsetup destination register bit mask "
-                                     << sparta::printBitSet(bitmask)
-                                     << " for '" << rf << "' scoreboard";
-                    }
+                    ILOG(":\tsetup destination register bit mask "
+                         << sparta::printBitSet(bitmask)
+                         << " for '" << rf << "' scoreboard");
                 }
 
                 // Remove it from uop queue

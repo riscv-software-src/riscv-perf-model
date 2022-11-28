@@ -16,6 +16,7 @@
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "cache/TreePLRUReplacement.hpp"
 
@@ -67,16 +68,14 @@ namespace olympia
         LSU(sparta::TreeNode* node, const LSUParameterSet* p);
 
         ~LSU() {
-            debug_logger_ << getContainer()->getLocation()
-                          << ": "
-                          << load_store_info_allocator.getNumAllocated()
-                          << " LoadStoreInstInfo objects allocated/created"
-                          << std::endl;
-            debug_logger_ << getContainer()->getLocation()
-                          << ": "
-                          << memory_access_allocator.getNumAllocated()
-                          << " MemoryAccessInfo objects allocated/created"
-                          << std::endl;
+            DLOG(getContainer()->getLocation()
+                 << ": "
+                 << load_store_info_allocator.getNumAllocated()
+                 << " LoadStoreInstInfo objects allocated/created");
+            DLOG(getContainer()->getLocation()
+                 << ": "
+                 << memory_access_allocator.getNumAllocated()
+                 << " MemoryAccessInfo objects allocated/created");
         }
 
         //! name of this resource.

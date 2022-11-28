@@ -100,7 +100,7 @@ namespace olympia
         ++curr_inst_index_;
         if (inst != nullptr) {
             inst->setUniqueID(++unique_id_);
-            inst->setProgramID(++unique_id_);
+            inst->setProgramID(unique_id_);
         }
         return inst;
 

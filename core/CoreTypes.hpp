@@ -21,11 +21,6 @@ namespace olympia
         "float"
     };
 
-    namespace message_categories {
-        const std::string INFO = "info";
-        // More can be added here, with any identifier...
-    }
-
     inline std::ostream & operator<<(std::ostream & os, const RegFile & rf)
     {
         sparta_assert(rf < RegFile::RF_INVALID,

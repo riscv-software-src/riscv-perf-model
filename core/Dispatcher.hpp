@@ -7,10 +7,10 @@
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/log/MessageSource.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "Inst.hpp"
 #include "CoreTypes.hpp"
-#include "LogUtils.hpp"
 
 namespace olympia
 {

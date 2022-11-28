@@ -1,8 +1,9 @@
 // <BIU.cpp> -*- C++ -*-
 
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
+
 #include "BIU.hpp"
-#include "LogUtils.hpp"
 
 namespace olympia_mss
 {

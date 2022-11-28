@@ -16,6 +16,7 @@
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "cache/TreePLRUReplacement.hpp"
 
@@ -23,7 +24,6 @@
 #include "FlushManager.hpp"
 #include "SimpleTLB.hpp"
 #include "SimpleDL1.hpp"
-#include "LogUtils.hpp"
 
 namespace olympia
 {

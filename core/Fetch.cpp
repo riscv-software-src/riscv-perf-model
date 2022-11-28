@@ -9,8 +9,8 @@
 #include "Fetch.hpp"
 #include "InstGenerator.hpp"
 #include "MavisUnit.hpp"
-#include "LogUtils.hpp"
 
+#include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
 namespace olympia

@@ -1,9 +1,9 @@
 // <ExecutePipePipe.cpp> -*- C++ -*-
 
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "ExecutePipe.hpp"
-#include "LogUtils.hpp"
 
 namespace olympia
 {

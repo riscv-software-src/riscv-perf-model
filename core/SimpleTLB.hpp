@@ -3,11 +3,11 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/MathUtils.hpp"
+#include "sparta/utils/LogUtils.hpp"
+
 #include "cache/BasicCacheItem.hpp"
 #include "cache/SimpleCache2.hpp"
 #include "cache/ReplacementIF.hpp"
-
-#include "LogUtils.hpp"
 
 namespace olympia
 {

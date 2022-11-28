@@ -3,7 +3,8 @@
 
 #include <algorithm>
 #include "ROB.hpp"
-#include "LogUtils.hpp"
+
+#include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
 namespace olympia

@@ -2,12 +2,12 @@
 #pragma once
 
 #include "core/InstGenerator.hpp"
-#include "core/LogUtils.hpp"
 
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/statistics/StatisticSet.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include <string>
 

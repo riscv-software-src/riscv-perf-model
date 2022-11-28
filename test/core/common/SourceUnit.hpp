@@ -4,7 +4,6 @@
 #include "core/InstGenerator.hpp"
 #include "core/MavisUnit.hpp"
 #include "core/InstGroup.hpp"
-#include "core/LogUtils.hpp"
 
 #include "mavis/ExtractorDirectInfo.h"
 
@@ -12,6 +11,7 @@
 #include "sparta/statistics/StatisticSet.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
+#include "sparta/utils/LogUtils.hpp"
 #include "sparta/ports/DataPort.hpp"
 
 #include <string>

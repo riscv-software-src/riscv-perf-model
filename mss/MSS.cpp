@@ -1,7 +1,8 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
+
 #include "MSS.hpp"
-#include "LogUtils.hpp"
 
 namespace olympia_mss
 {

@@ -4,8 +4,9 @@
 #include <algorithm>
 
 #include "Decode.hpp"
-#include "LogUtils.hpp"
+
 #include "sparta/events/StartupEvent.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 namespace olympia
 {

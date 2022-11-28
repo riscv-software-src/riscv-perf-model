@@ -20,6 +20,7 @@
 
 #include "cache/TreePLRUReplacement.hpp"
 
+#include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "SimpleTLB.hpp"

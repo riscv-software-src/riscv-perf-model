@@ -14,6 +14,7 @@
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/resources/Pipe.hpp"
 
+#include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 

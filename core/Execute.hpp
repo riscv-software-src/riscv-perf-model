@@ -5,6 +5,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
+#include "Inst.hpp"
 #include "ExecutePipe.hpp"
 
 namespace olympia

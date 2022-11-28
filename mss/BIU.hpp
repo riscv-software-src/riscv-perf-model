@@ -12,6 +12,7 @@
 #include "sparta/collection/Collectable.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
+#include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 

@@ -22,6 +22,7 @@
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
+#include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 

@@ -156,6 +156,12 @@ namespace olympia
         RegisterBitMask & getDestRegisterBitMask(const RegFile rf) {
             return dest_reg_bit_masks_[rf];
         }
+        const RegisterBitMask & getSrcRegisterBitMask(const RegFile rf) const {
+            return src_reg_bit_masks_[rf];
+        }
+        const RegisterBitMask & getDestRegisterBitMask(const RegFile rf) const {
+            return dest_reg_bit_masks_[rf];
+        }
 
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;

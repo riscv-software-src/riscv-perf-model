@@ -74,8 +74,6 @@ namespace olympia
         if (reorder_buffer_.size() > 0) {
             ev_retire_.schedule(sparta::Clock::Cycle(1));
         }
-
-        ILOG("Retire event");
     }
 
     // An illustration of the use of the callback -- instead of
@@ -84,10 +82,10 @@ namespace olympia
     void ROB::robAppended_(const InstGroup &) {
         for(auto & i : *in_reorder_buffer_write_.pullData()) {
             reorder_buffer_.push(i);
+            ILOG("retire appended: " << i);
         }
 
         ev_retire_.schedule(sparta::Clock::Cycle(0));
-        ILOG("Retire appended");
     }
 
     void ROB::handleFlush_(const FlushManager::FlushingCriteria &)
@@ -97,15 +95,17 @@ namespace olympia
         reorder_buffer_.clear();
     }
 
-    void ROB::retireInstructions_() {
+    void ROB::retireInstructions_()
+    {
         const uint32_t num_to_retire = std::min(reorder_buffer_.size(), num_to_retire_);
 
-        ILOG("Retire event, num to retire: " << num_to_retire);
+        ILOG("num to retire: " << num_to_retire);
 
         uint32_t retired_this_cycle = 0;
         for(uint32_t i = 0; i < num_to_retire; ++i)
         {
-            auto & ex_inst_ptr = reorder_buffer_.access(0);
+            auto ex_inst_ptr = reorder_buffer_.access(0);
+            sparta_assert(nullptr != ex_inst_ptr);
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
@@ -121,7 +121,7 @@ namespace olympia
                 ++retired_this_cycle;
                 reorder_buffer_.pop();
 
-                ILOG("Retiring " << ex_inst);
+                ILOG("retiring " << ex_inst);
 
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()
@@ -153,12 +153,15 @@ namespace olympia
 
             }
             else {
-                ex_inst.setLast(true, &ev_retire_);
+                ILOG("set oldest: " << ex_inst);
+                ex_inst.setOldest(true, &ev_retire_);
                 break;
             }
         }
-        out_reorder_buffer_credits_.send(retired_this_cycle);
-        last_retirement_ = getClock()->currentCycle();
+        if(retired_this_cycle != 0) {
+            out_reorder_buffer_credits_.send(retired_this_cycle);
+            last_retirement_ = getClock()->currentCycle();
+        }
     }
 
     // Make sure the pipeline is making forward progress

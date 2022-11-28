@@ -150,16 +150,16 @@ namespace olympia
         bool        isSpeculative() const  { return is_speculative_; }
 
         // Rename information
-        RegisterBitMask & getSrcRegisterBitMask(const RegFile rf) {
+        core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
             return src_reg_bit_masks_[rf];
         }
-        RegisterBitMask & getDestRegisterBitMask(const RegFile rf) {
+        core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) {
             return dest_reg_bit_masks_[rf];
         }
-        const RegisterBitMask & getSrcRegisterBitMask(const RegFile rf) const {
+        const core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) const {
             return src_reg_bit_masks_[rf];
         }
-        const RegisterBitMask & getDestRegisterBitMask(const RegFile rf) const {
+        const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
             return dest_reg_bit_masks_[rf];
         }
 
@@ -178,7 +178,7 @@ namespace olympia
         Status                 status_state_;
 
         // Rename information
-        using RegisterBitMaskArray = std::array<RegisterBitMask, N_REGFILES>;
+        using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
         RegisterBitMaskArray src_reg_bit_masks_;
         RegisterBitMaskArray dest_reg_bit_masks_;
     };

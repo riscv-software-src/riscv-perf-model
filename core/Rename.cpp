@@ -98,9 +98,7 @@ namespace olympia
             {
                 // Pick the oldest
                 const auto & renaming_inst = uop_queue_.read(0);
-                if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << ": sending inst to dispatch: " << renaming_inst;
-                }
+                ILOG("sending inst to dispatch: " << renaming_inst);
 
                 // TODO: Register renaming for sources
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
@@ -110,7 +108,7 @@ namespace olympia
                     const auto num = src.field_value;
                     auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                     bitmask.set(num);
-                    ILOG(":\tsetup source register bit mask "
+                    ILOG("\tsetup source register bit mask "
                          << sparta::printBitSet(bitmask)
                          << " for '" << rf << "' scoreboard");
                 }
@@ -123,7 +121,7 @@ namespace olympia
                     const auto num = dest.field_value;
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
                     bitmask.set(num);
-                    ILOG(":\tsetup destination register bit mask "
+                    ILOG("\tsetup destination register bit mask "
                          << sparta::printBitSet(bitmask)
                          << " for '" << rf << "' scoreboard");
                 }

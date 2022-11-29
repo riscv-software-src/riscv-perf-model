@@ -38,6 +38,7 @@ namespace olympia
         virtual InstPtr getNextInst(const sparta::Clock * clk) = 0;
         static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
                                                               const std::string & filename);
+        virtual bool isDone() const = 0;
 
     protected:
         MavisType * mavis_facade_ = nullptr;
@@ -52,6 +53,7 @@ namespace olympia
                           const std::string & filename);
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
+        bool isDone() const override final;
     private:
         std::unique_ptr<nlohmann::json> jobj_;
         uint64_t                        curr_inst_index_ = 0;
@@ -67,6 +69,7 @@ namespace olympia
 
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
+        bool isDone() const override final;
     private:
         std::unique_ptr<stf::STFInstReader> reader_;
 

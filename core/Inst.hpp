@@ -99,9 +99,9 @@ namespace olympia
             return inst_arch_info_->getTargetUnit();
         }
 
-        void setLast(bool last, sparta::Scheduleable * rob_retire_event) {
+        void setOldest(bool oldest, sparta::Scheduleable * rob_retire_event) {
             ev_retire_ = rob_retire_event;
-            is_last_ = last;
+            is_oldest_ = oldest;
 
             if(status_.isValidNS() && status_.readNS() == olympia::Inst::Status::COMPLETED) {
                 ev_retire_->schedule();
@@ -169,7 +169,7 @@ namespace olympia
 
         sparta::memory::addr_t inst_pc_       = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_  = 0; // Instruction's Target PC (for branches, loads/stores)
-        bool                   is_last_       = false;
+        bool                   is_oldest_       = false;
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?

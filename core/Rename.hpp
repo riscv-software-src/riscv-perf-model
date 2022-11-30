@@ -74,8 +74,12 @@ namespace olympia
         const uint32_t num_to_rename_per_cycle_;
         uint32_t credits_dispatch_ = 0;
 
-        //! Send initial credits
-        void sendInitialCredits_();
+        // Scoreboards
+        using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
+        Scoreboards scoreboards_;
+
+        //! Rename setup
+        void setupRename_();
 
         //! Free entries from Dispatch
         void creditsDispatchQueue_(const uint32_t &);

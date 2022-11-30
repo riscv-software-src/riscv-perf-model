@@ -40,7 +40,7 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, creditsDispatchQueue_, uint32_t));
         in_reorder_flush_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, handleFlush_, FlushManager::FlushingCriteria));
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, sendInitialCredits_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, setupRename_));
     }
 
     // Using the Rename factory, create the Scoreboards
@@ -63,10 +63,27 @@ namespace olympia
         }
     }
 
-
-    // Send the initial credit count
-    void Rename::sendInitialCredits_()
+    void Rename::setupRename_()
     {
+        // Set up scoreboards
+        auto sbs_tn = getContainer()->getChild("scoreboards");
+        sparta_assert(sbs_tn != nullptr, "Expected to find 'scoreboards' node in Rename, got none");
+        for(uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf) {
+            // Get scoreboard resources
+            auto sb_tn = sbs_tn->getChild(core_types::regfile_names[rf]);
+            scoreboards_[rf] = sb_tn->getResourceAs<sparta::Scoreboard*>();
+
+            // Initialize scoreboard resources, make 32 registers
+            // all ready.
+            constexpr uint32_t num_regs = 32;
+            core_types::RegisterBitMask bits;
+            for(uint32_t reg = 0; reg < num_regs; ++reg) {
+                bits.set(reg);
+            }
+            scoreboards_[rf]->set(bits);
+        }
+
+        // Send the initial credit count
         out_uop_queue_credits_.send(uop_queue_.capacity());
     }
 

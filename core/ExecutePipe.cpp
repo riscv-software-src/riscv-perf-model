@@ -42,9 +42,9 @@ namespace olympia
         std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
         for(const auto rf : reg_files)
         {
-            sbvs_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
-                                                       core_types::regfile_names[rf],
-                                                       getContainer()));
+            scoreboard_views_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
+                                                                   core_types::regfile_names[rf],
+                                                                   getContainer()));
         }
 
         // Send initial credits

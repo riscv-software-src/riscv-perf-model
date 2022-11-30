@@ -78,7 +78,7 @@ namespace olympia
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
-        ScoreboardViews sbvs_;
+        ScoreboardViews scoreboard_views_;
 
         // Busy signal for the attached alu
         bool unit_busy_ = false;

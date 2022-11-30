@@ -10,6 +10,9 @@
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
+#include "sparta/resources/Scoreboard.hpp"
+
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "InstGroup.hpp"
@@ -71,8 +74,12 @@ namespace olympia
         const uint32_t num_to_rename_per_cycle_;
         uint32_t credits_dispatch_ = 0;
 
-        //! Send initial credits
-        void sendInitialCredits_();
+        // Scoreboards
+        using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
+        Scoreboards scoreboards_;
+
+        //! Rename setup
+        void setupRename_();
 
         //! Free entries from Dispatch
         void creditsDispatchQueue_(const uint32_t &);
@@ -86,5 +93,20 @@ namespace olympia
         //! Flush instructions.
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
 
+    };
+
+    //! Rename's factory class. Don't create Rename without it
+    class RenameFactory : public sparta::ResourceFactory<Rename, Rename::RenameParameterSet>
+    {
+    public:
+        void onConfiguring(sparta::ResourceTreeNode* node) override;
+
+    private:
+        using ScoreboardTreeNodes = std::vector<std::unique_ptr<sparta::TreeNode>>;
+        using ScoreboardFactories = std::array <sparta::ResourceFactory<sparta::Scoreboard,
+                                                                        sparta::Scoreboard::ScoreboardParameters>,
+                                                core_types::RegFile::N_REGFILES>;
+        ScoreboardFactories sb_facts_;
+        ScoreboardTreeNodes sb_tns_;
     };
 }

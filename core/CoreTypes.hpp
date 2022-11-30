@@ -4,7 +4,7 @@
 
 #include "sparta/resources/Scoreboard.hpp"
 
-namespace olympia
+namespace olympia::core_types
 {
     using RegisterBitMask = sparta::Scoreboard::RegisterBitMask;
 

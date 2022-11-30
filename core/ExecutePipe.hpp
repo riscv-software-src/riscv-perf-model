@@ -87,6 +87,7 @@ namespace olympia
         const uint32_t execute_time_;
         const uint32_t scheduler_size_;
         const bool in_order_issue_;
+        const core_types::RegFile reg_file_;
         sparta::collection::IterableCollector<std::list<InstPtr>>
         ready_queue_collector_ {getContainer(), "scheduler_queue",
                 &ready_queue_, scheduler_size_};

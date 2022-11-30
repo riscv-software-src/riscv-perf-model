@@ -7,7 +7,19 @@
 
 namespace olympia
 {
+    core_types::RegFile determineRegisterFile(const std::string & target_name)
+    {
+        if(target_name == "alu" || target_name == "br") {
+            return core_types::RF_INTEGER;
+        }
+        else if(target_name == "fpu") {
+            return core_types::RF_FLOAT;
+        }
+        sparta_assert(false, "Not supported this target: " << target_name);
+    }
+
     const char ExecutePipe::name[] = "exe_pipe";
+
     ExecutePipe::ExecutePipe(sparta::TreeNode * node,
                              const ExecutePipeParameterSet * p) :
         sparta::Unit(node),
@@ -15,6 +27,7 @@ namespace olympia
         execute_time_(p->execute_time),
         scheduler_size_(p->scheduler_size),
         in_order_issue_(p->in_order_issue),
+        reg_file_(determineRegisterFile(node->getGroup())),
         collected_inst_(node, node->getName())
     {
         in_execute_inst_.
@@ -55,6 +68,11 @@ namespace olympia
     // Callbacks
     void ExecutePipe::getInstsFromDispatch_(const InstPtr & ex_inst)
     {
+        // FIXME: Now every source operand should be ready
+        const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
+        sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
+                      "Should be all ready source operands ... " << ex_inst);
+
         // Insert at the end if we are doing in order issue or if the scheduler is empty
         if (in_order_issue_ == true || ready_queue_.size() == 0) {
             ready_queue_.emplace_back(ex_inst);

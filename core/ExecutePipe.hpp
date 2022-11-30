@@ -14,13 +14,14 @@
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/EventSet.hpp"
 #include "sparta/events/UniqueEvent.hpp"
+#include "sparta/events/StartupEvent.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/Clock.hpp"
-#include "sparta/collection/Collectable.hpp"
-#include "sparta/events/StartupEvent.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
+#include "sparta/collection/Collectable.hpp"
+#include "sparta/resources/Scoreboard.hpp"
 
 #include "Inst.hpp"
 #include "CoreTypes.hpp"
@@ -75,7 +76,11 @@ namespace olympia
         typedef std::list<InstPtr> ReadyQueue;
         ReadyQueue  ready_queue_;
 
-        // busy signal for the attached alu
+        // Scoreboards
+        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+        ScoreboardViews sbvs_;
+
+        // Busy signal for the attached alu
         bool unit_busy_ = false;
         // Execution unit's execution time
         const bool     ignore_inst_execute_time_ = false;
@@ -106,7 +111,8 @@ namespace olympia
             "Total instructions executed", sparta::Counter::COUNT_NORMAL
         };
 
-        void sendInitialCredits_();
+        void setupExecutePipe_();
+
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         void issueInst_();

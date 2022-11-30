@@ -25,7 +25,7 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, flushInst_,
                                                                     FlushManager::FlushingCriteria));
         // Startup handler for sending initiatl credits
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ExecutePipe, sendInitialCredits_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ExecutePipe, setupExecutePipe_));
         // Set up the precedence between issue and complete
         // Complete should come before issue because it schedules issue with a 0 cycle delay
         // issue should always schedule complete with a non-zero delay (which corresponds to the
@@ -36,8 +36,18 @@ namespace olympia
 
     }
 
-    void ExecutePipe::sendInitialCredits_()
+    void ExecutePipe::setupExecutePipe_()
     {
+        // Setup scoreboard view upon register file
+        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+        for(const auto rf : reg_files)
+        {
+            sbvs_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
+                                                       core_types::regfile_names[rf],
+                                                       getContainer()));
+        }
+
+        // Send initial credits
         out_scheduler_credits_.send(scheduler_size_);
     }
 

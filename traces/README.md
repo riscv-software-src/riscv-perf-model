@@ -165,7 +165,7 @@ two extra lines of code to start/stop tracing.
    }
 
 ```
-The `START_TRACE` and `STOP_TRACE` markers are defined in `traces/stf_trace_gen/trace_markers.h`.
+The `START_TRACE` and `STOP_TRACE` macros are defined in `traces/stf_trace_gen/trace_macros.h`.
 
 [Follow the directions](https://github.com/chipsalliance/dromajo/blob/master/doc/setup.md#linux-with-buildroot)
 on booting Linux with a buildroot on Dromajo's page.
@@ -227,7 +227,7 @@ dhry_riscv.zstf
 Now, run that trace on olympia:
 ```
 % cd olympia/build
-% ./olympia ../traces/stf_trace_gen/dromajo/run/dhry_riscv.elf
+% ./olympia ../traces/stf_trace_gen/dromajo/run/dhry_riscv.zstf
 Running...
 olympia: STF file input detected
 

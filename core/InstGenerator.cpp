@@ -130,7 +130,7 @@ namespace olympia
         // value. Required for traces that stay in machine mode the entire
         // time
         constexpr bool FILTER_MODE_CHANGE_EVENTS = true;
-        constexpr bool SKIP_NONUSER_MODE         = true;
+        constexpr bool SKIP_NONUSER_MODE         = false;
         constexpr size_t BUFFER_SIZE             = 4096;
         reader_.reset(new stf::STFInstReader(filename,
                                              SKIP_NONUSER_MODE,

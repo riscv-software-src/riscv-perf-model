@@ -119,10 +119,10 @@ cd olympia/traces/stf_trace_gen
 git clone https://github.com/chipsalliance/dromajo
 
 # Checkout a Known-to-work SHA
+cd dromajo
 git checkout 86125b31
 
 # Apply the patch
-cd dromajo
 git apply ../dromajo_stf_lib.patch
 
 # Create a sym link to the stf_lib used by Olympia
@@ -151,9 +151,8 @@ For this example, since Dromajo does not support system call
 emulation, the workload dhrystone is instrumented and run inside
 Linux.
 
-The Dhrystone included with Olympia (`dry.c`) is instrumented with two
-extra lines of code to start/stop tracing as well as an early out of
-the main loop.
+The Dhrystone included with Olympia (`dhry_1.c`) is instrumented with
+two extra lines of code to start/stop tracing.
 
 ``` main() {
     // ... init code
@@ -166,55 +165,71 @@ the main loop.
    }
 
 ```
-The `START_TRACE` and `STOP_TRACE` markers are defined in `dromajo/include/trace_markers.h` included in the dromajo patch.
+The `START_TRACE` and `STOP_TRACE` markers are defined in `traces/stf_trace_gen/trace_markers.h`.
 
 [Follow the directions](https://github.com/chipsalliance/dromajo/blob/master/doc/setup.md#linux-with-buildroot)
 on booting Linux with a buildroot on Dromajo's page.
 
-Build `dry.c` that's included with olympia.  Remember that dry.c is a _shell script_ that builds itself.
+Build `dhrystone` that's included with olympia.  Set `RISCV_TOOLSUITE`
+to a local copy of a RISC-V gcc location.
 
 ```
-cd dromajo/run
-CC=riscv64-linux-gcc CFLAGS="-I../include -DTIME" sh ../../dry.c
+% cd dromajo/run
+% $RISCV_TOOLSUITE/bin/riscv64-unknown-elf-gcc -O3 -DTIME ../../*.c -o dhry_riscv.elf
 ```
-Copy `dry2` into the buildroot and rebuild it:
+Copy `dhry_riscv.elf` into the buildroot and rebuild the root file system:
 ```
-cp dry2 ./buildroot-2020.05.1/output/target/sbin/
-make -C buildroot-2020.05.1
+% cp dhry_riscv.elf ./buildroot-2020.05.1/output/target/sbin/
+% make -C buildroot-2020.05.1
+% cp buildroot-2020.05.1/output/images/rootfs.cpio .
 ```
-Don't forget to recopy the images.
+Run Dromajo with the flag `--stf_trace`, log in, and run Dhrystone for
+1000 iterations (as an example):
 
-Run Dromajo with the flag `--stf_trace`, log in, and run Dhrystone:
 ```
-../build/dromajo --stf_trace dry.zstf boot.cfg
+% ../build/dromajo --stf_trace dhry_riscv.zstf boot.cfg
 
+OpenSBI v0.8
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
 
-... OpenSBI boot
-
+... more bootup ...
 
 Welcome to Dromajo Buildroot
 buildroot login: root
 Password: root
-# dry2 10000
+# dhry_riscv.elf
+Dhrystone Benchmark, Version 2.1 (Language: C)
+
+Program compiled without 'register' attribute
+
+Please give the number of runs through the benchmark: 10000<return>
+
+Execution starts, 10000 runs through Dhrystone
+>>> DROMAJO: Tracing Staring at 101ba
+>>> DROMAJO: Traced 2390026 insts
+
+... rest of Dhrystone output
+
 
 ```
-After Dhrystone has finished, Ctrl-C out of Dromajo and observe the generated trace:
+After Dhrystone has finished, `Ctrl-C` out of Dromajo and observe the generated trace:
 ```
-% ls dry.zstf
-dry.zstf
+% ls dhry_riscv.zstf
+dhry_riscv.zstf
 ```
 Now, run that trace on olympia:
 ```
-cd olympia/build
-./olympia ../traces/stf_trace_gen/dromajo/run/dry.zstf
+% cd olympia/build
+% ./olympia ../traces/stf_trace_gen/dromajo/run/dhry_riscv.elf
 Running...
 olympia: STF file input detected
-Retired 1000000 instructions in 875797 cycles.  Period IPC: 1.14182 overall IPC: 1.14182
-Retired 2000000 instructions in 1751570 cycles.  Period IPC: 1.14185 overall IPC: 1.14183
-Retired 3000000 instructions in 2627287 cycles.  Period IPC: 1.14192 overall IPC: 1.14186
-Retired 4000000 instructions in 3503057 cycles.  Period IPC: 1.14185 overall IPC: 1.14186
-Retired 5000000 instructions in 4378790 cycles.  Period IPC: 1.1419 overall IPC: 1.14187
-Retired 6000000 instructions in 5254496 cycles.  Period IPC: 1.14194 overall IPC: 1.14188
-Retired 7000000 instructions in 6130274 cycles.  Period IPC: 1.14184 overall IPC: 1.14187
+
 ...
 ```

@@ -73,7 +73,7 @@ index 9dfb2cc..b509c9f 100644
      target_ulong last_data_value;
  #endif
 diff --git a/run/boot.cfg b/run/boot.cfg
-index b220030..a41b1ab 100644
+index b220030..d80fb22 100644
 --- a/run/boot.cfg
 +++ b/run/boot.cfg
 @@ -5,6 +5,6 @@
@@ -81,11 +81,11 @@ index b220030..a41b1ab 100644
      "kernel":"Image",
      "initrd":"rootfs.cpio",
 -    "cmdline": "root=/dev/ram rw earlycon=sbi console=hvc0 bench=spec06_gcc",
-+    "cmdline": "root=/dev/ram rw earlycon=sbi console=hvc0 bench=dry2",
++    "cmdline": "root=/dev/ram rw earlycon=sbi console=hvc0",
      "memory_base_addr":0x80000000
  }
 diff --git a/src/dromajo.cpp b/src/dromajo.cpp
-index 1169f23..789b2a0 100644
+index 1169f23..47c5ecf 100644
 --- a/src/dromajo.cpp
 +++ b/src/dromajo.cpp
 @@ -46,6 +46,11 @@
@@ -93,7 +93,7 @@ index 1169f23..789b2a0 100644
  #endif
  
 +
-+#include "trace_markers.h"
++#include "../../trace_macros.h"
 +#include "stf-inc/stf_writer.hpp"
 +#include "stf-inc/stf_record_types.hpp"
 +
@@ -115,7 +115,7 @@ index 1169f23..789b2a0 100644
  int iterate_core(RISCVMachine *m, int hartid) {
      if (m->common.maxinsns-- <= 0)
          /* Succeed after N instructions without failure. */
-@@ -139,6 +152,90 @@ int iterate_core(RISCVMachine *m, int hartid) {
+@@ -139,6 +152,92 @@ int iterate_core(RISCVMachine *m, int hartid) {
      if (last_pc == virt_machine_get_pc(m, hartid))
          return 0;
  
@@ -124,12 +124,13 @@ index 1169f23..789b2a0 100644
 +        if(insn_raw == START_TRACE_OPC)
 +        {
 +            tracing_enabled = true;
++            fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Started at 0x%lx\n", virt_machine_get_pc(m, 0));
 +            stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;
 +            if((bool)stf_writer == false) {
 +                stf_writer.open(m->common.stf_trace);
 +                stf_writer.
 +                    addTraceInfo(stf::TraceInfoRecord(stf::STF_GEN::STF_GEN_DROMAJO, 1, 1, 0,
-+                                                      "Trace actually from Dromajo"));
++                                                      "Trace from Dromajo"));
 +                stf_writer.setISA(stf::ISA::RISCV);
 +                stf_writer.setHeaderIEM(stf::INST_IEM::STF_INST_IEM_RV64);
 +                stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_RV64);
@@ -143,7 +144,8 @@ index 1169f23..789b2a0 100644
 +        else if (insn_raw == STOP_TRACE_OPC) {
 +            tracing_enabled = false;
 +            stf_writer.close();
-+            fprintf(dromajo_stderr, "Traced %ld insts\n", stf_count);
++            fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Stopped at 0x%lx\n", virt_machine_get_pc(m, 0));
++            fprintf(dromajo_stderr, ">>> DROMAJO: Traced %ld insts\n", stf_count);
 +        }
 +
 +        if(tracing_enabled)

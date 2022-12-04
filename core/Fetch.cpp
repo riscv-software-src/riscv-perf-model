@@ -72,16 +72,22 @@ namespace olympia
             }
         }
 
-        out_fetch_queue_write_.send(insts_to_send);
+        if(false == insts_to_send->empty())
+        {
+            out_fetch_queue_write_.send(insts_to_send);
 
-        credits_inst_queue_ -= upper;
-        if(credits_inst_queue_ > 0) {
-            fetch_inst_event_->schedule(1);
+            credits_inst_queue_ -= upper;
+            if(credits_inst_queue_ > 0) {
+                fetch_inst_event_->schedule(1);
+            }
+
+            if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                info_logger_ << "Fetch: send num_inst=" << insts_to_send->size()
+                             << " instructions, remaining credit=" << credits_inst_queue_;
+            }
         }
-
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Fetch: send num_inst=" << insts_to_send->size()
-                         << " instructions, remaining credit=" << credits_inst_queue_;
+        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
+            info_logger_ << "Fetch: no instructions from trace";
         }
     }
 

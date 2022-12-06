@@ -73,7 +73,7 @@ namespace olympia
 
         out_fetch_queue_write_.send(insts_to_send);
 
-        credits_inst_queue_ -= insts_to_send->size();
+        credits_inst_queue_ -= static_cast<uint32_t> (insts_to_send->size());
 
         if((credits_inst_queue_ > 0) && (false == inst_generator_->isDone())) {
             fetch_inst_event_->schedule(1);

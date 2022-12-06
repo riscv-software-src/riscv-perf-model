@@ -9,16 +9,16 @@
 # - python
 #
 content:
-  # Report1: Start from time/inst == 0 and collect everything
+  # Report 1: Start from time/inst == 0 and collect everything
   report:
     pattern:   top
-    def_file:  core_stats.yaml
+    def_file:  reports/core_stats.yaml
     dest_file: %OUT_BASE%.%OUT_FORMAT%
     format:    %OUT_FORMAT%
-  # Report1: Start from inst == INST_START
+  # Report 2: Start from inst == INST_START
   report:
     pattern:   top
-    def_file:  core_stats.yaml
+    def_file:  reports/core_stats.yaml
     dest_file: %OUT_BASE%_delayed.%OUT_FORMAT%
     format:    %OUT_FORMAT%
     trigger:

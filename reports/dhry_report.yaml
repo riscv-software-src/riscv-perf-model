@@ -13,9 +13,6 @@ content:
     # Assume a 1MHz part, determine the iterations per second
     "1e6 / (265 / cpu.core0.rob.stats.ipc)" : "Iterations Per Second"
 
-    # Assume a 1MHz part, determine the DMIPs based on the VAX 11/780
+    # Assume a 1MHz part, determine the DMIPs based on the VAX 1780
     # achieving a 1757 Dhrystones per second score
-    "(1e6 / (265 / cpu.core0.rob.stats.ipc)) / 1757" : "DMIPS"
-
-    # DMIPs/MHz
-    "((1e6 / (265 / cpu.core0.rob.stats.ipc)) / 1757) * 1000" : "DMIPS Per MHz"
+    "(1e6 / (265 / cpu.core0.rob.stats.ipc)) / 1757" : "DMIPS Per MHz"

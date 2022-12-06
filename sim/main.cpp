@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     const char * WORKLOAD = "workload";
 
     sparta::app::DefaultValues DEFAULTS;
-    DEFAULTS.auto_summary_default = "on";
+    DEFAULTS.auto_summary_default = "off";
     DEFAULTS.arch_arg_default = "small_core";
     DEFAULTS.arch_search_dirs = {"arches"}; // Where --arch will be resolved by default
 
@@ -79,8 +79,13 @@ int main(int argc, char **argv)
             return err_code; // Any errors already printed to cerr
         }
 
-        bool show_factories = false;
         auto& vm = cls.getVariablesMap();
+        if(vm.count("auto-summary") == 0) {
+            std::cout << "olympia: Auto-summary reports are disabled in Olympia.  To enable, use '--auto-summary on'"
+                      << std::endl;
+        }
+
+        bool show_factories = false;
         if(vm.count("show-factories") != 0) {
             show_factories = true;
         }

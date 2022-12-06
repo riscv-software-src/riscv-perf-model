@@ -71,6 +71,7 @@ namespace olympia
                                                                                 info_logger_,
                                                                                 &in_lsu_credits_,
                                                                                 &out_lsu_write_));
+        in_lsu_credits_.enableCollection(node);
 
         in_reorder_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, robCredits_, uint32_t));

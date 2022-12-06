@@ -102,7 +102,8 @@ namespace olympia
         // Create load/store instruction issue info
         LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
                                                                                                        mem_info_ptr);
-
+        lsu_insts_dispatched_++;
+ 
         // Append to instruction issue queue
         appendIssueQueue_(inst_info_ptr);
 
@@ -150,6 +151,8 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                         "Get ROB Ack, but the store inst hasn't retired yet!");
 
+        stores_retired_++;
+
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
@@ -165,6 +168,8 @@ namespace olympia
         // NOTE:
         // win_ptr should always point to an instruction ready to be issued
         // Otherwise assertion error should already be fired in arbitrateInstIssue_()
+
+        lsu_insts_issued_++;
 
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr->getMemoryAccessInfoPtr());
@@ -256,6 +261,8 @@ namespace olympia
             out_biu_req_.send(mmu_pending_inst_ptr_);
 
             succeed = true;
+
+            biu_reqs_++;
         }
         else {
             // Port is being driven by another source, wait for one cycle and check again
@@ -361,6 +368,8 @@ namespace olympia
             out_biu_req_.send(cache_pending_inst_ptr_);
 
             succeed = true;
+          
+            biu_reqs_++;
         }
         else {
             // Port is being driven by another source, wait for one cycle and check again
@@ -397,6 +406,8 @@ namespace olympia
 
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::COMPLETED);
+            
+            lsu_insts_completed_++;
 
             // Remove completed instruction from issue queue
             popIssueQueue_(inst_ptr);
@@ -431,6 +442,8 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
                         "Store inst cannot finish when cache is still a miss!");
 
+            lsu_insts_completed_++;
+
             // Remove store instruction from issue queue
             popIssueQueue_(inst_ptr);
 
@@ -457,6 +470,8 @@ namespace olympia
         auto flush = [criteria] (const uint64_t & id) -> bool {
             return id >= static_cast<uint64_t>(criteria);
         };
+
+        lsu_flushes_++;
 
         // Flush load/store pipeline entry
         flushLSPipeline_(flush);
@@ -597,12 +612,15 @@ namespace olympia
 
         if (tlb_always_hit_) {
             ILOG("TLB HIT all the time: vaddr=0x" << std::hex << vaddr);
+            tlb_hits_++;
         }
         else if (tlb_hit) {
             ILOG("TLB HIT: vaddr=0x" << std::hex << vaddr);
+            tlb_hits_++;
         }
         else {
             ILOG("TLB MISS: vaddr=0x" << std::hex << vaddr);
+            tlb_misses_++;
         }
 
         return tlb_hit;
@@ -679,12 +697,15 @@ namespace olympia
 
         if (dl1_always_hit_) {
             ILOG("DL1 Cache HIT all the time: phyAddr=0x" << std::hex << phyAddr);
+            dl1_cache_hits_++;
         }
         else if (cache_hit) {
             ILOG("DL1 Cache HIT: phyAddr=0x" << std::hex << phyAddr);
+            dl1_cache_hits_++;
         }
         else {
             ILOG("DL1 Cache MISS: phyAddr=0x" << std::hex << phyAddr);
+            dl1_cache_misses_++;
         }
 
         return cache_hit;

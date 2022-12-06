@@ -195,5 +195,5 @@ diff -y -W 150 report_medium.out report_big.out
 
 # Launch the viewer
 # *** MacOS use pythonw
-python  $MAP_BASE/helios/pipeViewer/pipe_view/argos.py -d pipeout_1K -l ../layouts/core.alf
+python $MAP_BASE/helios/pipeViewer/pipe_view/argos.py -d pipeout_1K -l ../layouts/small_core.alf
 ```

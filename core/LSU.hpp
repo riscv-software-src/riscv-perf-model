@@ -523,6 +523,50 @@ namespace olympia
         // Flush load/store pipeline
         template<typename Comp>
         void flushLSPipeline_(const Comp &);
+
+        // Counters
+        sparta::Counter lsu_insts_dispatched_{
+            getStatisticSet(), "lsu_insts_dispatched",
+            "Number of LSU instructions dispatched", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter stores_retired_{
+            getStatisticSet(), "stores_retired",
+            "Number of stores retired", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter lsu_insts_issued_{
+            getStatisticSet(), "lsu_insts_issued",
+            "Number of LSU instructions issued", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter lsu_insts_completed_{
+            getStatisticSet(), "lsu_insts_completed",
+            "Number of LSU instructions completed", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter lsu_flushes_{
+            getStatisticSet(), "lsu_flushes",
+            "Number of instruction flushes at LSU", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter tlb_hits_{
+            getStatisticSet(), "tlb_hits",
+            "Number of TLB hits", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter tlb_misses_{
+            getStatisticSet(), "tlb_misses",
+            "Number of TLB misses", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter dl1_cache_hits_{
+            getStatisticSet(), "dl1_cache_hits",
+            "Number of DL1 cache hits", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter dl1_cache_misses_{
+            getStatisticSet(), "dl1_cache_misses",
+            "Number of DL1 cache misses", sparta::Counter::COUNT_NORMAL
+        };
+        sparta::Counter biu_reqs_{
+            getStatisticSet(), "biu_reqs",
+            "Number of BIU reqs", sparta::Counter::COUNT_NORMAL
+        };
+
+
     };
 
     inline std::ostream & operator<<(std::ostream & os,

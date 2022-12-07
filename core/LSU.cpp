@@ -76,9 +76,7 @@ namespace olympia
                                                          (dl1_associativity));
         dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "LSU construct: #" << node->getGroupIdx();
-        }
+        ILOG("LSU construct: #" << node->getGroupIdx());
     }
 
 
@@ -91,10 +89,7 @@ namespace olympia
     {
         out_lsu_credits_.send(ldst_inst_queue_size_);
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "LSU initial credits for Dispatch Unit: " << ldst_inst_queue_size_;
-        }
+        ILOG("LSU initial credits for Dispatch Unit: " << ldst_inst_queue_size_);
     }
 
     // Receive new load/store instruction from Dispatch Unit
@@ -107,7 +102,8 @@ namespace olympia
         // Create load/store instruction issue info
         LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
                                                                                                        mem_info_ptr);
-
+        lsu_insts_dispatched_++;
+ 
         // Append to instruction issue queue
         appendIssueQueue_(inst_info_ptr);
 
@@ -132,9 +128,7 @@ namespace olympia
         // however, we can ONLY update instruction status as SCHEDULED for a new issue event
 
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Another issue event scheduled";
-        }
+        ILOG("Another issue event scheduled");
     }
 
     // Receive MSS access acknowledge from Bus Interface Unit
@@ -157,13 +151,13 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                         "Get ROB Ack, but the store inst hasn't retired yet!");
 
+        stores_retired_++;
+
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
 
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Get Ack from ROB! Retired store instruction: " << inst_ptr;
-        }
+        ILOG("Get Ack from ROB! Retired store instruction: " << inst_ptr);
     }
 
     // Issue/Re-issue ready instructions in the issue queue
@@ -174,6 +168,8 @@ namespace olympia
         // NOTE:
         // win_ptr should always point to an instruction ready to be issued
         // Otherwise assertion error should already be fired in arbitrateInstIssue_()
+
+        lsu_insts_issued_++;
 
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr->getMemoryAccessInfoPtr());
@@ -187,10 +183,7 @@ namespace olympia
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Issue/Re-issue Instruction: " << win_ptr->getInstPtr();
-        }
+        ILOG("Issue/Re-issue Instruction: " << win_ptr->getInstPtr());
     }
 
     // Handle MMU access request
@@ -209,11 +202,7 @@ namespace olympia
         bool MMUBypass = isAlreadyHIT;
 
         if (MMUBypass) {
-
-            if (SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "MMU Lookup is skipped (TLB is already hit)!";
-            }
-
+            ILOG("MMU Lookup is skipped (TLB is already hit)!");
             return;
         }
 
@@ -247,18 +236,10 @@ namespace olympia
                 // NOTE:
                 // The race between simultaneous MMU and cache requests is resolved by
                 // specifying precedence between these two competing events
-
-
-                if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                    info_logger_ << "MMU is trying to drive BIU request port!";
-                }
+                ILOG("MMU is trying to drive BIU request port!");
             }
             else {
-
-                if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                    info_logger_
-                        << "MMU miss cannot be served right now due to another outstanding one!";
-                }
+                ILOG("MMU miss cannot be served right now due to another outstanding one!");
             }
 
             // NEW: Invalidate pipeline stage
@@ -280,20 +261,19 @@ namespace olympia
             out_biu_req_.send(mmu_pending_inst_ptr_);
 
             succeed = true;
+
+            biu_reqs_++;
         }
         else {
             // Port is being driven by another source, wait for one cycle and check again
             uev_mmu_drive_biu_port_.schedule(sparta::Clock::Cycle(1));
         }
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            if (succeed) {
-                info_logger_ << "MMU is driving the BIU request port!";
-            }
-            else {
-                info_logger_ << "MMU is waiting to drive the BIU request port!";
-            }
+        if (succeed) {
+            ILOG("MMU is driving the BIU request port!");
+        }
+        else {
+            ILOG("MMU is waiting to drive the BIU request port!");
         }
     }
 
@@ -320,22 +300,18 @@ namespace olympia
         const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
 
         if (cacheBypass) {
-
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                if (isAlreadyHIT) {
-                    info_logger_ << "Cache Lookup is skipped (Cache already hit)!";
-                }
-                else if (!phyAddrIsReady) {
-                    info_logger_ << "Cache Lookup is skipped (Physical address not ready)!";
-                }
-                else if (isUnretiredStore) {
-                    info_logger_ << "Cache Lookup is skipped (Un-retired store instruction)!";
-                }
-                else {
-                    sparta_assert(false, "Cache access is bypassed without a valid reason!");
-                }
+            if (isAlreadyHIT) {
+                ILOG("Cache Lookup is skipped (Cache already hit)!");
             }
-
+            else if (!phyAddrIsReady) {
+                ILOG("Cache Lookup is skipped (Physical address not ready)!");
+            }
+            else if (isUnretiredStore) {
+                ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
+            }
+            else {
+                sparta_assert(false, "Cache access is bypassed without a valid reason!");
+            }
             return;
         }
 
@@ -367,17 +343,10 @@ namespace olympia
                 // NOTE:
                 // The race between simultaneous MMU and cache requests is resolved by
                 // specifying precedence between these two competing events
-
-
-                if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                    info_logger_ << "Cache is trying to drive BIU request port!";
-                }
+                ILOG("Cache is trying to drive BIU request port!");
             }
             else {
-
-                if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                    info_logger_ << "Cache miss cannot be served right now due to another outstanding one!";
-                }
+                ILOG("Cache miss cannot be served right now due to another outstanding one!");
             }
 
             // NEW: Invalidate pipeline stage
@@ -399,20 +368,19 @@ namespace olympia
             out_biu_req_.send(cache_pending_inst_ptr_);
 
             succeed = true;
+          
+            biu_reqs_++;
         }
         else {
             // Port is being driven by another source, wait for one cycle and check again
             uev_cache_drive_biu_port_.schedule(sparta::Clock::Cycle(1));
         }
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            if (succeed) {
-                info_logger_ << "Cache is driving the BIU request port!";
-            }
-            else {
-                info_logger_ << "Cache is waiting to drive the BIU request port!";
-            }
+        if (succeed) {
+            ILOG("Cache is driving the BIU request port!");
+        }
+        else {
+            ILOG("Cache is waiting to drive the BIU request port!");
         }
     }
 
@@ -438,6 +406,8 @@ namespace olympia
 
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::COMPLETED);
+            
+            lsu_insts_completed_++;
 
             // Remove completed instruction from issue queue
             popIssueQueue_(inst_ptr);
@@ -445,12 +415,9 @@ namespace olympia
             // Update instruction issue queue credits to Dispatch Unit
             out_lsu_credits_.send(1, 0);
 
-
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "Complete Load Instruction: "
-                             << inst_ptr->getMnemonic()
-                             << " uid(" << inst_ptr->getUniqueID() << ")";
-            }
+            ILOG("Complete Load Instruction: "
+                 << inst_ptr->getMnemonic()
+                 << " uid(" << inst_ptr->getUniqueID() << ")");
 
             return;
         }
@@ -466,16 +433,16 @@ namespace olympia
             inst_ptr->setStatus(Inst::Status::COMPLETED);
 
 
-            if (SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "Complete Store Instruction: "
-                             << inst_ptr->getMnemonic()
-                             << " uid(" << inst_ptr->getUniqueID() << ")";
-            }
+            ILOG("Complete Store Instruction: "
+                 << inst_ptr->getMnemonic()
+                 << " uid(" << inst_ptr->getUniqueID() << ")");
         }
         // Finish store operation
         else {
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
                         "Store inst cannot finish when cache is still a miss!");
+
+            lsu_insts_completed_++;
 
             // Remove store instruction from issue queue
             popIssueQueue_(inst_ptr);
@@ -483,10 +450,7 @@ namespace olympia
             // Update instruction issue queue credits to Dispatch Unit
             out_lsu_credits_.send(1, 0);
 
-
-            if (SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "Store operation is done!";
-            }
+            ILOG("Store operation is done!");
         }
 
 
@@ -500,14 +464,14 @@ namespace olympia
     // Handle instruction flush in LSU
     void LSU::handleFlush_(const FlushCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Start Flushing!";
-        }
+        ILOG("Start Flushing!");
 
         // Flush criteria setup
         auto flush = [criteria] (const uint64_t & id) -> bool {
             return id >= static_cast<uint64_t>(criteria);
         };
+
+        lsu_flushes_++;
 
         // Flush load/store pipeline entry
         flushLSPipeline_(flush);
@@ -551,10 +515,7 @@ namespace olympia
         // Always append newly dispatched instructions to the back of issue queue
         ldst_inst_queue_.push_back(inst_info_ptr);
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Append new load/store instruction to issue queue!";
-        }
+        ILOG("Append new load/store instruction to issue queue!");
     }
 
     // Pop completed load/store instruction out of issue queue
@@ -612,19 +573,15 @@ namespace olympia
         for (auto const &inst_info_ptr : ldst_inst_queue_) {
             if (inst_info_ptr->isReady()) {
                 isReady = true;
-
                 break;
             }
         }
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            if (isReady) {
-                info_logger_ << "At least one more instruction is ready to be issued!";
-            }
-            else {
-                info_logger_ << "No more instruction is ready to be issued!";
-            }
+        if (isReady) {
+            ILOG("At least one more instruction is ready to be issued!");
+        }
+        else {
+            ILOG("No more instruction is ready to be issued!");
         }
 
         return isReady;
@@ -653,16 +610,17 @@ namespace olympia
         }
 
 
-        if (SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            if (tlb_always_hit_) {
-                info_logger_ << "TLB HIT all the time: vaddr=0x" << std::hex << vaddr;
-            }
-            else if (tlb_hit) {
-                info_logger_ << "TLB HIT: vaddr=0x" << std::hex << vaddr;
-            }
-            else {
-                info_logger_ << "TLB MISS: vaddr=0x" << std::hex << vaddr;
-            }
+        if (tlb_always_hit_) {
+            ILOG("TLB HIT all the time: vaddr=0x" << std::hex << vaddr);
+            tlb_hits_++;
+        }
+        else if (tlb_hit) {
+            ILOG("TLB HIT: vaddr=0x" << std::hex << vaddr);
+            tlb_hits_++;
+        }
+        else {
+            ILOG("TLB MISS: vaddr=0x" << std::hex << vaddr);
+            tlb_misses_++;
         }
 
         return tlb_hit;
@@ -683,11 +641,7 @@ namespace olympia
         // Check if this MMU miss Ack is for an already flushed instruction
         if (mmu_pending_inst_flushed) {
             mmu_pending_inst_flushed = false;
-
-
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "BIU Ack for a flushed MMU miss is received!";
-            }
+            ILOG("BIU Ack for a flushed MMU miss is received!");
 
             // Schedule an instruction (re-)issue event
             // Note: some younger load/store instruction(s) might have been blocked by
@@ -699,10 +653,7 @@ namespace olympia
             return;
         }
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "BIU Ack for an outstanding MMU miss is received!";
-        }
+        ILOG("BIU Ack for an outstanding MMU miss is received!");
 
         // Reload TLB entry
         reloadTLB_(inst_ptr->getTargetVAddr());
@@ -711,10 +662,7 @@ namespace olympia
         updateIssuePriorityAfterTLBReload_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "MMU rehandling event is scheduled!";
-        }
+        ILOG("MMU rehandling event is scheduled!");
     }
 
     // Reload TLB entry
@@ -723,10 +671,7 @@ namespace olympia
         auto tlb_entry = &tlb_cache_->getLineForReplacementWithInvalidCheck(vaddr);
         tlb_cache_->allocateWithMRUUpdate(*tlb_entry, vaddr);
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "TLB reload complete!";
-        }
+        ILOG("TLB reload complete!");
     }
 
     // Access Cache
@@ -750,17 +695,17 @@ namespace olympia
             }
         }
 
-
-        if (SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            if (dl1_always_hit_) {
-                info_logger_ << "DL1 Cache HIT all the time: phyAddr=0x" << std::hex << phyAddr;
-            }
-            else if (cache_hit) {
-                info_logger_ << "DL1 Cache HIT: phyAddr=0x" << std::hex << phyAddr;
-            }
-            else {
-                info_logger_ << "DL1 Cache MISS: phyAddr=0x" << std::hex << phyAddr;
-            }
+        if (dl1_always_hit_) {
+            ILOG("DL1 Cache HIT all the time: phyAddr=0x" << std::hex << phyAddr);
+            dl1_cache_hits_++;
+        }
+        else if (cache_hit) {
+            ILOG("DL1 Cache HIT: phyAddr=0x" << std::hex << phyAddr);
+            dl1_cache_hits_++;
+        }
+        else {
+            ILOG("DL1 Cache MISS: phyAddr=0x" << std::hex << phyAddr);
+            dl1_cache_misses_++;
         }
 
         return cache_hit;
@@ -781,10 +726,7 @@ namespace olympia
         // Check if this cache miss Ack is for an already flushed instruction
         if (cache_pending_inst_flushed_) {
             cache_pending_inst_flushed_ = false;
-
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "BIU Ack for a flushed cache miss is received!";
-            }
+            ILOG("BIU Ack for a flushed cache miss is received!");
 
             // Schedule an instruction (re-)issue event
             // Note: some younger load/store instruction(s) might have been blocked by
@@ -797,10 +739,7 @@ namespace olympia
             return;
         }
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "BIU Ack for an outstanding cache miss is received!";
-        }
+        ILOG("BIU Ack for an outstanding cache miss is received!");
 
         // Reload cache line
         reloadCache_(inst_ptr->getRAdr());
@@ -809,10 +748,7 @@ namespace olympia
         updateIssuePriorityAfterCacheReload_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Cache rehandling event is scheduled!";
-        }
+        ILOG("Cache rehandling event is scheduled!");
     }
 
     // Reload cache line
@@ -821,10 +757,7 @@ namespace olympia
         auto dl1_cache_line = &dl1_cache_->getLineForReplacementWithInvalidCheck(phyAddr);
         dl1_cache_->allocateWithMRUUpdate(*dl1_cache_line, phyAddr);
 
-
-        if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-            info_logger_ << "Cache reload complete!";
-        }
+        ILOG("Cache reload complete!");
     }
 
     // Update issue priority when newly dispatched instruction comes in
@@ -956,20 +889,14 @@ namespace olympia
 
                 ++credits_to_send;
 
-
-                if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                    info_logger_ << "Flush Instruction ID: " << inst_id;
-                }
+                ILOG("Flush Instruction ID: " << inst_id);
             }
         }
 
         if (credits_to_send > 0) {
             out_lsu_credits_.send(credits_to_send);
 
-
-            if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                info_logger_ << "Flush " << credits_to_send << " instructions in issue queue!";
-            }
+            ILOG("Flush " << credits_to_send << " instructions in issue queue!");
         }
     }
 
@@ -988,11 +915,8 @@ namespace olympia
             if (flush(inst_id)) {
                 ldst_pipeline_.flushStage(iter);
 
-
-                if(SPARTA_EXPECT_FALSE(info_logger_.observed())) {
-                    info_logger_ << "Flush Pipeline Stage[" << stage_id
-                                 << "], Instruction ID: " << inst_id;
-                }
+                ILOG("Flush Pipeline Stage[" << stage_id
+                     << "], Instruction ID: " << inst_id);
             }
         }
     }

@@ -45,8 +45,7 @@ namespace olympia{
                                 olympia::Decode::DecodeParameterSet> decode_rf;
 
         //! \brief Resouce Factory to build a Rename Unit
-        sparta::ResourceFactory<olympia::Rename,
-                                olympia::Rename::RenameParameterSet> rename_rf;
+        RenameFactory rename_rf;
 
         //! \brief Resouce Factory to build a Dispatch Unit
         DispatchFactory dispatch_rf;

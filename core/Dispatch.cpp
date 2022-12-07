@@ -102,8 +102,8 @@ namespace olympia
                         ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
                         break;
                     }
-                    else if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                        info_logger_ << "dispatcher '" << disp->getName() << "' still cannot accept an inst";
+                    else  {
+                        ILOG("dispatcher '" << disp->getName() << "' still cannot accept an inst");
                     }
                 }
             }
@@ -111,8 +111,8 @@ namespace olympia
                 ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
             }
         }
-        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "no rob credits or no instructions to process";
+        else {
+            ILOG("no rob credits or no instructions to process");
         }
     }
 
@@ -125,15 +125,11 @@ namespace olympia
         uint32_t nc = in_reorder_credits_.pullData();
         credits_rob_ += nc;
         scheduleDispatchSession();
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "ROB got " << nc << " credits, total: " << credits_rob_;
-        }
+        ILOG("ROB got " << nc << " credits, total: " << credits_rob_);
     }
 
     void Dispatch::dispatchQueueAppended_(const InstGroupPtr &inst_grp) {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "queue appended: " << inst_grp;
-        }
+        ILOG("queue appended: " << inst_grp);
         for(auto & i : *in_dispatch_queue_write_.pullData()) {
             dispatch_queue_.push(i);
         }
@@ -145,9 +141,7 @@ namespace olympia
         uint32_t num_dispatch = std::min(dispatch_queue_.size(), num_to_dispatch_);
         num_dispatch = std::min(credits_rob_, num_dispatch);
 
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Num to dispatch: " << num_dispatch;
-        }
+        ILOG("Num to dispatch: " << num_dispatch);
 
         // Stop the current counter
         stall_counters_[current_stall_].stopCounting();
@@ -192,17 +186,13 @@ namespace olympia
                         ++(unit_distribution_context_.context(target_unit));
                         ++(weighted_unit_distribution_context_.context(target_unit));
 
-                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                            info_logger_ << "Sending instruction: "
-                                         << ex_inst_ptr << " to " << disp->getName();
-                        }
+                        ILOG("Sending instruction: "
+                             << ex_inst_ptr << " to " << disp->getName());
                         dispatched = true;
                         break;
                     }
                     else {
-                        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                            info_logger_ << disp->getName() << " cannot accept inst: " << ex_inst_ptr;
-                        }
+                        ILOG(disp->getName() << " cannot accept inst: " << ex_inst_ptr);
                         blocking_dispatcher_ = target_unit;
                     }
                 }
@@ -217,10 +207,8 @@ namespace olympia
                 dispatch_queue_.pop();
                 --credits_rob_;
             } else {
-                if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "Could not dispatch: "
-                                 << ex_inst_ptr << " stall: " << current_stall_;
-                }
+                ILOG("Could not dispatch: "
+                     << ex_inst_ptr << " stall: " << current_stall_);
                 break;
             }
         }
@@ -244,9 +232,7 @@ namespace olympia
 
     void Dispatch::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got a flush call for " << criteria;
-        }
+        ILOG("Got a flush call for " << criteria);
         out_dispatch_queue_credits_.send(dispatch_queue_.size());
         dispatch_queue_.clear();
         out_reorder_write_.cancel();

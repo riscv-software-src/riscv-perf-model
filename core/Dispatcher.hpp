@@ -7,6 +7,7 @@
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/log/MessageSource.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "Inst.hpp"
 #include "CoreTypes.hpp"
@@ -60,9 +61,7 @@ namespace olympia
                           << " cannot accept the given instruction (not enough credits): " << inst);
             sparta_assert(num_can_dispatch_ != 0, "Dispatcher " << name_
                           << " cannot accept the given instruction (already accepted an instruction)");
-            if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                info_logger_ << name_ << ": dispatching " << inst;
-            }
+            ILOG(name_ << ": dispatching " << inst);
             out_inst_->send(inst);
             --unit_credits_;
             --num_can_dispatch_;

@@ -1,12 +1,25 @@
 // <ExecutePipePipe.cpp> -*- C++ -*-
 
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "ExecutePipe.hpp"
 
 namespace olympia
 {
+    core_types::RegFile determineRegisterFile(const std::string & target_name)
+    {
+        if(target_name == "alu" || target_name == "br") {
+            return core_types::RF_INTEGER;
+        }
+        else if(target_name == "fpu") {
+            return core_types::RF_FLOAT;
+        }
+        sparta_assert(false, "Not supported this target: " << target_name);
+    }
+
     const char ExecutePipe::name[] = "exe_pipe";
+
     ExecutePipe::ExecutePipe(sparta::TreeNode * node,
                              const ExecutePipeParameterSet * p) :
         sparta::Unit(node),
@@ -14,6 +27,7 @@ namespace olympia
         execute_time_(p->execute_time),
         scheduler_size_(p->scheduler_size),
         in_order_issue_(p->in_order_issue),
+        reg_file_(determineRegisterFile(node->getGroup())),
         collected_inst_(node, node->getName())
     {
         in_execute_inst_.
@@ -24,21 +38,29 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, flushInst_,
                                                                     FlushManager::FlushingCriteria));
         // Startup handler for sending initiatl credits
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ExecutePipe, sendInitialCredits_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ExecutePipe, setupExecutePipe_));
         // Set up the precedence between issue and complete
         // Complete should come before issue because it schedules issue with a 0 cycle delay
         // issue should always schedule complete with a non-zero delay (which corresponds to the
         // insturction latency)
         complete_inst_ >> issue_inst_;
 
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "ExecutePipe construct: #" << node->getGroupIdx();
-        }
+        ILOG("ExecutePipe construct: #" << node->getGroupIdx());
 
     }
 
-    void ExecutePipe::sendInitialCredits_()
+    void ExecutePipe::setupExecutePipe_()
     {
+        // Setup scoreboard view upon register file
+        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+        for(const auto rf : reg_files)
+        {
+            scoreboard_views_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
+                                                                   core_types::regfile_names[rf],
+                                                                   getContainer()));
+        }
+
+        // Send initial credits
         out_scheduler_credits_.send(scheduler_size_);
     }
 
@@ -46,6 +68,11 @@ namespace olympia
     // Callbacks
     void ExecutePipe::getInstsFromDispatch_(const InstPtr & ex_inst)
     {
+        // FIXME: Now every source operand should be ready
+        const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
+        sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
+                      "Should be all ready source operands ... " << ex_inst);
+
         // Insert at the end if we are doing in order issue or if the scheduler is empty
         if (in_order_issue_ == true || ready_queue_.size() == 0) {
             ready_queue_.emplace_back(ex_inst);
@@ -86,10 +113,8 @@ namespace olympia
         const uint32_t exe_time =
             ignore_inst_execute_time_ ? execute_time_ : ex_inst.getExecuteTime();
         collected_inst_.collectWithDuration(ex_inst, exe_time);
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Executing: " << ex_inst << " for "
-                         << exe_time + getClock()->currentCycle();
-        }
+        ILOG("Executing: " << ex_inst << " for "
+             << exe_time + getClock()->currentCycle());
         sparta_assert(exe_time != 0);
 
         ++total_insts_issued_;
@@ -104,9 +129,7 @@ namespace olympia
 
     // Called by the scheduler, scheduled by complete_inst_.
     void ExecutePipe::completeInst_(const InstPtr & ex_inst) {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Completing inst: " << ex_inst;
-        }
+        ILOG("Completing inst: " << ex_inst);
 
         ex_inst->setStatus(Inst::Status::COMPLETED);
         // We're not busy anymore
@@ -123,9 +146,7 @@ namespace olympia
 
     void ExecutePipe::flushInst_(const FlushManager::FlushingCriteria & criteria)
     {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Got flush for criteria: " << criteria;
-        }
+        ILOG("Got flush for criteria: " << criteria);
 
         // Flush instructions in the ready queue
         ReadyQueue::iterator it = ready_queue_.begin();

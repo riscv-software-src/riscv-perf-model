@@ -4,14 +4,16 @@
 
 #include "sparta/memory/AddressTypes.hpp"
 #include "sparta/resources/SharedData.hpp"
+#include "sparta/resources/Scoreboard.hpp"
+#include "sparta/resources/Queue.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
-
 #include "mavis/OpcodeInfo.h"
 
 #include "InstArchInfo.hpp"
+#include "CoreTypes.hpp"
 
 #include <cstdlib>
 #include <ostream>
@@ -97,9 +99,9 @@ namespace olympia
             return inst_arch_info_->getTargetUnit();
         }
 
-        void setLast(bool last, sparta::Scheduleable * rob_retire_event) {
+        void setOldest(bool oldest, sparta::Scheduleable * rob_retire_event) {
             ev_retire_ = rob_retire_event;
-            is_last_ = last;
+            is_oldest_ = oldest;
 
             if(status_.isValidNS() && status_.readNS() == olympia::Inst::Status::COMPLETED) {
                 ev_retire_->schedule();
@@ -135,6 +137,11 @@ namespace olympia
         std::string getDisasm()   const { return opcode_info_->dasmString(); }
         uint32_t    getOpCode()   const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
+        // Operand information
+        using OpInfoList = mavis::DecodedInstructionInfo::OpInfoList;
+        const OpInfoList& getSourceOpInfoList() const { return opcode_info_->getSourceOpInfoList(); }
+        const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
+
         // Static instruction information
         bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
@@ -142,22 +149,42 @@ namespace olympia
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
 
+        // Rename information
+        core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
+            return src_reg_bit_masks_[rf];
+        }
+        core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) {
+            return dest_reg_bit_masks_[rf];
+        }
+        const core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) const {
+            return src_reg_bit_masks_[rf];
+        }
+        const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
+            return dest_reg_bit_masks_[rf];
+        }
+
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType      inst_arch_info_;
 
         sparta::memory::addr_t inst_pc_       = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_  = 0; // Instruction's Target PC (for branches, loads/stores)
-        bool                   is_last_       = false;
+        bool                   is_oldest_       = false;
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
         sparta::Scheduleable * ev_retire_    = nullptr;
         InstStatus             status_;
         Status                 status_state_;
+
+        // Rename information
+        using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
+        RegisterBitMaskArray src_reg_bit_masks_;
+        RegisterBitMaskArray dest_reg_bit_masks_;
     };
 
     using InstPtr = Inst::PtrType;
+    using InstQueue = sparta::Queue<InstPtr>;
 
     inline std::ostream & operator<<(std::ostream & os, const Inst::Status & status) {
         switch(status) {

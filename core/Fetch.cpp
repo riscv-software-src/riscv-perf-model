@@ -10,6 +10,7 @@
 #include "InstGenerator.hpp"
 #include "MavisUnit.hpp"
 
+#include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
 namespace olympia
@@ -63,9 +64,7 @@ namespace olympia
                 ex_inst->setSpeculative(speculative_path_);
                 insts_to_send->emplace_back(ex_inst);
 
-                if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                    info_logger_ << "Sending: " << ex_inst << " down the pipe";
-                }
+                ILOG("Sending: " << ex_inst << " down the pipe");
             }
             else {
                 break;
@@ -76,7 +75,11 @@ namespace olympia
         {
             out_fetch_queue_write_.send(insts_to_send);
 
-            credits_inst_queue_ -= upper;
+            credits_inst_queue_ -= static_cast<uint32_t> (insts_to_send->size());
+
+            if((credits_inst_queue_ > 0) && (false == inst_generator_->isDone())) {
+                fetch_inst_event_->schedule(1);
+            }
             if(credits_inst_queue_ > 0) {
                 fetch_inst_event_->schedule(1);
             }
@@ -95,10 +98,8 @@ namespace olympia
     void Fetch::receiveFetchQueueCredits_(const uint32_t & dat) {
         credits_inst_queue_ += dat;
 
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Fetch: receive num_decode_credits=" << dat
-                         << ", total decode_credits=" << credits_inst_queue_;
-        }
+        ILOG("Fetch: receive num_decode_credits=" << dat
+             << ", total decode_credits=" << credits_inst_queue_);
 
         // Schedule a fetch event this cycle
         fetch_inst_event_->schedule(sparta::Clock::Cycle(0));
@@ -106,10 +107,8 @@ namespace olympia
 
     // Called from Retire via in_fetch_flush_redirect_ port
     void Fetch::flushFetch_(const uint64_t & new_addr) {
-        if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Fetch: receive flush on new_addr=0x"
-                         << std::hex << new_addr << std::dec;
-        }
+        ILOG("Fetch: receive flush on new_addr=0x"
+             << std::hex << new_addr << std::dec);
 
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();

@@ -80,9 +80,6 @@ namespace olympia
             if((credits_inst_queue_ > 0) && (false == inst_generator_->isDone())) {
                 fetch_inst_event_->schedule(1);
             }
-            if(credits_inst_queue_ > 0) {
-                fetch_inst_event_->schedule(1);
-            }
 
             if(SPARTA_EXPECT_FALSE(info_logger_)) {
                 info_logger_ << "Fetch: send num_inst=" << insts_to_send->size()

@@ -1,6 +1,6 @@
 # olympia
 
-Olympia is a Performance Model for the RISC-V community as an
+Olympia is a Performance Model written in C++ for the RISC-V community as an
 _example_ of an Out-of-Order RISC-V CPU Performance Model based on the
 [Sparta Modeling
 Framework](https://github.com/sparcians/map/tree/master/sparta).

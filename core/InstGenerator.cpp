@@ -38,9 +38,8 @@ namespace olympia
 
         try {
             fs.open(filename);
-        } catch (const std::ifstream::failure &) {
-            std::cerr << "ERROR: Issues opening " << filename << std::endl;
-            throw;
+        } catch (const std::ifstream::failure &e) {
+            throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
 
         jobj_.reset(new nlohmann::json);
@@ -124,9 +123,8 @@ namespace olympia
 
         try {
             fs.open(filename);
-        } catch (const std::ifstream::failure &) {
-            std::cerr << "ERROR: Issues opening " << filename << std::endl;
-            throw;
+        } catch (const std::ifstream::failure &e) {
+            throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
 
         // If true, search for an stf-pte file alongside this trace.

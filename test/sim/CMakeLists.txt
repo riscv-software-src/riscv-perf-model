@@ -39,7 +39,7 @@ sparta_named_test(olympia_dhry_test_report_html olympia -i 1M
   --report-yaml-replacements OUT_BASE dhry_test_report OUT_FORMAT text INST_START 0
   --report-search-dir reports
   --report reports/core_report.def
-  --workload traces/dhrystone.zstf)
+  --workload traces/dhry_riscv.zstf)
 
 # Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")
@@ -47,6 +47,6 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
   string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
   sparta_named_test(olympia_arch_${ARCH_NAME}_test olympia
-    -i500K --workload traces/dhrystone.zstf
+    -i500K --workload traces/dhry_riscv.zstf
     --arch ${ARCH_NAME})
 endforeach()

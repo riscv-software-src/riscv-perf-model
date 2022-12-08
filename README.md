@@ -89,14 +89,14 @@ done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
 ./olympia ../traces/example_json.json
 
 # Run a given STF trace file
-./olympia ../traces/dhrystone.zstf
+./olympia ../traces/dhry_riscv.zstf
 
 # Run a given STF trace file only 100K instructions
-./olympia -i100K ../traces/dhrystone.zstf
+./olympia -i100K ../traces/dhry_riscv.zstf
 
 # Run a given STF trace file and generate a
 # generic full simulation report
-./olympia ../traces/dhrystone.zstf --report-all dhry_report.out
+./olympia ../traces/dhry_riscv.zstf --report-all dhry_report.out
 ```
 
 ## Generate and Consume Configuration Files
@@ -110,19 +110,19 @@ done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
 dyff between baseline.yaml always_hit_DL1.yaml
 
 # Use the configuration file generated
-./olympia -c always_hit_DL1.yaml -i1M ../traces/dhrystone.zstf
+./olympia -c always_hit_DL1.yaml -i1M ../traces/dhry_riscv.zstf
 ```
 
 ## Generate Logs
 ```
 # Log of all messages, different outputs
-./olympia -i1K --auto-summary off ../traces/dhrystone.zstf \
+./olympia -i1K --auto-summary off ../traces/dhry_riscv.zstf \
    -l top info all_messages.log.basic   \
    -l top info all_messages.log.verbose \
    -l top info all_messages.log.raw
 
 # Different logs, some shared
-./olympia -i1K --auto-summary off ../traces/dhrystone.zstf \
+./olympia -i1K --auto-summary off ../traces/dhry_riscv.zstf \
    -l top.*.*.decode info decode.log \
    -l top.*.*.rob    info rob.log    \
    -l top.*.*.decode info decode_rob.log \
@@ -133,19 +133,19 @@ dyff between baseline.yaml always_hit_DL1.yaml
 # Run with 1M instructions, generate a report from the top of the tree
 # with stats that are not hidden; turn off the auto reporting
 cat reports/core_stats.yaml
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_full_report.txt text
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_full_report.txt text
 
 # Generate a report only for decode in text form
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top.cpu.core0.decode" reports/core_stats.yaml my_decode_report.txt text
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off  --report "top.cpu.core0.decode" reports/core_stats.yaml my_decode_report.txt text
 
 # Generate a report in JSON format
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_json_report.json json
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_json_report.json json
 
 # Generate a report in CSV format
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_csv_report.csv csv
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_csv_report.csv csv
 
 # Generate a report in HTML format
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
 ```
 
 ## Generate More Complex Reports
@@ -153,7 +153,7 @@ cat reports/core_stats.yaml
 # Using a report definition file, program the report collection to
 # start after 500K instructions
 cat reports/core_report.def
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off    \
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off    \
    --report reports/core_report.def  \
    --report-search reports           \
    --report-yaml-replacements        \
@@ -163,7 +163,7 @@ cat reports/core_report.def
 
 # Generate a time-series report -- capture all stats every 10K instructions
 cat reports/core_timeseries.def
-./olympia -i1M ../traces/dhrystone.zstf --auto-summary off       \
+./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off       \
    --report reports/core_timeseries.def \
    --report-search reports              \
    --report-yaml-replacements           \
@@ -175,25 +175,25 @@ python3 ./reports/plot_ts.y my_report_time_series_all.csv
 ## Experimenting with Architectures
 ```
 # By default, olympia uses the small_core architecture
-./olympia -i1M  ../traces/dhrystone.zstf --auto-summary off --report-all report_small.out
+./olympia -i1M  ../traces/dhry_riscv.zstf --auto-summary off --report-all report_small.out
 
 # Use the medium sized core
 cat arches/medium_core.yaml  # Example the medium core
-./olympia -i1M  ../traces/dhrystone.zstf --arch medium_core --auto-summary off --report-all report_medium.out
+./olympia -i1M  ../traces/dhry_riscv.zstf --arch medium_core --auto-summary off --report-all report_medium.out
 diff -y -W 150 report_small.out report_medium.out
 
 # Use the big core
 cat arches/big_core.yaml  # Example the medium core
-./olympia -i1M  ../traces/dhrystone.zstf --arch big_core --auto-summary off --report-all report_big.out
+./olympia -i1M  ../traces/dhry_riscv.zstf --arch big_core --auto-summary off --report-all report_big.out
 diff -y -W 150 report_medium.out report_big.out
 
 ```
 
 ## Generate and View a Pipeout
 ```
-./olympia -i1M ../traces/dhrystone.zstf --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
+./olympia -i1M ../traces/dhry_riscv.zstf --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
 
 # Launch the viewer
 # *** MacOS use pythonw
-python  $MAP_BASE/helios/pipeViewer/pipe_view/argos.py -d pipeout_1K -l ../layouts/core.alf
+python $MAP_BASE/helios/pipeViewer/pipe_view/argos.py -d pipeout_1K -l ../layouts/small_core.alf
 ```

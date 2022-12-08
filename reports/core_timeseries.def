@@ -1,7 +1,7 @@
 content:
   report:
     pattern: _global
-    def_file: core_stats.yaml
+    def_file: reports/core_stats.yaml
     dest_file: %OUT_BASE%_time_series_all.csv
     format: csv
     trigger:

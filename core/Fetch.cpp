@@ -71,16 +71,24 @@ namespace olympia
             }
         }
 
-        out_fetch_queue_write_.send(insts_to_send);
+        if(false == insts_to_send->empty())
+        {
+            out_fetch_queue_write_.send(insts_to_send);
 
-        credits_inst_queue_ -= static_cast<uint32_t> (insts_to_send->size());
+            credits_inst_queue_ -= static_cast<uint32_t> (insts_to_send->size());
 
-        if((credits_inst_queue_ > 0) && (false == inst_generator_->isDone())) {
-            fetch_inst_event_->schedule(1);
+            if((credits_inst_queue_ > 0) && (false == inst_generator_->isDone())) {
+                fetch_inst_event_->schedule(1);
+            }
+
+            if(SPARTA_EXPECT_FALSE(info_logger_)) {
+                info_logger_ << "Fetch: send num_inst=" << insts_to_send->size()
+                             << " instructions, remaining credit=" << credits_inst_queue_;
+            }
         }
-
-        ILOG("Fetch: send num_inst=" << insts_to_send->size()
-             << " instructions, remaining credit=" << credits_inst_queue_);
+        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
+            info_logger_ << "Fetch: no instructions from trace";
+        }
     }
 
     // Called when decode has room

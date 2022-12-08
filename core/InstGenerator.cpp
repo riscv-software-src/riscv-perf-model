@@ -38,9 +38,8 @@ namespace olympia
 
         try {
             fs.open(filename);
-        } catch (const std::ifstream::failure &) {
-            std::cerr << "ERROR: Issues opening " << filename << std::endl;
-            throw;
+        } catch (const std::ifstream::failure &e) {
+            throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
 
         jobj_.reset(new nlohmann::json);
@@ -124,9 +123,8 @@ namespace olympia
 
         try {
             fs.open(filename);
-        } catch (const std::ifstream::failure &) {
-            std::cerr << "ERROR: Issues opening " << filename << std::endl;
-            throw;
+        } catch (const std::ifstream::failure &e) {
+            throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
 
         // If true, search for an stf-pte file alongside this trace.
@@ -136,7 +134,7 @@ namespace olympia
         // value. Required for traces that stay in machine mode the entire
         // time
         constexpr bool FILTER_MODE_CHANGE_EVENTS = true;
-        constexpr bool SKIP_NONUSER_MODE         = true;
+        constexpr bool SKIP_NONUSER_MODE         = false;
         constexpr size_t BUFFER_SIZE             = 4096;
         reader_.reset(new stf::STFInstReader(filename,
                                              SKIP_NONUSER_MODE,

@@ -1,7 +1,10 @@
-
 #
 # Set up the pipeline for a 8-wide machine
 #
+
+# Build on top of a medium core
+include: medium_core.yaml
+
 top.cpu.core0:
   fetch.params.num_to_fetch:   8
   decode.params.num_to_decode: 8

@@ -34,7 +34,7 @@ wt_spc		= $wt - 1			# Default spacing between horizontally adjacent elements
 dir_mode	= 0
 
 #-------------------------------------------------- Show core pipeline elements
-include		core_column.cmd
+include		ARCH_CORE_COMMON
 
 #-------------------------------------------------- Show cycles legend
 show_cycles
@@ -52,7 +52,7 @@ wt_spc		= $wt - 1			# Default spacing between horizontally adjacent elements
 dir_mode	= 1
 
 #-------------------------------------------------- Show core pipeline elements
-include		core_column.cmd
+include		ARCH_CORE_COMMON
 
 #-------------------------------------------------- Done with this column
 caption_x	= $column_right_x + $column_sep

@@ -75,8 +75,8 @@ Example:
     {
         "mnemonic": "lw",
         "rs1": 4,
-        "rs2": 3,
-        "rd":  5,
+        "rd": 3,
+        "imm":  128,
         "vaddr" : "0xdeadbeef"
     }
 

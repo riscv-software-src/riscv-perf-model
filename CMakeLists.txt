@@ -42,7 +42,7 @@ elseif (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")
   set(SPARTA_BUILD_TYPE "release")
 else()
-  message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|Debug|Profile")
+  message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|FastDebug|Debug|Profile")
 endif()
 
 # Sparta/STF linking

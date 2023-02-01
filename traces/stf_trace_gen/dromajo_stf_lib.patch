@@ -35,10 +35,19 @@ index 3bd8505..bd183bf 100644
      include_directories(/usr/local/include /usr/local/include/libelf)
      target_link_libraries(dromajo_cosim -L/usr/local/lib -lelf)
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 925808b..0111447 100644
+index 925808b..bb233e2 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
-@@ -272,6 +272,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+@@ -52,6 +52,8 @@
+ #error unsupported XLEN
+ #endif
+ 
++#include <limits>
++
+ static inline intx_t glue(div, XLEN)(intx_t a, intx_t b) {
+     if (b == 0) {
+         return -1;
+@@ -272,6 +274,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
      }
  
      s->pending_exception = -1;

@@ -20,6 +20,7 @@ under development.
 # Build Directions
 
 1. Download and build Sparta.  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/master/sparta)
+1. Make sure you have the [required libraries](https://github.com/sparcians/stf_lib#required-packages) for the STF toolsuite installed
 1. Clone olympia
    ```
    git clone --recursive git@github.com:riscv-software-src/riscv-perf-model.git

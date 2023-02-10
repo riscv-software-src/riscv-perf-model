@@ -23,7 +23,6 @@ jobs:
       OLYMPIA_BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
 
     steps:
-
       # Get Sparta
       - name: Checkout Sparta
         uses: actions/checkout@v3

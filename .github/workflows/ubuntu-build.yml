@@ -13,7 +13,7 @@ jobs:
       # Strategy is a matrix of debug and release builds/regression
       matrix:
         os: [ubuntu-latest]
-        BUILD_TYPE: [debug, release]
+        BUILD_TYPE: [debug]
 
     name: Ubuntu-${{ matrix.BUILD_TYPE }}
     runs-on: ${{ matrix.os }}
@@ -47,7 +47,7 @@ jobs:
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
           $CONDA/bin/conda env create --file  ${{ github.workspace }}/conda/environment.yml
-          $CONDA/bin/conda activate riscv_perf_model
+          $CONDA/bin/conda init bash
 
       # Build
       - name: Build

@@ -5,6 +5,9 @@ echo "HOME:" $HOME
 echo "GITHUB_WORKSPACE:" $GITHUB_WORKSPACE
 echo "GITHUB_EVENT_PATH:" $GITHUB_EVENT_PATH
 echo "PWD:" `pwd`
+
+$CONDA/bin/conda activate riscv_perf_model
+
 #
 # Compile Sparta Infra (always build with release)
 #   Have other build types point to release
@@ -15,7 +18,7 @@ mkdir -p release  # Link step expects "release" as dir name
 ln -s release fastdebug
 ln -s release debug
 cd release
-CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Release -DGEN_DEBUG_INFO=OFF -GNinja
+CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -GNinja
 ninja
 BUILD_SPARTA=$?
 if [ ${BUILD_SPARTA} -ne 0 ]; then

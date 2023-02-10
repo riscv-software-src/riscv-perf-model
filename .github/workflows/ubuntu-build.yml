@@ -7,6 +7,7 @@ env:
   CACHE_VERSION: v1
 
 name: Regress Olympia on Ubuntu
+jobs:
   build_test_job:
     strategy:
       # Strategy is a matrix of debug and release builds/regression

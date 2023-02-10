@@ -23,21 +23,32 @@ jobs:
       OLYMPIA_BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
 
     steps:
-      # Go get Sparta
+
+      # Get Sparta
       - name: Checkout Sparta
         uses: actions/checkout@v3
         with:
           repository: sparcians/map
           path: map
 
-      # Go get Olympia
+      # Get Olympia
       - name: Checkout Olympia
         uses: actions/checkout@v3
         with:
           submodules: recursive
 
+      # Setup Conda and build environment
+      - name: Setup Conda Environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          $CONDA/bin/conda env update --file  ${{ github.workspace }}/olympia/conda/environment.yml --name sparta
       #
       # Build
       #
-      - name: Build
-        uses: ./.github/actions/build  # Uses an action.yml in directory
+      #- name: Build
+      #  uses: ./.github/actions/build  # Uses an action.yml in directory

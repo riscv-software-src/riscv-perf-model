@@ -42,13 +42,16 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-
-      - name: Install dependencies
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
           $CONDA/bin/conda env create --file  ${{ github.workspace }}/conda/environment.yml
-      #
+          $CONDA/bin/conda activate riscv_perf_model
+
       # Build
-      #
-      #- name: Build
-      #  uses: ./.github/actions/build  # Uses an action.yml in directory
+      - name: Build
+        uses: ./.github/actions/build.sh  # Uses an action.yml in directory
+
+      #- name: CTest
+      #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long
+      #  if: ${{ env.DABBLE_BUILD_TYPE == 'release' }} && ${{ env.VALGRIND == 'false' }}
+      #  uses: ./.github/actions/ctest  # Uses an action.yml in directory

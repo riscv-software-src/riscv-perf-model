@@ -49,7 +49,7 @@ jobs:
 
       # Build
       - name: Build
-        uses: ./.github/actions/build.sh  # Uses an action.yml in directory
+        uses: ./.github/actions/build  # Uses an action.yml in directory
 
       #- name: CTest
       #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long

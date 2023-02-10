@@ -51,7 +51,17 @@ jobs:
 
       # Build
       - name: Build
-        uses: ./.github/actions/build  # Uses an action.yml in directory
+        run: |
+          $CONDA/bin/conda activate riscv_perf_model
+          echo "Building Sparta Infra"
+          cd ${GITHUB_WORKSPACE}/map/sparta
+          mkdir -p release  # Link step expects "release" as dir name
+          ln -s release fastdebug
+          ln -s release debug
+          cd release
+          CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF
+          make -j2
+
 
       #- name: CTest
       #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long

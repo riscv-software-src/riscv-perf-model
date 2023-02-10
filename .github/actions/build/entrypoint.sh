@@ -2,7 +2,7 @@
 
 set -x
 
- $HOME/.bashrc
+. $HOME/.bashrc
 . "/usr/share/miniconda/etc/profile.d/conda.sh"
 
 echo "Starting Build Entry"

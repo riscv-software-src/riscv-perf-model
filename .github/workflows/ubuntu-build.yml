@@ -48,6 +48,7 @@ jobs:
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
           $CONDA/bin/conda env update --file  ${{ github.workspace }}/conda/environment.yml
+          $CONDA/bin/conda init bash
 
       # Build
       - name: Build

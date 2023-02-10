@@ -39,14 +39,14 @@ jobs:
 
       # Setup Conda and build environment
       - name: Setup Conda Environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
 
       - name: Install dependencies
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
-          $CONDA/bin/conda create --file  ${{ github.workspace }}/conda/environment.yml --name sparta
+          $CONDA/bin/conda env create --file  ${{ github.workspace }}/conda/environment.yml
       #
       # Build
       #

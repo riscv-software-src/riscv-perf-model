@@ -33,7 +33,7 @@ jobs:
       # Go get Olympia
       - name: Checkout Olympia
         uses: actions/checkout@v3
-        submodules: recursive
+          submodules: recursive
 
       #
       # Build

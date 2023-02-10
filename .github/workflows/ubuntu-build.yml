@@ -25,9 +25,9 @@ jobs:
   steps:
     - name: Checkout Sparta
       uses: actions/checkout@v2
-        with:
-          repository: sparcians/map
-          path: map
+      with:
+        repository: sparcians/map
+        path: map
 
     - name: Checkout Olympia
       uses: actions/checkout@v3

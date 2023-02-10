@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. $HOME/.bashrc
+
 echo "Starting Build Entry"
 echo "HOME:" $HOME
 echo "GITHUB_WORKSPACE:" $GITHUB_WORKSPACE

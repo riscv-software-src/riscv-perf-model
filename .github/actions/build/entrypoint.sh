@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. $HOME/.bashrc
+cat $HOME/.bashrc
 
 echo "Starting Build Entry"
 echo "HOME:" $HOME

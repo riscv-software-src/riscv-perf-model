@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
-          $CONDA/bin/conda create --file  ${{ github.workspace }}/olympia/conda/environment.yml --name sparta
+          $CONDA/bin/conda create --file  ${{ github.workspace }}/conda/environment.yml --name sparta
       #
       # Build
       #

@@ -1,7 +1,7 @@
 project(olympia_test)
 
 # Include the handy testing marcros defined in Sparta
-include(${SPARTA_BASE}/test/TestingMacros.cmake)
+#include(${SPARTA_BASE}/test/TestingMacros.cmake)
 
 # This line will make sure olympia is built before running the tests
 sparta_regress (olympia)

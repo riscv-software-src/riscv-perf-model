@@ -11,10 +11,10 @@ add_compile_options ( -Werror
 
 ################################################################################
 # Set up Sparta
-if (NOT SPARTA_BASE)
-  message (FATAL_ERROR "Need to define the location of the Sparta: cmake <args> -DSPARTA_BASE=\"/path/to/sparta\"")
-endif ()
-include (${SPARTA_BASE}/cmake/sparta-config.cmake)
+enable_language (C)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} $ENV{HOME}/map/usr/local/lib/cmake/sparta)
+find_package(Sparta HINTS $ENV{HOME}/map/usr/local/ REQUIRED)
+#include (${SPARTA_BASE}/cmake/sparta-config.cmake)
 
 ################################################################################
 # Set up STF library

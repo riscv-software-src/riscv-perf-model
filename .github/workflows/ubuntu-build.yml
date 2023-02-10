@@ -23,11 +23,20 @@ jobs:
       OLYMPIA_BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
 
     steps:
+      # Go get Sparta
       - name: Checkout Sparta
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: sparcians/map
           path: map
 
+      # Go get Olympia
       - name: Checkout Olympia
         uses: actions/checkout@v3
+        submodules: recursive
+
+      #
+      # Build
+      #
+      - name: Build
+        uses: ./.github/actions/build  # Uses an action.yml in directory

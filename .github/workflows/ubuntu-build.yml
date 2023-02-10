@@ -38,10 +38,12 @@ jobs:
           submodules: recursive
 
       # Setup Conda and build environment
-      - name: Setup Conda Environment
+      - name: Grab Pythong v3.8
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
+
+      -name: Setup Conda Environment
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
           $CONDA/bin/conda env create --file  ${{ github.workspace }}/conda/environment.yml

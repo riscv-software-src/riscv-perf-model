@@ -24,6 +24,12 @@ jobs:
 
     steps:
 
+      # Get Olympia
+      - name: Checkout Olympia
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
       # Get Sparta
       - name: Checkout Sparta
         uses: actions/checkout@v3
@@ -31,11 +37,6 @@ jobs:
           repository: sparcians/map
           path: map
 
-      # Get Olympia
-      - name: Checkout Olympia
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
 
       # Setup Conda and build environment
       - name: Grab Python v3.8

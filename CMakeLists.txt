@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(olympia CXX)
+project(olympia C CXX)
 
 add_compile_options ( -Werror
   -Wall -Wextra -Winline -Winit-self -Wno-unused-function
@@ -11,10 +11,12 @@ add_compile_options ( -Werror
 
 ################################################################################
 # Set up Sparta
-if (NOT SPARTA_BASE)
-  message (FATAL_ERROR "Need to define the location of the Sparta: cmake <args> -DSPARTA_BASE=\"/path/to/sparta\"")
-endif ()
-include (${SPARTA_BASE}/cmake/sparta-config.cmake)
+if(IS_DIRECTORY ${SPARTA_SEARCH_DIR}) 
+  set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
+else()
+  message (STATUS "If needed, please provide the location where sparta is installed: -DSPARTA_SEARCH_DIR=<directory>")
+endif()
+find_package(Sparta REQUIRED)
 
 ################################################################################
 # Set up STF library
@@ -45,12 +47,6 @@ else()
   message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|Debug|Profile")
 endif()
 
-# Sparta/STF linking
-link_directories (
-  ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}
-  ${SPARTA_BASE}/${SPARTA_BUILD_TYPE}/simdb
-  )
-
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
@@ -59,8 +55,6 @@ set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 include_directories (core mss)
 include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
-include_directories (SYSTEM ${SPARTA_BASE})
-include_directories (SYSTEM ${SPARTA_BASE}/simdb/include)
 
 # The Core, MSS, and the simulator
 add_subdirectory(core)
@@ -77,7 +71,7 @@ add_executable(olympia
   sim/OlympiaSim.cpp
   sim/main.cpp
   )
-target_link_libraries (olympia core mss ${Sparta_LIBS} ${STF_LINK_LIBS})
+target_link_libraries (olympia core mss SPARTA::sparta ${STF_LINK_LIBS})
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   target_link_options    (olympia PUBLIC -flto)
   target_compile_options (olympia PUBLIC -flto)

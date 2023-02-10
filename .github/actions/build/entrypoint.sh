@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-cat $HOME/.bashrc
+set -x
+
+ $HOME/.bashrc
+. "/usr/share/miniconda/etc/profile.d/conda.sh"
 
 echo "Starting Build Entry"
 echo "HOME:" $HOME

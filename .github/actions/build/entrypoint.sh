@@ -2,16 +2,14 @@
 
 set -x
 
-. $HOME/.bashrc
-. "/usr/share/miniconda/etc/profile.d/conda.sh"
+source "/usr/share/miniconda/etc/profile.d/conda.sh"
+source activate riscv_perf_model
 
 echo "Starting Build Entry"
 echo "HOME:" $HOME
 echo "GITHUB_WORKSPACE:" $GITHUB_WORKSPACE
 echo "GITHUB_EVENT_PATH:" $GITHUB_EVENT_PATH
 echo "PWD:" `pwd`
-
-$CONDA/bin/conda activate riscv_perf_model
 
 #
 # Compile Sparta Infra (always build with release)

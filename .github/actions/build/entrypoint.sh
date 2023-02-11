@@ -28,3 +28,14 @@ if [ ${BUILD_SPARTA} -ne 0 ]; then
     echo "ERROR: build sparta FAILED!!!"
     exit 1
 fi
+
+cd ${GITHUB_WORKSPACE}/riscv-perf-model
+mkdir $OLYMPIA_BUILD_TYPE
+cd $OLYMPIA_BUILD_TYPE
+CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DSPARTA_BASE=${GITHUB_WORKSPACE}/map/sparta
+make -j2 regress
+BUILD_OLYMPIA=$?
+if [ ${BUILD_OLYMPIA} -ne 0 ]; then
+    echo "ERROR: build/regress of olympia FAILED!!!"
+    exit 1
+fi

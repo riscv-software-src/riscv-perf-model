@@ -3,7 +3,7 @@
 set -x
 
 source "/usr/share/miniconda/etc/profile.d/conda.sh"
-source activate riscv_perf_model
+conda activate riscv_perf_model
 
 echo "Starting Build Entry"
 echo "HOME:" $HOME

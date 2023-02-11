@@ -29,7 +29,7 @@ if [ ${BUILD_SPARTA} -ne 0 ]; then
     exit 1
 fi
 
-cd ${GITHUB_WORKSPACE}/riscv-perf-model
+cd ${GITHUB_WORKSPACE}
 mkdir $OLYMPIA_BUILD_TYPE
 cd $OLYMPIA_BUILD_TYPE
 CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DSPARTA_BASE=${GITHUB_WORKSPACE}/map/sparta

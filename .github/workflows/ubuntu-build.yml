@@ -13,7 +13,7 @@ jobs:
       # Strategy is a matrix of debug and release builds/regression
       matrix:
         os: [ubuntu-latest]
-        BUILD_TYPE: [Debug]
+        BUILD_TYPE: [Debug,Release]
 
     name: Ubuntu-${{ matrix.BUILD_TYPE }}
     runs-on: ${{ matrix.os }}

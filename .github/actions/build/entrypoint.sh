@@ -22,6 +22,10 @@ ln -s release fastdebug
 ln -s release debug
 cd release
 cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF
+if [ $? -ne 0 ]; then
+    echo "ERROR: Cmake for Sparta framework failed"
+    exit 1
+fi
 make -j2
 BUILD_SPARTA=$?
 if [ ${BUILD_SPARTA} -ne 0 ]; then
@@ -33,6 +37,10 @@ cd ${GITHUB_WORKSPACE}
 mkdir $OLYMPIA_BUILD_TYPE
 cd $OLYMPIA_BUILD_TYPE
 cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DSPARTA_BASE=${GITHUB_WORKSPACE}/map/sparta
+if [ $? -ne 0 ]; then
+    echo "ERROR: Cmake for olympia failed"
+    exit 1
+fi
 make -j2 regress
 BUILD_OLYMPIA=$?
 if [ ${BUILD_OLYMPIA} -ne 0 ]; then

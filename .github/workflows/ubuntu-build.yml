@@ -13,7 +13,7 @@ jobs:
       # Strategy is a matrix of debug and release builds/regression
       matrix:
         os: [ubuntu-latest]
-        BUILD_TYPE: [Debug]
+        BUILD_TYPE: [Debug,Release]
 
     name: Ubuntu-${{ matrix.BUILD_TYPE }}
     runs-on: ${{ matrix.os }}
@@ -51,7 +51,7 @@ jobs:
           $CONDA/bin/conda init bash
 
       # Build
-      - name: Build
+      - name: Build & Regress
         run: ./.github/actions/build/entrypoint.sh
 
       #- name: CTest

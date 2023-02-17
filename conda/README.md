@@ -1,8 +1,17 @@
 # Conda enviornments
 
-The conda environment created using yml file specification in this directory can be used to build and run olympia, stf`_`lib and stf`_`tools.
+The conda environment created using yml file specification in this
+directory can be used to build and run olympia, the [Sparta Modeling
+Framework](https://github.com/sparcians/map/tree/master/sparta), [STF
+Library](https://github.com/sparcians/stf_lib) and [STF
+Tools](https://github.com/sparcians/stf_tools).
 
-## Create new environment or update existing environment
+## Download and install miniconda
+
+If `conda` is not already set up or the preference is to have a local
+`conda` environment, consider installing [miniconda](https://docs.conda.io/en/latest/miniconda.html) first.
+
+## Create a New Environment or Update Existing Conda Environment
 
 A new environment can be created using `environment.yaml` file as follows:
 

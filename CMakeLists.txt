@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.17)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -22,7 +22,7 @@ find_package(Sparta REQUIRED)
 # Set up STF library
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
-include(${STF_LIB_BASE}/cmake/stf-config.cmake)
+#include(${STF_LIB_BASE}/cmake/stf-config.cmake)
 
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)

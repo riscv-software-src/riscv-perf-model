@@ -26,7 +26,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1
 fi
-make -j2
+make -j2 install
 BUILD_SPARTA=$?
 if [ ${BUILD_SPARTA} -ne 0 ]; then
     echo "ERROR: build sparta FAILED!!!"
@@ -36,7 +36,7 @@ fi
 cd ${GITHUB_WORKSPACE}
 mkdir $OLYMPIA_BUILD_TYPE
 cd $OLYMPIA_BUILD_TYPE
-cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DSPARTA_BASE=${GITHUB_WORKSPACE}/map/sparta
+cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF
 if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1

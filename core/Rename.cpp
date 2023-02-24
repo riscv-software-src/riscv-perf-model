@@ -10,7 +10,7 @@
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/report/DatabaseInterface.hpp"
-
+#include "mavis/ExtractorDirectInfo.h"
 namespace olympia
 {
     inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
@@ -40,6 +40,8 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, creditsDispatchQueue_, uint32_t));
         in_reorder_flush_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, handleFlush_, FlushManager::FlushingCriteria));
+        in_rename_retire_ack_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(Rename, getAckFromROB_, InstPtr));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, setupRename_));
     }
 
@@ -83,6 +85,11 @@ namespace olympia
             scoreboards_[rf]->set(bits);
         }
 
+        // initialize freelist
+        for(unsigned int i = 0; i < (int) sparta::Scoreboard::MAX_REGISTERS; i++){
+            freelist[core_types::RegFile::RF_INTEGER].push(i); // INTEGER
+            freelist[core_types::RegFile::RF_FLOAT].push(i); // FLOAT
+        }
         // Send the initial credit count
         out_uop_queue_credits_.send(uop_queue_.capacity());
     }
@@ -96,7 +103,42 @@ namespace olympia
             ev_rename_insts_.schedule();
         }
     }
+    void Rename::getAckFromROB_(const InstPtr & inst_ptr)
+    {
+        sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
+                        "Get ROB Ack, but the store inst hasn't retired yet!");
+        // free references as well
 
+        core_types::RegFile rf;
+        auto dests = inst_ptr->getDestOpInfoList();
+        for(const auto & dest : dests){
+            rf = determineRegisterFile(dest);
+        }
+        
+        //freeing references to PRF
+        auto src_register_bit_mask = inst_ptr->getSrcRegisterBitMask(rf);
+        //auto dest_register_bit_mask = inst_ptr->getDestRegisterBitMask(rf);
+        for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
+            if(src_register_bit_mask.test(i)){
+                --reference_counter[rf][i];
+                ILOG("Decrementing reference counter on prf " << i << " ");
+            }
+            if(reference_counter[rf][i] <= 0){
+                //register is free now
+                ILOG("Freeing register: " << i);
+                freelist[rf].push(i);
+                reference_counter[rf][i] = 0;
+                if(map_table_reverse[rf][i].size() != 0){
+                    auto num = map_table_reverse[rf][i].front();
+                    map_table_reverse[rf][i].pop();
+                    map_table[rf][num].pop();
+                }
+            }
+        }
+        ILOG("Get Ack from ROB in Rename Stage! Retired store instruction: " << inst_ptr);
+    }
+
+    
     // Handle incoming flush
     void Rename::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
@@ -124,54 +166,118 @@ namespace olympia
     {
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
-
+        bool freelist_full = false;
+        //uint32_t actual_rename = 0;
         if(num_rename > 0)
         {
             // Pick instructions from uop queue to rename
             InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+            std::queue<std::pair<int, unsigned int>> prfs_popped;
+
+            //see if there will be enough prfs for renaming
             for(uint32_t i = 0; i < num_rename; ++i)
             {
                 // Pick the oldest
-                const auto & renaming_inst = uop_queue_.read(0);
-                ILOG("sending inst to dispatch: " << renaming_inst);
-
-                // TODO: Register renaming for sources
-                const auto & srcs = renaming_inst->getSourceOpInfoList();
-                for(const auto & src : srcs)
-                {
-                    const auto rf  = determineRegisterFile(src);
-                    const auto num = src.field_value;
-                    auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                    bitmask.set(num);
-                    ILOG("\tsetup source register bit mask "
-                         << sparta::printBitSet(bitmask)
-                         << " for '" << rf << "' scoreboard");
-                }
+                const auto & renaming_inst = uop_queue_.read(i);
 
                 // TODO: Register renaming for destinations
                 const auto & dests = renaming_inst->getDestOpInfoList();
                 for(const auto & dest : dests)
                 {
                     const auto rf  = determineRegisterFile(dest);
-                    const auto num = dest.field_value;
-                    auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
-                    bitmask.set(num);
-                    ILOG("\tsetup destination register bit mask "
-                         << sparta::printBitSet(bitmask)
-                         << " for '" << rf << "' scoreboard");
+                    if(freelist[rf].empty()){
+                        // freelist is full
+                        freelist_full = true;
+                        const auto num = dest.field_value;
+                        // if(num == 5){
+                        //     ILOG("Freelist is full on rf " << (int) rf << " register " << num);
+                        // }
+                        ILOG("Freelist is full on rf " << (int) rf << " register " << num);
+                        break; // stop processing this instruction group
+                    } else{
+                        unsigned int prf = freelist[rf].front();
+                        freelist[rf].pop();
+                        prfs_popped.push(std::make_pair(rf, prf));
+                    }
+                    
                 }
-
-                // Remove it from uop queue
-                insts->emplace_back(uop_queue_.read(0));
-                uop_queue_.pop();
+                if(freelist_full){
+                    break;
+                }
             }
+            if(freelist_full){
+                while(!prfs_popped.empty()){
+                    freelist[prfs_popped.front().first].push(prfs_popped.front().second);
+                    prfs_popped.pop();
+                }
+            }
+            else{
+                for(uint32_t i = 0; i < num_rename; ++i)
+                {
+                    // Pick the oldest
+                    const auto & renaming_inst = uop_queue_.read(0);
+                    ILOG("sending inst to dispatch: " << renaming_inst);
 
-            // Send renamed instructions to dispatch
-            out_dispatch_queue_write_.send(insts);
-            credits_dispatch_ -= num_rename;
+                    // TODO: Register renaming for destinations
+                    const auto & dests = renaming_inst->getDestOpInfoList();
+                    for(const auto & dest : dests)
+                    {
+                        const auto rf  = determineRegisterFile(dest);
+                        const auto num = dest.field_value;
+                        auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
+                        
+                        // we already defined a prf register, so we can just use the original value
+                        unsigned int prf = prfs_popped.front().second;//(unsigned int) map_table[rf][num].back();
+                        prfs_popped.pop();
+                        map_table[rf][num].push(prf);
+                        map_table_reverse[rf][prf].push(num);
+                        bitmask.set(prf);
+                        scoreboards_[rf]->set(bitmask);
+                        // ILOG("\tsetup destination register bit mask "
+                        // << sparta::printBitSet(bitmask)
+                        // << " for '" << rf << "' scoreboard");
+                    }
 
-            // Replenish credits in the Decode unit
-            out_uop_queue_credits_.send(num_rename);
+                    // TODO: Register renaming for sources
+                    const auto & srcs = renaming_inst->getSourceOpInfoList();
+                    for(const auto & src : srcs)
+                    {
+                        const auto rf  = determineRegisterFile(src);
+                        const auto num = src.field_value;
+                        auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
+                        unsigned int prf;
+
+                        if(map_table[rf][num].size() == 0){
+                            prf = num;
+                        }
+                        else{
+                            prf = map_table[rf][num].back();
+                            ILOG("Increasing reference counter on prf " << prf << " and rf " << (int) rf);
+                        }
+                        reference_counter[rf][prf]++;
+                        bitmask.set(prf);
+                        scoreboards_[rf]->set(bitmask);
+                        ILOG("\tsetup source register bit mask "
+                            << sparta::printBitSet(bitmask)
+                            << " for '" << rf << "' scoreboard");
+                    }
+
+                    // Remove it from uop queue
+                    insts->emplace_back(uop_queue_.read(0));
+                    uop_queue_.pop();
+                }   
+            }
+            if(insts->size() < num_rename){
+                ILOG("diff in insts size and num rename");
+            }
+            if(!freelist_full){
+                // Send renamed instructions to dispatch
+                out_dispatch_queue_write_.send(insts);
+                credits_dispatch_ -= insts->size();
+                // Replenish credits in the Decode unit                
+                out_uop_queue_credits_.send(num_rename);
+
+            }
         }
 
         if (credits_dispatch_ > 0 && (uop_queue_.size() > 0)) {

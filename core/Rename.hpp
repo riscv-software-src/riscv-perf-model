@@ -4,6 +4,8 @@
 #pragma once
 
 #include <string>
+#include <array>
+#include <vector>
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"
@@ -56,6 +58,18 @@ namespace olympia
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
 
+        //map of arch -> physical registers
+        //int int_map_table[31][10] = {};
+        std::queue<unsigned int> map_table[2][sparta::Scoreboard::MAX_REGISTERS];
+        std::queue<unsigned int> map_table_reverse[2][sparta::Scoreboard::MAX_REGISTERS];
+        int reference_counter[2][sparta::Scoreboard::MAX_REGISTERS] = {};
+        //std::vector<std::bitset<sparta::Scoreboard::MAX_REGISTERS> > freelist(2, std::bitset<sparta::Scoreboard::MAX_REGISTERS>());
+        //std::bitset<sparta::Scoreboard::MAX_REGISTERS> freelist[2];
+        // unsigned long long int_freelist = 0;
+        std::queue<unsigned int> freelist[2];
+        // //std::vector<int> float_map_table[32];
+        // unsigned long long float_freelist = 0;
+
     private:
         InstQueue                         uop_queue_;
         sparta::DataInPort<InstGroupPtr>  in_uop_queue_append_       {&unit_port_set_, "in_uop_queue_append", 1};
@@ -63,6 +77,7 @@ namespace olympia
         sparta::DataOutPort<InstGroupPtr> out_dispatch_queue_write_  {&unit_port_set_, "out_dispatch_queue_write"};
         sparta::DataInPort<uint32_t>      in_dispatch_queue_credits_ {&unit_port_set_, "in_dispatch_queue_credits",
                                                                       sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<InstPtr>       in_rename_retire_ack_         {&unit_port_set_, "in_rename_retire_ack", 1};
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
@@ -92,6 +107,9 @@ namespace olympia
 
         //! Flush instructions.
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
+
+        // Get Retired Instructions
+        void getAckFromROB_(const InstPtr &);
 
     };
 

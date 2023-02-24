@@ -198,6 +198,10 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_rob_retire_ack"
         },
         {
+            "cpu.core*.rob.ports.out_rob_retire_ack",
+            "cpu.core*.rename.ports.in_rename_retire_ack"
+        },
+        {
             "cpu.core*.flushmanager.ports.out_retire_flush",
             "cpu.core*.dispatch.ports.in_reorder_flush"
         },

@@ -21,7 +21,7 @@ mkdir -p release  # Link step expects "release" as dir name
 ln -s release fastdebug
 ln -s release debug
 cd release
-cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF
+cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/sparta_installed
 if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1
@@ -36,7 +36,7 @@ fi
 cd ${GITHUB_WORKSPACE}
 mkdir $OLYMPIA_BUILD_TYPE
 cd $OLYMPIA_BUILD_TYPE
-cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF
+cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DSPARTA_SEARCH_DIR=${GITHUB_WORKSPACE}/sparta_installed
 if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1

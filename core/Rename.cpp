@@ -167,7 +167,7 @@ namespace olympia
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
         bool freelist_full = false;
-        //uint32_t actual_rename = 0;
+
         if(num_rename > 0)
         {
             // Pick instructions from uop queue to rename
@@ -189,9 +189,6 @@ namespace olympia
                         // freelist is full
                         freelist_full = true;
                         const auto num = dest.field_value;
-                        // if(num == 5){
-                        //     ILOG("Freelist is full on rf " << (int) rf << " register " << num);
-                        // }
                         ILOG("Freelist is full on rf " << (int) rf << " register " << num);
                         break; // stop processing this instruction group
                     } else{
@@ -206,6 +203,7 @@ namespace olympia
                 }
             }
             if(freelist_full){
+                // restore freelist to original state, as we are not going to process the instruction group yet.
                 while(!prfs_popped.empty()){
                     freelist[prfs_popped.front().first].push(prfs_popped.front().second);
                     prfs_popped.pop();
@@ -267,16 +265,12 @@ namespace olympia
                     uop_queue_.pop();
                 }   
             }
-            if(insts->size() < num_rename){
-                ILOG("diff in insts size and num rename");
-            }
+            // Send renamed instructions to dispatch
+            credits_dispatch_ -= insts->size();//num_rename;
             if(!freelist_full){
-                // Send renamed instructions to dispatch
                 out_dispatch_queue_write_.send(insts);
-                credits_dispatch_ -= insts->size();
-                // Replenish credits in the Decode unit                
+                // Replenish credits in the Decode unit             
                 out_uop_queue_credits_.send(num_rename);
-
             }
         }
 

@@ -119,20 +119,27 @@ namespace olympia
         auto src_register_bit_mask = inst_ptr->getSrcRegisterBitMask(rf);
         //auto dest_register_bit_mask = inst_ptr->getDestRegisterBitMask(rf);
         for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
-            if(src_register_bit_mask.test(i)){
+            if(src_register_bit_mask.test(i) && reference_counter[rf][i] != 0){
                 --reference_counter[rf][i];
+                if(reference_counter[rf][i] <= 0){
+                    //register is free now
+                    ILOG("Freeing register: " << i);
+                    freelist[rf].push(i);
+                    reference_counter[rf][i] = 0;
+                    if(map_table_reverse[rf][i].size() != 0){
+                        auto num = map_table_reverse[rf][i].front();
+                        map_table_reverse[rf][i].pop();
+                        map_table[rf][num].pop();
+                    }
+                }
                 ILOG("Decrementing reference counter on prf " << i << " ");
             }
-            if(reference_counter[rf][i] <= 0){
-                //register is free now
-                ILOG("Freeing register: " << i);
-                freelist[rf].push(i);
-                reference_counter[rf][i] = 0;
-                if(map_table_reverse[rf][i].size() != 0){
-                    auto num = map_table_reverse[rf][i].front();
-                    map_table_reverse[rf][i].pop();
-                    map_table[rf][num].pop();
-                }
+        }
+
+        auto dest_register_bit_mask = inst_ptr->getDestRegisterBitMask(rf);
+        for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
+            if(dest_register_bit_mask.test(i)){
+                ILOG("Destination register read in is: " << i);
             }
         }
         ILOG("Get Ack from ROB in Rename Stage! Retired store instruction: " << inst_ptr);
@@ -266,11 +273,15 @@ namespace olympia
                 }   
             }
             // Send renamed instructions to dispatch
-            credits_dispatch_ -= insts->size();//num_rename;
+            //credits_dispatch_ -= insts->size();//num_rename;
             if(!freelist_full){
                 out_dispatch_queue_write_.send(insts);
+                credits_dispatch_ -= insts->size();
                 // Replenish credits in the Decode unit             
                 out_uop_queue_credits_.send(num_rename);
+            }
+            else{
+                credits_dispatch_ -= num_rename;
             }
         }
 

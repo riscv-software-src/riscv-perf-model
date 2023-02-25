@@ -22,6 +22,7 @@ namespace olympia
 
     const char Rename::name[] = "rename";
 
+
     Rename::Rename(sparta::TreeNode * node,
                    const RenameParameterSet * p) :
         sparta::Unit(node),
@@ -106,8 +107,7 @@ namespace olympia
     void Rename::getAckFromROB_(const InstPtr & inst_ptr)
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
-                        "Get ROB Ack, but the store inst hasn't retired yet!");
-        // free references as well
+                        "Get ROB Ack, but the inst hasn't retired yet!");
 
         core_types::RegFile rf;
         auto dests = inst_ptr->getDestOpInfoList();
@@ -115,31 +115,28 @@ namespace olympia
             rf = determineRegisterFile(dest);
         }
         
-        //freeing references to PRF
-        auto src_register_bit_mask = inst_ptr->getSrcRegisterBitMask(rf);
-        //auto dest_register_bit_mask = inst_ptr->getDestRegisterBitMask(rf);
-        for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
-            if(src_register_bit_mask.test(i) && reference_counter[rf][i] != 0){
-                --reference_counter[rf][i];
-                if(reference_counter[rf][i] <= 0){
-                    //register is free now
-                    ILOG("Freeing register: " << i);
-                    freelist[rf].push(i);
-                    reference_counter[rf][i] = 0;
-                    if(map_table_reverse[rf][i].size() != 0){
-                        auto num = map_table_reverse[rf][i].front();
-                        map_table_reverse[rf][i].pop();
-                        map_table[rf][num].pop();
-                    }
-                }
-                ILOG("Decrementing reference counter on prf " << i << " ");
-            }
-        }
-
         auto dest_register_bit_mask = inst_ptr->getDestRegisterBitMask(rf);
         for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
             if(dest_register_bit_mask.test(i)){
-                ILOG("Destination register read in is: " << i);
+                if(reference_counter[rf][i] <= 0){
+                    // register is free now
+                    freelist[rf].push(i);
+                }
+            }
+        }
+
+        // freeing references to PRF
+        auto src_register_bit_mask = inst_ptr->getSrcRegisterBitMask(rf);
+        for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
+            if(src_register_bit_mask.test(i) && reference_counter[rf][i] > 0){
+                // we only free the register if this reference is the last one
+                --reference_counter[rf][i];
+                if(reference_counter[rf][i] <= 0){
+                    // freeing a register in the case where it has references
+                    // we wait until the last reference is retired to then free the prf
+                    freelist[rf].push(i);
+                }
+                ILOG("Decrementing reference counter on prf " << i << " ");
             }
         }
         ILOG("Get Ack from ROB in Rename Stage! Retired store instruction: " << inst_ptr);
@@ -189,14 +186,14 @@ namespace olympia
 
                 // TODO: Register renaming for destinations
                 const auto & dests = renaming_inst->getDestOpInfoList();
+                int count = 0;
                 for(const auto & dest : dests)
                 {
+                    count++;
                     const auto rf  = determineRegisterFile(dest);
                     if(freelist[rf].empty()){
                         // freelist is full
                         freelist_full = true;
-                        const auto num = dest.field_value;
-                        ILOG("Freelist is full on rf " << (int) rf << " register " << num);
                         break; // stop processing this instruction group
                     } else{
                         unsigned int prf = freelist[rf].front();
@@ -217,6 +214,7 @@ namespace olympia
                 }
             }
             else{
+                // we have enough renames to process this instruction group
                 for(uint32_t i = 0; i < num_rename; ++i)
                 {
                     // Pick the oldest
@@ -232,15 +230,14 @@ namespace olympia
                         auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
                         
                         // we already defined a prf register, so we can just use the original value
-                        unsigned int prf = prfs_popped.front().second;//(unsigned int) map_table[rf][num].back();
+                        unsigned int prf = prfs_popped.front().second;
                         prfs_popped.pop();
                         map_table[rf][num].push(prf);
-                        map_table_reverse[rf][prf].push(num);
                         bitmask.set(prf);
                         scoreboards_[rf]->set(bitmask);
-                        // ILOG("\tsetup destination register bit mask "
-                        // << sparta::printBitSet(bitmask)
-                        // << " for '" << rf << "' scoreboard");
+                        ILOG("\tsetup destination register bit mask "
+                        << sparta::printBitSet(bitmask)
+                        << " for '" << rf << "' scoreboard");
                     }
 
                     // TODO: Register renaming for sources
@@ -257,9 +254,9 @@ namespace olympia
                         }
                         else{
                             prf = map_table[rf][num].back();
-                            ILOG("Increasing reference counter on prf " << prf << " and rf " << (int) rf);
                         }
                         reference_counter[rf][prf]++;
+                        ILOG("Increasing reference counter on prf " << prf << " and rf " << (int) rf);
                         bitmask.set(prf);
                         scoreboards_[rf]->set(bitmask);
                         ILOG("\tsetup source register bit mask "
@@ -272,16 +269,14 @@ namespace olympia
                     uop_queue_.pop();
                 }   
             }
-            // Send renamed instructions to dispatch
-            //credits_dispatch_ -= insts->size();//num_rename;
+
             if(!freelist_full){
+                // Send insts to dispatch
                 out_dispatch_queue_write_.send(insts);
-                credits_dispatch_ -= insts->size();
+                credits_dispatch_ -= num_rename;
+
                 // Replenish credits in the Decode unit             
                 out_uop_queue_credits_.send(num_rename);
-            }
-            else{
-                credits_dispatch_ -= num_rename;
             }
         }
 

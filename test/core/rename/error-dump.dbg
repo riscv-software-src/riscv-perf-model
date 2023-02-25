@@ -1,0 +1,47 @@
+Name:     
+Cmdline:  
+Exe:      
+SimulatorVersion:
+Repro:    
+Start:    Sunday Sun Feb 19 17:32:35 2023
+Elapsed:  0.122003s
+
+
+Error:
+================================================================================
+The name or alias "dispatch" is already taken by the name or alias of another child "dispatch" of the same parent TreeNode "top" 
+
+
+Backtrace:
+================================================================================
+  (1) 1   Rename_test                         0x00000001031042d8 _ZN6sparta3app9Backtrace12getBacktraceEv + 28
+  (2) 2   Rename_test                         0x0000000103664db0 _ZN6sparta15SpartaExceptionC2Ev + 124
+  (3) 3   Rename_test                         0x0000000103664fe4 _ZN6sparta15SpartaExceptionC1Ev + 28
+  (4) 4   Rename_test                         0x00000001036653a0 _ZN6sparta15SpartaExceptionC1ERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE + 32
+  (5) 5   Rename_test                         0x000000010394c3cc _ZN6sparta8TreeNode28verifyUniqueChildIdentifier_ERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEEb + 180
+  (6) 6   Rename_test                         0x000000010394a168 _ZN6sparta8TreeNode9addChild_EPS0_b + 2932
+  (7) 7   Rename_test                         0x000000010393f240 _ZN6sparta8TreeNode8addChildEPS0_b + 52
+  (8) 8   Rename_test                         0x0000000102b1a858 _ZN6sparta16ResourceTreeNodeC2EPNS_8TreeNodeERKNSt3__112basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEESB_jSB_PNS_19ResourceFactoryBaseE + 640
+  (9) 9   Rename_test                         0x0000000102b18f1c _ZN6sparta16ResourceTreeNodeC1EPNS_8TreeNodeERKNSt3__112basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEESB_jSB_PNS_19ResourceFactoryBaseE + 76
+ (10) 10  Rename_test                         0x0000000102a839d0 _ZN9RenameSim10buildTree_Ev + 924
+ (11) 11  Rename_test                         0x00000001036db6b0 _ZN6sparta3app10Simulation9buildTreeEv + 376
+ (12) 12  Rename_test                         0x000000010316643c _ZN6sparta3app20CommandLineSimulator19populateSimulation_EPNS0_10SimulationE + 2968
+ (13) 13  Rename_test                         0x00000001031657fc _ZN6sparta3app20CommandLineSimulator18populateSimulationEPNS0_10SimulationE + 264
+ (14) 14  Rename_test                         0x0000000102a7f0b8 _Z7runTestiPPc + 1748
+ (15) 15  Rename_test                         0x0000000102a80520 main + 36
+ (16) 16  dyld                                0x000000010a19908c start + 520
+
+
+
+Scheduler:  
+================================================================================
+Current Tick:  0
+Num Fired:     0
+Current Phase: Trigger
+Current Event: <null>
+
+sparta::Scheduler is empty
+
+
+================================================================================
+error-dump.dbg EOF

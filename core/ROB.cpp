@@ -116,6 +116,8 @@ namespace olympia
                 if (ex_inst.isStoreInst()) {
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
+                // sending retired instruction to rename
+                out_rob_retire_ack_rename_.send(ex_inst_ptr);
 
                 ++num_retired_;
                 ++retired_this_cycle;

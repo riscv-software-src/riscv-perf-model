@@ -58,17 +58,12 @@ namespace olympia
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
 
-        //map of arch -> physical registers
-        //int int_map_table[31][10] = {};
+        // map of ARF -> PRF
         std::queue<unsigned int> map_table[2][sparta::Scoreboard::MAX_REGISTERS];
-        std::queue<unsigned int> map_table_reverse[2][sparta::Scoreboard::MAX_REGISTERS];
+        // reference counter for PRF
         int reference_counter[2][sparta::Scoreboard::MAX_REGISTERS] = {};
-        //std::vector<std::bitset<sparta::Scoreboard::MAX_REGISTERS> > freelist(2, std::bitset<sparta::Scoreboard::MAX_REGISTERS>());
-        //std::bitset<sparta::Scoreboard::MAX_REGISTERS> freelist[2];
-        // unsigned long long int_freelist = 0;
+        // list of free PRF that are available to map
         std::queue<unsigned int> freelist[2];
-        // //std::vector<int> float_map_table[32];
-        // unsigned long long float_freelist = 0;
 
     private:
         InstQueue                         uop_queue_;

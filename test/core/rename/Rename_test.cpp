@@ -65,7 +65,7 @@ public:
         sparta::app::Simulation::runRaw(run_time);
     }
 
-private:
+// private:
 
     void buildTree_()  override
     {
@@ -81,7 +81,7 @@ private:
                                                                  "Mavis Unit",
                                                                  &mavis_fact));
 
-        // Create a Source Unit -- this would represent Rename
+        // Create a Source Unit
         sparta::ResourceTreeNode * src_unit  = nullptr;
         tns_to_delete_.emplace_back(src_unit = new sparta::ResourceTreeNode(rtn,
                                                                             core_test::SourceUnit::name,
@@ -107,12 +107,13 @@ private:
                                                                         &dispatch_fact));
         
         // Create Rename
-        tns_to_delete_.emplace_back(disp = new sparta::ResourceTreeNode(rtn,
+        sparta::ResourceTreeNode * rename_unit = new sparta::ResourceTreeNode(rtn,
                                                                         olympia::Rename::name,
                                                                         sparta::TreeNode::GROUP_NAME_NONE,
                                                                         sparta::TreeNode::GROUP_IDX_NONE,
                                                                         "Test Rename",
-                                                                        &rename_fact));
+                                                                        &rename_fact);
+        tns_to_delete_.emplace_back(rename_unit);
 
         // Create SinkUnit that represents the ROB
         sparta::ResourceTreeNode * rob  = nullptr;
@@ -197,6 +198,12 @@ private:
                      root_node->getChildAs<sparta::Port>("rename.ports.out_uop_queue_credits"));
         sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_uop_queue_append"),
                      root_node->getChildAs<sparta::Port>("decode.ports.out_instgrp_write"));
+        // sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
+        //              root_node->getChildAs<sparta::Port>("rob.ports.out_rob_retire_ack"));
+        // {
+        //     "cpu.core*.rob.ports.out_rob_retire_ack_rename",
+        //     "cpu.core*.rename.ports.in_rename_retire_ack"
+        // },
 
         // Bind the "exe" SinkUnit blocks to dispatch
         for(auto exe_unit : exe_units_)
@@ -207,6 +214,8 @@ private:
 
             sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_"+unit_name+"_credits"),
                          root_node->getChildAs<sparta::Port>(unit_name+".ports.out_sink_credits"));
+            sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
+                     root_node->getChildAs<sparta::Port>(unit_name+".ports.out_rob_retire_ack"));
         }
 
         // Bind the "LSU" SinkUnit to Dispatch
@@ -279,6 +288,22 @@ void runTest(int argc, char **argv)
 
     cls.populateSimulation(&sim);
     cls.runSimulator(&sim);
+    sparta::RootTreeNode* root_node = sim.getRoot();
+    root_node->getChild("rename");
+    // core_tree_node->getChild("lsu")->getResourceAs<olympia::LSU>()
+    olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
+    // the test runs 20 instructions of r3 = r1 + r2
+    // the freelist should be 20 instructions less, or in this case on the 20th register
+    EXPECT_TRUE(my_rename->freelist[0].size() == sparta::Scoreboard::MAX_REGISTERS);
+    // the map table should have a queue of 20 instructions, as 20 destinations are passed, each destination gets its own seperate PRF mapped
+    EXPECT_TRUE(my_rename->map_table[0][3].size() == 0);
+
+    // since no destination register is remapped for r1 and r2, the reference counter should just be for r1 and r2
+    // therefore the refrence count for r1 and r2 should be 20
+    EXPECT_TRUE(my_rename->reference_counter[0][1] == sparta::Scoreboard::MAX_REGISTERS);
+    EXPECT_TRUE(my_rename->reference_counter[0][2] == sparta::Scoreboard::MAX_REGISTERS);
+
+    //const Resource* res = sim.getRoot()->getChildren()[5]->getResource_();
     EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
 }
 

@@ -58,12 +58,20 @@ namespace rename_test
             {
                 for(auto ptr : *inst_or_insts) {
                     ILOG("Instruction: '" << ptr << "' sinked");
-                    //out_rob_retire_ack_.send(ptr);
+                    auto & ex_inst = *ptr;
+                    ex_inst.setStatus(olympia::Inst::Status::RETIRED);
+                    out_rob_retire_ack_.send(ptr);
                 }
             }
             else {
                 ILOG("Instruction: '" << inst_or_insts << "' sinked");
+                auto & ex_inst = *inst_or_insts;
+                ex_inst.setStatus(olympia::Inst::Status::RETIRED);
+                out_rob_retire_ack_.send(inst_or_insts);
             }
+            // for(auto ptr : *inst_or_insts){
+            //     out_rob_retire_ack_.send(ptr);
+            // }
             ++credits_to_send_back_;
             ev_return_credits_.schedule(1);
         }
@@ -76,10 +84,10 @@ namespace rename_test
 
         sparta::DataOutPort<uint32_t>             out_sink_credits_ {&unit_port_set_, "out_sink_credits"};
         sparta::DataInPort<olympia::InstPtr>      in_sink_inst_     {&unit_port_set_, "in_sink_inst",
-                                                                     sparta::SchedulingPhase::Tick, 1};
+                                                                     sparta::SchedulingPhase::Tick, 5};
         sparta::DataInPort<olympia::InstGroupPtr> in_sink_inst_grp_ {&unit_port_set_, "in_sink_inst_grp",
-                                                                     sparta::SchedulingPhase::Tick, 1};
-        //sparta::DataOutPort<olympia::InstPtr>     out_rob_retire_ack_ {&unit_port_set_, "out_rob_retire_ack"};
+                                                                     sparta::SchedulingPhase::Tick, 5};
+        sparta::DataOutPort<olympia::InstPtr>     out_rob_retire_ack_ {&unit_port_set_, "out_rob_retire_ack"};
         uint32_t credits_ = 0;
         sparta::UniqueEvent<> ev_return_credits_{&unit_event_set_, "return_credits",
                                                  CREATE_SPARTA_HANDLER(ROBSinkUnit, sendCredits_)};

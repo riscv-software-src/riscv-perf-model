@@ -60,6 +60,12 @@ namespace olympia
 
         // map of ARF -> PRF
         std::queue<unsigned int> map_table[2][sparta::Scoreboard::MAX_REGISTERS];
+        // table used for storing PRF -> ARF mapping, so we can pop the map_table entries on retirement
+        std::queue<unsigned int> reverse_map_table[2][sparta::Scoreboard::MAX_REGISTERS];
+        // mapping used when a src doesn't reference a PRF
+        // we need to track those, so that when we retire the instruction, we know not to count them
+        // towards the reference counter
+        std::queue<unsigned int> src_map_table[2][sparta::Scoreboard::MAX_REGISTERS];
         // reference counter for PRF
         int reference_counter[2][sparta::Scoreboard::MAX_REGISTERS] = {};
         // list of free PRF that are available to map

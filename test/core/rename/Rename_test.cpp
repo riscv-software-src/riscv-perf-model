@@ -65,7 +65,7 @@ public:
         sparta::app::Simulation::runRaw(run_time);
     }
 
-// private:
+private:
 
     void buildTree_()  override
     {
@@ -82,22 +82,20 @@ public:
                                                                  &mavis_fact));
 
         // Create a Source Unit
-        sparta::ResourceTreeNode * src_unit  = nullptr;
-        tns_to_delete_.emplace_back(src_unit = new sparta::ResourceTreeNode(rtn,
+        tns_to_delete_.emplace_back(new sparta::ResourceTreeNode(rtn,
                                                                             core_test::SourceUnit::name,
                                                                             sparta::TreeNode::GROUP_NAME_NONE,
                                                                             sparta::TreeNode::GROUP_IDX_NONE,
                                                                             "Source Unit",
                                                                             &source_fact));
-        src_unit->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
-
-        tns_to_delete_.emplace_back(src_unit = new sparta::ResourceTreeNode(rtn,
+        sparta::ResourceTreeNode * decode_unit = nullptr;
+        tns_to_delete_.emplace_back(decode_unit = new sparta::ResourceTreeNode(rtn,
                                                                             olympia::Decode::name,
                                                                             sparta::TreeNode::GROUP_NAME_NONE,
                                                                             sparta::TreeNode::GROUP_IDX_NONE,
                                                                             "Decode Unit",
                                                                             &source_fact));
-
+        decode_unit->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
         // Create Dispatch
         tns_to_delete_.emplace_back(disp = new sparta::ResourceTreeNode(rtn,
                                                                         olympia::Dispatch::name,
@@ -198,12 +196,6 @@ public:
                      root_node->getChildAs<sparta::Port>("rename.ports.out_uop_queue_credits"));
         sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_uop_queue_append"),
                      root_node->getChildAs<sparta::Port>("decode.ports.out_instgrp_write"));
-        // sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
-        //              root_node->getChildAs<sparta::Port>("rob.ports.out_rob_retire_ack"));
-        // {
-        //     "cpu.core*.rob.ports.out_rob_retire_ack_rename",
-        //     "cpu.core*.rename.ports.in_rename_retire_ack"
-        // },
 
         // Bind the "exe" SinkUnit blocks to dispatch
         for(auto exe_unit : exe_units_)
@@ -211,7 +203,6 @@ public:
             const std::string unit_name = exe_unit->getName();
             sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_"+unit_name+"_write"),
                          root_node->getChildAs<sparta::Port>(unit_name + ".ports.in_sink_inst"));
-
             sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_"+unit_name+"_credits"),
                          root_node->getChildAs<sparta::Port>(unit_name+".ports.out_sink_credits"));
             sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
@@ -221,9 +212,10 @@ public:
         // Bind the "LSU" SinkUnit to Dispatch
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_lsu_write"),
                      root_node->getChildAs<sparta::Port>("lsu.ports.in_sink_inst"));
-
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_lsu_credits"),
                      root_node->getChildAs<sparta::Port>("lsu.ports.out_sink_credits"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
+                     root_node->getChildAs<sparta::Port>("lsu.ports.out_rob_retire_ack"));
     }
 
     sparta::ResourceFactory<olympia::Decode,
@@ -287,23 +279,39 @@ void runTest(int argc, char **argv)
     RenameSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file, enable_vector);
 
     cls.populateSimulation(&sim);
-    cls.runSimulator(&sim);
+
     sparta::RootTreeNode* root_node = sim.getRoot();
-    root_node->getChild("rename");
-    // core_tree_node->getChild("lsu")->getResourceAs<olympia::LSU>()
     olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
-    // the test runs 20 instructions of r3 = r1 + r2
-    // the freelist should be 20 instructions less, or in this case on the 20th register
-    EXPECT_TRUE(my_rename->freelist[0].size() == sparta::Scoreboard::MAX_REGISTERS);
-    // the map table should have a queue of 20 instructions, as 20 destinations are passed, each destination gets its own seperate PRF mapped
+
+    cls.runSimulator(&sim, 2);
+    // process only one instruction, check that freelist and map_tables are allocated correctly
+    EXPECT_TRUE(my_rename->freelist[0].size() == 511);
+    EXPECT_TRUE(my_rename->map_table[0][3].size() == 1);
+    
+    // reference counters should be 0, because the SRCs aren't referencing any PRFs
+    EXPECT_TRUE(my_rename->reference_counter[0][1] == 0);
+    EXPECT_TRUE(my_rename->reference_counter[0][2] == 0);
+
+    cls.runSimulator(&sim, 3);
+    // first two instructions are RAW
+    // so the second instruction should increase reference count
+    EXPECT_TRUE(my_rename->reference_counter[0][0] == 1);
+
+
+    // full run through
+    cls.runSimulator(&sim);
+
+    // after all instructions have retired, we should have a full freelist
+    EXPECT_TRUE(my_rename->freelist[0].size() == 512);
+    EXPECT_TRUE(my_rename->reference_counter[0][1] == 0);
+    EXPECT_TRUE(my_rename->reference_counter[0][2] == 0);
+
+    // spot checking architectural registers mappings are cleared
+    // as mappings are cleared once an instruction are retired
     EXPECT_TRUE(my_rename->map_table[0][3].size() == 0);
+    EXPECT_TRUE(my_rename->map_table[0][4].size() == 0);
+    EXPECT_TRUE(my_rename->map_table[0][5].size() == 0);
 
-    // since no destination register is remapped for r1 and r2, the reference counter should just be for r1 and r2
-    // therefore the refrence count for r1 and r2 should be 20
-    EXPECT_TRUE(my_rename->reference_counter[0][1] == sparta::Scoreboard::MAX_REGISTERS);
-    EXPECT_TRUE(my_rename->reference_counter[0][2] == sparta::Scoreboard::MAX_REGISTERS);
-
-    //const Resource* res = sim.getRoot()->getChildren()[5]->getResource_();
     EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
 }
 

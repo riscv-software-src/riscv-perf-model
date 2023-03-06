@@ -28,7 +28,7 @@ namespace rename_test
             explicit ROBSinkUnitParameters(sparta::TreeNode *n) :
                 sparta::ParameterSet(n)
             { }
-            PARAMETER(uint32_t, sink_queue_size, 10, "Sink queue size for testing")
+            PARAMETER(uint32_t, sink_queue_size, 20, "Sink queue size for testing")
             PARAMETER(std::string, purpose, "grp", "Purpose of this ROBSinkUnit: grp, single")
         };
 
@@ -69,9 +69,6 @@ namespace rename_test
                 ex_inst.setStatus(olympia::Inst::Status::RETIRED);
                 out_rob_retire_ack_.send(inst_or_insts);
             }
-            // for(auto ptr : *inst_or_insts){
-            //     out_rob_retire_ack_.send(ptr);
-            // }
             ++credits_to_send_back_;
             ev_return_credits_.schedule(1);
         }
@@ -84,13 +81,14 @@ namespace rename_test
 
         sparta::DataOutPort<uint32_t>             out_sink_credits_ {&unit_port_set_, "out_sink_credits"};
         sparta::DataInPort<olympia::InstPtr>      in_sink_inst_     {&unit_port_set_, "in_sink_inst",
-                                                                     sparta::SchedulingPhase::Tick, 5};
+                                                                     sparta::SchedulingPhase::Tick, 1};
         sparta::DataInPort<olympia::InstGroupPtr> in_sink_inst_grp_ {&unit_port_set_, "in_sink_inst_grp",
-                                                                     sparta::SchedulingPhase::Tick, 5};
+                                                                     sparta::SchedulingPhase::Tick, 1};
         sparta::DataOutPort<olympia::InstPtr>     out_rob_retire_ack_ {&unit_port_set_, "out_rob_retire_ack"};
         uint32_t credits_ = 0;
         sparta::UniqueEvent<> ev_return_credits_{&unit_event_set_, "return_credits",
                                                  CREATE_SPARTA_HANDLER(ROBSinkUnit, sendCredits_)};
+        sparta::DataOutPort<uint32_t>             out_reorder_buffer_credits_ {&unit_port_set_, "out_reorder_buffer_credits"};
         uint32_t credits_to_send_back_ = 0;
     };
 

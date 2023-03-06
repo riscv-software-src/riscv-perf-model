@@ -1,0 +1,93 @@
+[
+    {
+        "mnemonic": "add",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "add",
+        "rs1": 3,
+        "rs2": 2,
+        "rd": 4
+    },
+    {
+        "mnemonic": "add",
+        "rs1": 7,
+        "rs2": 8,
+        "rd": 9
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 6,
+        "rs2": 7,
+        "rd": 8
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 8,
+        "rs2": 7,
+        "rd": 6
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 6,
+        "rs2": 8,
+        "rd": 10
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 10,
+        "rs2": 11,
+        "rd": 12
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 12,
+        "rs2": 11,
+        "rd": 13
+    },
+    {
+        "mnemonic": "sub",
+        "rs1": 13,
+        "rs2": 12,
+        "rd": 14
+    },
+    {
+        "mnemonic": "sub",
+        "rs1": 4,
+        "rs2": 3,
+        "rd":  5
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 4,
+        "rs2": 3,
+        "rd":  5,
+        "vaddr" : "0xdeadbeef"
+    },
+    {
+        "mnemonic": "sw",
+        "rs2": 3,
+        "vaddr" : "0xdeadbeef"
+    },
+    {
+        "mnemonic": "div",
+        "rs1": 10,
+        "rs2": 15,
+        "rd":  20
+    },
+    {
+		"mnemonic" : "fadd.s",
+		"form" : "Rfloat",
+		"stencil" : "0x53"
+	},
+    {
+		"mnemonic" : "beq",
+		"form" : "B",
+		"stencil" : "0x63",
+		"type" : ["branch", "cond"],
+		"l-oper" : "all"
+	}
+
+]

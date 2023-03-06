@@ -22,7 +22,7 @@ namespace olympia
 
     const char Rename::name[] = "rename";
 
-
+    int free_insts = 0;
     Rename::Rename(sparta::TreeNode * node,
                    const RenameParameterSet * p) :
         sparta::Unit(node),
@@ -127,17 +127,31 @@ namespace olympia
                 if(reference_counter[rf][i] <= 0){
                     // register is free now
                     freelist[rf].push(i);
+                    free_insts++;
                 }
+                // popping the front of the map table because the instruction is now retired
+                // we don't want subsequent instructions to reference a retired PRF 
+                map_table[rf][reverse_map_table[rf][i].front()].pop();
+                reverse_map_table[rf][i].pop();
             }
-            if(src_register_bit_mask.test(i) && reference_counter[rf][i] > 0){
+            if(src_register_bit_mask.test(i)){
                 // we only free the register if this reference is the last one
-                --reference_counter[rf][i];
-                if(reference_counter[rf][i] <= 0){
-                    // freeing a register in the case where it has references
-                    // we wait until the last reference is retired to then free the prf
-                    freelist[rf].push(i);
+                if(src_map_table[rf][i].size() == 0){
+                    --reference_counter[rf][i];
+                    if(reference_counter[rf][i] <= 0){
+                        // freeing a register in the case where it has references
+                        // we wait until the last reference is retired to then free the prf
+                        freelist[rf].push(i);
+                        free_insts++;
+                    }
+                }
+                else{
+                    src_map_table[rf][i].pop();
                 }
             }
+        }
+        if(freelist[rf].size() > 512){
+            freelist[rf].size();
         }
         ILOG("Get Ack from ROB in Rename Stage! Retired store instruction: " << inst_ptr);
     }
@@ -159,8 +173,7 @@ namespace olympia
             uop_queue_.push(i);
         }
 
-        // If we have credits from dispatch, schedule a rename session
-        // this cycle
+        // If we have credits from dispatch, schedule a rename session this cycle
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
         unsigned int rf_counters[2] = {0, 0};
@@ -207,11 +220,15 @@ namespace olympia
 
                     if(map_table[rf][num].size() == 0){
                         prf = num;
+                        // we store the mapping, so when processing the retired instruction,
+                        // we know that there was no real mapping
+                        src_map_table[rf][num].push(prf);
                     }
                     else{
                         prf = map_table[rf][num].back();
+                        // only increase reference counter for real references
+                        reference_counter[rf][prf]++;
                     }
-                    reference_counter[rf][prf]++;
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
                     ILOG("\tsetup source register bit mask "
@@ -230,6 +247,9 @@ namespace olympia
                     unsigned int prf = freelist[rf].front();
                     freelist[rf].pop();
                     map_table[rf][num].push(prf);
+                    // reverse map table is used for mapping the PRF -> ARF
+                    // so when we get a retired instruction, we know to pop the map table entry
+                    reverse_map_table[rf][prf].push(num);
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
                     ILOG("\tsetup destination register bit mask "

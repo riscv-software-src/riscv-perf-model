@@ -4,8 +4,6 @@
 #pragma once
 
 #include <string>
-#include <array>
-#include <vector>
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"

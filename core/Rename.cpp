@@ -142,9 +142,6 @@ namespace olympia
                 }
             }
         }
-        if(freelist[rf].size() > 512){
-            freelist[rf].size();
-        }
         ILOG("Get Ack from ROB in Rename Stage! Retired store instruction: " << inst_ptr);
     }
 
@@ -179,7 +176,14 @@ namespace olympia
                 rf_counters[rf]++; 
             }
         }
-        if (credits_dispatch_ > 0 && (freelist[core_types::RegFile::RF_FLOAT].size() >= rf_counters[core_types::RegFile::RF_FLOAT] && freelist[core_types::RegFile::RF_INTEGER].size() >= rf_counters[core_types::RegFile::RF_INTEGER])) {
+
+        int num_valid_freelist = 0;
+        for(int i = 0; i < core_types::N_REGFILES; ++i){
+            if(freelist[i].size() >= rf_counters[i]){
+                ++num_valid_freelist;
+            }
+        }
+        if(credits_dispatch_ > 0 && num_valid_freelist == core_types::N_REGFILES) {
             ev_rename_insts_.schedule();
         }
     }

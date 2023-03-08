@@ -46,8 +46,7 @@ public:
                 const std::string & mavis_isa_files,
                 const std::string & mavis_uarch_files,
                 const std::string & output_file,
-                const std::string & input_file,
-                const bool vector_enabled) :
+                const std::string & input_file) :
         sparta::app::Simulation("RenameSim", sched),
         input_file_(input_file),
         test_tap_(getRoot(), "info", output_file)
@@ -249,7 +248,6 @@ void runTest(int argc, char **argv)
     DEFAULTS.auto_summary_default = "off";
     std::vector<std::string> datafiles;
     std::string input_file;
-    bool enable_vector;
 
     sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
     auto & app_opts = cls.getApplicationOptions();
@@ -260,10 +258,7 @@ void runTest(int argc, char **argv)
         ("input-file",
          sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
          "Provide a JSON instruction stream",
-         "Provide a JSON file with instructions to run through Execute")
-        ("enable_vector",
-         sparta::app::named_value<bool>("enable_vector", &enable_vector)->default_value(false),
-         "Enable the experimental vector pipelines");
+         "Provide a JSON file with instructions to run through Execute");
 
     po::positional_options_description& pos_opts = cls.getPositionalOptions();
     pos_opts.add("output_file", -1); // example, look for the <data file> at the end
@@ -276,7 +271,7 @@ void runTest(int argc, char **argv)
     sparta_assert(false == datafiles.empty(), "Need an output file as the last argument of the test");
 
     sparta::Scheduler sched;
-    RenameSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file, enable_vector);
+    RenameSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
 
     cls.populateSimulation(&sim);
 

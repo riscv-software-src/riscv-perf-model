@@ -32,6 +32,32 @@ namespace olympia
     class Inst {
     public:
 
+        class RenameData{
+            public:
+            void setDestination(unsigned int destination){
+                dest = destination;
+            }
+            void setOriginalDestination(unsigned int destination){
+                original_dest = destination;
+            }
+            void setSource(std::pair<unsigned int, bool> source){
+                src.push_back(source);
+            }
+            std::vector<std::pair<unsigned int, bool>> getSource(){
+                return src;
+            }
+            unsigned int getDestination(){
+                return dest;
+            }
+            unsigned int getOriginalDestination(){
+                return original_dest;
+            }
+            private:
+            unsigned int dest;
+            unsigned int original_dest;
+            std::vector<std::pair<unsigned int, bool>> src;
+        };
+
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
 
@@ -163,6 +189,9 @@ namespace olympia
             return dest_reg_bit_masks_[rf];
         }
 
+        RenameData & getRenameData(){
+            return rename_data;
+        }
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType      inst_arch_info_;
@@ -181,6 +210,7 @@ namespace olympia
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
         RegisterBitMaskArray src_reg_bit_masks_;
         RegisterBitMaskArray dest_reg_bit_masks_;
+        RenameData rename_data;
     };
 
     using InstPtr = Inst::PtrType;

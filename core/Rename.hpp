@@ -55,19 +55,24 @@ namespace olympia
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
-
+        ~Rename(){
+            // delete map_table and reference counter, as they are dynamically allocated
+            for(int i = 0; i < core_types::N_REGFILES; ++i){
+                delete [] map_table[i];
+                delete [] reference_counter[i];
+            }
+        }
         // map of ARF -> PRF
-        std::queue<unsigned int> map_table[2][sparta::Scoreboard::MAX_REGISTERS];
-        // table used for storing PRF -> ARF mapping, so we can pop the map_table entries on retirement
-        std::queue<unsigned int> reverse_map_table[2][sparta::Scoreboard::MAX_REGISTERS];
-        // mapping used when a src doesn't reference a PRF
-        // we need to track those, so that when we retire the instruction, we know not to count them
-        // towards the reference counter
-        std::queue<unsigned int> src_map_table[2][sparta::Scoreboard::MAX_REGISTERS];
+        std::queue<unsigned int> ** map_table = new std::queue<unsigned int>*[core_types::N_REGFILES];
         // reference counter for PRF
-        int reference_counter[2][sparta::Scoreboard::MAX_REGISTERS] = {};
+        int* reference_counter[core_types::N_REGFILES];
         // list of free PRF that are available to map
-        std::queue<unsigned int> freelist[2];
+        std::queue<unsigned int> freelist[core_types::N_REGFILES];
+        
+        std::map<olympia::core_types::RegFile, unsigned int> NumRenameRegisters = {
+            {core_types::RegFile::RF_INTEGER, 512},
+            {core_types::RegFile::RF_FLOAT, 512}
+        };
 
     private:
         InstQueue                         uop_queue_;

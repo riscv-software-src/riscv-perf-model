@@ -10,7 +10,7 @@
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/report/DatabaseInterface.hpp"
-#include "mavis/ExtractorDirectInfo.h"
+
 namespace olympia
 {
     inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
@@ -22,7 +22,6 @@ namespace olympia
 
     const char Rename::name[] = "rename";
 
-    int free_insts = 0;
     Rename::Rename(sparta::TreeNode * node,
                    const RenameParameterSet * p) :
         sparta::Unit(node),
@@ -87,9 +86,14 @@ namespace olympia
         }
 
         // initialize freelist
-        for(unsigned int i = 0; i < (int) sparta::Scoreboard::MAX_REGISTERS; i++){
-            freelist[core_types::RegFile::RF_INTEGER].push(i); // INTEGER
-            freelist[core_types::RegFile::RF_FLOAT].push(i); // FLOAT
+        
+        std::map<olympia::core_types::RegFile, unsigned int>::iterator it;
+        for(it = NumRenameRegisters.begin(); it != NumRenameRegisters.end(); it++){
+            for(unsigned int i = 0; i < it->second; i++){
+                freelist[it->first].push(i);
+            }
+            map_table[it->first] = new std::queue<unsigned int>[it->second];
+            reference_counter[it->first] = new int[it->second]();
         }
         // Send the initial credit count
         out_uop_queue_credits_.send(uop_queue_.capacity());
@@ -109,44 +113,32 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                         "Get ROB Ack, but the inst hasn't retired yet!");
 
-        core_types::RegFile rf;
-        auto dests = inst_ptr->getDestOpInfoList();
+        core_types::RegFile rf = core_types::RegFile::RF_INTEGER;
+        auto const & dests = inst_ptr->getDestOpInfoList();
         if(dests.size() > 0){
+            sparta_assert(dests.size() == 1); // we should only have one destination
             rf = determineRegisterFile(dests[0]);   
         }
-        else{
-            // in the case of no dest register, it will be a NOP
-            rf = core_types::RegFile::RF_INTEGER;
+
+        auto const & dest = inst_ptr->getRenameData().getDestination();
+        auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+        auto const & srcs = inst_ptr->getRenameData().getSource();
+
+        if(dests.size() > 0){
+            if(reference_counter[rf][dest] <= 0){
+                freelist[rf].push(dest);
+            }
+            map_table[rf][original_dest].pop();
         }
         
         // freeing references to PRF
-        auto dest_register_bit_mask = inst_ptr->getDestRegisterBitMask(rf);
-        auto src_register_bit_mask = inst_ptr->getSrcRegisterBitMask(rf);
-        for(unsigned int i = 0; i < sparta::Scoreboard::MAX_REGISTERS; i++){
-            if(dest_register_bit_mask.test(i)){
-                if(reference_counter[rf][i] <= 0){
-                    // register is free now
-                    freelist[rf].push(i);
-                    free_insts++;
-                }
-                // popping the front of the map table because the instruction is now retired
-                // we don't want subsequent instructions to reference a retired PRF 
-                map_table[rf][reverse_map_table[rf][i].front()].pop();
-                reverse_map_table[rf][i].pop();
-            }
-            if(src_register_bit_mask.test(i)){
-                // we only free the register if this reference is the last one
-                if(src_map_table[rf][i].size() == 0){
-                    --reference_counter[rf][i];
-                    if(reference_counter[rf][i] <= 0){
-                        // freeing a register in the case where it has references
-                        // we wait until the last reference is retired to then free the prf
-                        freelist[rf].push(i);
-                        free_insts++;
-                    }
-                }
-                else{
-                    src_map_table[rf][i].pop();
+        for(auto src: srcs){
+            if(src.second == false){
+                --reference_counter[rf][src.first];
+                if(reference_counter[rf][src.first] <= 0){
+                    // freeing a register in the case where it has references
+                    // we wait until the last reference is retired to then free the prf
+                    freelist[rf].push(src.first);
                 }
             }
         }
@@ -176,15 +168,15 @@ namespace olympia
         // If we have credits from dispatch, schedule a rename session this cycle
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
-        unsigned int rf_counters[2] = {0, 0};
+        unsigned int rf_counters[core_types::N_REGFILES] = {};
         for(uint32_t i = 0; i < num_rename; ++i)
         {
             const auto & renaming_inst = uop_queue_.read(i);
             const auto & dests = renaming_inst->getDestOpInfoList();
-            for(const auto & dest : dests)
-            {
-                const auto rf  = determineRegisterFile(dest);
-                rf_counters[rf]++;
+            if(dests.size() > 0){
+                sparta_assert(dests.size() == 1); // we should only have one destination
+                const auto rf = determineRegisterFile(dests[0]);  
+                rf_counters[rf]++; 
             }
         }
         if (credits_dispatch_ > 0 && (freelist[core_types::RegFile::RF_FLOAT].size() >= rf_counters[core_types::RegFile::RF_FLOAT] && freelist[core_types::RegFile::RF_INTEGER].size() >= rf_counters[core_types::RegFile::RF_INTEGER])) {
@@ -211,6 +203,10 @@ namespace olympia
 
                 // TODO: Register renaming for sources
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
+                if(srcs.size() > 1){
+                    int i = 0;
+                    i++;
+                }
                 for(const auto & src : srcs)
                 {
                     const auto rf  = determineRegisterFile(src);
@@ -218,17 +214,20 @@ namespace olympia
                     auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                     unsigned int prf;
 
+                    bool no_prf = false;
                     if(map_table[rf][num].size() == 0){
                         prf = num;
                         // we store the mapping, so when processing the retired instruction,
                         // we know that there was no real mapping
-                        src_map_table[rf][num].push(prf);
+                        no_prf = true;
                     }
                     else{
                         prf = map_table[rf][num].back();
                         // only increase reference counter for real references
                         reference_counter[rf][prf]++;
                     }
+                    std::pair<unsigned int, bool> rename_data_src(prf, no_prf);
+                    renaming_inst->getRenameData().setSource(rename_data_src);
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
                     ILOG("\tsetup source register bit mask "
@@ -249,7 +248,9 @@ namespace olympia
                     map_table[rf][num].push(prf);
                     // reverse map table is used for mapping the PRF -> ARF
                     // so when we get a retired instruction, we know to pop the map table entry
-                    reverse_map_table[rf][prf].push(num);
+
+                    renaming_inst->getRenameData().setDestination(prf);
+                    renaming_inst->getRenameData().setOriginalDestination(num);
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
                     ILOG("\tsetup destination register bit mask "

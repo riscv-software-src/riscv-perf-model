@@ -43,13 +43,13 @@ namespace olympia
             void setSource(std::pair<unsigned int, bool> source){
                 src.push_back(source);
             }
-            std::vector<std::pair<unsigned int, bool>> getSource(){
+            const std::vector<std::pair<unsigned int, bool>> & getSource() const {
                 return src;
             }
-            unsigned int getDestination(){
+            uint32_t getDestination() const {
                 return dest;
             }
-            unsigned int getOriginalDestination(){
+            uint32_t getOriginalDestination() const {
                 return original_dest;
             }
             private:

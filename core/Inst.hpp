@@ -33,7 +33,7 @@ namespace olympia
     public:
 
         class RenameData{
-            public:
+        public:
             void setDestination(unsigned int destination){
                 dest = destination;
             }

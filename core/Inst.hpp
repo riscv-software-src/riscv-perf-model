@@ -189,7 +189,7 @@ namespace olympia
             return dest_reg_bit_masks_[rf];
         }
 
-        RenameData & getRenameData(){
+        const RenameData & getRenameData() const {
             return rename_data;
         }
     private:

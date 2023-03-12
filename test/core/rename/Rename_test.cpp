@@ -181,6 +181,9 @@ private:
         // groups) to Dispatch
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_reorder_buffer_write"),
                      root_node->getChildAs<sparta::Port>("rob.ports.in_sink_inst_grp"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_reorder_buffer_write"),
+                     root_node->getChildAs<sparta::Port>("rob.ports.in_sink_retire_inst_grp"));
+
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_reorder_buffer_credits"),
                      root_node->getChildAs<sparta::Port>("rob.ports.out_sink_credits"));
         
@@ -204,6 +207,8 @@ private:
                          root_node->getChildAs<sparta::Port>(unit_name + ".ports.in_sink_inst"));
             sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_"+unit_name+"_credits"),
                          root_node->getChildAs<sparta::Port>(unit_name+".ports.out_sink_credits"));
+            sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_"+unit_name+"_write"),
+                         root_node->getChildAs<sparta::Port>(unit_name + ".ports.in_sink_retire_inst"));
             sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
                      root_node->getChildAs<sparta::Port>(unit_name+".ports.out_rob_retire_ack"));
         }
@@ -211,6 +216,8 @@ private:
         // Bind the "LSU" SinkUnit to Dispatch
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_lsu_write"),
                      root_node->getChildAs<sparta::Port>("lsu.ports.in_sink_inst"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_lsu_write"),
+                     root_node->getChildAs<sparta::Port>("lsu.ports.in_sink_retire_inst"));
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_lsu_credits"),
                      root_node->getChildAs<sparta::Port>("lsu.ports.out_sink_credits"));
         sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
@@ -277,35 +284,16 @@ void runTest(int argc, char **argv)
 
     sparta::RootTreeNode* root_node = sim.getRoot();
     olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
+    olympia::RenameTester rename_tester;
 
     cls.runSimulator(&sim, 2);
-    // process only one instruction, check that freelist and map_tables are allocated correctly
-    EXPECT_TRUE(my_rename->freelist[0].size() == 511);
-    EXPECT_TRUE(my_rename->map_table[0][3].size() == 1);
-    
-    // reference counters should be 0, because the SRCs aren't referencing any PRFs
-    EXPECT_TRUE(my_rename->reference_counter[0][1] == 0);
-    EXPECT_TRUE(my_rename->reference_counter[0][2] == 0);
+    rename_tester.test_one_instruction(*my_rename);
 
     cls.runSimulator(&sim, 3);
-    // first two instructions are RAW
-    // so the second instruction should increase reference count
-    EXPECT_TRUE(my_rename->reference_counter[0][0] == 1);
+    rename_tester.test_multiple_instructions(*my_rename);
 
-
-    // full run through
     cls.runSimulator(&sim);
-
-    // after all instructions have retired, we should have a full freelist
-    EXPECT_TRUE(my_rename->freelist[0].size() == 512);
-    EXPECT_TRUE(my_rename->reference_counter[0][1] == 0);
-    EXPECT_TRUE(my_rename->reference_counter[0][2] == 0);
-
-    // spot checking architectural registers mappings are cleared
-    // as mappings are cleared once an instruction are retired
-    EXPECT_TRUE(my_rename->map_table[0][3].size() == 0);
-    EXPECT_TRUE(my_rename->map_table[0][4].size() == 0);
-    EXPECT_TRUE(my_rename->map_table[0][5].size() == 0);
+    rename_tester.test_clearing_rename_structures(*my_rename);
 
     EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
 }

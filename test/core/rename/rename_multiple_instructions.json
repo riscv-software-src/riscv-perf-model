@@ -12,36 +12,6 @@
         "rd": 4
     },
     {
-        "mnemonic": "add",
-        "rs1": 7,
-        "rs2": 8,
-        "rd": 9
-    },
-    {
-        "mnemonic": "mul",
-        "rs1": 6,
-        "rs2": 7,
-        "rd": 8
-    },
-    {
-        "mnemonic": "mul",
-        "rs1": 8,
-        "rs2": 7,
-        "rd": 6
-    },
-    {
-        "mnemonic": "mul",
-        "rs1": 6,
-        "rs2": 8,
-        "rd": 10
-    },
-    {
-        "mnemonic": "mul",
-        "rs1": 10,
-        "rs2": 11,
-        "rd": 12
-    },
-    {
         "mnemonic": "mul",
         "rs1": 12,
         "rs2": 11,

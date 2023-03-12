@@ -33,29 +33,30 @@ namespace olympia
     public:
 
         class RenameData{
-        public:
-            void setDestination(unsigned int destination){
-                dest = destination;
-            }
-            void setOriginalDestination(unsigned int destination){
-                original_dest = destination;
-            }
-            void setSource(std::pair<unsigned int, bool> source){
-                src.push_back(source);
-            }
-            const std::vector<std::pair<unsigned int, bool>> & getSource() const {
-                return src;
-            }
-            uint32_t getDestination() const {
-                return dest;
-            }
-            uint32_t getOriginalDestination() const {
-                return original_dest;
-            }
+            public:
+                void setDestination(uint32_t destination){
+                    dest_ = destination;
+                }
+                void setOriginalDestination(uint32_t destination){
+                    original_dest_ = destination;
+                }
+                using SourceReg = std::pair<uint32_t, bool>;
+                void setSource(SourceReg source){
+                    src_.push_back(source);
+                }
+                std::vector<std::pair<uint32_t, bool>> getSource() const {
+                    return src_;
+                }
+                uint32_t getDestination() const {
+                    return dest_;
+                }
+                uint32_t getOriginalDestination() const {
+                    return original_dest_;
+                }
             private:
-            unsigned int dest;
-            unsigned int original_dest;
-            std::vector<std::pair<unsigned int, bool>> src;
+                uint32_t dest_;
+                uint32_t original_dest_;
+                std::vector<SourceReg> src_;
         };
 
         // Used by Mavis
@@ -189,7 +190,7 @@ namespace olympia
             return dest_reg_bit_masks_[rf];
         }
 
-        const RenameData & getRenameData() const {
+        RenameData & getRenameData(){
             return rename_data;
         }
     private:

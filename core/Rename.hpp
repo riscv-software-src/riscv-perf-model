@@ -12,6 +12,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/resources/Scoreboard.hpp"
+#include "sparta/utils/SpartaTester.hpp"
 
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
@@ -42,6 +43,8 @@ namespace olympia
 
             PARAMETER(uint32_t, num_to_rename,       4, "Number of instructions to rename")
             PARAMETER(uint32_t, rename_queue_depth, 10, "Number of instructions queued for rename")
+            PARAMETER(uint32_t, num_integer_renames, 128, "Number of integer renames")
+            PARAMETER(uint32_t, num_float_renames,   128, "Number of float renames")
         };
 
         /**
@@ -57,22 +60,9 @@ namespace olympia
         static const char name[];
         ~Rename(){
             // delete map_table and reference counter, as they are dynamically allocated
-            for(int i = 0; i < core_types::N_REGFILES; ++i){
-                delete [] map_table[i];
-                delete [] reference_counter[i];
-            }
+            delete [] map_table_;
+            delete [] reference_counter_;
         }
-        // map of ARF -> PRF
-        std::queue<unsigned int> ** map_table = new std::queue<unsigned int>*[core_types::N_REGFILES];
-        // reference counter for PRF
-        int* reference_counter[core_types::N_REGFILES];
-        // list of free PRF that are available to map
-        std::queue<unsigned int> freelist[core_types::N_REGFILES];
-        
-        std::map<olympia::core_types::RegFile, unsigned int> NumRenameRegisters = {
-            {core_types::RegFile::RF_INTEGER, 512},
-            {core_types::RegFile::RF_FLOAT, 512}
-        };
 
     private:
         InstQueue                         uop_queue_;
@@ -97,6 +87,13 @@ namespace olympia
         using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
         Scoreboards scoreboards_;
 
+        // map of ARF -> PRF
+        std::unique_ptr<int32_t[]>* map_table_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];//new std::unique_ptr<std::queue<uint32_t>[] >[core_types::N_REGFILES];
+        // reference counter for PRF
+        std::unique_ptr<int32_t[]> * reference_counter_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];
+        // list of free PRF that are available to map
+        std::queue<uint32_t> freelist_[core_types::N_REGFILES];
+
         //! Rename setup
         void setupRename_();
 
@@ -115,6 +112,8 @@ namespace olympia
         // Get Retired Instructions
         void getAckFromROB_(const InstPtr &);
 
+        friend class RenameTester;
+
     };
 
     //! Rename's factory class. Don't create Rename without it
@@ -130,5 +129,40 @@ namespace olympia
                                                 core_types::RegFile::N_REGFILES>;
         ScoreboardFactories sb_facts_;
         ScoreboardTreeNodes sb_tns_;
+    };
+
+    // Rename Tester Class
+    class RenameTester{
+        public:
+        void test_clearing_rename_structures(Rename & rename){
+            // after all instructions have retired, we should have a full freelist
+            EXPECT_TRUE(rename.freelist_[0].size() == 128);
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+
+            // spot checking architectural registers mappings are cleared and set to invalid
+            // as mappings are cleared once an instruction are retired
+            EXPECT_TRUE(rename.map_table_[0][0] == -1);
+            EXPECT_TRUE(rename.map_table_[0][3] == -1);
+            EXPECT_TRUE(rename.map_table_[0][4] == -1);
+            EXPECT_TRUE(rename.map_table_[0][5] == -1);
+            EXPECT_TRUE(rename.map_table_[0][64] == -1);
+            EXPECT_TRUE(rename.map_table_[0][125] == -1);
+        }
+        void test_one_instruction(Rename & rename){
+            // process only one instruction, check that freelist and map_tables are allocated correctly
+            EXPECT_TRUE(rename.freelist_[0].size() == 127);
+            // map table entry is valid, as it's been allocated
+            EXPECT_TRUE(rename.map_table_[0][3] != -1);
+            
+            // reference counters should be 0, because the SRCs aren't referencing any PRFs
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+        }
+        void test_multiple_instructions(Rename & rename){
+            // first two instructions are RAW
+            // so the second instruction should increase reference count
+            EXPECT_TRUE(rename.reference_counter_[0][0] == 1);
+        }
     };
 }

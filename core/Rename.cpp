@@ -43,6 +43,22 @@ namespace olympia
         in_rename_retire_ack_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(Rename, getAckFromROB_, InstPtr));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, setupRename_));
+        
+        auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
+                        for(uint32_t i = 0; i < num_renames; ++i) {
+                            freelist_[reg_file].emplace(i);
+                        }
+                        map_table_[reg_file].reset(new int32_t[num_renames]());
+                        for(uint32_t i = 0; i < num_renames; i++){
+                            // mark all map_table values as invalid
+                            map_table_[reg_file][i] = -1;
+                        }
+                        reference_counter_[reg_file].reset(new int32_t[num_renames]());
+                    };
+
+        setup_map(core_types::RegFile::RF_INTEGER, p->num_integer_renames);
+        setup_map(core_types::RegFile::RF_FLOAT,   p->num_float_renames);
+        static_assert(core_types::RegFile::N_REGFILES == 2, "New RF type added, but Rename not updated");
     }
 
     // Using the Rename factory, create the Scoreboards
@@ -85,16 +101,6 @@ namespace olympia
             scoreboards_[rf]->set(bits);
         }
 
-        // initialize freelist
-        
-        std::map<olympia::core_types::RegFile, unsigned int>::iterator it;
-        for(it = NumRenameRegisters.begin(); it != NumRenameRegisters.end(); it++){
-            for(unsigned int i = 0; i < it->second; i++){
-                freelist[it->first].push(i);
-            }
-            map_table[it->first] = new std::queue<unsigned int>[it->second];
-            reference_counter[it->first] = new int[it->second]();
-        }
         // Send the initial credit count
         out_uop_queue_credits_.send(uop_queue_.capacity());
     }
@@ -125,24 +131,24 @@ namespace olympia
         auto const & srcs = inst_ptr->getRenameData().getSource();
 
         if(dests.size() > 0){
-            if(reference_counter[rf][dest] <= 0){
-                freelist[rf].push(dest);
+            if(reference_counter_[rf][dest] <= 0){
+                freelist_[rf].push(dest);
             }
-            map_table[rf][original_dest].pop();
+            map_table_[rf][original_dest] = -1;
         }
         
         // freeing references to PRF
         for(auto src: srcs){
             if(src.second == false){
-                --reference_counter[rf][src.first];
-                if(reference_counter[rf][src.first] <= 0){
+                --reference_counter_[rf][src.first];
+                if(reference_counter_[rf][src.first] <= 0){
                     // freeing a register in the case where it has references
                     // we wait until the last reference is retired to then free the prf
-                    freelist[rf].push(src.first);
+                    freelist_[rf].push(src.first);
                 }
             }
         }
-        ILOG("Get Ack from ROB in Rename Stage! Retired store instruction: " << inst_ptr);
+        ILOG("Get Ack from ROB in Rename Stage! Retired instruction: " << inst_ptr);
     }
 
     
@@ -165,7 +171,7 @@ namespace olympia
         // If we have credits from dispatch, schedule a rename session this cycle
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
-        unsigned int rf_counters[core_types::N_REGFILES] = {};
+        uint32_t rf_counters[core_types::N_REGFILES] = {};
         for(uint32_t i = 0; i < num_rename; ++i)
         {
             const auto & renaming_inst = uop_queue_.read(i);
@@ -177,13 +183,13 @@ namespace olympia
             }
         }
 
-        int num_valid_freelist = 0;
+        int num_valid_freelist_ = 0;
         for(int i = 0; i < core_types::N_REGFILES; ++i){
-            if(freelist[i].size() >= rf_counters[i]){
-                ++num_valid_freelist;
+            if(freelist_[i].size() >= rf_counters[i]){
+                ++num_valid_freelist_;
             }
         }
-        if(credits_dispatch_ > 0 && num_valid_freelist == core_types::N_REGFILES) {
+        if(credits_dispatch_ > 0 && num_valid_freelist_ == core_types::N_REGFILES) {
             ev_rename_insts_.schedule();
         }
     }
@@ -216,21 +222,21 @@ namespace olympia
                     const auto rf  = determineRegisterFile(src);
                     const auto num = src.field_value;
                     auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                    unsigned int prf;
+                    uint32_t prf;
 
                     bool no_prf = false;
-                    if(map_table[rf][num].size() == 0){
+                    if(map_table_[rf][num] < 0){
                         prf = num;
                         // we store the mapping, so when processing the retired instruction,
-                        // we know that there was no real mapping
+                        // we know that there was no real mapping, so we mark it as no_prf
                         no_prf = true;
                     }
                     else{
-                        prf = map_table[rf][num].back();
+                        prf = (uint32_t) map_table_[rf][num];
                         // only increase reference counter for real references
-                        reference_counter[rf][prf]++;
+                        reference_counter_[rf][prf]++;
                     }
-                    std::pair<unsigned int, bool> rename_data_src(prf, no_prf);
+                    olympia::Inst::RenameData::SourceReg rename_data_src(prf, no_prf);
                     renaming_inst->getRenameData().setSource(rename_data_src);
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
@@ -247,9 +253,9 @@ namespace olympia
                     const auto num = dest.field_value;
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
                     
-                    unsigned int prf = freelist[rf].front();
-                    freelist[rf].pop();
-                    map_table[rf][num].push(prf);
+                    uint32_t prf = freelist_[rf].front();
+                    freelist_[rf].pop();
+                    map_table_[rf][num] = (int) prf;
                     // reverse map table is used for mapping the PRF -> ARF
                     // so when we get a retired instruction, we know to pop the map table entry
 

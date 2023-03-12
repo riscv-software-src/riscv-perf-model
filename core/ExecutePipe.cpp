@@ -2,7 +2,6 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/LogUtils.hpp"
-#include "Rename.hpp"
 #include "ExecutePipe.hpp"
 
 namespace olympia

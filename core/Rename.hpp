@@ -135,8 +135,9 @@ namespace olympia
     };
 
     // Rename Tester Class
-    class RenameTester{
-        public:
+    class RenameTester
+    {
+    public:
         void test_clearing_rename_structures(Rename & rename){
             // after all instructions have retired, we should have a full freelist
             EXPECT_TRUE(rename.freelist_[0].size() == 128);

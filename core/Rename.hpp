@@ -90,7 +90,6 @@ namespace olympia
         // (data value, valid bit)
         using MapPair = std::pair<uint32_t, bool>;
         // map of ARF -> PRF
-        //std::unique_ptr<int32_t[]>* map_table_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];//new std::unique_ptr<std::queue<uint32_t>[] >[core_types::N_REGFILES];
         std::unique_ptr<std::unique_ptr<MapPair[]>[]> map_table_ = std::make_unique<std::unique_ptr<MapPair[]>[]>(core_types::N_REGFILES);
         // reference counter for PRF
         std::unique_ptr<int32_t[]> * reference_counter_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];

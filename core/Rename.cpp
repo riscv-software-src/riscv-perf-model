@@ -51,7 +51,6 @@ namespace olympia
                         map_table_[reg_file].reset(new MapPair[num_renames]());
                         for(uint32_t i = 0; i < num_renames; i++){
                             // mark all map_table values as invalid
-                            //olympia::Inst::RenameData::SourceReg rename_data_src(prf, no_prf);
                             MapPair initial_value(0, false);
                             map_table_[reg_file][i] = initial_value;
                         }

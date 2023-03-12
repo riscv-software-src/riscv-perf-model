@@ -48,10 +48,12 @@ namespace olympia
                         for(uint32_t i = 0; i < num_renames; ++i) {
                             freelist_[reg_file].emplace(i);
                         }
-                        map_table_[reg_file].reset(new int32_t[num_renames]());
+                        map_table_[reg_file].reset(new MapPair[num_renames]());
                         for(uint32_t i = 0; i < num_renames; i++){
                             // mark all map_table values as invalid
-                            map_table_[reg_file][i] = -1;
+                            //olympia::Inst::RenameData::SourceReg rename_data_src(prf, no_prf);
+                            MapPair initial_value(0, false);
+                            map_table_[reg_file][i] = initial_value;
                         }
                         reference_counter_[reg_file].reset(new int32_t[num_renames]());
                     };
@@ -134,7 +136,9 @@ namespace olympia
             if(reference_counter_[rf][dest] <= 0){
                 freelist_[rf].push(dest);
             }
-            map_table_[rf][original_dest] = -1;
+            map_table_[rf][original_dest].first = 0;
+            // map entry is now invalid, srcs should read from ARF
+            map_table_[rf][original_dest].second = false;
         }
         
         // freeing references to PRF
@@ -225,14 +229,14 @@ namespace olympia
                     uint32_t prf;
 
                     bool no_prf = false;
-                    if(map_table_[rf][num] < 0){
+                    if(!map_table_[rf][num].second){
                         prf = num;
                         // we store the mapping, so when processing the retired instruction,
                         // we know that there was no real mapping, so we mark it as no_prf
                         no_prf = true;
                     }
                     else{
-                        prf = (uint32_t) map_table_[rf][num];
+                        prf = map_table_[rf][num].first;
                         // only increase reference counter for real references
                         reference_counter_[rf][prf]++;
                     }
@@ -255,7 +259,8 @@ namespace olympia
                     
                     uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
-                    map_table_[rf][num] = (int) prf;
+                    map_table_[rf][num].first = prf;
+                    map_table_[rf][num].second = true;
                     // reverse map table is used for mapping the PRF -> ARF
                     // so when we get a retired instruction, we know to pop the map table entry
 

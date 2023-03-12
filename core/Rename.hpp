@@ -60,7 +60,7 @@ namespace olympia
         static const char name[];
         ~Rename(){
             // delete map_table and reference counter, as they are dynamically allocated
-            delete [] map_table_;
+            map_table_.reset();
             delete [] reference_counter_;
         }
 
@@ -87,8 +87,11 @@ namespace olympia
         using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
         Scoreboards scoreboards_;
 
+        // (data value, valid bit)
+        using MapPair = std::pair<uint32_t, bool>;
         // map of ARF -> PRF
-        std::unique_ptr<int32_t[]>* map_table_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];//new std::unique_ptr<std::queue<uint32_t>[] >[core_types::N_REGFILES];
+        //std::unique_ptr<int32_t[]>* map_table_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];//new std::unique_ptr<std::queue<uint32_t>[] >[core_types::N_REGFILES];
+        std::unique_ptr<std::unique_ptr<MapPair[]>[]> map_table_ = std::make_unique<std::unique_ptr<MapPair[]>[]>(core_types::N_REGFILES);
         // reference counter for PRF
         std::unique_ptr<int32_t[]> * reference_counter_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];
         // list of free PRF that are available to map
@@ -142,18 +145,18 @@ namespace olympia
 
             // spot checking architectural registers mappings are cleared and set to invalid
             // as mappings are cleared once an instruction are retired
-            EXPECT_TRUE(rename.map_table_[0][0] == -1);
-            EXPECT_TRUE(rename.map_table_[0][3] == -1);
-            EXPECT_TRUE(rename.map_table_[0][4] == -1);
-            EXPECT_TRUE(rename.map_table_[0][5] == -1);
-            EXPECT_TRUE(rename.map_table_[0][64] == -1);
-            EXPECT_TRUE(rename.map_table_[0][125] == -1);
+            EXPECT_TRUE(rename.map_table_[0][0].second == false);
+            EXPECT_TRUE(rename.map_table_[0][3].second == false);
+            EXPECT_TRUE(rename.map_table_[0][4].second == false);
+            EXPECT_TRUE(rename.map_table_[0][5].second == false);
+            EXPECT_TRUE(rename.map_table_[0][64].second == false);
+            EXPECT_TRUE(rename.map_table_[0][125].second == false);
         }
         void test_one_instruction(Rename & rename){
             // process only one instruction, check that freelist and map_tables are allocated correctly
             EXPECT_TRUE(rename.freelist_[0].size() == 127);
             // map table entry is valid, as it's been allocated
-            EXPECT_TRUE(rename.map_table_[0][3] != -1);
+            EXPECT_TRUE(rename.map_table_[0][3].second == true);
             
             // reference counters should be 0, because the SRCs aren't referencing any PRFs
             EXPECT_TRUE(rename.reference_counter_[0][1] == 0);

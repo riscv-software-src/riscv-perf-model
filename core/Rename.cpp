@@ -122,30 +122,27 @@ namespace olympia
 
         core_types::RegFile rf = core_types::RegFile::RF_INTEGER;
         auto const & dests = inst_ptr->getDestOpInfoList();
+        auto const & dest = inst_ptr->getRenameData().getDestination();
+        auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
             rf = determineRegisterFile(dests[0]);   
-        }
-
-        auto const & dest = inst_ptr->getRenameData().getDestination();
-        auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
-        auto const & srcs = inst_ptr->getRenameData().getSource();
-
-        if(dests.size() > 0){
+            // free PRF if no references from srcs
             if(reference_counter_[rf][dest] <= 0){
                 freelist_[rf].push(dest);
             }
             map_table_[rf][original_dest].first = 0;
-            // map entry is now invalid, srcs should read from ARF
+            // map entry is now invalid, new srcs should read from ARF
             map_table_[rf][original_dest].second = false;
         }
-        
+
+        auto const & srcs = inst_ptr->getRenameData().getSource();
         // freeing references to PRF
         for(auto src: srcs){
             if(src.second == false){
                 --reference_counter_[rf][src.first];
                 if(reference_counter_[rf][src.first] <= 0){
-                    // freeing a register in the case where it has references
+                    // freeing a register in the case where it has references and has already been retired
                     // we wait until the last reference is retired to then free the prf
                     freelist_[rf].push(src.first);
                 }
@@ -216,10 +213,6 @@ namespace olympia
 
                 // TODO: Register renaming for sources
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
-                if(srcs.size() > 1){
-                    int i = 0;
-                    i++;
-                }
                 for(const auto & src : srcs)
                 {
                     const auto rf  = determineRegisterFile(src);

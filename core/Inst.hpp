@@ -34,14 +34,15 @@ namespace olympia
 
         class RenameData{
             public:
+                using SourceReg = std::pair<uint32_t, bool>;
+                
                 void setDestination(uint32_t destination){
                     dest_ = destination;
                 }
                 void setOriginalDestination(uint32_t destination){
                     original_dest_ = destination;
                 }
-                using SourceReg = std::pair<uint32_t, bool>;
-                void setSource(SourceReg source){
+                void setSource(const SourceReg & source){
                     src_.push_back(source);
                 }
                 const std::vector<SourceReg> & getSource() const {

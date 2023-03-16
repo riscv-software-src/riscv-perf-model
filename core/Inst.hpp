@@ -44,7 +44,7 @@ namespace olympia
                 void setSource(SourceReg source){
                     src_.push_back(source);
                 }
-                std::vector<std::pair<uint32_t, bool>> getSource() const {
+                const std::vector<SourceReg> & getSource() const {
                     return src_;
                 }
                 uint32_t getDestination() const {

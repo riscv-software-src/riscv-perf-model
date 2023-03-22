@@ -36,7 +36,7 @@ jobs:
         with:
           repository: sparcians/map
           path: map
-          ref: map_v1.1.1
+          ref: map_v1.2.0.patch
 
       # Setup Conda and build environment
       - name: Grab Python v3.8

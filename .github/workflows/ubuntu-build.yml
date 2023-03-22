@@ -1,0 +1,60 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+env:
+  CACHE_VERSION: v1
+
+name: Regress Olympia on Ubuntu
+jobs:
+  build_test_job:
+    strategy:
+      # Strategy is a matrix of debug and release builds/regression
+      matrix:
+        os: [ubuntu-latest]
+        BUILD_TYPE: [Debug,Release]
+
+    name: Ubuntu-${{ matrix.BUILD_TYPE }}
+    runs-on: ${{ matrix.os }}
+
+    # Set up a global environment variable for build scripts
+    env:
+      OLYMPIA_BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
+
+    steps:
+
+      # Get Olympia
+      - name: Checkout Olympia
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      # Get Sparta
+      - name: Checkout Sparta
+        uses: actions/checkout@v3
+        with:
+          repository: sparcians/map
+          path: map
+
+
+      # Setup Conda and build environment
+      - name: Grab Python v3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+
+      - name: Setup Conda Environment
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          $CONDA/bin/conda env update --file  ${{ github.workspace }}/conda/environment.yml
+          $CONDA/bin/conda init bash
+
+      # Build
+      - name: Build & Regress
+        run: ./.github/actions/build/entrypoint.sh
+
+      #- name: CTest
+      #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long
+      #  if: ${{ env.DABBLE_BUILD_TYPE == 'release' }} && ${{ env.VALGRIND == 'false' }}
+      #  uses: ./.github/actions/ctest  # Uses an action.yml in directory

@@ -94,7 +94,7 @@ namespace olympia
         // map of ARF -> PRF
         std::unique_ptr<std::unique_ptr<MapPair[]>[]> map_table_ = std::make_unique<std::unique_ptr<MapPair[]>[]>(core_types::N_REGFILES);
         // reference counter for PRF
-        std::unique_ptr<int32_t[]> * reference_counter_ = new std::unique_ptr<int32_t[]>[core_types::N_REGFILES];
+        std::array<std::vector<int32_t>, core_types::N_REGFILES> reference_counter_;
         // list of free PRF that are available to map
         std::queue<uint32_t> freelist_[core_types::N_REGFILES];
 

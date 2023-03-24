@@ -13,7 +13,6 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 #include "sparta/utils/SpartaTester.hpp"
-//#include "../test/core/rename/Rename_test.hpp"
 
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
@@ -31,7 +30,6 @@ namespace olympia
      * 2. Rename the uops and send to dispatch pipe (retrieved via port)
      * 3. The dispatch pipe will send to unit for schedule
      */
-
     class Rename : public sparta::Unit
     {
     public:
@@ -135,4 +133,5 @@ namespace olympia
         ScoreboardFactories sb_facts_;
         ScoreboardTreeNodes sb_tns_;
     };
+    class RenameTester;
 }

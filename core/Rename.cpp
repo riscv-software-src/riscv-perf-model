@@ -48,8 +48,10 @@ namespace olympia
                         for(uint32_t i = 0; i < num_renames; ++i) {
                             freelist_[reg_file].push(i);
                         }
-                        map_table_[reg_file].reset(new MapPair[num_renames]());
-                        for(uint32_t i = 0; i < num_renames; i++){
+                        uint32_t map_num = (num_renames >= 32) ? num_renames : 32;
+                        // initialize map table with 32 registers if there are less than 32 renames
+                        map_table_[reg_file].reset(new MapPair[map_num]());
+                        for(uint32_t i = 0; i < map_num; i++){
                             // mark all map_table values as invalid
                             MapPair initial_value(0, false);
                             map_table_[reg_file][i] = initial_value;
@@ -193,7 +195,7 @@ namespace olympia
 
         int num_valid_freelist_ = 0;
         for(int i = 0; i < core_types::N_REGFILES; ++i){
-            if(freelist_[i].size() > rf_counters[i]){
+            if(freelist_[i].size() >= rf_counters[i]){
                 ++num_valid_freelist_;
             }
         }
@@ -248,21 +250,16 @@ namespace olympia
 
                 // TODO: Register renaming for destinations
                 const auto & dests = renaming_inst->getDestOpInfoList();
-                if(dests.size() > 0){
-                    sparta_assert(dests.size() == 1);
-                }
                 for(const auto & dest : dests)
                 {
                     const auto rf  = determineRegisterFile(dest);
                     const auto num = dest.field_value;
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
-                    
+
                     uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
                     map_table_[rf][num].first = prf;
                     map_table_[rf][num].second = true;
-                    // reverse map table is used for mapping the PRF -> ARF
-                    // so when we get a retired instruction, we know to pop the map table entry
 
                     renaming_inst->getRenameData().setDestination(prf);
                     renaming_inst->getRenameData().setOriginalDestination(num);

@@ -60,8 +60,6 @@ namespace olympia
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
-        ~Rename(){
-        }
 
     private:
         InstQueue                         uop_queue_;

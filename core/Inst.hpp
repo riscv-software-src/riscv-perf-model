@@ -190,8 +190,10 @@ namespace olympia
         const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
             return dest_reg_bit_masks_[rf];
         }
-
-        RenameData & getRenameData(){
+        RenameData & getRenameData() {
+            return rename_data;
+        }
+        const RenameData & getRenameData() const{
             return rename_data;
         }
     private:

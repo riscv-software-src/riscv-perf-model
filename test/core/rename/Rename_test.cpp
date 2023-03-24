@@ -33,6 +33,52 @@ TEST_INIT
 // Set up the Mavis decoder globally for the testing
 olympia::InstAllocator inst_allocator(2000, 1000);
 
+
+class olympia::RenameTester
+{
+    public:
+        void test_clearing_rename_structures(olympia::Rename & rename){
+            // after all instructions have retired, we should have a full freelist
+            if (rename.reference_counter_[0].size() == 11){
+                EXPECT_TRUE(rename.freelist_[0].size() == 11);
+            }
+            else{
+                EXPECT_TRUE(rename.freelist_[0].size() == 128);
+            }
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+
+            // spot checking architectural registers mappings are cleared and set to invalid
+            // as mappings are cleared once an instruction are retired
+            EXPECT_TRUE(rename.map_table_[0][0].second == false);
+            EXPECT_TRUE(rename.map_table_[0][3].second == false);
+            EXPECT_TRUE(rename.map_table_[0][4].second == false);
+            EXPECT_TRUE(rename.map_table_[0][5].second == false);
+            EXPECT_TRUE(rename.map_table_[0][10].second == false);
+        }
+        void test_one_instruction(olympia::Rename & rename){
+            // process only one instruction, check that freelist and map_tables are allocated correctly
+            if (rename.reference_counter_[0].size() == 11){
+                EXPECT_TRUE(rename.freelist_[0].size() == 10);
+            }
+            else{
+                EXPECT_TRUE(rename.freelist_[0].size() == 127);
+            }
+            // map table entry is valid, as it's been allocated
+            EXPECT_TRUE(rename.map_table_[0][3].second == true);
+            
+            // reference counters should be 0, because the SRCs aren't referencing any PRFs
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+        }
+        void test_multiple_instructions(olympia::Rename & rename){
+            // first two instructions are RAW
+            // so the second instruction should increase reference count
+            EXPECT_TRUE(rename.reference_counter_[0][0] == 1);
+        }
+};
+
+
 //
 // Simple Rename Simulator.
 //

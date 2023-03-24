@@ -47,6 +47,7 @@ namespace olympia
         auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
                         for(uint32_t i = 0; i < num_renames; ++i) {
                             freelist_[reg_file].push(i);
+                            reference_counter_[reg_file].push_back(0);
                         }
                         uint32_t map_num = (num_renames >= 32) ? num_renames : 32;
                         // initialize map table with 32 registers if there are less than 32 renames
@@ -56,7 +57,6 @@ namespace olympia
                             MapPair initial_value(0, false);
                             map_table_[reg_file][i] = initial_value;
                         }
-                        reference_counter_[reg_file].reset(new int32_t[num_renames]());
                     };
 
         setup_map(core_types::RegFile::RF_INTEGER, p->num_integer_renames);

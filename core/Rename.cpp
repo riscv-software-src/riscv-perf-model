@@ -46,7 +46,7 @@ namespace olympia
         
         auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
                         for(uint32_t i = 0; i < num_renames; ++i) {
-                            freelist_[reg_file].emplace(i);
+                            freelist_[reg_file].push(i);
                         }
                         map_table_[reg_file].reset(new MapPair[num_renames]());
                         for(uint32_t i = 0; i < num_renames; i++){
@@ -112,7 +112,7 @@ namespace olympia
 
         credits_dispatch_ += credits;
         if (uop_queue_.size() > 0) {
-            ev_rename_insts_.schedule();
+            ev_schedule_rename_.schedule();
         }
     }
     void Rename::getAckFromROB_(const InstPtr & inst_ptr)
@@ -148,6 +148,9 @@ namespace olympia
                 }
             }
         }
+        if(credits_dispatch_ > 0 && (uop_queue_.size() > 0)){
+            ev_schedule_rename_.schedule();
+        }
         ILOG("Get Ack from ROB in Rename Stage! Retired instruction: " << inst_ptr);
     }
 
@@ -168,6 +171,11 @@ namespace olympia
             uop_queue_.push(i);
         }
 
+        if(credits_dispatch_ > 0) {
+            ev_schedule_rename_.schedule();
+        }
+    }
+    void Rename::scheduleRenaming_(){
         // If we have credits from dispatch, schedule a rename session this cycle
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
@@ -185,7 +193,7 @@ namespace olympia
 
         int num_valid_freelist_ = 0;
         for(int i = 0; i < core_types::N_REGFILES; ++i){
-            if(freelist_[i].size() >= rf_counters[i]){
+            if(freelist_[i].size() > rf_counters[i]){
                 ++num_valid_freelist_;
             }
         }
@@ -193,17 +201,14 @@ namespace olympia
             ev_rename_insts_.schedule();
         }
     }
-
     void Rename::renameInstructions_()
     {
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
-
         if(num_rename > 0)
         {
             // Pick instructions from uop queue to rename
             InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-
 
             for(uint32_t i = 0; i < num_rename; ++i)
             {
@@ -243,6 +248,9 @@ namespace olympia
 
                 // TODO: Register renaming for destinations
                 const auto & dests = renaming_inst->getDestOpInfoList();
+                if(dests.size() > 0){
+                    sparta_assert(dests.size() == 1);
+                }
                 for(const auto & dest : dests)
                 {
                     const auto rf  = determineRegisterFile(dest);
@@ -279,7 +287,7 @@ namespace olympia
         }
 
         if (credits_dispatch_ > 0 && (uop_queue_.size() > 0)) {
-            ev_rename_insts_.schedule(1);
+            ev_schedule_rename_.schedule(1);
         }
     }
 

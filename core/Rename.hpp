@@ -79,6 +79,8 @@ namespace olympia
 
         sparta::UniqueEvent<> ev_rename_insts_ {&unit_event_set_, "rename_insts",
                                                 CREATE_SPARTA_HANDLER(Rename, renameInstructions_)};
+        sparta::UniqueEvent<> ev_schedule_rename_ {&unit_event_set_, "schedule_rename",
+                                                CREATE_SPARTA_HANDLER(Rename, scheduleRenaming_)};
 
         const uint32_t num_to_rename_per_cycle_;
         uint32_t credits_dispatch_ = 0;
@@ -104,6 +106,9 @@ namespace olympia
 
         //! Process new instructions coming in from decode
         void decodedInstructions_(const InstGroupPtr &);
+
+        //! Schedule renaming if there are enough PRFs in the freelist_
+        void scheduleRenaming_();
 
         //! Rename instructions
         void renameInstructions_();

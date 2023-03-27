@@ -36,6 +36,7 @@ jobs:
         with:
           repository: sparcians/map
           path: map
+          ref: master
 
 
       # Setup Conda and build environment

@@ -11,7 +11,7 @@ dependencies:
   - bzip2=1.0.8=h7f98852_4
   - c-ares=1.18.1=h7f98852_0
   - ca-certificates=2022.12.7=ha878542_0
-  - cmake=3.17.0=h28c56e5_0
+  - cmake=3.26.1
   - cppcheck=2.7.5=py310h94ea96f_1
   - curl=7.87.0=h6312ad2_0
   - doxygen=1.8.20=had0d8f1_0

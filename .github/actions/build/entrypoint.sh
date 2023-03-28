@@ -20,8 +20,9 @@ cd ${GITHUB_WORKSPACE}/map/sparta
 # Double check if which hash we have
 # FIXME: hacky: ensure we have master here on the branch
 git remote -v show
-git branch -l
-git checkout --progress --force -B master origin/master
+git fetch
+git branch -la
+git switch master
 git rev-parse HEAD
 mkdir -p release  # Link step expects "release" as dir name
 ln -s release fastdebug

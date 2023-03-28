@@ -11,12 +11,23 @@ add_compile_options ( -Werror
 
 ################################################################################
 # Set up Sparta
-if(IS_DIRECTORY ${SPARTA_SEARCH_DIR}) 
-  set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
+if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})
+  message (STATUS "Using '${SPARTA_SEARCH_DIR}' for sparta install")
+elseif(DEFINED ENV{CONDA_PREFIX})
+  message (STATUS "Looking for SPARTA in the conda environment: '$ENV{CONDA_PREFIX}'")
+  set(SPARTA_SEARCH_DIR $ENV{CONDA_PREFIX})
 else()
   message (STATUS "If needed, please provide the location where sparta is installed: -DSPARTA_SEARCH_DIR=<directory>")
 endif()
+set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
+
 find_package(Sparta REQUIRED)
+
+if (NOT SPARTA_FOUND)
+  message (FATAL_ERROR "Sparta was not found in ${SPARTA_SEARCH_DIR}")
+else()
+  message (STATUS "Sparta was found in ${SPARTA_SEARCH_DIR}")
+endif()
 
 ################################################################################
 # Set up STF library

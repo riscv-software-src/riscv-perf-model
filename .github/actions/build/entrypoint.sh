@@ -9,6 +9,7 @@ echo "Starting Build Entry"
 echo "HOME:" $HOME
 echo "GITHUB_WORKSPACE:" $GITHUB_WORKSPACE
 echo "GITHUB_EVENT_PATH:" $GITHUB_EVENT_PATH
+echo "CONDA_PREFIX:" $CONDA_PREFIX
 echo "PWD:" `pwd`
 
 #
@@ -17,16 +18,9 @@ echo "PWD:" `pwd`
 #
 echo "Building Sparta Infra"
 cd ${GITHUB_WORKSPACE}/map/sparta
-# Double check if which hash we have
-# FIXME: hacky: ensure we have master here on the branch
-git fetch
-git switch master
-git rev-parse HEAD
-mkdir -p release  # Link step expects "release" as dir name
-ln -s release fastdebug
-ln -s release debug
+mkdir -p release
 cd release
-cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/sparta_installed
+cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
 if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1
@@ -41,7 +35,7 @@ fi
 cd ${GITHUB_WORKSPACE}
 mkdir $OLYMPIA_BUILD_TYPE
 cd $OLYMPIA_BUILD_TYPE
-cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DSPARTA_SEARCH_DIR=${GITHUB_WORKSPACE}/sparta_installed
+cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF
 if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1

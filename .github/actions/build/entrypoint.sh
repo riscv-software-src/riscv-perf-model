@@ -19,9 +19,7 @@ echo "Building Sparta Infra"
 cd ${GITHUB_WORKSPACE}/map/sparta
 # Double check if which hash we have
 # FIXME: hacky: ensure we have master here on the branch
-git remote -v show
 git fetch
-git branch -la
 git switch master
 git rev-parse HEAD
 mkdir -p release  # Link step expects "release" as dir name
@@ -48,7 +46,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1
 fi
-make -j2 regress
+make -j2 regress VERBOSE=1
 BUILD_OLYMPIA=$?
 if [ ${BUILD_OLYMPIA} -ne 0 ]; then
     echo "ERROR: build/regress of olympia FAILED!!!"

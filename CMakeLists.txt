@@ -28,12 +28,20 @@ if (NOT SPARTA_FOUND)
 else()
   message (STATUS "Sparta was found in ${SPARTA_SEARCH_DIR}")
 endif()
+#include_directories(${SPARTA_INCLUDE_DIRS})
 
 ################################################################################
 # Set up STF library
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
-#include(${STF_LIB_BASE}/cmake/stf-config.cmake)
+
+if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
+  set (FULL_LTO true)
+  include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
+  setup_stf_linker(false)
+endif()
+
+
 
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)
@@ -84,8 +92,10 @@ add_executable(olympia
   )
 target_link_libraries (olympia core mss SPARTA::sparta ${STF_LINK_LIBS})
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
-  target_link_options    (olympia PUBLIC -flto)
+  target_compile_options (core    PUBLIC -flto)
+  target_compile_options (mss     PUBLIC -flto)
   target_compile_options (olympia PUBLIC -flto)
+  target_link_options    (olympia PUBLIC -flto)
 endif()
 
 # Create a few links like reports and arch directories

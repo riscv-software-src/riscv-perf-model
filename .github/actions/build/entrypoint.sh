@@ -19,8 +19,10 @@ echo "Building Sparta Infra"
 cd ${GITHUB_WORKSPACE}/map/sparta
 # Double check if which hash we have
 # FIXME: hacky: ensure we have master here on the branch
-git checkout --progress --force -B master refs/remotes/origin/master
-echo "sparta git @ $(git rev-parse HEAD)"
+git remote -v show
+git branch -l
+git checkout --progress --force -B master origin/master
+git rev-parse HEAD
 mkdir -p release  # Link step expects "release" as dir name
 ln -s release fastdebug
 ln -s release debug

@@ -20,3 +20,4 @@ add_library(core
   CPUFactory.cpp
   CPUTopology.cpp
   )
+target_link_libraries (core PUBLIC SPARTA::sparta ${STF_LINK_LIBS})

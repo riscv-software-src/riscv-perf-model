@@ -78,6 +78,7 @@ namespace olympia
                                                 CREATE_SPARTA_HANDLER(Rename, scheduleRenaming_)};
 
         const uint32_t num_to_rename_per_cycle_;
+        uint32_t num_to_rename_ = 0;
         uint32_t credits_dispatch_ = 0;
 
         // Scoreboards
@@ -92,6 +93,12 @@ namespace olympia
         std::array<std::vector<int32_t>, core_types::N_REGFILES> reference_counter_;
         // list of free PRF that are available to map
         std::queue<uint32_t> freelist_[core_types::N_REGFILES];
+        // used to track current number of each type of RF instruction at each
+        // given index in the uop_queue_
+        struct RegCountData{
+            uint32_t cumulative_reg_counts[core_types::RegFile::N_REGFILES] = {0};
+        };
+        std::deque<RegCountData> uop_queue_regcount_data_;
 
         //! Rename setup
         void setupRename_();

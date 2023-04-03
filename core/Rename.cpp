@@ -94,7 +94,7 @@ namespace olympia
             auto sb_tn = sbs_tn->getChild(core_types::regfile_names[rf]);
             scoreboards_[rf] = sb_tn->getResourceAs<sparta::Scoreboard*>();
 
-            // Initialize scoreboard resources, make 32 registers
+            // Initialize scoreboard resources, make number rename PRFs registers,
             // all ready.
             constexpr uint32_t num_regs = 32;
             core_types::RegisterBitMask bits;
@@ -169,8 +169,21 @@ namespace olympia
     {
         sparta_assert(in_uop_queue_append_.dataReceived());
 
+        RegCountData current_counts;
+        if(!uop_queue_regcount_data_.empty()){
+            // if we have entries, use the most recent entered instruction counts
+            current_counts = uop_queue_regcount_data_.back();
+        }   
         for(auto & i : *insts) {
+            // create an index count for each instruction entered
+            const auto & dests = i->getDestOpInfoList();
+            if(dests.size() > 0){
+                sparta_assert(dests.size() == 1); // we should only have one destination
+                const auto rf = determineRegisterFile(dests[0]);  
+                current_counts.cumulative_reg_counts[rf]++;
+            }
             uop_queue_.push(i);
+            uop_queue_regcount_data_.push_back(current_counts);
         }
 
         if(credits_dispatch_ > 0) {
@@ -181,38 +194,50 @@ namespace olympia
         // If we have credits from dispatch, schedule a rename session this cycle
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
-        uint32_t rf_counters[core_types::N_REGFILES] = {};
-        for(uint32_t i = 0; i < num_rename; ++i)
-        {
-            const auto & renaming_inst = uop_queue_.read(i);
-            const auto & dests = renaming_inst->getDestOpInfoList();
-            if(dests.size() > 0){
-                sparta_assert(dests.size() == 1); // we should only have one destination
-                const auto rf = determineRegisterFile(dests[0]);  
-                rf_counters[rf]++; 
+        if(credits_dispatch_ > 0){
+            RegCountData count_subtract;
+            bool enough_rename = false;
+            for(u_int32_t i = num_rename; i > 0 ; --i){
+                if(enough_rename){
+                    // once we know the number we can rename
+                    // pop everything below it
+                    uop_queue_regcount_data_.pop_front();
+                }
+                else{
+                    int enough_freelists = 0;
+                    for(int j = 0; j < core_types::RegFile::N_REGFILES; ++j){
+                        if(uop_queue_regcount_data_[i-1].cumulative_reg_counts[j] <= freelist_[j].size()){
+                            enough_freelists++;
+                        }
+                    }
+                    if(enough_freelists == core_types::RegFile::N_REGFILES){
+                        // we are good to process all instructions from this index
+                        num_to_rename_ = i;
+                        enough_rename = true;
+                    }
+                }
             }
-        }
-
-        int num_valid_freelist_ = 0;
-        for(int i = 0; i < core_types::N_REGFILES; ++i){
-            if(freelist_[i].size() >= rf_counters[i]){
-                ++num_valid_freelist_;
+            // decrement the rest of the entries in the uop_queue_reg_count_data_ accordingly
+            if(enough_rename){
+                count_subtract = uop_queue_regcount_data_.front();
+                uop_queue_regcount_data_.pop_front();
+                for(unsigned int i = 0; i < uop_queue_regcount_data_.size(); ++i){
+                    for(int j = 0; j < core_types::RegFile::N_REGFILES; ++j){
+                        uop_queue_regcount_data_[i].cumulative_reg_counts[j] -= count_subtract.cumulative_reg_counts[j];
+                    }
+                }
+                ev_rename_insts_.schedule();
             }
-        }
-        if(credits_dispatch_ > 0 && num_valid_freelist_ == core_types::N_REGFILES) {
-            ev_rename_insts_.schedule();
         }
     }
     void Rename::renameInstructions_()
     {
-        uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
-        num_rename = std::min(credits_dispatch_, num_rename);
-        if(num_rename > 0)
+        if(num_to_rename_ > 0)
         {
             // Pick instructions from uop queue to rename
             InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
 
-            for(uint32_t i = 0; i < num_rename; ++i)
+            for(uint32_t i = 0; i < num_to_rename_; ++i)
             {
                 // Pick the oldest
                 const auto & renaming_inst = uop_queue_.read(0);
@@ -269,7 +294,6 @@ namespace olympia
                     << sparta::printBitSet(bitmask)
                     << " for '" << rf << "' scoreboard");
                 }
-
                 // Remove it from uop queue
                 insts->emplace_back(uop_queue_.read(0));
                 uop_queue_.pop();
@@ -277,12 +301,12 @@ namespace olympia
 
             // Send insts to dispatch
             out_dispatch_queue_write_.send(insts);
-            credits_dispatch_ -= num_rename;
+            credits_dispatch_ -= num_to_rename_;
 
             // Replenish credits in the Decode unit             
-            out_uop_queue_credits_.send(num_rename);
+            out_uop_queue_credits_.send(num_to_rename_);
+            num_to_rename_ = 0;
         }
-
         if (credits_dispatch_ > 0 && (uop_queue_.size() > 0)) {
             ev_schedule_rename_.schedule(1);
         }

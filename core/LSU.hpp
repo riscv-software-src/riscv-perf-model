@@ -17,6 +17,7 @@
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/resources/Scoreboard.hpp"
 
 #include "cache/TreePLRUReplacement.hpp"
 
@@ -336,6 +337,10 @@ namespace olympia
             tlb_cache_ = &tlb;
         }
     private:
+
+        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+        ScoreboardViews scoreboard_views_;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
@@ -437,6 +442,9 @@ namespace olympia
         // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
         void sendInitialCredits_();
 
+        // Setup Scoreboard Views
+        void setupScoreboard_();
+        
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 

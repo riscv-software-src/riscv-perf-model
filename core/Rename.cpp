@@ -96,7 +96,7 @@ namespace olympia
 
             // Initialize scoreboard resources, make 32 registers
             // all ready.
-            constexpr uint32_t num_regs = 32;
+            uint32_t num_regs = reference_counter_[rf].size() > 32 ? reference_counter_[rf].size() : 32;
             core_types::RegisterBitMask bits;
             for(uint32_t reg = 0; reg < num_regs; ++reg) {
                 bits.set(reg);
@@ -218,6 +218,11 @@ namespace olympia
                 const auto & renaming_inst = uop_queue_.read(0);
                 ILOG("sending inst to dispatch: " << renaming_inst);
 
+                if(renaming_inst->getUniqueID() == 20){
+                    i++;
+                    i--;
+                }
+
                 // TODO: Register renaming for sources
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
                 for(const auto & src : srcs)
@@ -233,19 +238,22 @@ namespace olympia
                         // we store the mapping, so when processing the retired instruction,
                         // we know that there was no real mapping, so we mark it as no_prf
                         no_prf = true;
-                    }
+                        // we can then set the scoreboard, as we're using the ARFs
+                        // bitmask.set(prf);
+                        bitmask.set(prf);
+                        scoreboards_[rf]->set(bitmask);
+                        // ILOG("\tsetup source register bit mask "
+                        //     << sparta::printBitSet(bitmask)
+                        //     << " for '" << rf << "' scoreboard");
+                        }
                     else{
                         prf = map_table_[rf][num].first;
+                        bitmask.set(prf);
                         // only increase reference counter for real references
                         reference_counter_[rf][prf]++;
                     }
                     olympia::Inst::RenameData::SourceReg rename_data_src(prf, no_prf);
                     renaming_inst->getRenameData().setSource(rename_data_src);
-                    bitmask.set(prf);
-                    scoreboards_[rf]->set(bitmask);
-                    ILOG("\tsetup source register bit mask "
-                        << sparta::printBitSet(bitmask)
-                        << " for '" << rf << "' scoreboard");
                 }
 
                 // TODO: Register renaming for destinations
@@ -258,16 +266,21 @@ namespace olympia
 
                     uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
+                    if(num == 12){
+                        i++;
+                        i--;
+                    }
                     map_table_[rf][num].first = prf;
                     map_table_[rf][num].second = true;
 
                     renaming_inst->getRenameData().setDestination(prf);
                     renaming_inst->getRenameData().setOriginalDestination(num);
                     bitmask.set(prf);
-                    scoreboards_[rf]->set(bitmask);
-                    ILOG("\tsetup destination register bit mask "
-                    << sparta::printBitSet(bitmask)
-                    << " for '" << rf << "' scoreboard");
+                    // scoreboards_[rf]->clearBits(bitmask);
+                    ILOG("Assigning ARF: " << num << " to PRF: " << prf);
+                    // ILOG("\tsetup destination register bit mask "
+                    // << sparta::printBitSet(bitmask)
+                    // << " for '" << rf << "' scoreboard");
                 }
 
                 // Remove it from uop queue

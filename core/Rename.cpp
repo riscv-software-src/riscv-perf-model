@@ -94,7 +94,7 @@ namespace olympia
             auto sb_tn = sbs_tn->getChild(core_types::regfile_names[rf]);
             scoreboards_[rf] = sb_tn->getResourceAs<sparta::Scoreboard*>();
 
-            // Initialize scoreboard resources, make number rename PRFs registers,
+            // Initialize 32 scoreboard resources,
             // all ready.
             constexpr uint32_t num_regs = 32;
             core_types::RegisterBitMask bits;
@@ -181,6 +181,14 @@ namespace olympia
                 sparta_assert(dests.size() == 1); // we should only have one destination
                 const auto rf = determineRegisterFile(dests[0]);  
                 current_counts.cumulative_reg_counts[rf]++;
+            }
+            else{
+                // for other instructions check the sources
+                const auto & srcs = i->getSourceOpInfoList();
+                if(srcs.size() > 0){
+                    const auto rf = determineRegisterFile(srcs[0]);
+                    current_counts.cumulative_reg_counts[rf]++;
+                }
             }
             uop_queue_.push(i);
             uop_queue_regcount_data_.push_back(current_counts);

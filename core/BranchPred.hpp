@@ -1,5 +1,4 @@
 // <Branch.hpp> -*- C++ -*-
-// <Fetch.hpp> -*- C++ -*-
 
 //!
 //! \file BranchPred.hpp
@@ -24,18 +23,25 @@
  * implementations of Prediction output, Prediction input and Update input, along with
  * implementations of getPrediction and updatePredictor operations.
  * */
+#include <map>
 
 class Prediction; // Prediction output
 class Update;     // Update input
 class Input;      // Prediction input
 
 
-template <class PredictionT, UpdateT, InputT>
+template <class PredictionT, class UpdateT, class InputT>
 class BranchPredictor
 {
 public:
+    BrandPredictor() = default;
     PredictionT & getPrediction(const InputT &);
     void updatePredictor(UpdateT &);
+private:
+    // a map of branch PC to 2 bit staurating counter tracking branch history
+    std::map <uint64_t, uint8_t> branch_history_table_; // BHT
+    // a map of branch PC to target of the branch
+    std::map <uint64_t, uint8_t> branch_target_buffer_; // BTB
 };
 
 // following class definitions are example inputs & outputs for a very simple branch
@@ -49,6 +55,7 @@ public:
 class Update
 {
 public:
+    uint64_t predictedPC;
     uint64_t correctedPC;
 };
 

@@ -1,3 +1,5 @@
+[![Regress Olympia on Ubuntu](https://github.com/riscv-software-src/riscv-perf-model/actions/workflows/ubuntu-build.yml/badge.svg)](https://github.com/riscv-software-src/riscv-perf-model/actions/workflows/ubuntu-build.yml)
+
 # olympia
 
 Olympia is a Performance Model written in C++ for the RISC-V community as an

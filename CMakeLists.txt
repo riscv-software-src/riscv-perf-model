@@ -28,7 +28,8 @@ if (NOT SPARTA_FOUND)
 else()
   message (STATUS "Sparta was found in ${SPARTA_SEARCH_DIR}")
 endif()
-#include_directories(${SPARTA_INCLUDE_DIRS})
+
+include_directories(${SPARTA_INCLUDE_DIRS})
 
 ################################################################################
 # Set up STF library

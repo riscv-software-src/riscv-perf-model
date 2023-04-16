@@ -71,33 +71,70 @@ namespace olympia
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
         sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
                       "Should be all ready source operands ... " << ex_inst);
+        bool operands_ready = false;
+        if(scoreboard_views_[reg_file_]->isSet(src_bits)){
+            operands_ready = true;
+        }
+        else if(ex_inst->getRenameData().getSource()[0].second || ex_inst->getRenameData().getSource()[1].second){
+            // one of the sources is using ARF, PRF may be the destination of another instruction, so we just go on ahead
+            if(ex_inst->getRenameData().getSource()[0].second && ex_inst->getRenameData().getSource()[1].second){
+                // both sources from ARF, operands are ready
+                operands_ready = true;
+            }
+            else if(ex_inst->getRenameData().getSource()[0].second){
+                core_types::RegisterBitMask bitmask;
+                bitmask.set(ex_inst->getRenameData().getSource()[1].first);
+                if(scoreboard_views_[reg_file_]->isSet(bitmask)){
+                    operands_ready = true;
+                }
+            }
+            else{
+                core_types::RegisterBitMask bitmask;
+                bitmask.set(ex_inst->getRenameData().getSource()[0].first);
+                if(scoreboard_views_[reg_file_]->isSet(bitmask)){
+                    operands_ready = true;
+                }
+            }
 
-        // Insert at the end if we are doing in order issue or if the scheduler is empty
-        if (in_order_issue_ == true || ready_queue_.size() == 0) {
-            ready_queue_.emplace_back(ex_inst);
         }
-        else {
-            // Stick the instructions in a random position in the ready queue
-            uint64_t issue_pos = uint64_t(std::rand()) % ready_queue_.size();
-             if (issue_pos == ready_queue_.size()-1) {
-                 ready_queue_.emplace_back(ex_inst);
-             }
-             else {
-                 uint64_t pos = 0;
-                 auto iter = ready_queue_.begin();
-                 while (iter != ready_queue_.end()) {
-                     if (pos == issue_pos) {
-                         ready_queue_.insert(iter, ex_inst);
-                         break;
-                     }
-                     ++iter;
-                     ++pos;
-                 }
-             }
+        if(operands_ready){
+            // if source bits are ready
+            sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
+                      "Should be all ready source operands ... " << ex_inst);
+            // Insert at the end if we are doing in order issue or if the scheduler is empty
+            ILOG("Sending to issue queue" << ex_inst);
+            if (in_order_issue_ == true || ready_queue_.size() == 0) {
+                ready_queue_.emplace_back(ex_inst);
+            }
+            else {
+                // Stick the instructions in a random position in the ready queue
+                uint64_t issue_pos = uint64_t(std::rand()) % ready_queue_.size();
+                if (issue_pos == ready_queue_.size()-1) {
+                    ready_queue_.emplace_back(ex_inst);
+                }
+                else {
+                    uint64_t pos = 0;
+                    auto iter = ready_queue_.begin();
+                    while (iter != ready_queue_.end()) {
+                        if (pos == issue_pos) {
+                            ready_queue_.insert(iter, ex_inst);
+                            break;
+                        }
+                        ++iter;
+                        ++pos;
+                    }
+                }
+            }
+            // Schedule issue if the alu is not busy
+            if (unit_busy_ == false) {
+                issue_inst_.schedule(sparta::Clock::Cycle(0));
+            }
         }
-        // Schedule issue if the alu is not busy
-        if (unit_busy_ == false) {
-            issue_inst_.schedule(sparta::Clock::Cycle(0));
+        else{
+            scoreboard_views_[reg_file_]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
+                                        [this, ex_inst](const sparta::Scoreboard::RegisterBitMask&)
+                                        {this->getInstsFromDispatch_(ex_inst);});
+            ILOG("Registering Callback: " << ex_inst);
         }
     }
 
@@ -131,6 +168,11 @@ namespace olympia
         ILOG("Completing inst: " << ex_inst);
 
         ex_inst->setStatus(Inst::Status::COMPLETED);
+
+        // set scoreboard
+        const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);
+        scoreboard_views_[reg_file_]->setReady(dest_bits);
+
         // We're not busy anymore
         unit_busy_ = false;
 

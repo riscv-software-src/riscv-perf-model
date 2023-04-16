@@ -1,4 +1,3 @@
-
 #include "sparta/utils/SpartaAssert.hpp"
 #include "LSU.hpp"
 
@@ -32,8 +31,6 @@ namespace olympia
 
         // Startup handler for sending initiatl credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
-        // Create scoreboard view
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, setupScoreboard_));
 
 
         // Port config
@@ -78,15 +75,6 @@ namespace olympia
                                                          (dl1_associativity));
         dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));
 
-
-        // std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
-        // for(const auto rf : reg_files)
-        // {
-        //     scoreboard_views_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
-        //                                                            core_types::regfile_names[rf],
-        //                                                            getContainer()));
-        // }
-        
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
 
@@ -94,15 +82,7 @@ namespace olympia
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
     ////////////////////////////////////////////////////////////////////////////////
-    void LSU::setupScoreboard_(){
-        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
-        for(const auto rf : reg_files)
-        {
-            scoreboard_views_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
-                                                                   core_types::regfile_names[rf],
-                                                                   getContainer()));
-        }
-    }
+
     // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
     void LSU::sendInitialCredits_()
     {
@@ -114,122 +94,40 @@ namespace olympia
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
+        // Create load/store memory access info
+        MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
+                                                                                                    inst_ptr);
 
-        const auto reg = inst_ptr->getDestOpInfoList();
-        auto reg_file = core_types::RegFile::RF_INTEGER;
-        if(reg.size() > 0){
-            const bool is_float = (reg[0].operand_type == mavis::InstMetaData::OperandTypes::SINGLE) ||
-                              (reg[0].operand_type == mavis::InstMetaData::OperandTypes::DOUBLE);
-            reg_file = is_float ? core_types::RegFile::RF_FLOAT : core_types::RegFile::RF_INTEGER;
-        }
-        const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
-        const auto & srcs = inst_ptr->getSourceOpInfoList();
-        // sparta_assert(scoreboard_views_[reg_file]->isSet(src_bits),
-        //               "Should be all ready source operands ... " << inst_ptr);
-        //InstID -> use ex_ins->unique_id_
-        bool operands_ready = false;
-        if(scoreboard_views_[reg_file]->isSet(src_bits)){
-            operands_ready = true;
-        }
-        else if(srcs.size() > 1){
-            if(inst_ptr->getRenameData().getSource()[0].second || inst_ptr->getRenameData().getSource()[1].second){
-                // one of the sources is using ARF, PRF may be the destination of another instruction, so we just go on ahead
-                if(inst_ptr->getRenameData().getSource()[0].second && inst_ptr->getRenameData().getSource()[1].second){
-                    // both sources from ARF, operands are ready
-                    operands_ready = true;
-                }
-                else if(inst_ptr->getRenameData().getSource()[0].second){
-                    core_types::RegisterBitMask bitmask;
-                    bitmask.set(inst_ptr->getRenameData().getSource()[1].first);
-                    if(scoreboard_views_[reg_file]->isSet(bitmask)){
-                        operands_ready = true;
-                    }
-                }
-                else{
-                    core_types::RegisterBitMask bitmask;
-                    bitmask.set(inst_ptr->getRenameData().getSource()[0].first);
-                    if(scoreboard_views_[reg_file]->isSet(bitmask)){
-                        operands_ready = true;
-                    }
-                }
-            }
-        }
-        if(operands_ready){
-            // Create load/store memory access info
-            MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
-                                                                                                        inst_ptr);
+        // Create load/store instruction issue info
+        LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
+                                                                                                       mem_info_ptr);
+        lsu_insts_dispatched_++;
+ 
+        // Append to instruction issue queue
+        appendIssueQueue_(inst_info_ptr);
 
-            // Create load/store instruction issue info
-            LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
-                                                                                                        mem_info_ptr);
-            lsu_insts_dispatched_++;
-    
-            // Append to instruction issue queue
-            appendIssueQueue_(inst_info_ptr);
+        // Update issue priority & Schedule an instruction issue event
+        updateIssuePriorityAfterNewDispatch_(inst_ptr);
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
-            // Update issue priority & Schedule an instruction issue event
-            updateIssuePriorityAfterNewDispatch_(inst_ptr);
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-
-            // NOTE:
-            // IssuePriority should always be updated before a new issue event is scheduled.
-            // This guarantees that whenever a new instruction issue event is scheduled:
-            // (1)Instruction issue queue already has "something READY";
-            // (2)Instruction issue arbitration is guaranteed to be sucessful.
+        // NOTE:
+        // IssuePriority should always be updated before a new issue event is scheduled.
+        // This guarantees that whenever a new instruction issue event is scheduled:
+        // (1)Instruction issue queue already has "something READY";
+        // (2)Instruction issue arbitration is guaranteed to be sucessful.
 
 
-            // Update instruction status
-            inst_ptr->setStatus(Inst::Status::SCHEDULED);
+        // Update instruction status
+        inst_ptr->setStatus(Inst::Status::SCHEDULED);
 
-            // NOTE:
-            // It is a bug if instruction status is updated as SCHEDULED in the issueInst_()
-            // The reason is: when issueInst_() is called, it could be scheduled for
-            // either a new issue event, or a re-issue event
-            // however, we can ONLY update instruction status as SCHEDULED for a new issue event
-
-            ILOG("Another issue event scheduled");
-        }
-        else{
-            scoreboard_views_[reg_file]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
-                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                        {this->getInstsFromDispatch_(inst_ptr);});
-            ILOG("Registering Callback: " << inst_ptr);
-        }
-        
-
-        // //Create load/store memory access info
-        // MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
-        //                                                                                             inst_ptr);
-
-        // // Create load/store instruction issue info
-        // LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
-        //                                                                                             mem_info_ptr);
-        // lsu_insts_dispatched_++;
-
-        // // Append to instruction issue queue
-        // appendIssueQueue_(inst_info_ptr);
-
-        // // Update issue priority & Schedule an instruction issue event
-        // updateIssuePriorityAfterNewDispatch_(inst_ptr);
-        // uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-
-        // // NOTE:
-        // // IssuePriority should always be updated before a new issue event is scheduled.
-        // // This guarantees that whenever a new instruction issue event is scheduled:
-        // // (1)Instruction issue queue already has "something READY";
-        // // (2)Instruction issue arbitration is guaranteed to be sucessful.
+        // NOTE:
+        // It is a bug if instruction status is updated as SCHEDULED in the issueInst_()
+        // The reason is: when issueInst_() is called, it could be scheduled for
+        // either a new issue event, or a re-issue event
+        // however, we can ONLY update instruction status as SCHEDULED for a new issue event
 
 
-        // // Update instruction status
-        // inst_ptr->setStatus(Inst::Status::SCHEDULED);
-
-        // // NOTE:
-        // // It is a bug if instruction status is updated as SCHEDULED in the issueInst_()
-        // // The reason is: when issueInst_() is called, it could be scheduled for
-        // // either a new issue event, or a re-issue event
-        // // however, we can ONLY update instruction status as SCHEDULED for a new issue event
-
-        // ILOG("Another issue event scheduled");
+        ILOG("Another issue event scheduled");
     }
 
     // Receive MSS access acknowledge from Bus Interface Unit
@@ -498,19 +396,6 @@ namespace olympia
 
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto reg = inst_ptr->getDestOpInfoList();
-        if(reg.size() > 0){
-            const bool is_float = (reg[0].operand_type == mavis::InstMetaData::OperandTypes::SINGLE) ||
-                              (reg[0].operand_type == mavis::InstMetaData::OperandTypes::DOUBLE);
-            const auto reg_file = is_float ? core_types::RegFile::RF_FLOAT : core_types::RegFile::RF_INTEGER;
-            auto const & dests = inst_ptr->getDestOpInfoList();
-            if(dests.size() > 0){
-                sparta_assert(dests.size() == 1);
-                const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
-                scoreboard_views_[reg_file]->setReady(dest_bits);
-            }
-        }
-        
         bool isStoreInst = inst_ptr->isStoreInst();
 
         // Complete load instruction

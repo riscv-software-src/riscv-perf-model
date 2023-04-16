@@ -38,43 +38,61 @@ class olympia::RenameTester
 {
     public:
         void test_clearing_rename_structures(olympia::Rename & rename){
-            // after all instructions have retired, we should have a full freelist
-            if (rename.reference_counter_[0].size() == 11){
-                EXPECT_TRUE(rename.freelist_[0].size() == 11);
+            // after all instructions have retired, we should have:
+            // num_rename_registers - 32 registers = freelist size
+            // because we initialize the first 32 registers
+            if (rename.reference_counter_[0].size() == 34){
+                EXPECT_TRUE(rename.freelist_[0].size() == 2);
+                // in the case of only two free PRFs, they should NOT be equal to each other
+                EXPECT_TRUE(rename.freelist_[0].front() != rename.freelist_[0].back());
             }
             else{
-                EXPECT_TRUE(rename.freelist_[0].size() == 128);
+                EXPECT_TRUE(rename.freelist_[0].size() == 96);
             }
-            EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
-            EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+            // we're only expecting one reference
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 1);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
 
-            // spot checking architectural registers mappings are cleared and set to invalid
-            // as mappings are cleared once an instruction are retired
-            EXPECT_TRUE(rename.map_table_[0][0].second == false);
-            EXPECT_TRUE(rename.map_table_[0][3].second == false);
-            EXPECT_TRUE(rename.map_table_[0][4].second == false);
-            EXPECT_TRUE(rename.map_table_[0][5].second == false);
-            EXPECT_TRUE(rename.map_table_[0][10].second == false);
         }
         void test_one_instruction(olympia::Rename & rename){
             // process only one instruction, check that freelist and map_tables are allocated correctly
-            if (rename.reference_counter_[0].size() == 11){
-                EXPECT_TRUE(rename.freelist_[0].size() == 10);
+            if (rename.reference_counter_[0].size() == 34){
+                EXPECT_TRUE(rename.freelist_[0].size() == 1);
             }
             else{
-                EXPECT_TRUE(rename.freelist_[0].size() == 127);
+                EXPECT_TRUE(rename.freelist_[0].size() == 95);
             }
             // map table entry is valid, as it's been allocated
-            EXPECT_TRUE(rename.map_table_[0][3].second == true);
             
-            // reference counters should be 0, because the SRCs aren't referencing any PRFs
-            EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
-            EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+            // reference counters should now be 2 because the first instruction is:
+            // ADD x3 x1 x2 and both x1 -> prf1 and x2 -> prf2
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 2);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
         }
         void test_multiple_instructions(olympia::Rename & rename){
             // first two instructions are RAW
             // so the second instruction should increase reference count
-            EXPECT_TRUE(rename.reference_counter_[0][0] == 1);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
+        }
+         void test_startup_rename_structures(olympia::Rename & rename){
+            // before starting, we should have:
+            // num_rename_registers - 32 registers = freelist size
+            // because we initialize the first 32 registers
+            if (rename.reference_counter_[0].size() == 34){
+                EXPECT_TRUE(rename.freelist_[0].size() == 2);
+            }
+            else{
+                EXPECT_TRUE(rename.freelist_[0].size() == 96);
+            }
+            // we're only expecting a value of 1 for registers x0 -> x31 because we initialize them
+            EXPECT_TRUE(rename.reference_counter_[0][1] == 1);
+            EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
+            EXPECT_TRUE(rename.reference_counter_[0][30] == 1);
+            EXPECT_TRUE(rename.reference_counter_[0][31] == 1);
+            //
+            EXPECT_TRUE(rename.reference_counter_[0][33] == 0);
+            EXPECT_TRUE(rename.reference_counter_[0][34] == 0);
+
         }
 };
 
@@ -331,7 +349,7 @@ void runTest(int argc, char **argv)
     sparta::RootTreeNode* root_node = sim.getRoot();
     olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
     olympia::RenameTester rename_tester;
-
+    rename_tester.test_startup_rename_structures(*my_rename);
     cls.runSimulator(&sim, 2);
     rename_tester.test_one_instruction(*my_rename);
 

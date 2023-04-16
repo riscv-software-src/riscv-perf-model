@@ -27,7 +27,9 @@ namespace olympia
         sparta::Unit(node),
         uop_queue_("rename_uop_queue", p->rename_queue_depth,
                    node->getClock(), getStatisticSet()),
-        num_to_rename_per_cycle_(p->num_to_rename)
+        num_to_rename_per_cycle_(p->num_to_rename),
+        rename_histogram_(*getStatisticSet(), "rename_histogram", "Rename Stage Histogram", 
+                          [&p]() { std::vector<int> v(p->num_to_rename+1); std::iota(v.begin(), v.end(), 0); return v; }())
     {
         uop_queue_.enableCollection(node);
 
@@ -43,24 +45,26 @@ namespace olympia
         in_rename_retire_ack_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(Rename, getAckFromROB_, InstPtr));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, setupRename_));
-        
         auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
-                        for(uint32_t i = 0; i < num_renames; ++i) {
+                        uint32_t num_regs = 32;  // default risc-v ARF count
+                        sparta_assert(num_regs < num_renames); // ensure we have more renames than 32 because first 32 renames are allocated at the beginning
+                        map_table_[reg_file].reset(new uint32_t[32]);
+                        // initialize the first 32 regs, i.e x1 -> PRF1
+                        for(uint32_t i = 0; i < num_regs; i++){
+                            map_table_[reg_file][i] = i;
+                            // for the first 32 registers, we mark their reference_counters 1, as they are the
+                            // current "valid" PRF for that ARF
+                            reference_counter_[reg_file].push_back(1);
+                        }
+                        for(uint32_t i = num_regs; i < num_renames; ++i) {
                             freelist_[reg_file].push(i);
                             reference_counter_[reg_file].push_back(0);
-                        }
-                        uint32_t map_num = (num_renames >= 32) ? num_renames : 32;
-                        // initialize map table with 32 registers if there are less than 32 renames
-                        map_table_[reg_file].reset(new MapPair[map_num]());
-                        for(uint32_t i = 0; i < map_num; i++){
-                            // mark all map_table values as invalid
-                            MapPair initial_value(0, false);
-                            map_table_[reg_file][i] = initial_value;
                         }
                     };
 
         setup_map(core_types::RegFile::RF_INTEGER, p->num_integer_renames);
         setup_map(core_types::RegFile::RF_FLOAT,   p->num_float_renames);
+        
         static_assert(core_types::RegFile::N_REGFILES == 2, "New RF type added, but Rename not updated");
     }
 
@@ -121,33 +125,30 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                         "Get ROB Ack, but the inst hasn't retired yet!");
-
         core_types::RegFile rf = core_types::RegFile::RF_INTEGER;
         auto const & dests = inst_ptr->getDestOpInfoList();
-        auto const & dest = inst_ptr->getRenameData().getDestination();
         auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
             rf = determineRegisterFile(dests[0]);   
-            // free PRF if no references from srcs
-            if(reference_counter_[rf][dest] <= 0){
-                freelist_[rf].push(dest);
+            --reference_counter_[rf][original_dest];
+            // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
+            // so we know it's free to be pushed to freelist if it has no other src references
+            if(reference_counter_[rf][original_dest] <= 0){
+                freelist_[rf].push(original_dest);
             }
-            map_table_[rf][original_dest].first = 0;
-            // map entry is now invalid, new srcs should read from ARF
-            map_table_[rf][original_dest].second = false;
         }
 
-        auto const & srcs = inst_ptr->getRenameData().getSource();
+        const auto & srcs = inst_ptr->getRenameData().getSource();
         // freeing references to PRF
         for(auto src: srcs){
-            if(src.second == false){
-                --reference_counter_[rf][src.first];
-                if(reference_counter_[rf][src.first] <= 0){
-                    // freeing a register in the case where it has references and has already been retired
-                    // we wait until the last reference is retired to then free the prf
-                    freelist_[rf].push(src.first);
-                }
+            --reference_counter_[rf][src];
+            if(reference_counter_[rf][src] <= 0){
+                // freeing a register in the case where it still has references and has already been retired
+                // we wait until the last reference is retired to then free the prf
+                // any "valid" PRF that is the true mapping of an ARF will have a reference_counter of at least 1,
+                // and thus shouldn't be retired
+                freelist_[rf].push(src);
             }
         }
         if(credits_dispatch_ > 0 && (uop_queue_.size() > 0)){
@@ -236,7 +237,14 @@ namespace olympia
                 }
                 ev_rename_insts_.schedule();
             }
+            else{
+                num_to_rename_ = 0;
+            }
         }
+        else{
+            num_to_rename_ = 0;
+        }
+        rename_histogram_.addValue((int) num_to_rename_);
     }
     void Rename::renameInstructions_()
     {
@@ -258,22 +266,9 @@ namespace olympia
                     const auto rf  = determineRegisterFile(src);
                     const auto num = src.field_value;
                     auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                    uint32_t prf;
-
-                    bool no_prf = false;
-                    if(!map_table_[rf][num].second){
-                        prf = num;
-                        // we store the mapping, so when processing the retired instruction,
-                        // we know that there was no real mapping, so we mark it as no_prf
-                        no_prf = true;
-                    }
-                    else{
-                        prf = map_table_[rf][num].first;
-                        // only increase reference counter for real references
-                        reference_counter_[rf][prf]++;
-                    }
-                    olympia::Inst::RenameData::SourceReg rename_data_src(prf, no_prf);
-                    renaming_inst->getRenameData().setSource(rename_data_src);
+                    uint32_t prf = map_table_[rf][num];
+                    reference_counter_[rf][prf]++;
+                    renaming_inst->getRenameData().setSource(prf);
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
                     ILOG("\tsetup source register bit mask "
@@ -291,11 +286,15 @@ namespace olympia
 
                     uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
-                    map_table_[rf][num].first = prf;
-                    map_table_[rf][num].second = true;
-
+                    renaming_inst->getRenameData().setOriginalDestination(map_table_[rf][num]);
+                    map_table_[rf][num] = prf;
+                    // we increase reference_counter_ for destinations to mark them as "valid",
+                    // so the PRF in the reference_counter_ should have a value of 1
+                    // once a PRF reference_counter goes to 0, we know that the PRF isn't the "valid"
+                    // PRF for that ARF anymore and there are no sources referring to it
+                    // so we can push it to freelist
+                    reference_counter_[rf][prf]++;
                     renaming_inst->getRenameData().setDestination(prf);
-                    renaming_inst->getRenameData().setOriginalDestination(num);
                     bitmask.set(prf);
                     scoreboards_[rf]->set(bitmask);
                     ILOG("\tsetup destination register bit mask "

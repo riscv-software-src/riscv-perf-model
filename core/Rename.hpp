@@ -13,6 +13,9 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 #include "sparta/utils/SpartaTester.hpp"
+#include "sparta/statistics/Histogram.hpp"
+#include "sparta/statistics/BasicHistogram.hpp"
+
 
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
@@ -84,11 +87,11 @@ namespace olympia
         // Scoreboards
         using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
         Scoreboards scoreboards_;
-
-        // (data value, valid bit)
-        using MapPair = std::pair<uint32_t, bool>;
+        // histogram counter for number of renames each time scheduleRenaming_ is called
+        sparta::BasicHistogram<int> rename_histogram_;
         // map of ARF -> PRF
-        std::unique_ptr<std::unique_ptr<MapPair[]>[]> map_table_ = std::make_unique<std::unique_ptr<MapPair[]>[]>(core_types::N_REGFILES);
+        std::unique_ptr<std::unique_ptr<uint32_t[]>[]> map_table_ = std::make_unique<std::unique_ptr<uint32_t[]>[]>(core_types::N_REGFILES);
+
         // reference counter for PRF
         std::array<std::vector<int32_t>, core_types::N_REGFILES> reference_counter_;
         // list of free PRF that are available to map

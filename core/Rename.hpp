@@ -90,8 +90,8 @@ namespace olympia
         // histogram counter for number of renames each time scheduleRenaming_ is called
         sparta::BasicHistogram<int> rename_histogram_;
         // map of ARF -> PRF
-        std::unique_ptr<std::unique_ptr<uint32_t[]>[]> map_table_ = std::make_unique<std::unique_ptr<uint32_t[]>[]>(core_types::N_REGFILES);
-
+        uint32_t map_table_[core_types::N_REGFILES][32]; 
+        
         // reference counter for PRF
         std::array<std::vector<int32_t>, core_types::N_REGFILES> reference_counter_;
         // list of free PRF that are available to map

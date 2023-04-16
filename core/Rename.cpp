@@ -48,7 +48,6 @@ namespace olympia
         auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
                         uint32_t num_regs = 32;  // default risc-v ARF count
                         sparta_assert(num_regs < num_renames); // ensure we have more renames than 32 because first 32 renames are allocated at the beginning
-                        map_table_[reg_file].reset(new uint32_t[32]);
                         // initialize the first 32 regs, i.e x1 -> PRF1
                         for(uint32_t i = 0; i < num_regs; i++){
                             map_table_[reg_file][i] = i;

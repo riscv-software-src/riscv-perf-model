@@ -69,8 +69,8 @@ namespace olympia
     {
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
-        sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
-                      "Should be all ready source operands ... " << ex_inst);
+        // sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
+        //               "Should be all ready source operands ... " << ex_inst);
         bool operands_ready = false;
         if(scoreboard_views_[reg_file_]->isSet(src_bits)){
             operands_ready = true;

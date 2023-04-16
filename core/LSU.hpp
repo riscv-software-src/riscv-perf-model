@@ -190,6 +190,10 @@ namespace olympia
             // Cache access status
             sparta::State<CacheState> cache_access_state_;
 
+            // Scoreboards
+            using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+            ScoreboardViews scoreboard_views_;
+
         };  // class MemoryAccessInfo
 
         // allocator for this object type

@@ -5,8 +5,8 @@
 #top.cpu:
 #  dispatch.num_to_dispatch: 2
   top:
-    rename.params.num_integer_renames: 11
-    rename.params.num_float_renames: 11
+    rename.params.num_integer_renames: 34
+    rename.params.num_float_renames: 34
 
 top.extension.core_extensions:
   execution_topology:

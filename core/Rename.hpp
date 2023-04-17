@@ -13,6 +13,9 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 #include "sparta/utils/SpartaTester.hpp"
+#include "sparta/statistics/Histogram.hpp"
+#include "sparta/statistics/BasicHistogram.hpp"
+
 
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
@@ -78,20 +81,27 @@ namespace olympia
                                                 CREATE_SPARTA_HANDLER(Rename, scheduleRenaming_)};
 
         const uint32_t num_to_rename_per_cycle_;
+        uint32_t num_to_rename_ = 0;
         uint32_t credits_dispatch_ = 0;
 
         // Scoreboards
         using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
         Scoreboards scoreboards_;
-
-        // (data value, valid bit)
-        using MapPair = std::pair<uint32_t, bool>;
+        // histogram counter for number of renames each time scheduleRenaming_ is called
+        sparta::BasicHistogram<int> rename_histogram_;
         // map of ARF -> PRF
-        std::unique_ptr<std::unique_ptr<MapPair[]>[]> map_table_ = std::make_unique<std::unique_ptr<MapPair[]>[]>(core_types::N_REGFILES);
+        uint32_t map_table_[core_types::N_REGFILES][32]; 
+        
         // reference counter for PRF
         std::array<std::vector<int32_t>, core_types::N_REGFILES> reference_counter_;
         // list of free PRF that are available to map
         std::queue<uint32_t> freelist_[core_types::N_REGFILES];
+        // used to track current number of each type of RF instruction at each
+        // given index in the uop_queue_
+        struct RegCountData{
+            uint32_t cumulative_reg_counts[core_types::RegFile::N_REGFILES] = {0};
+        };
+        std::deque<RegCountData> uop_queue_regcount_data_;
 
         //! Rename setup
         void setupRename_();

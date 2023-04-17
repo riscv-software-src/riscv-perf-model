@@ -69,36 +69,7 @@ namespace olympia
     {
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
-        // sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
-        //               "Should be all ready source operands ... " << ex_inst);
-        bool operands_ready = false;
         if(scoreboard_views_[reg_file_]->isSet(src_bits)){
-            operands_ready = true;
-        }
-        else if(ex_inst->getRenameData().getSource()[0].second || ex_inst->getRenameData().getSource()[1].second){
-            // one of the sources is using ARF, PRF may be the destination of another instruction, so we just go on ahead
-            if(ex_inst->getRenameData().getSource()[0].second && ex_inst->getRenameData().getSource()[1].second){
-                // both sources from ARF, operands are ready
-                operands_ready = true;
-            }
-            else if(ex_inst->getRenameData().getSource()[0].second){
-                core_types::RegisterBitMask bitmask;
-                bitmask.set(ex_inst->getRenameData().getSource()[1].first);
-                if(scoreboard_views_[reg_file_]->isSet(bitmask)){
-                    operands_ready = true;
-                }
-            }
-            else{
-                core_types::RegisterBitMask bitmask;
-                bitmask.set(ex_inst->getRenameData().getSource()[0].first);
-                if(scoreboard_views_[reg_file_]->isSet(bitmask)){
-                    operands_ready = true;
-                }
-            }
-
-        }
-        if(operands_ready){
-            // if source bits are ready
             sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
                       "Should be all ready source operands ... " << ex_inst);
             // Insert at the end if we are doing in order issue or if the scheduler is empty

@@ -119,36 +119,9 @@ namespace olympia
         }
 
         const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
-        // sparta_assert(scoreboard_views_[reg_file]->isSet(src_bits),
-        //               "Should be all ready source operands ... " << inst_ptr);
-        bool operands_ready = false;
         if(scoreboard_views_[reg_file]->isSet(src_bits)){
-            operands_ready = true;
-        }
-        else if(inst_ptr->getRenameData().getSource()[0].second || inst_ptr->getRenameData().getSource()[1].second){
-            // one of the sources is using ARF, PRF may be the destination of another instruction, so we just go on ahead
-            if(inst_ptr->getRenameData().getSource()[0].second && inst_ptr->getRenameData().getSource()[1].second){
-                // both sources from ARF, operands are ready
-                operands_ready = true;
-            }
-            else if(inst_ptr->getRenameData().getSource()[0].second){
-                core_types::RegisterBitMask bitmask;
-                bitmask.set(inst_ptr->getRenameData().getSource()[1].first);
-                if(scoreboard_views_[reg_file]->isSet(bitmask)){
-                    operands_ready = true;
-                }
-            }
-            else{
-                core_types::RegisterBitMask bitmask;
-                bitmask.set(inst_ptr->getRenameData().getSource()[0].first);
-                if(scoreboard_views_[reg_file]->isSet(bitmask)){
-                    operands_ready = true;
-                }
-            }
-
-        }
-
-        if(operands_ready){
+            sparta_assert(scoreboard_views_[reg_file]->isSet(src_bits),
+            "Should be all ready source operands ... " << inst_ptr);
             // Create load/store memory access info
             MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
                                                                                                         inst_ptr);

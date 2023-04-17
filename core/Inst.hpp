@@ -34,7 +34,8 @@ namespace olympia
 
         class RenameData{
             public:
-                using SourceReg = std::pair<uint32_t, bool>;
+                // <original dest, new destination>
+                using SourceReg = std::pair<uint32_t, uint32_t>;
                 
                 void setDestination(uint32_t destination){
                     dest_ = destination;
@@ -42,10 +43,10 @@ namespace olympia
                 void setOriginalDestination(uint32_t destination){
                     original_dest_ = destination;
                 }
-                void setSource(const SourceReg & source){
+                void setSource(uint32_t source){
                     src_.push_back(source);
                 }
-                const std::vector<SourceReg> & getSource() const {
+                const std::vector<uint32_t> & getSource() const {
                     return src_;
                 }
                 uint32_t getDestination() const {
@@ -57,7 +58,7 @@ namespace olympia
             private:
                 uint32_t dest_;
                 uint32_t original_dest_;
-                std::vector<SourceReg> src_;
+                std::vector<uint32_t> src_;
         };
 
         // Used by Mavis

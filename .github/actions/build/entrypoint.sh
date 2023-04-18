@@ -26,7 +26,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1
 fi
-make -j2
+make -j$(nproc --all)
 BUILD_SPARTA=$?
 if [ ${BUILD_SPARTA} -ne 0 ]; then
     echo "ERROR: build sparta FAILED!!!"
@@ -41,7 +41,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1
 fi
-make -j2 regress
+make -j$(nproc --all) regress
 BUILD_OLYMPIA=$?
 if [ ${BUILD_OLYMPIA} -ne 0 ]; then
     echo "ERROR: build/regress of olympia FAILED!!!"

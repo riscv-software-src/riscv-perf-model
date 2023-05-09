@@ -1,7 +1,6 @@
 project(olympia_test)
 
-# Include the handy testing marcros defined in Sparta
-include(${SPARTA_BASE}/test/TestingMacros.cmake)
+# Note: these sparta_* macros/functions get defined when find_package(Sparta) is called
 
 # This line will make sure olympia is built before running the tests
 sparta_regress (olympia)

@@ -1,3 +1,5 @@
+[![Regress Olympia on Ubuntu](https://github.com/riscv-software-src/riscv-perf-model/actions/workflows/ubuntu-build.yml/badge.svg)](https://github.com/riscv-software-src/riscv-perf-model/actions/workflows/ubuntu-build.yml)
+
 # olympia
 
 Olympia is a Performance Model written in C++ for the RISC-V community as an
@@ -20,7 +22,7 @@ under development.
 # Build Directions
 
 1. Set up a clean working `conda` environment by following the directions [here](https://github.com/riscv-software-src/riscv-perf-model/tree/master/conda)
-1. Download and build Sparta and checkout tag [map_v1.1.0](https://github.com/sparcians/map/releases/tag/map_v1.1.0).  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/map_v1.1.0/sparta#building-sparta-with-packages-used-in-continuous-integration-macos--centos7-or-newer-linux)
+1. Download and build Sparta and checkout branch [map_v2](https://github.com/sparcians/map/tree/map_v2).  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/map_v2#building-map) to build _and install_ Sparta
 1. Make sure you have the [required libraries](https://github.com/sparcians/stf_lib#required-packages) for the STF toolsuite installed
 1. Clone olympia
    ```

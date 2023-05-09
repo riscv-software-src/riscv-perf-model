@@ -39,7 +39,7 @@ under development.
 mkdir release; cd release
 
 # Assumes a build of sparta at /path/to/map/sparta/release
-cmake .. -DCMAKE_BUILD_TYPE=Release -DSPARTA_BASE=/path/to/map/sparta
+cmake .. -DCMAKE_BUILD_TYPE=Release -DSPARTA_SEARCH_DIR=/path/to/map/sparta/release
 
 # Just builds the simulator
 make olympia
@@ -51,7 +51,7 @@ make olympia
 mkdir debug; cd debug
 
 # Assumes a build of sparta at /path/to/map/sparta/debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DSPARTA_BASE=/path/to/map/sparta
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DSPARTA_SEARCH_DIR=/path/to/map/sparta/debug
 
 # Just builds the simulator
 make olympia

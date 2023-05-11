@@ -30,7 +30,7 @@ namespace olympia
         ldst_inst_queue_.enableCollection(node);
 
 
-        // Startup handler for sending initiatl credits
+        // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
 
 

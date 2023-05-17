@@ -435,16 +435,12 @@ namespace olympia
 
         core_types::RegFile reg_file = core_types::RF_INTEGER;
         const auto & dests = inst_ptr->getDestOpInfoList();
-        const auto & srcs = inst_ptr->getSourceOpInfoList();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
             reg_file = determineRegisterFile(dests[0]);
+            const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
+            scoreboard_views_[reg_file]->setReady(dest_bits);
         }
-        else if(srcs.size() > 0){
-            reg_file = determineRegisterFile(srcs[0]);
-        }
-        const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
-        scoreboard_views_[reg_file]->setReady(dest_bits);
 
         // Complete load instruction
         if (!isStoreInst) {

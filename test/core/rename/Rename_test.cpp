@@ -3,6 +3,8 @@
 #include "MavisUnit.hpp"
 #include "CoreUtils.hpp"
 #include "Rename.hpp"
+#include "ExecutePipe.hpp"
+#include "sim/OlympiaSim.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"
@@ -74,7 +76,7 @@ class olympia::RenameTester
             // so the second instruction should increase reference count
             EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
         }
-         void test_startup_rename_structures(olympia::Rename & rename){
+        void test_startup_rename_structures(olympia::Rename & rename){
             // before starting, we should have:
             // num_rename_registers - 32 registers = freelist size
             // because we initialize the first 32 registers
@@ -96,6 +98,35 @@ class olympia::RenameTester
         }
 };
 
+class olympia::ExecutePipeTester
+{
+    public:
+    void test_dependent_integer_first_instruction(olympia::ExecutePipe & executepipe){
+        // testing RAW dependency for ExecutePipe
+        // only alu0 should have an issued instruction
+        // so alu0's total_insts_issued should be 1
+        EXPECT_TRUE(executepipe.total_insts_issued_ == 1);
+    }
+    void test_dependent_integer_second_instruction(olympia::ExecutePipe & executepipe){
+        // testing RAW dependency for ExecutePipe
+        // only alu0 should have an issued instruction
+        // alu1 shouldn't, hence this test is checking for alu1's issued inst count is 0
+        EXPECT_TRUE(executepipe.total_insts_issued_ == 0);
+    }
+};
+
+class olympia::LSUTester
+{
+    public:
+    void test_dependent_lsu_instruction(olympia::LSU & lsu){
+        // testing RAW dependency for LSU
+        // we have an ADD instruction before we destination register 3
+        // and then a subsequent STORE instruction to register 3
+        // we can't STORE until the add instruction runs, so we test
+        // while the ADD instruction is running, the STORE instruction should NOT issue
+        EXPECT_TRUE(lsu.lsu_insts_issued_ == 0);
+    }
+};
 
 //
 // Simple Rename Simulator.
@@ -251,7 +282,7 @@ private:
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_reorder_buffer_credits"),
                      root_node->getChildAs<sparta::Port>("rob.ports.out_sink_credits"));
         
-        // // Bind the Rename ports
+        // Bind the Rename ports
         sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.out_dispatch_queue_write"),
                      root_node->getChildAs<sparta::Port>("dispatch.ports.in_dispatch_queue_write"));
 
@@ -341,25 +372,70 @@ void runTest(int argc, char **argv)
 
     sparta_assert(false == datafiles.empty(), "Need an output file as the last argument of the test");
 
-    sparta::Scheduler sched;
-    RenameSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
+    if(input_file == "raw_integer.json"){
+        sparta::Scheduler scheduler;
+        uint64_t ilimit = 0;
+        uint32_t num_cores = 1;
+        bool show_factories = false;
+        OlympiaSim sim("simple",
+                       scheduler,
+                       num_cores, // cores
+                       input_file,
+                       ilimit,
+                       show_factories);
+        cls.populateSimulation(&sim);
+        sparta::RootTreeNode* root_node = sim.getRoot();
 
-    cls.populateSimulation(&sim);
+        olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.alu0")->getResourceAs<olympia::ExecutePipe*>();
+        olympia::ExecutePipe* my_executepipe1 = root_node->getChild("cpu.core0.execute.alu1")->getResourceAs<olympia::ExecutePipe*>();
+        olympia::ExecutePipeTester executepipe_tester;
+        cls.runSimulator(&sim, 7);
+        executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
+        executepipe_tester.test_dependent_integer_second_instruction(*my_executepipe1);        
+    }
+    else if(input_file == "raw_lsu.json"){
+        sparta::Scheduler scheduler;
+        uint64_t ilimit = 0;
+        uint32_t num_cores = 1;
+        bool show_factories = false;
+        OlympiaSim sim("simple",
+                       scheduler,
+                       num_cores, // cores
+                       input_file,
+                       ilimit,
+                       show_factories);
+        cls.populateSimulation(&sim);
+        sparta::RootTreeNode* root_node = sim.getRoot();
 
-    sparta::RootTreeNode* root_node = sim.getRoot();
-    olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
-    olympia::RenameTester rename_tester;
-    rename_tester.test_startup_rename_structures(*my_rename);
-    cls.runSimulator(&sim, 2);
-    rename_tester.test_one_instruction(*my_rename);
+        olympia::LSU* my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
+        olympia::LSUTester lsu_tester;
+        olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.alu0")->getResourceAs<olympia::ExecutePipe*>();
+        olympia::ExecutePipeTester executepipe_tester;
+        cls.runSimulator(&sim, 7);
+        executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
+        lsu_tester.test_dependent_lsu_instruction(*my_lsu);
+    }
+    else{
+        sparta::Scheduler sched;
+        RenameSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
 
-    cls.runSimulator(&sim, 3);
-    rename_tester.test_multiple_instructions(*my_rename);
+        cls.populateSimulation(&sim);
 
-    cls.runSimulator(&sim);
-    rename_tester.test_clearing_rename_structures(*my_rename);
+        sparta::RootTreeNode* root_node = sim.getRoot();
+        olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
+        olympia::RenameTester rename_tester;
+        rename_tester.test_startup_rename_structures(*my_rename);
+        cls.runSimulator(&sim, 2);
+        rename_tester.test_one_instruction(*my_rename);
 
-    EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
+        cls.runSimulator(&sim, 3);
+        rename_tester.test_multiple_instructions(*my_rename);
+
+        cls.runSimulator(&sim);
+        rename_tester.test_clearing_rename_structures(*my_rename);
+
+        EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
+    }
 }
 
 int main(int argc, char **argv)

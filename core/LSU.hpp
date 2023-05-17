@@ -578,6 +578,7 @@ namespace olympia
             "Number of BIU reqs", sparta::Counter::COUNT_NORMAL
         };
 
+        friend class LSUTester;
 
     };
 

@@ -32,6 +32,35 @@ namespace olympia
     class Inst {
     public:
 
+        class RenameData{
+            public:
+                // <original dest, new destination>
+                using SourceReg = std::pair<uint32_t, uint32_t>;
+                
+                void setDestination(uint32_t destination){
+                    dest_ = destination;
+                }
+                void setOriginalDestination(uint32_t destination){
+                    original_dest_ = destination;
+                }
+                void setSource(uint32_t source){
+                    src_.push_back(source);
+                }
+                const std::vector<uint32_t> & getSource() const {
+                    return src_;
+                }
+                uint32_t getDestination() const {
+                    return dest_;
+                }
+                uint32_t getOriginalDestination() const {
+                    return original_dest_;
+                }
+            private:
+                uint32_t dest_;
+                uint32_t original_dest_;
+                std::vector<uint32_t> src_;
+        };
+
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
 
@@ -162,7 +191,12 @@ namespace olympia
         const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
             return dest_reg_bit_masks_[rf];
         }
-
+        RenameData & getRenameData() {
+            return rename_data;
+        }
+        const RenameData & getRenameData() const{
+            return rename_data;
+        }
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType      inst_arch_info_;
@@ -181,6 +215,7 @@ namespace olympia
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
         RegisterBitMaskArray src_reg_bit_masks_;
         RegisterBitMaskArray dest_reg_bit_masks_;
+        RenameData rename_data;
     };
 
     using InstPtr = Inst::PtrType;

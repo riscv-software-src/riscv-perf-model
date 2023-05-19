@@ -2,7 +2,7 @@ project(Rename_test)
 
 target_link_libraries (core mss)
 
-add_executable(Rename_test Rename_test.cpp sim/OlympiaSim.cpp)
+add_executable(Rename_test Rename_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
 
 target_link_libraries(Rename_test core common_test ${STF_LINK_LIBS} SPARTA::sparta)
 

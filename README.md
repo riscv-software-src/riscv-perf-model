@@ -28,7 +28,7 @@ under development.
    ```
    git clone --recursive git@github.com:riscv-software-src/riscv-perf-model.git
    ```
-1. Build Olympia
+1. Build Olympia in the new `conda` environment created
 
 ```
 
@@ -47,7 +47,7 @@ make olympia
 ################################################################################
 # Debug
 
-# A release build
+# A debug build
 mkdir debug; cd debug
 
 # Assumes a build of sparta at /path/to/map/sparta/debug

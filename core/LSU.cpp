@@ -1,14 +1,9 @@
 #include "sparta/utils/SpartaAssert.hpp"
+#include "CoreUtils.hpp"
 #include "LSU.hpp"
 
 namespace olympia
 {
-    inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
-    {
-        const bool is_float = (reg.operand_type == mavis::InstMetaData::OperandTypes::SINGLE) ||
-                              (reg.operand_type == mavis::InstMetaData::OperandTypes::DOUBLE);
-        return is_float ? core_types::RegFile::RF_FLOAT : core_types::RegFile::RF_INTEGER;
-    }
     const char LSU::name[] = "lsu";
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -112,16 +107,14 @@ namespace olympia
         const auto & dests = inst_ptr->getDestOpInfoList();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
-            reg_file = determineRegisterFile(dests[0]);
+            reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
         }
         else if(srcs.size() > 0){
-            reg_file = determineRegisterFile(srcs[0]);
+            reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
         }
 
         const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
         if(scoreboard_views_[reg_file]->isSet(src_bits)){
-            sparta_assert(scoreboard_views_[reg_file]->isSet(src_bits),
-            "Should be all ready source operands ... " << inst_ptr);
             // Create load/store memory access info
             MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
                                                                                                         inst_ptr);
@@ -437,7 +430,7 @@ namespace olympia
         const auto & dests = inst_ptr->getDestOpInfoList();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
-            reg_file = determineRegisterFile(dests[0]);
+            reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
             const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
             scoreboard_views_[reg_file]->setReady(dest_bits);
         }

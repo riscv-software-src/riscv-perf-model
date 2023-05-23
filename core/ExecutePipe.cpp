@@ -70,8 +70,6 @@ namespace olympia
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
         if(scoreboard_views_[reg_file_]->isSet(src_bits)){
-            sparta_assert(scoreboard_views_[reg_file_]->isSet(src_bits),
-                      "Should be all ready source operands ... " << ex_inst);
             // Insert at the end if we are doing in order issue or if the scheduler is empty
             ILOG("Sending to issue queue" << ex_inst);
             if (in_order_issue_ == true || ready_queue_.size() == 0) {

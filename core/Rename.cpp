@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include "CoreUtils.hpp"
 #include "Rename.hpp"
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
@@ -13,13 +14,6 @@
 
 namespace olympia
 {
-    inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
-    {
-        const bool is_float = (reg.operand_type == mavis::InstMetaData::OperandTypes::SINGLE) ||
-                              (reg.operand_type == mavis::InstMetaData::OperandTypes::DOUBLE);
-        return is_float ? core_types::RegFile::RF_FLOAT : core_types::RegFile::RF_INTEGER;
-    }
-
     const char Rename::name[] = "rename";
 
     Rename::Rename(sparta::TreeNode * node,
@@ -129,7 +123,7 @@ namespace olympia
         auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
-            rf = determineRegisterFile(dests[0]);   
+            rf = olympia::coreutils::determineRegisterFile(dests[0]);   
             --reference_counter_[rf][original_dest];
             // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
             // so we know it's free to be pushed to freelist if it has no other src references
@@ -179,14 +173,14 @@ namespace olympia
             const auto & dests = i->getDestOpInfoList();
             if(dests.size() > 0){
                 sparta_assert(dests.size() == 1); // we should only have one destination
-                const auto rf = determineRegisterFile(dests[0]);  
+                const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);  
                 current_counts.cumulative_reg_counts[rf]++;
             }
             else{
                 // for other instructions check the sources
                 const auto & srcs = i->getSourceOpInfoList();
                 if(srcs.size() > 0){
-                    const auto rf = determineRegisterFile(srcs[0]);
+                    const auto rf = olympia::coreutils::determineRegisterFile(srcs[0]);
                     current_counts.cumulative_reg_counts[rf]++;
                 }
             }
@@ -262,7 +256,7 @@ namespace olympia
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
                 for(const auto & src : srcs)
                 {
-                    const auto rf  = determineRegisterFile(src);
+                    const auto rf  = olympia::coreutils::determineRegisterFile(src);
                     const auto num = src.field_value;
                     auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                     uint32_t prf = map_table_[rf][num];
@@ -278,7 +272,7 @@ namespace olympia
                 const auto & dests = renaming_inst->getDestOpInfoList();
                 for(const auto & dest : dests)
                 {
-                    const auto rf  = determineRegisterFile(dest);
+                    const auto rf  = olympia::coreutils::determineRegisterFile(dest);
                     const auto num = dest.field_value;
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
 

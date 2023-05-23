@@ -4,6 +4,7 @@
 #include "CoreUtils.hpp"
 #include "Rename.hpp"
 #include "ExecutePipe.hpp"
+#include "LSU.hpp"
 #include "sim/OlympiaSim.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
@@ -372,17 +373,18 @@ void runTest(int argc, char **argv)
 
     sparta_assert(false == datafiles.empty(), "Need an output file as the last argument of the test");
 
+    sparta::Scheduler scheduler;
+    uint64_t ilimit = 0;
+    uint32_t num_cores = 1;
+    bool show_factories = false;
+    OlympiaSim sim("simple",
+                    scheduler,
+                    num_cores, // cores
+                    input_file,
+                    ilimit,
+                    show_factories);
+
     if(input_file == "raw_integer.json"){
-        sparta::Scheduler scheduler;
-        uint64_t ilimit = 0;
-        uint32_t num_cores = 1;
-        bool show_factories = false;
-        OlympiaSim sim("simple",
-                       scheduler,
-                       num_cores, // cores
-                       input_file,
-                       ilimit,
-                       show_factories);
         cls.populateSimulation(&sim);
         sparta::RootTreeNode* root_node = sim.getRoot();
 
@@ -394,16 +396,6 @@ void runTest(int argc, char **argv)
         executepipe_tester.test_dependent_integer_second_instruction(*my_executepipe1);        
     }
     else if(input_file == "raw_lsu.json"){
-        sparta::Scheduler scheduler;
-        uint64_t ilimit = 0;
-        uint32_t num_cores = 1;
-        bool show_factories = false;
-        OlympiaSim sim("simple",
-                       scheduler,
-                       num_cores, // cores
-                       input_file,
-                       ilimit,
-                       show_factories);
         cls.populateSimulation(&sim);
         sparta::RootTreeNode* root_node = sim.getRoot();
 
@@ -417,21 +409,21 @@ void runTest(int argc, char **argv)
     }
     else{
         sparta::Scheduler sched;
-        RenameSim sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
+        RenameSim rename_sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
 
-        cls.populateSimulation(&sim);
+        cls.populateSimulation(&rename_sim);
 
-        sparta::RootTreeNode* root_node = sim.getRoot();
+        sparta::RootTreeNode* root_node =  rename_sim.getRoot();
         olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
         olympia::RenameTester rename_tester;
         rename_tester.test_startup_rename_structures(*my_rename);
-        cls.runSimulator(&sim, 2);
+        cls.runSimulator(& rename_sim, 2);
         rename_tester.test_one_instruction(*my_rename);
 
-        cls.runSimulator(&sim, 3);
+        cls.runSimulator(& rename_sim, 3);
         rename_tester.test_multiple_instructions(*my_rename);
 
-        cls.runSimulator(&sim);
+        cls.runSimulator(& rename_sim);
         rename_tester.test_clearing_rename_structures(*my_rename);
 
         EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");

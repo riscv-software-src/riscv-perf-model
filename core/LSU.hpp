@@ -666,4 +666,5 @@ namespace olympia
         }
         return os;
     }
+    class LSUTester;
 } // namespace olympia

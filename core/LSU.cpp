@@ -104,15 +104,9 @@ namespace olympia
     {   
         core_types::RegFile reg_file = core_types::RF_INTEGER;
         const auto & srcs = inst_ptr->getSourceOpInfoList();
-        const auto & dests = inst_ptr->getDestOpInfoList();
-        if(dests.size() > 0){
-            sparta_assert(dests.size() == 1); // we should only have one destination
-            reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
-        }
-        else if(srcs.size() > 0){
+        if(srcs.size() > 0){
             reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
         }
-
         const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
         if(scoreboard_views_[reg_file]->isSet(src_bits)){
             // Create load/store memory access info

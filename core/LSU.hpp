@@ -17,6 +17,7 @@
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/resources/Scoreboard.hpp"
 
 #include "cache/TreePLRUReplacement.hpp"
 
@@ -189,6 +190,10 @@ namespace olympia
             // Cache access status
             sparta::State<CacheState> cache_access_state_;
 
+            // Scoreboards
+            using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+            ScoreboardViews scoreboard_views_;
+
         };  // class MemoryAccessInfo
 
         // allocator for this object type
@@ -336,6 +341,10 @@ namespace olympia
             tlb_cache_ = &tlb;
         }
     private:
+
+        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+        ScoreboardViews scoreboard_views_;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
@@ -437,6 +446,9 @@ namespace olympia
         // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
         void sendInitialCredits_();
 
+        // Setup Scoreboard Views
+        void setupScoreboard_();
+        
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 
@@ -566,6 +578,7 @@ namespace olympia
             "Number of BIU reqs", sparta::Counter::COUNT_NORMAL
         };
 
+        friend class LSUTester;
 
     };
 
@@ -653,4 +666,5 @@ namespace olympia
         }
         return os;
     }
+    class LSUTester;
 } // namespace olympia

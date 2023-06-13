@@ -3,7 +3,6 @@
 #
 
 # Build on top of a small core
-include: small_core.yaml
 
 top.cpu.core0:
   fetch.params.num_to_fetch:   3

@@ -124,8 +124,11 @@ namespace olympia
 
         // Used to flush the ALU
         void flushInst_(const FlushManager::FlushingCriteria & criteria);
-    };
 
+        // Friend class used in rename testing
+        friend class ExecutePipeTester;
+    };
+    class ExecutePipeTester;
     using ExecutePipeFactory = sparta::ResourceFactory<olympia::ExecutePipe,
                                                        olympia::ExecutePipe::ExecutePipeParameterSet>;
 } // namespace olympia

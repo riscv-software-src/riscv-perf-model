@@ -1,0 +1,14 @@
+[
+    {
+        "mnemonic": "add",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "sub",
+        "rs1": 3,
+        "rs2": 2,
+        "rd": 4
+    }
+]

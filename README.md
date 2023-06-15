@@ -62,12 +62,6 @@ make regress
 
 ```
 
-# Limitations
-
-Rename doesn't actually rename.  In fact, there are no operand
-dependencies supported... yet.  (This work to be
-done)[https://github.com/riscv-software-src/riscv-perf-model/issues/2]
-
 # Example Usage
 
 ## Get Help Messages

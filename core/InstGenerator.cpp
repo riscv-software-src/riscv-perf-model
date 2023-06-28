@@ -134,7 +134,7 @@ namespace olympia
         // value. Required for traces that stay in machine mode the entire
         // time
         constexpr bool FILTER_MODE_CHANGE_EVENTS = true;
-        constexpr bool SKIP_NONUSER_MODE         = false;
+        constexpr bool SKIP_NONUSER_MODE         = true;
         constexpr size_t BUFFER_SIZE             = 4096;
         reader_.reset(new stf::STFInstReader(filename,
                                              SKIP_NONUSER_MODE,
@@ -180,7 +180,8 @@ namespace olympia
         catch(std::exception & excpt) {
             std::cerr << "ERROR: Mavis failed decoding: 0x"
                       << std::hex << opcode << " for STF It PC: 0x"
-                      << next_it_->pc() << " STFID: " << next_it_->index() << ": err: "
+                      << next_it_->pc() << " STFID: " << std::dec
+                      << next_it_->index() << " err: "
                       << excpt.what() << std::endl;
             throw;
         }

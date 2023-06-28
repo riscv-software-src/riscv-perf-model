@@ -36,7 +36,7 @@ namespace olympia
             public:
                 // <original dest, new destination>
                 using SourceReg = std::pair<uint32_t, uint32_t>;
-                
+
                 void setDestination(uint32_t destination){
                     dest_ = destination;
                 }
@@ -248,8 +248,10 @@ namespace olympia
     }
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
-        os << "uid: " << inst.getUniqueID() << " " << inst.getStatus() << " "
-           << std::hex << inst.getPC() << std::dec << " '" << inst.getDisasm() << "' ";
+        os << "uid: " << inst.getUniqueID()
+           << " " << std::setw(12) << inst.getStatus()
+           << " " << std::hex << inst.getPC() << std::dec
+           << " pid: " << inst->getProgramID() << " '" << inst.getDisasm() << "' ";
         return os;
     }
 

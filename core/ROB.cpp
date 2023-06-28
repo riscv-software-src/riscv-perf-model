@@ -166,6 +166,14 @@ namespace olympia
         }
     }
 
+    void ROB::dumpDebugContent_(std::ostream& output) const
+    {
+        output << "ROB Contents" << std::endl;
+        for(const auto & entry : reorder_buffer_) {
+            output << '\t' << entry << std::endl;
+        }
+    }
+
     // Make sure the pipeline is making forward progress
     void ROB::checkForwardProgress_()
     {
@@ -173,6 +181,7 @@ namespace olympia
         {
             sparta::SpartaException e;
             e << "Been a while since we've retired an instruction.  Is the pipe stalled indefinitely?";
+            e << " currentCycle: "  << getClock()->currentCycle();
             throw e;
         }
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);

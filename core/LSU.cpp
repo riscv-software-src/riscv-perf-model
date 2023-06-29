@@ -48,8 +48,17 @@ namespace olympia
                 (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
 
 
-        // Pipeline events config
+        // Allow the pipeline to create events and schedule work
         ldst_pipeline_.performOwnUpdates();
+
+        // There can be situations where NOTHING is going on in the
+        // simulator but forward progression of the pipeline elements.
+        // In this case, the internal event for the LS pipeline will
+        // be the only event keeping simulation alive.  Sparta
+        // supports identifying non-essential events (by calling
+        // setContinuing to false on any event).
+        ldst_pipeline_.setContinuing(true);
+
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
                                                 CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 

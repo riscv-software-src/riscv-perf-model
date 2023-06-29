@@ -3,6 +3,7 @@
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "ExecutePipe.hpp"
+#include "CoreUtils.hpp"
 
 namespace olympia
 {
@@ -139,8 +140,13 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
 
         // set scoreboard
-        const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);
-        scoreboard_views_[reg_file_]->setReady(dest_bits);
+        const auto & dests = ex_inst->getDestOpInfoList();
+        if(dests.size() > 0){
+            sparta_assert(dests.size() == 1); // we should only have one destination
+            core_types::RegFile reg_file_complete = olympia::coreutils::determineRegisterFile(dests[0]);
+            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_complete);
+            scoreboard_views_[reg_file_complete]->setReady(dest_bits);
+        }
 
         // We're not busy anymore
         unit_busy_ = false;

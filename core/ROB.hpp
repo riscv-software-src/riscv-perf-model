@@ -122,7 +122,8 @@ namespace olympia
         void retireInstructions_();
         void checkForwardProgress_();
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
-        void dumpDebugContent_(std::ostream& output) const;
+        void dumpDebugContent_(std::ostream& output) const override final;
+        void onStartingTeardown_() override final;
 
     };
 }

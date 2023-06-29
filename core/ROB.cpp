@@ -61,11 +61,6 @@ namespace olympia
     ROB::~ROB() {
         // Logging can be done from destructors in the correct simulator setup
         ILOG("ROB is destructing now, but you can still see this message");
-
-        if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
-            std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
-            dumpDebugContent_(std::cerr);
-        }
     }
 
     void ROB::sendInitialCredits_()
@@ -199,6 +194,13 @@ namespace olympia
             throw e;
         }
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
+    }
+
+    void ROB::onStartingTeardown_() {
+        if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
+            std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
+            dumpDebugContent_(std::cerr);
+        }
     }
 
 }

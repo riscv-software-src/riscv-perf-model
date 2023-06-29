@@ -22,7 +22,7 @@ namespace olympia
         uop_queue_("rename_uop_queue", p->rename_queue_depth,
                    node->getClock(), getStatisticSet()),
         num_to_rename_per_cycle_(p->num_to_rename),
-        rename_histogram_(*getStatisticSet(), "rename_histogram", "Rename Stage Histogram", 
+        rename_histogram_(*getStatisticSet(), "rename_histogram", "Rename Stage Histogram",
                           [&p]() { std::vector<int> v(p->num_to_rename+1); std::iota(v.begin(), v.end(), 0); return v; }())
     {
         uop_queue_.enableCollection(node);
@@ -57,7 +57,7 @@ namespace olympia
 
         setup_map(core_types::RegFile::RF_INTEGER, p->num_integer_renames);
         setup_map(core_types::RegFile::RF_FLOAT,   p->num_float_renames);
-        
+
         static_assert(core_types::RegFile::N_REGFILES == 2, "New RF type added, but Rename not updated");
     }
 
@@ -123,7 +123,7 @@ namespace olympia
         auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
         if(dests.size() > 0){
             sparta_assert(dests.size() == 1); // we should only have one destination
-            rf = olympia::coreutils::determineRegisterFile(dests[0]);   
+            rf = olympia::coreutils::determineRegisterFile(dests[0]);
             --reference_counter_[rf][original_dest];
             // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
             // so we know it's free to be pushed to freelist if it has no other src references
@@ -147,10 +147,10 @@ namespace olympia
         if(credits_dispatch_ > 0 && (uop_queue_.size() > 0)){
             ev_schedule_rename_.schedule();
         }
-        ILOG("Get Ack from ROB in Rename Stage! Retired instruction: " << inst_ptr);
+        ILOG("Retired instruction: " << inst_ptr);
     }
 
-    
+
     // Handle incoming flush
     void Rename::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
@@ -167,13 +167,13 @@ namespace olympia
         if(!uop_queue_regcount_data_.empty()){
             // if we have entries, use the most recent entered instruction counts
             current_counts = uop_queue_regcount_data_.back();
-        }   
+        }
         for(auto & i : *insts) {
             // create an index count for each instruction entered
             const auto & dests = i->getDestOpInfoList();
             if(dests.size() > 0){
                 sparta_assert(dests.size() == 1); // we should only have one destination
-                const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);  
+                const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);
                 current_counts.cumulative_reg_counts[rf]++;
             }
             else{
@@ -250,6 +250,7 @@ namespace olympia
             {
                 // Pick the oldest
                 const auto & renaming_inst = uop_queue_.read(0);
+                renaming_inst->setStatus(Inst::Status::RENAMED);
                 ILOG("sending inst to dispatch: " << renaming_inst);
 
                 // TODO: Register renaming for sources
@@ -264,8 +265,8 @@ namespace olympia
                     renaming_inst->getRenameData().setSource(prf);
                     bitmask.set(prf);
                     ILOG("\tsetup source register bit mask "
-                        << sparta::printBitSet(bitmask)
-                        << " for '" << rf << "' scoreboard");
+                         << sparta::printBitSet(bitmask)
+                         << " for '" << rf << "' scoreboard");
                 }
 
                 // TODO: Register renaming for destinations
@@ -289,19 +290,19 @@ namespace olympia
                     renaming_inst->getRenameData().setDestination(prf);
                     bitmask.set(prf);
                     ILOG("\tsetup destination register bit mask "
-                    << sparta::printBitSet(bitmask)
-                    << " for '" << rf << "' scoreboard");
+                         << sparta::printBitSet(bitmask)
+                         << " for '" << rf << "' scoreboard");
                 }
                 // Remove it from uop queue
                 insts->emplace_back(uop_queue_.read(0));
                 uop_queue_.pop();
-            }   
+            }
 
             // Send insts to dispatch
             out_dispatch_queue_write_.send(insts);
             credits_dispatch_ -= num_to_rename_;
 
-            // Replenish credits in the Decode unit             
+            // Replenish credits in the Decode unit
             out_uop_queue_credits_.send(num_to_rename_);
             num_to_rename_ = 0;
         }

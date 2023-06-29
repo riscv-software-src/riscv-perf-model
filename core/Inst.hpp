@@ -3,7 +3,6 @@
 #pragma once
 
 #include "sparta/memory/AddressTypes.hpp"
-#include "sparta/resources/SharedData.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 #include "sparta/resources/Queue.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
@@ -74,13 +73,12 @@ namespace olympia
             __FIRST = FETCHED,
             DECODED,
             RENAMED,
+            DISPATCHED,
             SCHEDULED,
             COMPLETED,
             RETIRED,
             __LAST
         };
-
-        using InstStatus = sparta::SharedData<Status>;
 
         /*!
          * \brief Construct an Instruction
@@ -96,7 +94,6 @@ namespace olympia
              const sparta::Clock             * clk) :
             opcode_info_    (opcode_info),
             inst_arch_info_ (inst_arch_info),
-            status_("inst_status", clk, Status::FETCHED),
             status_state_(Status::FETCHED)
         { }
 
@@ -106,7 +103,6 @@ namespace olympia
 
         const Status & getStatus() const {
             return status_state_;
-            //return status_state_.getEnumValue();
         }
 
         bool getCompletedStatus() const {
@@ -114,10 +110,8 @@ namespace olympia
         }
 
         void setStatus(Status status) {
-            //status_state_.setValue(status);
             status_state_ = status;
-            status_.write(status);
-            if(getStatus() == olympia::Inst::Status::COMPLETED) {
+            if(getStatus() == Status::COMPLETED) {
                 if(ev_retire_ != 0) {
                     ev_retire_->schedule();
                 }
@@ -128,14 +122,16 @@ namespace olympia
             return inst_arch_info_->getTargetUnit();
         }
 
+        InstArchInfo::TargetPipe getPipe() const {
+            return inst_arch_info_->getTargetPipe();
+        }
+
         void setOldest(bool oldest, sparta::Scheduleable * rob_retire_event) {
             ev_retire_ = rob_retire_event;
             is_oldest_ = oldest;
-
-            if(status_.isValidNS() && status_.readNS() == olympia::Inst::Status::COMPLETED) {
-                ev_retire_->schedule();
-            }
         }
+
+        bool isMarkedOldest() const { return is_oldest_; }
 
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
@@ -208,7 +204,6 @@ namespace olympia
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
         sparta::Scheduleable * ev_retire_    = nullptr;
-        InstStatus             status_;
         Status                 status_state_;
 
         // Rename information
@@ -232,6 +227,9 @@ namespace olympia
             case Inst::Status::RENAMED:
                 os << "RENAMED";
                 break;
+            case Inst::Status::DISPATCHED:
+                os << "DISPATCHED";
+                break;
             case Inst::Status::SCHEDULED:
                 os << "SCHEDULED";
                 break;
@@ -249,9 +247,9 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
         os << "uid: " << inst.getUniqueID()
-           << " " << std::setw(12) << inst.getStatus()
+           << " " << std::setw(10) << inst.getStatus()
            << " " << std::hex << inst.getPC() << std::dec
-           << " pid: " << inst->getProgramID() << " '" << inst.getDisasm() << "' ";
+           << " pid: " << inst.getProgramID() << " '" << inst.getDisasm() << "' ";
         return os;
     }
 

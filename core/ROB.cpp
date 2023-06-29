@@ -61,6 +61,11 @@ namespace olympia
     ROB::~ROB() {
         // Logging can be done from destructors in the correct simulator setup
         ILOG("ROB is destructing now, but you can still see this message");
+
+        if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
+            std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
+            dumpDebugContent_(std::cerr);
+        }
     }
 
     void ROB::sendInitialCredits_()
@@ -71,9 +76,6 @@ namespace olympia
 
     void ROB::retireEvent_() {
         retireInstructions_();
-        if (reorder_buffer_.size() > 0) {
-            ev_retire_.schedule(sparta::Clock::Cycle(1));
-        }
     }
 
     // An illustration of the use of the callback -- instead of
@@ -135,6 +137,7 @@ namespace olympia
                 }
                 // Will be true if the user provides a -i option
                 if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_))) {
+                    rob_stopped_simulation_ = true;
                     getScheduler()->stopRunning();
                     break;
                 }
@@ -155,11 +158,22 @@ namespace olympia
 
             }
             else {
-                ILOG("set oldest: " << ex_inst);
-                ex_inst.setOldest(true, &ev_retire_);
                 break;
             }
         }
+
+        if(false == reorder_buffer_.empty()) {
+            const auto & oldest_inst = reorder_buffer_.front();
+            if(oldest_inst->getStatus() == Inst::Status::COMPLETED) {
+                ILOG("oldest is marked completed: " << oldest_inst);
+                ev_retire_.schedule();
+            }
+            else if(false == oldest_inst->isMarkedOldest()) {
+                ILOG("set oldest: " << oldest_inst);
+                oldest_inst->setOldest(true, &ev_retire_);
+            }
+        }
+
         if(retired_this_cycle != 0) {
             out_reorder_buffer_credits_.send(retired_this_cycle);
             last_retirement_ = getClock()->currentCycle();

@@ -70,6 +70,7 @@ endif()
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
+set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Include directories
 include_directories (core mss)

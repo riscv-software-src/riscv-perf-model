@@ -274,7 +274,6 @@ namespace olympia
             // This is a function which will be added in the SPARTA_ADDPAIRs API.
             uint64_t getInstUniqueID() const {
                 const MemoryAccessInfoPtr &mem_access_info_ptr = getMemoryAccessInfoPtr();
-
                 return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUniqueID();
             }
 
@@ -448,7 +447,7 @@ namespace olympia
 
         // Setup Scoreboard Views
         void setupScoreboard_();
-        
+
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 
@@ -666,5 +665,39 @@ namespace olympia
         }
         return os;
     }
+
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::LoadStoreInstInfo & ls_info)
+    {
+        os << "lsinfo: "
+           << "uid: "    << ls_info.getInstUniqueID()
+           << " pri:"    << ls_info.getPriority()
+           << " state: " << ls_info.getState();
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::LoadStoreInstInfoPtr & ls_info)
+    {
+        os << *ls_info;
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::MemoryAccessInfo & mem)
+    {
+        os << "memptr: " << mem.getInstPtr();
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::MemoryAccessInfoPtr & mem_ptr)
+    {
+        os << *mem_ptr;
+        return os;
+    }
+
+
     class LSUTester;
 } // namespace olympia

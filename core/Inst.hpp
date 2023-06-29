@@ -31,33 +31,31 @@ namespace olympia
     class Inst {
     public:
 
-        class RenameData{
-            public:
-                // <original dest, new destination>
-                using SourceReg = std::pair<uint32_t, uint32_t>;
+        class RenameData
+        {
+        public:
+            // A register consists of its value and its register file.
+            struct Reg {
+                uint32_t val = 0;
+                core_types::RegFile rf = core_types::RegFile::RF_INVALID;
+            };
+            using RegList = std::vector<Reg>;
 
-                void setDestination(uint32_t destination){
-                    dest_ = destination;
-                }
-                void setOriginalDestination(uint32_t destination){
-                    original_dest_ = destination;
-                }
-                void setSource(uint32_t source){
-                    src_.push_back(source);
-                }
-                const std::vector<uint32_t> & getSource() const {
-                    return src_;
-                }
-                uint32_t getDestination() const {
-                    return dest_;
-                }
-                uint32_t getOriginalDestination() const {
-                    return original_dest_;
-                }
-            private:
-                uint32_t dest_;
-                uint32_t original_dest_;
-                std::vector<uint32_t> src_;
+            void setOriginalDestination(const Reg & destination){
+                original_dest_ = destination;
+            }
+            void setSource(const Reg & source){
+                src_.emplace_back(source);
+            }
+            const RegList & getSourceList() const {
+                return src_;
+            }
+            const Reg & getOriginalDestination() const {
+                return original_dest_;
+            }
+        private:
+            Reg original_dest_;
+            RegList src_;
         };
 
         // Used by Mavis

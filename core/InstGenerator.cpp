@@ -6,7 +6,8 @@
 namespace olympia
 {
     std::unique_ptr<InstGenerator> InstGenerator::createGenerator(MavisType * mavis_facade,
-                                                                  const std::string & filename)
+                                                                  const std::string & filename,
+                                                                  const bool skip_nonuser_mode)
     {
         const std::string json_ext = "json";
         if((filename.size() > json_ext.size()) && filename.substr(filename.size()-json_ext.size()) == json_ext) {
@@ -17,7 +18,7 @@ namespace olympia
         const std::string stf_ext = "stf";  // Should cover both zstf and stf
         if((filename.size() > stf_ext.size()) && filename.substr(filename.size()-stf_ext.size()) == stf_ext) {
             std::cout << "olympia: STF file input detected" << std::endl;
-            return std::unique_ptr<InstGenerator>(new TraceInstGenerator(mavis_facade, filename));
+            return std::unique_ptr<InstGenerator>(new TraceInstGenerator(mavis_facade, filename, skip_nonuser_mode));
         }
 
         // Dunno what it is...
@@ -114,7 +115,8 @@ namespace olympia
     ////////////////////////////////////////////////////////////////////////////////
     // STF Inst Generator
     TraceInstGenerator::TraceInstGenerator(MavisType * mavis_facade,
-                                           const std::string & filename) :
+                                           const std::string & filename,
+                                           const bool skip_nonuser_mode) :
         InstGenerator(mavis_facade)
     {
         std::ifstream fs;
@@ -134,10 +136,9 @@ namespace olympia
         // value. Required for traces that stay in machine mode the entire
         // time
         constexpr bool FILTER_MODE_CHANGE_EVENTS = true;
-        constexpr bool SKIP_NONUSER_MODE         = true;
         constexpr size_t BUFFER_SIZE             = 4096;
         reader_.reset(new stf::STFInstReader(filename,
-                                             SKIP_NONUSER_MODE,
+                                             skip_nonuser_mode,
                                              CHECK_FOR_STF_PTE,
                                              FILTER_MODE_CHANGE_EVENTS,
                                              BUFFER_SIZE));

@@ -157,18 +157,18 @@ namespace olympia
             bool getPhyAddrStatus() const { return phyAddrIsReady_; }
 
             const MMUState & getMMUState() const {
-                return mmu_access_state_.getEnumValue();
+                return mmu_access_state_;
             }
 
             void setMMUState(const MMUState & state) {
-                mmu_access_state_.setValue(state);
+                mmu_access_state_ = state;
             }
 
             const CacheState & getCacheState() const {
-                return cache_access_state_.getEnumValue();
+                return cache_access_state_;
             }
             void setCacheState(const CacheState & state) {
-                cache_access_state_.setValue(state);
+                cache_access_state_ = state;
             }
 
             // This is a function which will be added in the addArgs API.
@@ -185,10 +185,10 @@ namespace olympia
             bool phyAddrIsReady_;
 
             // MMU access status
-            sparta::State<MMUState> mmu_access_state_;
+            MMUState mmu_access_state_;
 
             // Cache access status
-            sparta::State<CacheState> cache_access_state_;
+            CacheState cache_access_state_;
 
             // Scoreboards
             using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;

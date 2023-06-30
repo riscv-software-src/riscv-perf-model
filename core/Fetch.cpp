@@ -21,6 +21,7 @@ namespace olympia
                  const FetchParameterSet * p) :
         sparta::Unit(node),
         num_insts_to_fetch_(p->num_to_fetch),
+        skip_nonuser_mode_(p->skip_nonuser_mode),
         my_clk_(getClock())
     {
         in_fetch_queue_credits_.
@@ -43,7 +44,9 @@ namespace olympia
         auto cpu_node   = getContainer()->getParent()->getParent();
         auto extension  = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
         auto workload   = extension->getParameters()->getParameter("workload");
-        inst_generator_ = InstGenerator::createGenerator(getMavis(getContainer()), workload->getValueAsString());
+        inst_generator_ = InstGenerator::createGenerator(getMavis(getContainer()),
+                                                         workload->getValueAsString(),
+                                                         skip_nonuser_mode_);
 
         fetch_inst_event_->schedule(1);
     }

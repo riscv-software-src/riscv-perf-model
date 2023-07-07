@@ -33,13 +33,27 @@ under development.
 ```
 
 ################################################################################
-# Optimized
+# Optimized, no symbols
 
 # A release build
 mkdir release; cd release
 
-# Assumes a build of sparta at /path/to/map/sparta/release
-cmake .. -DCMAKE_BUILD_TYPE=Release -DSPARTA_SEARCH_DIR=/path/to/map/sparta/release
+# Assumes sparta was installed in the conda environment.
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/intall
+cmake .. -DCMAKE_BUILD_TYPE=Release 
+
+# Just builds the simulator
+make olympia
+
+################################################################################
+# Fast Debug, optimized (not LTO) with debug symbols
+
+# A FastDebug build
+mkdir fastdebug; cd fastdebug
+
+# Assumes sparta was installed in the conda environment.
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/intall
+cmake .. -DCMAKE_BUILD_TYPE=fastdebug
 
 # Just builds the simulator
 make olympia
@@ -50,8 +64,9 @@ make olympia
 # A debug build
 mkdir debug; cd debug
 
-# Assumes a build of sparta at /path/to/map/sparta/debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DSPARTA_SEARCH_DIR=/path/to/map/sparta/debug
+# Assumes sparta was installed in the conda environment.
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/intall
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 
 # Just builds the simulator
 make olympia

@@ -157,18 +157,18 @@ namespace olympia
             bool getPhyAddrStatus() const { return phyAddrIsReady_; }
 
             const MMUState & getMMUState() const {
-                return mmu_access_state_.getEnumValue();
+                return mmu_access_state_;
             }
 
             void setMMUState(const MMUState & state) {
-                mmu_access_state_.setValue(state);
+                mmu_access_state_ = state;
             }
 
             const CacheState & getCacheState() const {
-                return cache_access_state_.getEnumValue();
+                return cache_access_state_;
             }
             void setCacheState(const CacheState & state) {
-                cache_access_state_.setValue(state);
+                cache_access_state_ = state;
             }
 
             // This is a function which will be added in the addArgs API.
@@ -185,10 +185,10 @@ namespace olympia
             bool phyAddrIsReady_;
 
             // MMU access status
-            sparta::State<MMUState> mmu_access_state_;
+            MMUState mmu_access_state_;
 
             // Cache access status
-            sparta::State<CacheState> cache_access_state_;
+            CacheState cache_access_state_;
 
             // Scoreboards
             using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
@@ -274,7 +274,6 @@ namespace olympia
             // This is a function which will be added in the SPARTA_ADDPAIRs API.
             uint64_t getInstUniqueID() const {
                 const MemoryAccessInfoPtr &mem_access_info_ptr = getMemoryAccessInfoPtr();
-
                 return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUniqueID();
             }
 
@@ -448,7 +447,7 @@ namespace olympia
 
         // Setup Scoreboard Views
         void setupScoreboard_();
-        
+
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 
@@ -666,5 +665,39 @@ namespace olympia
         }
         return os;
     }
+
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::LoadStoreInstInfo & ls_info)
+    {
+        os << "lsinfo: "
+           << "uid: "    << ls_info.getInstUniqueID()
+           << " pri:"    << ls_info.getPriority()
+           << " state: " << ls_info.getState();
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::LoadStoreInstInfoPtr & ls_info)
+    {
+        os << *ls_info;
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::MemoryAccessInfo & mem)
+    {
+        os << "memptr: " << mem.getInstPtr();
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LSU::MemoryAccessInfoPtr & mem_ptr)
+    {
+        os << *mem_ptr;
+        return os;
+    }
+
+
     class LSUTester;
 } // namespace olympia

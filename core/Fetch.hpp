@@ -53,7 +53,8 @@ namespace olympia
                                                             "Num to fetch must be greater than 0");
             }
 
-            PARAMETER(uint32_t, num_to_fetch, 4, "Number of instructions to fetch")
+            PARAMETER(uint32_t, num_to_fetch,          4, "Number of instructions to fetch")
+            PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
         };
 
         /**
@@ -90,6 +91,10 @@ namespace olympia
         // Instruction fetch
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
+
+
+        // For traces with system instructions, skip them
+        const bool skip_nonuser_mode_;
 
         // Number of credits from decode that fetch has
         uint32_t credits_inst_queue_ = 0;

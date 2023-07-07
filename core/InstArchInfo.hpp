@@ -46,8 +46,27 @@ namespace olympia
         };
         static constexpr uint32_t N_TARGET_UNITS = static_cast<uint32_t>(TargetUnit::UNKNOWN);
 
+        enum class TargetPipe : std::uint16_t{
+            BR,
+            CMOV,
+            DIV,
+            FADDSUB,
+            FLOAT,
+            FMAC,
+            I2F,
+            INT,
+            LSU,
+            MUL,
+            SYS,
+            UNKNOWN
+        };
+        static constexpr uint32_t N_TARGET_PIPES = static_cast<uint32_t>(TargetPipe::UNKNOWN);
+
         using TargetUnitMap = std::map<std::string, TargetUnit>;
         static const TargetUnitMap dispatch_target_map;
+
+        using TargetPipeMap = std::map<std::string, TargetPipe>;
+        static const TargetPipeMap execution_pipe_map;
 
         // Called by Mavis during its initialization
         explicit InstArchInfo(const nlohmann::json& jobj)
@@ -62,6 +81,9 @@ namespace olympia
         //! Return the target unit for this instruction type
         TargetUnit getTargetUnit() const { return tgt_unit_; }
 
+        //! Return the target unit for this instruction type
+        TargetPipe getTargetPipe() const { return tgt_pipe_; }
+
         //! Return the execution time (latency) of the instruction
         uint32_t   getExecutionTime() const { return execute_time_; }
 
@@ -70,6 +92,7 @@ namespace olympia
 
     private:
         TargetUnit tgt_unit_ = TargetUnit::UNKNOWN;
+        TargetPipe tgt_pipe_ = TargetPipe::UNKNOWN;
         uint32_t   execute_time_ = 0;
         bool       is_load_store_ = false;
     };

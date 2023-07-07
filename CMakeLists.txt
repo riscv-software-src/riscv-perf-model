@@ -64,12 +64,13 @@ elseif (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
 elseif (CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")
   set(SPARTA_BUILD_TYPE "release")
 else()
-  message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|Debug|Profile")
+  message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|FastDebug|Debug|Profile")
 endif()
 
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
+set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Include directories
 include_directories (core mss)

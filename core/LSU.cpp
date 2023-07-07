@@ -48,8 +48,17 @@ namespace olympia
                 (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
 
 
-        // Pipeline events config
+        // Allow the pipeline to create events and schedule work
         ldst_pipeline_.performOwnUpdates();
+
+        // There can be situations where NOTHING is going on in the
+        // simulator but forward progression of the pipeline elements.
+        // In this case, the internal event for the LS pipeline will
+        // be the only event keeping simulation alive.  Sparta
+        // supports identifying non-essential events (by calling
+        // setContinuing to false on any event).
+        ldst_pipeline_.setContinuing(true);
+
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
                                                 CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
@@ -101,7 +110,7 @@ namespace olympia
 
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
-    {   
+    {
         core_types::RegFile reg_file = core_types::RF_INTEGER;
         const auto & srcs = inst_ptr->getSourceOpInfoList();
         if(srcs.size() > 0){
@@ -117,7 +126,7 @@ namespace olympia
             LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
                                                                                                         mem_info_ptr);
             lsu_insts_dispatched_++;
-    
+
             // Append to instruction issue queue
             appendIssueQueue_(inst_info_ptr);
 
@@ -219,6 +228,8 @@ namespace olympia
 
 
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        ILOG(mem_access_info_ptr);
+
         bool isAlreadyHIT = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
         bool MMUBypass = isAlreadyHIT;
 
@@ -312,6 +323,8 @@ namespace olympia
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
 
+        ILOG(mem_access_info_ptr);
+
         const bool phyAddrIsReady =
             mem_access_info_ptr->getPhyAddrStatus();
         const bool isAlreadyHIT =
@@ -389,7 +402,7 @@ namespace olympia
             out_biu_req_.send(cache_pending_inst_ptr_);
 
             succeed = true;
-          
+
             biu_reqs_++;
         }
         else {
@@ -420,6 +433,8 @@ namespace olympia
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool isStoreInst = inst_ptr->isStoreInst();
 
+        ILOG(mem_access_info_ptr);
+
         core_types::RegFile reg_file = core_types::RF_INTEGER;
         const auto & dests = inst_ptr->getDestOpInfoList();
         if(dests.size() > 0){
@@ -436,7 +451,7 @@ namespace olympia
 
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::COMPLETED);
-            
+
             lsu_insts_completed_++;
 
             // Remove completed instruction from issue queue
@@ -597,24 +612,17 @@ namespace olympia
     // Check for ready to issue instructions
     bool LSU::isReadyToIssueInsts_() const
     {
-        bool isReady = false;
-
         // Check if there is at least one ready-to-issue instruction in issue queue
         for (auto const &inst_info_ptr : ldst_inst_queue_) {
             if (inst_info_ptr->isReady()) {
-                isReady = true;
-                break;
+                ILOG("At least one instruction is ready to be issued: " << inst_info_ptr);
+                return true;
             }
         }
 
-        if (isReady) {
-            ILOG("At least one more instruction is ready to be issued!");
-        }
-        else {
-            ILOG("No more instruction is ready to be issued!");
-        }
+        ILOG("No instructions are ready to be issued");
 
-        return isReady;
+        return false;
     }
 
 

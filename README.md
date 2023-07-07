@@ -7,8 +7,8 @@ _example_ of an Out-of-Order RISC-V CPU Performance Model based on the
 [Sparta Modeling
 Framework](https://github.com/sparcians/map/tree/master/sparta).
 
-Olympia's intent is to provide a basis for RISC-V CPU development
-enabling the community to build upon Olympia, extending its
+Olympia's intent is to provide a starting point for RISC-V CPU performance modeling development
+enabling the community to build upon Olympia by extending its
 functionality in areas like branch prediction, prefetching/caching
 concepts, application profiling, middle-core design, etc.
 
@@ -33,13 +33,17 @@ under development.
 ```
 
 ################################################################################
+# Enable conda environment (suggested)
+conda activate sparta
+
+################################################################################
 # Optimized, no symbols
 
 # A release build
 mkdir release; cd release
 
 # Assumes sparta was installed in the conda environment.
-# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/intall
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
 cmake .. -DCMAKE_BUILD_TYPE=Release 
 
 # Just builds the simulator
@@ -52,7 +56,7 @@ make olympia
 mkdir fastdebug; cd fastdebug
 
 # Assumes sparta was installed in the conda environment.
-# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/intall
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
 cmake .. -DCMAKE_BUILD_TYPE=fastdebug
 
 # Just builds the simulator
@@ -65,7 +69,7 @@ make olympia
 mkdir debug; cd debug
 
 # Assumes sparta was installed in the conda environment.
-# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/intall
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 
 # Just builds the simulator

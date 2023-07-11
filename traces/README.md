@@ -120,7 +120,7 @@ git clone https://github.com/chipsalliance/dromajo
 
 # Checkout a Known-to-work SHA
 cd dromajo
-git checkout 86125b31
+git checkout 6f68f74
 
 # Apply the patch
 git apply ../dromajo_stf_lib.patch

@@ -66,6 +66,12 @@
         "latency" : 1
     },
     {
+        "mnemonic" : "li",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
         "mnemonic" : "nop",
         "dispatch" : ["alu"],
         "pipe" : "int",

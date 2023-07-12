@@ -10,6 +10,7 @@ file(CREATE_LINK ${SIM_BASE}/reports ${CMAKE_CURRENT_BINARY_DIR}/reports SYMBOLI
 file(CREATE_LINK ${SIM_BASE}/arches  ${CMAKE_CURRENT_BINARY_DIR}/arches SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/traces  ${CMAKE_CURRENT_BINARY_DIR}/traces SYMBOLIC)
+file(CREATE_LINK ${SIM_BASE}/test/sim/json_tests  ${CMAKE_CURRENT_BINARY_DIR}/json_tests SYMBOLIC)
 
 # Tests
 sparta_named_test(olympia_json_test olympia --workload traces/example_json.json)
@@ -39,6 +40,9 @@ sparta_named_test(olympia_dhry_test_report_html olympia -i 1M
   --report-search-dir reports
   --report reports/core_report.def
   --workload traces/dhry_riscv.zstf)
+
+sparta_named_test(olympia_json_test_missing_opcodes olympia
+  --workload json_tests/missing_opcodes.json)
 
 # Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")

@@ -15,6 +15,9 @@ namespace olympia
                                          const std::string& pseudo_file_path)
     {
         std::vector<std::string> isa_files = {isa_file_path + "/isa_rv64g.json",
+                                              isa_file_path + "/isa_rv64zba.json",
+                                              isa_file_path + "/isa_rv64zbb.json",
+                                              isa_file_path + "/isa_rv64zbs.json",
                                               isa_file_path + "/isa_rv64c.json",
                                               isa_file_path + "/isa_rv64cf.json",
                                               isa_file_path + "/isa_rv64cd.json"};

@@ -208,5 +208,53 @@
         "dispatch" : ["alu"],
         "pipe" : "mul",
         "latency" : 3
+    },
+    {
+        "mnemonic" : "bclr",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bclri",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bext",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bexti",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "binv",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "binvi",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bset",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
+    },
+    {
+        "mnemonic" : "bseti",
+        "dispatch" : ["alu"],
+        "pipe" : "int",
+        "latency" : 1
     }
 ]

@@ -93,7 +93,11 @@ namespace olympia
             opcode_info_    (opcode_info),
             inst_arch_info_ (inst_arch_info),
             status_state_(Status::FETCHED)
-        { }
+        {
+            sparta_assert(inst_arch_info_ != nullptr,
+                          "Mavis decoded the instruction, but Olympia has no uarch data for it: "
+                          << getDisasm() << " " << std::hex << " opc: 0x" << getOpCode());
+        }
 
         // This is needed by Mavis as an optimization.  Try NOT to
         // implement it and let the compiler do it for us for speed.

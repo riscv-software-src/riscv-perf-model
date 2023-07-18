@@ -186,27 +186,20 @@ Copy `dhry_riscv.elf` into the buildroot and rebuild the root file system:
 % cp buildroot-2020.05.1/output/images/rootfs.cpio .
 ```
 
-To build `coremark` (not included with olympia), clone `coremark` from the official
-repository. Apply the patch provided to build for riscv target. Set `RISCV_TOOLSUITE`
-to a local copy of a RISC-V gcc location.
+To build `coremark` (not included with olympia), clone RISC-V ported `coremark` from
+the below url. Set `RISCV_TOOLSUITE` to a local copy of a RISC-V toolchain location.
 ```
 # Clone Coremark from EEMBC and cd into it
-% git clone https://github.com/eembc/coremark.git
-
-# Checkout a Known-to-work SHA
-cd coremark
-git checkout d5fad6b
-
-# Apply the patch
-git apply ../coremark_riscv.patch
+% git clone --recurse-submodules https://github.com/riscv-boom/riscv-coremark.git
+% cd riscv-coremark/coremark
 
 # Build coremark
-make RISCVTOOLS=$RISCV_TOOLSUITE PORT_DIR=riscv64/ link
+% make RISCVTOOLS=$RISCV_TOOLSUITE PORT_DIR=../riscv64/ compile
 ```
 
-Copy `coremark.elf` into the buildroot and rebuild the root file system:
+Copy the generated `coremark.riscv` into the buildroot and rebuild the root file system:
 ```
-% cp coremark.elf ./buildroot-2020.05.1/output/target/sbin/
+% cp coremark.riscv ./buildroot-2020.05.1/output/target/sbin/
 % make -C buildroot-2020.05.1
 % cp buildroot-2020.05.1/output/images/rootfs.cpio .
 ```

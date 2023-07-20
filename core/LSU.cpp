@@ -115,8 +115,7 @@ namespace olympia
         bool operands_ready = false;
 
         if(srcs.size() > 0){
-            core_types::RegFile reg_file = core_types::RegFile::RF_INTEGER;
-            reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
+            core_types::RegFile reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
             if(reg_file == core_types::RegFile::RF_FLOAT){
                 // if we have a floating point load, address is an integer
                 // but data is a float so we need to check both scoreboards

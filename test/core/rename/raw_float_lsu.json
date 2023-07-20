@@ -1,0 +1,20 @@
+[
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "vaddr" : "0xdeadbeef"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 3,
+        "rs2": 4,
+        "rd":  5,
+        "vaddr" : "0xdeadbeef"
+    }
+]

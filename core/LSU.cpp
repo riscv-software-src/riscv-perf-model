@@ -111,13 +111,49 @@ namespace olympia
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
-        core_types::RegFile reg_file = core_types::RF_INTEGER;
         const auto & srcs = inst_ptr->getSourceOpInfoList();
+        bool operands_ready = false;
+
         if(srcs.size() > 0){
+            core_types::RegFile reg_file = core_types::RegFile::RF_INTEGER;
             reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
+            if(reg_file == core_types::RegFile::RF_FLOAT){
+                // if we have a floating point load, address is an integer
+                // but data is a float so we need to check both scoreboards
+                uint32_t reg_file_count = 0;
+                for(uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)
+                {
+                    reg_file = static_cast<olympia::core_types::RegFile>(rf);
+                    const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
+                    if(scoreboard_views_[reg_file]->isSet(src_bits)){
+                        reg_file_count++;
+                    }
+                    else{
+                        scoreboard_views_[reg_file]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
+                                            [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
+                                            {this->getInstsFromDispatch_(inst_ptr);});
+                        ILOG("Registering Callback: " << inst_ptr);
+                    }
+                }
+                if(reg_file_count == core_types::RegFile::N_REGFILES){
+                    operands_ready = true;
+                }
+            }
+            else{
+                const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
+                if(scoreboard_views_[reg_file]->isSet(src_bits)){
+                    operands_ready = true;
+                }
+                else{
+                    scoreboard_views_[reg_file]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
+                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
+                                        {this->getInstsFromDispatch_(inst_ptr);});
+                    ILOG("Registering Callback: " << inst_ptr);
+                }
+            }
         }
-        const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
-        if(scoreboard_views_[reg_file]->isSet(src_bits)){
+
+        if(operands_ready){
             // Create load/store memory access info
             MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
                                                                                                         inst_ptr);
@@ -152,12 +188,6 @@ namespace olympia
 
 
             ILOG("Another issue event scheduled");
-        }
-        else{
-            scoreboard_views_[reg_file]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
-                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                        {this->getInstsFromDispatch_(inst_ptr);});
-            ILOG("Registering Callback: " << inst_ptr);
         }
     }
 

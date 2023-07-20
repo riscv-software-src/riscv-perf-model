@@ -117,7 +117,7 @@ namespace olympia
         if(srcs.size() > 0){
             core_types::RegFile reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
             if(reg_file == core_types::RegFile::RF_FLOAT){
-                // if we have a floating point load, address is an integer
+                // if we have a floating point store, address is an integer
                 // but data is a float so we need to check both scoreboards
                 uint32_t reg_file_count = 0;
                 for(uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)

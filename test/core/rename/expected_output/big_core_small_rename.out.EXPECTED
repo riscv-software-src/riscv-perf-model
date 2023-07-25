@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Friday Fri Jun 30 14:11:31 2023
-#Elapsed:  0.002329s
+#Start:    Monday Mon Jul 24 20:42:35 2023
+#Elapsed:  0.002593s
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
 {0000000000 00000000 top.dispatch info} robCredits_: ROB got 10 credits, total: 10
 {0000000000 00000000 top.dispatch info} receiveCredits_: alu0 got 10 credits, total: 10
@@ -180,7 +180,7 @@
 {0000000011 00000011 top.rename info} renameInstructions_: sending inst to dispatch: uid: 7    RENAMED 0 pid: 8 'div	20,10,15' 
 {0000000011 00000011 top.rename info} renameInstructions_: 	setup source register bit mask [10] for 'integer' scoreboard
 {0000000011 00000011 top.rename info} renameInstructions_: 	setup source register bit mask [10,15] for 'integer' scoreboard
-{0000000011 00000011 top.rename info} renameInstructions_: 	setup destination register bit mask [5] for 'integer' scoreboard
+{0000000011 00000011 top.rename info} renameInstructions_: 	setup destination register bit mask [13] for 'integer' scoreboard
 {0000000011 00000011 top.decode info} inCredits: Got credits from dut: 1
 {0000000011 00000011 top.decode info} Sending group: 0x00000000 UID(8)  PID(9)  fadd.s
 {0000000012 00000012 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(7)  PID(8)  div

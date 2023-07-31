@@ -73,7 +73,7 @@ namespace olympia
         if(scoreboard_views_[reg_file_]->isSet(src_bits))
         {
             // Insert at the end if we are doing in order issue or if the scheduler is empty
-            ILOG("Sending to issue queue" << ex_inst);
+            ILOG("Sending to issue queue " << ex_inst);
             if (in_order_issue_ == true || ready_queue_.size() == 0) {
                 ready_queue_.emplace_back(ex_inst);
             }

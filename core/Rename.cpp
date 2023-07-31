@@ -301,6 +301,8 @@ namespace olympia
                     // so we can push it to freelist
                     reference_counter_[rf][prf]++;
                     bitmask.set(prf);
+                    // clear scoreboard for the PRF we are allocating
+                    scoreboards_[rf]->clearBits(bitmask);
                     ILOG("\tsetup destination register bit mask "
                          << sparta::printBitSet(bitmask)
                          << " for '" << rf << "' scoreboard");

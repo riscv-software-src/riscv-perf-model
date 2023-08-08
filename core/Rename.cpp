@@ -134,7 +134,8 @@ namespace olympia
         const auto & srcs = inst_ptr->getRenameData().getSourceList();
         if(inst_ptr->isStoreInst() && dests.size() == 0){
             // decrement counter for store data tracking
-            --reference_counter_[inst_ptr->getRenameData().getDataReg().rf][inst_ptr->getRenameData().getDataReg().val];
+            const auto & data_reg = inst_ptr->getRenameData().getDataReg();
+            --reference_counter_[data_reg.rf][data_reg.val];
         }
         // freeing references to PRF
         for(const auto & src: srcs)

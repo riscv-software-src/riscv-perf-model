@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Friday Fri Jun 30 14:12:22 2023
-#Elapsed:  0.002573s
+#Start:    Monday Mon Aug  7 21:59:03 2023
+#Elapsed:  0.003107s
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
 {0000000000 00000000 top.dispatch info} robCredits_: ROB got 10 credits, total: 10
 {0000000000 00000000 top.dispatch info} receiveCredits_: alu0 got 10 credits, total: 10
@@ -103,7 +103,7 @@
 {0000000007 00000007 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 5 DISPATCHED 0 pid: 6 'lw	5,4,3'  to lsu
 {0000000007 00000007 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000007 00000007 top.rename info} renameInstructions_: sending inst to dispatch: uid: 6    RENAMED 0 pid: 7 'sw	3' 
-{0000000007 00000007 top.rename info} renameInstructions_: 	setup source register bit mask [32] for 'integer' scoreboard
+{0000000007 00000007 top.rename info} renameInstructions_: 	setup store data register bit mask [32] for 'integer' scoreboard
 {0000000007 00000007 top.decode info} inCredits: Got credits from dut: 1
 {0000000007 00000007 top.decode info} Sending group: 0x00000000 UID(7)  PID(8)  div
 {0000000008 00000008 top.rename info} getAckFromROB_: Retired instruction: uid: 4    RETIRED 0 pid: 5 'sub	5,4,3' 

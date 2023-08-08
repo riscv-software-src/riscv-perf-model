@@ -111,13 +111,36 @@ namespace olympia
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
-        core_types::RegFile reg_file = core_types::RF_INTEGER;
-        const auto & srcs = inst_ptr->getSourceOpInfoList();
-        if(srcs.size() > 0){
-            reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
+        bool all_ready = true; // assume all ready
+        if(!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))){
+            all_ready = false;
+            const auto & src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
+            scoreboard_views_[core_types::RF_INTEGER]->
+                registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
+                                    [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
+                                    {
+                                        this->getInstsFromDispatch_(inst_ptr);
+                                    });
+            ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(src_bits));
         }
-        const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
-        if(scoreboard_views_[reg_file]->isSet(src_bits)){
+
+        if(inst_ptr->getDestOpInfoList().size() == 0){
+            const auto rf = inst_ptr->getRenameData().getDataReg().rf;
+            const auto & data_bits = inst_ptr->getDataRegisterBitMask(rf);
+            if(!scoreboard_views_[rf]->isSet(data_bits)){
+                // checking if data operand is ready
+                all_ready = false;
+                scoreboard_views_[rf]->
+                    registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
+                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
+                                        {
+                                            this->getInstsFromDispatch_(inst_ptr);
+                                        });
+                ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
+            }
+        }
+
+        if(all_ready){
             // Create load/store memory access info
             MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
                                                                                                         inst_ptr);
@@ -152,12 +175,6 @@ namespace olympia
 
 
             ILOG("Another issue event scheduled");
-        }
-        else{
-            scoreboard_views_[reg_file]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
-                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                        {this->getInstsFromDispatch_(inst_ptr);});
-            ILOG("Registering Callback: " << inst_ptr);
         }
     }
 

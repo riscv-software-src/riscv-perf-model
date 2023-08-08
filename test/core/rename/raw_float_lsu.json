@@ -8,13 +8,18 @@
     {
         "mnemonic": "fsw",
         "fs2": 3,
+        "fs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "sw",
+        "rs2": 3,
         "vaddr" : "0xdeadbeef"
     },
     {
-        "mnemonic": "lw",
-        "rs1": 3,
-        "rs2": 4,
-        "rd":  5,
-        "vaddr" : "0xdeadbeef"
+        "mnemonic": "flw",
+        "fs1": 3,
+        "fd":  5,
+        "imm": 2
     }
 ]

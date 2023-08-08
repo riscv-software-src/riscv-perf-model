@@ -132,10 +132,9 @@ namespace olympia
         }
 
         const auto & srcs = inst_ptr->getRenameData().getSourceList();
-        if(inst_ptr->isStoreInst() && srcs.size() < 2 && dests.size() == 0){
-            // free PRF for STORE instruction used for data tracking
-            core_types::RegFile rf = core_types::RF_INTEGER;
-            freelist_[rf].push(inst_ptr->getRenameData().getAddrReg().val);
+        if(inst_ptr->isStoreInst() && dests.size() == 0){
+            // decrement counter for store data tracking
+            --reference_counter_[inst_ptr->getRenameData().getDataReg().rf][inst_ptr->getRenameData().getDataReg().val];
         }
         // freeing references to PRF
         for(const auto & src: srcs)
@@ -177,12 +176,9 @@ namespace olympia
         for(auto & i : *insts) {
             // create an index count for each instruction entered
             const auto & dests = i->getDestOpInfoList();
-            if(dests.size() > 0 && i->isStoreInst() && i->getSourceOpInfoList().size() < 2){
-                ILOG("test1");
-            }
-            if(i->isStoreInst() && i->getSourceOpInfoList().size() < 2 && dests.size() == 0){
-                // For STOREs we count for INTEGER because addresses use INTEGER PRF
-                current_counts.cumulative_reg_counts[core_types::RF_INTEGER]++;
+            if(i->isStoreInst() && dests.size() == 0){
+                // For STOREs, addresses use INTEGER PRF
+                current_counts.cumulative_reg_counts[core_types::RegFile::RF_INTEGER]++;
             }
             else if(dests.size() > 0){
                 sparta_assert(dests.size() == 1); // we should only have one destination
@@ -272,33 +268,52 @@ namespace olympia
 
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
                 const auto & dests = renaming_inst->getDestOpInfoList();
-
                 for(const auto & src : srcs)
                 {
-                    const auto rf  = olympia::coreutils::determineRegisterFile(src);
-                    const auto num = src.field_value;
-                    auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                    const uint32_t prf = map_table_[rf][num];
-                    reference_counter_[rf][prf]++;
-                    renaming_inst->getRenameData().setSource({prf, rf});
-                    bitmask.set(prf);
+                    if(renaming_inst->isStoreInst() && dests.size() == 0 && (src.field_id == mavis::InstMetaData::OperandFieldID::RS2)){
+                        // for store data operand we store the data reg information differently
+                        const auto rf  = olympia::coreutils::determineRegisterFile(src);
+                        const auto num = src.field_value;
+                        auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
+                        const uint32_t prf = map_table_[rf][num];
+                        reference_counter_[rf][prf]++;
+                        renaming_inst->getRenameData().setDataReg({prf, rf});
+                        bitmask.set(prf);
 
-                    ILOG("\tsetup source register bit mask "
-                         << sparta::printBitSet(bitmask)
-                         << " for '" << rf << "' scoreboard");
-
-                    if(renaming_inst->isStoreInst() && srcs.size() < 2 && dests.size() == 0){
-                        // assigning a register from PRF for data register
-                        auto & addr_bitmask = renaming_inst->getAddrRegisterBitMask();
-                        core_types::RegFile rf = core_types::RF_INTEGER; // all address operations are integer
+                        ILOG("\tsetup store data register bit mask "
+                            << sparta::printBitSet(bitmask)
+                            << " for '" << rf << "' scoreboard");
+                    }
+                    else if(renaming_inst->isStoreInst() && dests.size() == 0){
+                        // address operand of store instruction, we allocate a PRF
+                        core_types::RegFile rf = core_types::RegFile::RF_INTEGER;
+                        auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                         const uint32_t prf = freelist_[rf].front();
                         freelist_[rf].pop();
-                        renaming_inst->getRenameData().setAddrReg({prf, rf});
-                        addr_bitmask.set(prf);
+                        renaming_inst->getRenameData().setSource({prf, rf});
+                        reference_counter_[rf][prf]++;
+                        bitmask.set(prf);
 
-                        // TODO: we set address register to ready, but
+                        // TODO: we set address register to ready for now, but
                         // when we seperate address calculation for runahead
-                        scoreboards_[rf]->set(addr_bitmask);
+                        // we would clear the scoreboard
+                        scoreboards_[rf]->set(bitmask);
+                        ILOG("\tsetup store address register bit mask "
+                            << sparta::printBitSet(bitmask)
+                            << " for '" << rf << "' scoreboard");
+                    }
+                    else{
+                        const auto rf  = olympia::coreutils::determineRegisterFile(src);
+                        const auto num = src.field_value;
+                        auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
+                        const uint32_t prf = map_table_[rf][num];
+                        reference_counter_[rf][prf]++;
+                        renaming_inst->getRenameData().setSource({prf, rf});
+                        bitmask.set(prf);
+
+                        ILOG("\tsetup source register bit mask "
+                            << sparta::printBitSet(bitmask)
+                            << " for '" << rf << "' scoreboard");
                     }
                 }
                 
@@ -318,6 +333,8 @@ namespace olympia
                     // so we can push it to freelist
                     reference_counter_[rf][prf]++;
                     bitmask.set(prf);
+                    // clear scoreboard for the PRF we are allocating
+                    scoreboards_[rf]->clearBits(bitmask);
                     ILOG("\tsetup destination register bit mask "
                          << sparta::printBitSet(bitmask)
                          << " for '" << rf << "' scoreboard");

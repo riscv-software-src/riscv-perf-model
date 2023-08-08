@@ -112,33 +112,31 @@ namespace olympia
     void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
         bool all_ready = true; // assume all ready
-        for(const auto & src_reg : inst_ptr->getRenameData().getSourceList())
-        {
-            const auto & src_bits = inst_ptr->getSrcRegisterBitMask(src_reg.rf);
-            const auto & addr_bits = inst_ptr->getAddrRegisterBitMask();
-            if(inst_ptr->getDestOpInfoList().size() == 0 && !scoreboard_views_[core_types::RF_INTEGER]->isSet(addr_bits)){
-                // checking if address operand is ready
+        if(!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))){
+            all_ready = false;
+            const auto & src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
+            scoreboard_views_[core_types::RF_INTEGER]->
+                registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
+                                    [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
+                                    {
+                                        this->getInstsFromDispatch_(inst_ptr);
+                                    });
+            ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(src_bits));
+        }
+
+        if(inst_ptr->getDestOpInfoList().size() == 0){
+            const auto rf = inst_ptr->getRenameData().getDataReg().rf;
+            const auto & data_bits = inst_ptr->getDataRegisterBitMask(rf);
+            if(!scoreboard_views_[rf]->isSet(data_bits)){
+                // checking if data operand is ready
                 all_ready = false;
-                scoreboard_views_[core_types::RF_INTEGER]->
-                    registerReadyCallback(addr_bits, inst_ptr->getUniqueID(),
+                scoreboard_views_[rf]->
+                    registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
                                         [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
                                         {
                                             this->getInstsFromDispatch_(inst_ptr);
                                         });
-                ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(addr_bits));
-            }
-            if (!(scoreboard_views_[src_reg.rf]->isSet(src_bits))) {
-                all_ready = false;
-                scoreboard_views_[src_reg.rf]->
-                    registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
-                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                        {
-                                            this->getInstsFromDispatch_(inst_ptr);
-                                        });
-                ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(src_bits));
-            }
-            if(!all_ready){
-                break;
+                ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
             }
         }
 

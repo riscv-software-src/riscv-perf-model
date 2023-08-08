@@ -44,8 +44,8 @@ namespace olympia
             void setOriginalDestination(const Reg & destination){
                 original_dest_ = destination;
             }
-            void setAddrReg(const Reg & addr_reg){
-                addr_reg_ = addr_reg;
+            void setDataReg(const Reg & data_reg){
+                data_reg_ = data_reg;
             }
             void setSource(const Reg & source){
                 src_.emplace_back(source);
@@ -56,13 +56,13 @@ namespace olympia
             const Reg & getOriginalDestination() const {
                 return original_dest_;
             }
-            const Reg & getAddrReg() const {
-                return addr_reg_;
+            const Reg & getDataReg() const {
+                return data_reg_;
             }
         private:
             Reg original_dest_;
             RegList src_;
-            Reg addr_reg_;
+            Reg data_reg_;
         };
 
         // Used by Mavis
@@ -190,8 +190,8 @@ namespace olympia
         core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) {
             return dest_reg_bit_masks_[rf];
         }
-        core_types::RegisterBitMask & getAddrRegisterBitMask() {
-            return store_addr_mask_;
+        core_types::RegisterBitMask & getDataRegisterBitMask(const core_types::RegFile rf) {
+            return store_data_mask_[rf];
         }
         const core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) const {
             return src_reg_bit_masks_[rf];
@@ -199,8 +199,8 @@ namespace olympia
         const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
             return dest_reg_bit_masks_[rf];
         }
-        const core_types::RegisterBitMask & getAddrRegisterBitMask() const {
-            return store_addr_mask_;
+        const core_types::RegisterBitMask & getDataRegisterBitMask(const core_types::RegFile rf) const {
+            return store_data_mask_[rf];
         }
         RenameData & getRenameData() {
             return rename_data;
@@ -225,7 +225,7 @@ namespace olympia
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
         RegisterBitMaskArray src_reg_bit_masks_;
         RegisterBitMaskArray dest_reg_bit_masks_;
-        core_types::RegisterBitMask store_addr_mask_;
+        RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
     };
 

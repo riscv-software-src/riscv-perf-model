@@ -177,7 +177,8 @@ namespace olympia
         const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
 
         // Static instruction information
-        bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
+        bool        isStoreInst() const    { return is_store_; }
+        bool        isLoadStoreInst() const {return inst_arch_info_->isLoadStore(); }
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
@@ -218,6 +219,7 @@ namespace olympia
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
+        bool                   is_store_ = opcode_info_->getDestOpInfoList().size() == 0 && inst_arch_info_->isLoadStore();
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 

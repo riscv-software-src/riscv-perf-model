@@ -417,7 +417,7 @@ void runTest(int argc, char **argv)
         olympia::LSUTester lsu_tester;
         olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.alu0")->getResourceAs<olympia::ExecutePipe*>();
         olympia::ExecutePipeTester executepipe_tester;
-        cls.runSimulator(&sim, 7);
+        cls.runSimulator(&sim, 6);
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     }

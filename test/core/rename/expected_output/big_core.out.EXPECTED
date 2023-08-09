@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Monday Mon Aug  7 22:13:10 2023
-#Elapsed:  0.010408s
+#Start:    Tuesday Tue Aug  8 21:26:00 2023
+#Elapsed:  0.002239s
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
 {0000000000 00000000 top.dispatch info} robCredits_: ROB got 10 credits, total: 10
 {0000000000 00000000 top.dispatch info} receiveCredits_: alu0 got 10 credits, total: 10
@@ -142,9 +142,9 @@
 {0000000006 00000006 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 4 DISPATCHED 0 pid: 5 'sub	5,4,3'  to alu0
 {0000000006 00000006 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000006 00000006 top.rename info} renameInstructions_: sending inst to dispatch: uid: 5    RENAMED 0 pid: 6 'lw	5,4,3' 
-{0000000006 00000006 top.rename info} renameInstructions_: 	setup source register bit mask [33] for 'integer' scoreboard
-{0000000006 00000006 top.rename info} renameInstructions_: 	setup source register bit mask [32-33] for 'integer' scoreboard
-{0000000006 00000006 top.rename info} renameInstructions_: 	setup destination register bit mask [37] for 'integer' scoreboard
+{0000000006 00000006 top.rename info} renameInstructions_: 	setup LSU address register bit mask [37] for 'integer' scoreboard
+{0000000006 00000006 top.rename info} renameInstructions_: 	setup store data register bit mask [32] for 'integer' scoreboard
+{0000000006 00000006 top.rename info} renameInstructions_: 	setup destination register bit mask [38] for 'integer' scoreboard
 {0000000006 00000006 top.decode info} inCredits: Got credits from dut: 1
 {0000000006 00000006 top.decode info} Sending group: 0x00000000 UID(6)  PID(7)  sw
 {0000000007 00000007 top.rename info} getAckFromROB_: Retired instruction: uid: 3    RETIRED 0 pid: 4 'sub	14,13,12' 
@@ -172,7 +172,7 @@
 {0000000008 00000008 top.rename info} renameInstructions_: sending inst to dispatch: uid: 7    RENAMED 0 pid: 8 'div	20,10,15' 
 {0000000008 00000008 top.rename info} renameInstructions_: 	setup source register bit mask [10] for 'integer' scoreboard
 {0000000008 00000008 top.rename info} renameInstructions_: 	setup source register bit mask [10,15] for 'integer' scoreboard
-{0000000008 00000008 top.rename info} renameInstructions_: 	setup destination register bit mask [38] for 'integer' scoreboard
+{0000000008 00000008 top.rename info} renameInstructions_: 	setup destination register bit mask [39] for 'integer' scoreboard
 {0000000008 00000008 top.decode info} inCredits: Got credits from dut: 1
 {0000000008 00000008 top.decode info} Sending group: 0x00000000 UID(8)  PID(9)  fadd.s
 {0000000009 00000009 top.rename info} getAckFromROB_: Retired instruction: uid: 5    RETIRED 0 pid: 6 'lw	5,4,3' 

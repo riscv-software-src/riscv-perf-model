@@ -10,43 +10,35 @@ namespace olympia
     // Constructor
     ////////////////////////////////////////////////////////////////////////////////
 
-    LSU::LSU(sparta::TreeNode *node, const LSUParameterSet *p) :
-        sparta::Unit(node),
-        memory_access_allocator(50, 30),   // 50 and 30 are arbitrary numbers here.  It can be tuned to an exact value.
-        load_store_info_allocator(50, 30),
-        ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
-        ldst_inst_queue_size_(p->ldst_inst_queue_size),
+    LSU::LSU(sparta::TreeNode *node, const LSUParameterSet *p) : sparta::Unit(node),
+                                                                 memory_access_allocator(50, 30), // 50 and 30 are arbitrary numbers here.  It can be tuned to an exact value.
+                                                                 load_store_info_allocator(50, 30),
+                                                                 ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
+                                                                 ldst_inst_queue_size_(p->ldst_inst_queue_size),
 
-        tlb_always_hit_(p->tlb_always_hit),
-        dl1_always_hit_(p->dl1_always_hit),
+                                                                 tlb_always_hit_(p->tlb_always_hit),
+                                                                 dl1_always_hit_(p->dl1_always_hit),
 
-        issue_latency_(p->issue_latency),
-        mmu_latency_(p->mmu_latency),
-        cache_latency_(p->cache_latency),
-        complete_latency_(p->complete_latency)
+                                                                 issue_latency_(p->issue_latency),
+                                                                 mmu_latency_(p->mmu_latency),
+                                                                 cache_latency_(p->cache_latency),
+                                                                 complete_latency_(p->complete_latency)
     {
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
 
-
         // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
 
-
         // Port config
-        in_lsu_insts_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
+        in_lsu_insts_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
 
-        in_biu_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromBIU_, InstPtr));
+        in_biu_ack_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromBIU_, InstPtr));
 
-        in_rob_retire_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
+        in_rob_retire_ack_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
 
-        in_reorder_flush_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
-
+        in_reorder_flush_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
 
         // Allow the pipeline to create events and schedule work
         ldst_pipeline_.performOwnUpdates();
@@ -60,14 +52,13 @@ namespace olympia
         ldst_pipeline_.setContinuing(true);
 
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
-                                                CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
+                                              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
-                                                CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::COMPLETE),
-                                                CREATE_SPARTA_HANDLER(LSU, completeInst_));
-
+                                              CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
         // Event precedence setup
         uev_cache_drive_biu_port_ >> uev_mmu_drive_biu_port_;
@@ -81,12 +72,10 @@ namespace olympia
         const uint32_t dl1_line_size = p->dl1_line_size;
         const uint32_t dl1_size_kb = p->dl1_size_kb;
         const uint32_t dl1_associativity = p->dl1_associativity;
-        std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
-                                                         (dl1_associativity));
-        dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));
+        std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement(dl1_associativity));
+        dl1_cache_.reset(new SimpleDL1(getContainer(), dl1_size_kb, dl1_line_size, *repl));
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
-
 
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
@@ -97,7 +86,7 @@ namespace olympia
     {
         // Setup scoreboard view upon register file
         std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
-        for(const auto rf : reg_files)
+        for (const auto rf : reg_files)
         {
             scoreboard_views_[rf].reset(new sparta::ScoreboardView(getContainer()->getName(),
                                                                    core_types::regfile_names[rf],
@@ -109,45 +98,48 @@ namespace olympia
     }
 
     // Receive new load/store instruction from Dispatch Unit
-    void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
+    void LSU::getInstsFromDispatch_(const InstPtr &inst_ptr)
     {
         bool all_ready = true; // assume all ready
-        if(!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))){
+        if (!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER)))
+        {
+            // address check
             all_ready = false;
-            const auto & src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
-            scoreboard_views_[core_types::RF_INTEGER]->
-                registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
-                                    [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                    {
-                                        this->getInstsFromDispatch_(inst_ptr);
-                                    });
+            const auto &src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
+            scoreboard_views_[core_types::RF_INTEGER]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
+                                                                             [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                                                             {
+                                                                                 this->getInstsFromDispatch_(inst_ptr);
+                                                                             });
             ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(src_bits));
         }
 
-        if(inst_ptr->getDestOpInfoList().size() == 0){
+        if (inst_ptr->isStoreInst())
+        {
             const auto rf = inst_ptr->getRenameData().getDataReg().rf;
-            const auto & data_bits = inst_ptr->getDataRegisterBitMask(rf);
-            if(!scoreboard_views_[rf]->isSet(data_bits)){
+            const auto &data_bits = inst_ptr->getDataRegisterBitMask(rf);
+            if (!scoreboard_views_[rf]->isSet(data_bits))
+            {
                 // checking if data operand is ready
                 all_ready = false;
-                scoreboard_views_[rf]->
-                    registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
-                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                        {
-                                            this->getInstsFromDispatch_(inst_ptr);
-                                        });
+                scoreboard_views_[rf]->registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
+                                                             [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                                             {
+                                                                 this->getInstsFromDispatch_(inst_ptr);
+                                                             });
                 ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
             }
         }
 
-        if(all_ready){
+        if (all_ready)
+        {
             // Create load/store memory access info
             MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
                                                                                                         inst_ptr);
 
             // Create load/store instruction issue info
             LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
-                                                                                                        mem_info_ptr);
+                                                                                                           mem_info_ptr);
             lsu_insts_dispatched_++;
 
             // Append to instruction issue queue
@@ -163,7 +155,6 @@ namespace olympia
             // (1)Instruction issue queue already has "something READY";
             // (2)Instruction issue arbitration is guaranteed to be sucessful.
 
-
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::SCHEDULED);
 
@@ -173,36 +164,37 @@ namespace olympia
             // either a new issue event, or a re-issue event
             // however, we can ONLY update instruction status as SCHEDULED for a new issue event
 
-
             ILOG("Another issue event scheduled");
         }
     }
 
     // Receive MSS access acknowledge from Bus Interface Unit
-    void LSU::getAckFromBIU_(const InstPtr & inst_ptr)
+    void LSU::getAckFromBIU_(const InstPtr &inst_ptr)
     {
-        if (inst_ptr == mmu_pending_inst_ptr_) {
+        if (inst_ptr == mmu_pending_inst_ptr_)
+        {
             rehandleMMULookupReq_(inst_ptr);
         }
-        else if (inst_ptr == cache_pending_inst_ptr_) {
+        else if (inst_ptr == cache_pending_inst_ptr_)
+        {
             rehandleCacheLookupReq_(inst_ptr);
         }
-        else {
+        else
+        {
             sparta_assert(false, "Unexpected BIU Ack event occurs!");
         }
     }
 
     // Receive update from ROB whenever store instructions retire
-    void LSU::getAckFromROB_(const InstPtr & inst_ptr)
+    void LSU::getAckFromROB_(const InstPtr &inst_ptr)
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
-                        "Get ROB Ack, but the store inst hasn't retired yet!");
+                      "Get ROB Ack, but the store inst hasn't retired yet!");
 
         stores_retired_++;
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-
 
         ILOG("Get Ack from ROB! Retired store instruction: " << inst_ptr);
     }
@@ -211,7 +203,7 @@ namespace olympia
     void LSU::issueInst_()
     {
         // Instruction issue arbitration
-        const LoadStoreInstInfoPtr & win_ptr = arbitrateInstIssue_();
+        const LoadStoreInstInfoPtr &win_ptr = arbitrateInstIssue_();
         // NOTE:
         // win_ptr should always point to an instruction ready to be issued
         // Otherwise assertion error should already be fired in arbitrateInstIssue_()
@@ -226,7 +218,8 @@ namespace olympia
         win_ptr->setPriority(LoadStoreInstInfo::IssuePriority::LOWEST);
 
         // Schedule another instruction issue event if possible
-        if (isReadyToIssueInsts_()) {
+        if (isReadyToIssueInsts_())
+        {
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
 
@@ -239,18 +232,19 @@ namespace olympia
         const auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
 
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id)) {
+        if (!ldst_pipeline_.isValid(stage_id))
+        {
             return;
         }
 
-
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const MemoryAccessInfoPtr &mem_access_info_ptr = ldst_pipeline_[stage_id];
         ILOG(mem_access_info_ptr);
 
         bool isAlreadyHIT = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
         bool MMUBypass = isAlreadyHIT;
 
-        if (MMUBypass) {
+        if (MMUBypass)
+        {
             ILOG("MMU Lookup is skipped (TLB is already hit)!");
             return;
         }
@@ -258,17 +252,20 @@ namespace olympia
         // Access TLB, and check TLB hit or miss
         bool TLB_HIT = MMULookup_(mem_access_info_ptr);
 
-        if (TLB_HIT) {
+        if (TLB_HIT)
+        {
             // Update memory access info
             mem_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
             // Update physical address status
             mem_access_info_ptr->setPhyAddrStatus(true);
         }
-        else {
+        else
+        {
             // Update memory access info
             mem_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
 
-            if (mmu_busy_ == false) {
+            if (mmu_busy_ == false)
+            {
                 // MMU is busy, no more TLB MISS can be handled, RESET is required on finish
                 mmu_busy_ = true;
                 // Keep record of the current TLB MISS instruction
@@ -287,7 +284,8 @@ namespace olympia
                 // specifying precedence between these two competing events
                 ILOG("MMU is trying to drive BIU request port!");
             }
-            else {
+            else
+            {
                 ILOG("MMU miss cannot be served right now due to another outstanding one!");
             }
 
@@ -302,9 +300,10 @@ namespace olympia
         bool succeed = false;
 
         // Check if DataOutPort is available
-        if (!out_biu_req_.isDriven()) {
+        if (!out_biu_req_.isDriven())
+        {
             sparta_assert(mmu_pending_inst_ptr_ != nullptr,
-                "Attempt to drive BIU port when no outstanding TLB miss exists!");
+                          "Attempt to drive BIU port when no outstanding TLB miss exists!");
 
             // Port is available, drive port immediately, and send request out
             out_biu_req_.send(mmu_pending_inst_ptr_);
@@ -313,15 +312,18 @@ namespace olympia
 
             biu_reqs_++;
         }
-        else {
+        else
+        {
             // Port is being driven by another source, wait for one cycle and check again
             uev_mmu_drive_biu_port_.schedule(sparta::Clock::Cycle(1));
         }
 
-        if (succeed) {
+        if (succeed)
+        {
             ILOG("MMU is driving the BIU request port!");
         }
-        else {
+        else
+        {
             ILOG("MMU is waiting to drive the BIU request port!");
         }
     }
@@ -332,13 +334,13 @@ namespace olympia
         const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
 
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id)) {
+        if (!ldst_pipeline_.isValid(stage_id))
+        {
             return;
         }
 
-
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+        const MemoryAccessInfoPtr &mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
 
         ILOG(mem_access_info_ptr);
 
@@ -350,17 +352,22 @@ namespace olympia
             inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
         const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
 
-        if (cacheBypass) {
-            if (isAlreadyHIT) {
+        if (cacheBypass)
+        {
+            if (isAlreadyHIT)
+            {
                 ILOG("Cache Lookup is skipped (Cache already hit)!");
             }
-            else if (!phyAddrIsReady) {
+            else if (!phyAddrIsReady)
+            {
                 ILOG("Cache Lookup is skipped (Physical address not ready)!");
             }
-            else if (isUnretiredStore) {
+            else if (isUnretiredStore)
+            {
                 ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
             }
-            else {
+            else
+            {
                 sparta_assert(false, "Cache access is bypassed without a valid reason!");
             }
             return;
@@ -369,15 +376,18 @@ namespace olympia
         // Access cache, and check cache hit or miss
         const bool CACHE_HIT = cacheLookup_(mem_access_info_ptr);
 
-        if (CACHE_HIT) {
+        if (CACHE_HIT)
+        {
             // Update memory access info
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
         }
-        else {
+        else
+        {
             // Update memory access info
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
 
-            if (cache_busy_ == false) {
+            if (cache_busy_ == false)
+            {
                 // Cache is now busy, no more CACHE MISS can be handled, RESET required on finish
                 cache_busy_ = true;
                 // Keep record of the current CACHE MISS instruction
@@ -396,7 +406,8 @@ namespace olympia
                 // specifying precedence between these two competing events
                 ILOG("Cache is trying to drive BIU request port!");
             }
-            else {
+            else
+            {
                 ILOG("Cache miss cannot be served right now due to another outstanding one!");
             }
 
@@ -411,9 +422,10 @@ namespace olympia
         bool succeed = false;
 
         // Check if DataOutPort is available
-        if (!out_biu_req_.isDriven()) {
+        if (!out_biu_req_.isDriven())
+        {
             sparta_assert(cache_pending_inst_ptr_ != nullptr,
-                "Attempt to drive BIU port when no outstanding cache miss exists!");
+                          "Attempt to drive BIU port when no outstanding cache miss exists!");
 
             // Port is available, drive the port immediately, and send request out
             out_biu_req_.send(cache_pending_inst_ptr_);
@@ -422,15 +434,18 @@ namespace olympia
 
             biu_reqs_++;
         }
-        else {
+        else
+        {
             // Port is being driven by another source, wait for one cycle and check again
             uev_cache_drive_biu_port_.schedule(sparta::Clock::Cycle(1));
         }
 
-        if (succeed) {
+        if (succeed)
+        {
             ILOG("Cache is driving the BIU request port!");
         }
-        else {
+        else
+        {
             ILOG("Cache is waiting to drive the BIU request port!");
         }
     }
@@ -441,30 +456,32 @@ namespace olympia
         const auto stage_id = static_cast<uint32_t>(PipelineStage::COMPLETE);
 
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id)) {
+        if (!ldst_pipeline_.isValid(stage_id))
+        {
             return;
         }
 
-
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+        const MemoryAccessInfoPtr &mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         bool isStoreInst = inst_ptr->isStoreInst();
 
         ILOG(mem_access_info_ptr);
 
         core_types::RegFile reg_file = core_types::RF_INTEGER;
-        const auto & dests = inst_ptr->getDestOpInfoList();
-        if(dests.size() > 0){
+        const auto &dests = inst_ptr->getDestOpInfoList();
+        if (dests.size() > 0)
+        {
             sparta_assert(dests.size() == 1); // we should only have one destination
             reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
-            const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
+            const auto &dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
             scoreboard_views_[reg_file]->setReady(dest_bits);
         }
 
         // Complete load instruction
-        if (!isStoreInst) {
+        if (!isStoreInst)
+        {
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
-                        "Load instruction cannot complete when cache is still a miss!");
+                          "Load instruction cannot complete when cache is still a miss!");
 
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::COMPLETED);
@@ -484,25 +501,25 @@ namespace olympia
             return;
         }
 
-
         // Complete store instruction
-        if (inst_ptr->getStatus() != Inst::Status::RETIRED) {
+        if (inst_ptr->getStatus() != Inst::Status::RETIRED)
+        {
 
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
-                        "Store instruction cannot complete when TLB is still a miss!");
+                          "Store instruction cannot complete when TLB is still a miss!");
 
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::COMPLETED);
-
 
             ILOG("Complete Store Instruction: "
                  << inst_ptr->getMnemonic()
                  << " uid(" << inst_ptr->getUniqueID() << ")");
         }
         // Finish store operation
-        else {
+        else
+        {
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
-                        "Store inst cannot finish when cache is still a miss!");
+                          "Store inst cannot finish when cache is still a miss!");
 
             lsu_insts_completed_++;
 
@@ -515,7 +532,6 @@ namespace olympia
             ILOG("Store operation is done!");
         }
 
-
         // NOTE:
         // Checking whether an instruction is ready to complete could be non-trivial
         // Right now we simply assume:
@@ -524,12 +540,13 @@ namespace olympia
     }
 
     // Handle instruction flush in LSU
-    void LSU::handleFlush_(const FlushCriteria & criteria)
+    void LSU::handleFlush_(const FlushCriteria &criteria)
     {
         ILOG("Start Flushing!");
 
         // Flush criteria setup
-        auto flush = [criteria] (const uint64_t & id) -> bool {
+        auto flush = [criteria](const uint64_t &id) -> bool
+        {
             return id >= static_cast<uint64_t>(criteria);
         };
 
@@ -539,12 +556,14 @@ namespace olympia
         flushLSPipeline_(flush);
 
         // Mark flushed flag for unfinished speculative MMU access
-        if (mmu_busy_ && flush(mmu_pending_inst_ptr_->getUniqueID())) {
+        if (mmu_busy_ && flush(mmu_pending_inst_ptr_->getUniqueID()))
+        {
             mmu_pending_inst_flushed = true;
         }
 
         // Mark flushed flag for unfinished speculative cache access
-        if (cache_busy_ && flush(cache_pending_inst_ptr_->getUniqueID())) {
+        if (cache_busy_ && flush(cache_pending_inst_ptr_->getUniqueID()))
+        {
             cache_pending_inst_flushed_ = true;
         }
 
@@ -552,7 +571,8 @@ namespace olympia
         flushIssueQueue_(flush);
 
         // Cancel issue event already scheduled if no ready-to-issue inst left after flush
-        if (!isReadyToIssueInsts_()) {
+        if (!isReadyToIssueInsts_())
+        {
             uev_issue_inst_.cancel();
         }
 
@@ -563,16 +583,15 @@ namespace olympia
         // Otherwise, assertion error is fired inside arbitrateInstIssue_()
     }
 
-
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call
     ////////////////////////////////////////////////////////////////////////////////
 
     // Append new load/store instruction into issue queue
-    void LSU::appendIssueQueue_(const LoadStoreInstInfoPtr & inst_info_ptr)
+    void LSU::appendIssueQueue_(const LoadStoreInstInfoPtr &inst_info_ptr)
     {
         sparta_assert(ldst_inst_queue_.size() <= ldst_inst_queue_size_,
-                        "Appending issue queue causes overflows!");
+                      "Appending issue queue causes overflows!");
 
         // Always append newly dispatched instructions to the back of issue queue
         ldst_inst_queue_.push_back(inst_info_ptr);
@@ -581,11 +600,13 @@ namespace olympia
     }
 
     // Pop completed load/store instruction out of issue queue
-    void LSU::popIssueQueue_(const InstPtr & inst_ptr)
+    void LSU::popIssueQueue_(const InstPtr &inst_ptr)
     {
         // Look for the instruction to be completed, and remove it from issue queue
-        for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
-            if ((*iter)->getInstPtr() == inst_ptr) {
+        for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++)
+        {
+            if ((*iter)->getInstPtr() == inst_ptr)
+            {
                 ldst_inst_queue_.erase(iter);
 
                 return;
@@ -596,7 +617,7 @@ namespace olympia
     }
 
     // Arbitrate instruction issue from ldst_inst_queue
-    const LSU::LoadStoreInstInfoPtr & LSU::arbitrateInstIssue_()
+    const LSU::LoadStoreInstInfoPtr &LSU::arbitrateInstIssue_()
     {
         sparta_assert(ldst_inst_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
@@ -604,14 +625,17 @@ namespace olympia
         auto win_ptr_iter = ldst_inst_queue_.begin();
 
         // Select the ready instruction with highest issue priority
-        for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
+        for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++)
+        {
             // Skip not ready-to-issue instruction
-            if (!(*iter)->isReady()) {
+            if (!(*iter)->isReady())
+            {
                 continue;
             }
 
             // Pick winner
-            if (!(*win_ptr_iter)->isReady() || (*iter)->winArb(*win_ptr_iter)) {
+            if (!(*win_ptr_iter)->isReady() || (*iter)->winArb(*win_ptr_iter))
+            {
                 win_ptr_iter = iter;
             }
             // NOTE:
@@ -630,8 +654,10 @@ namespace olympia
     bool LSU::isReadyToIssueInsts_() const
     {
         // Check if there is at least one ready-to-issue instruction in issue queue
-        for (auto const &inst_info_ptr : ldst_inst_queue_) {
-            if (inst_info_ptr->isReady()) {
+        for (auto const &inst_info_ptr : ldst_inst_queue_)
+        {
+            if (inst_info_ptr->isReady())
+            {
                 ILOG("At least one instruction is ready to be issued: " << inst_info_ptr);
                 return true;
             }
@@ -642,38 +668,42 @@ namespace olympia
         return false;
     }
 
-
     // Access MMU/TLB
-    bool LSU::MMULookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    bool LSU::MMULookup_(const MemoryAccessInfoPtr &mem_access_info_ptr)
     {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+        const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t vaddr = inst_ptr->getTargetVAddr();
 
         bool tlb_hit = false;
 
         // C++ comma operator: assign tlb_hit first, then evaluate it. Just For Fun
-        if (tlb_hit = tlb_always_hit_, tlb_hit) {
+        if (tlb_hit = tlb_always_hit_, tlb_hit)
+        {
         }
-        else {
+        else
+        {
             auto tlb_entry = tlb_cache_->peekLine(vaddr);
             tlb_hit = (tlb_entry != nullptr) && tlb_entry->isValid();
 
             // Update MRU replacement state if TLB HIT
-            if (tlb_hit) {
+            if (tlb_hit)
+            {
                 tlb_cache_->touch(*tlb_entry);
             }
         }
 
-
-        if (tlb_always_hit_) {
+        if (tlb_always_hit_)
+        {
             ILOG("TLB HIT all the time: vaddr=0x" << std::hex << vaddr);
             tlb_hits_++;
         }
-        else if (tlb_hit) {
+        else if (tlb_hit)
+        {
             ILOG("TLB HIT: vaddr=0x" << std::hex << vaddr);
             tlb_hits_++;
         }
-        else {
+        else
+        {
             ILOG("TLB MISS: vaddr=0x" << std::hex << vaddr);
             tlb_misses_++;
         }
@@ -682,7 +712,7 @@ namespace olympia
     }
 
     // Re-handle outstanding MMU access request
-    void LSU::rehandleMMULookupReq_(const InstPtr & inst_ptr)
+    void LSU::rehandleMMULookupReq_(const InstPtr &inst_ptr)
     {
         // MMU is no longer busy any more
         mmu_busy_ = false;
@@ -694,7 +724,8 @@ namespace olympia
         // However, that means MMU has to keep record of a list of pending instructions
 
         // Check if this MMU miss Ack is for an already flushed instruction
-        if (mmu_pending_inst_flushed) {
+        if (mmu_pending_inst_flushed)
+        {
             mmu_pending_inst_flushed = false;
             ILOG("BIU Ack for a flushed MMU miss is received!");
 
@@ -702,7 +733,8 @@ namespace olympia
             // Note: some younger load/store instruction(s) might have been blocked by
             // this outstanding miss
             updateIssuePriorityAfterTLBReload_(inst_ptr, true);
-            if (isReadyToIssueInsts_()) {
+            if (isReadyToIssueInsts_())
+            {
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
             }
             return;
@@ -730,35 +762,41 @@ namespace olympia
     }
 
     // Access Cache
-    bool LSU::cacheLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    bool LSU::cacheLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr)
     {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+        const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t phyAddr = inst_ptr->getRAdr();
 
         bool cache_hit = false;
 
-        if (dl1_always_hit_) {
+        if (dl1_always_hit_)
+        {
             cache_hit = true;
         }
-        else {
+        else
+        {
             auto cache_line = dl1_cache_->peekLine(phyAddr);
             cache_hit = (cache_line != nullptr) && cache_line->isValid();
 
             // Update MRU replacement state if Cache HIT
-            if (cache_hit) {
+            if (cache_hit)
+            {
                 dl1_cache_->touchMRU(*cache_line);
             }
         }
 
-        if (dl1_always_hit_) {
+        if (dl1_always_hit_)
+        {
             ILOG("DL1 Cache HIT all the time: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_hits_++;
         }
-        else if (cache_hit) {
+        else if (cache_hit)
+        {
             ILOG("DL1 Cache HIT: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_hits_++;
         }
-        else {
+        else
+        {
             ILOG("DL1 Cache MISS: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_misses_++;
         }
@@ -767,7 +805,7 @@ namespace olympia
     }
 
     // Re-handle outstanding cache access request
-    void LSU::rehandleCacheLookupReq_(const InstPtr & inst_ptr)
+    void LSU::rehandleCacheLookupReq_(const InstPtr &inst_ptr)
     {
         // Cache is no longer busy any more
         cache_busy_ = false;
@@ -779,7 +817,8 @@ namespace olympia
         // However, that means cache has to keep record of a list of pending instructions
 
         // Check if this cache miss Ack is for an already flushed instruction
-        if (cache_pending_inst_flushed_) {
+        if (cache_pending_inst_flushed_)
+        {
             cache_pending_inst_flushed_ = false;
             ILOG("BIU Ack for a flushed cache miss is received!");
 
@@ -787,7 +826,8 @@ namespace olympia
             // Note: some younger load/store instruction(s) might have been blocked by
             // this outstanding miss
             updateIssuePriorityAfterCacheReload_(inst_ptr, true);
-            if (isReadyToIssueInsts_()) {
+            if (isReadyToIssueInsts_())
+            {
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
             }
 
@@ -816,10 +856,12 @@ namespace olympia
     }
 
     // Update issue priority when newly dispatched instruction comes in
-    void LSU::updateIssuePriorityAfterNewDispatch_(const InstPtr & inst_ptr)
+    void LSU::updateIssuePriorityAfterNewDispatch_(const InstPtr &inst_ptr)
     {
-        for (auto &inst_info_ptr : ldst_inst_queue_) {
-            if (inst_info_ptr->getInstPtr() == inst_ptr) {
+        for (auto &inst_info_ptr : ldst_inst_queue_)
+        {
+            if (inst_info_ptr->getInstPtr() == inst_ptr)
+            {
 
                 inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::NEW_DISP);
@@ -829,19 +871,21 @@ namespace olympia
         }
 
         sparta_assert(false,
-            "Attempt to update issue priority for instruction not yet in the issue queue!");
+                      "Attempt to update issue priority for instruction not yet in the issue queue!");
     }
 
     // Update issue priority after cache reload
-    void LSU::updateIssuePriorityAfterTLBReload_(const InstPtr & inst_ptr,
+    void LSU::updateIssuePriorityAfterTLBReload_(const InstPtr &inst_ptr,
                                                  const bool is_flushed_inst)
     {
         bool is_found = false;
 
-        for (auto &inst_info_ptr : ldst_inst_queue_) {
-            const MemoryAccessInfoPtr & mem_info_ptr = inst_info_ptr->getMemoryAccessInfoPtr();
+        for (auto &inst_info_ptr : ldst_inst_queue_)
+        {
+            const MemoryAccessInfoPtr &mem_info_ptr = inst_info_ptr->getMemoryAccessInfoPtr();
 
-            if (mem_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::MISS) {
+            if (mem_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::MISS)
+            {
                 // Re-activate all TLB-miss-pending instructions in the issue queue
                 inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::MMU_PENDING);
@@ -850,7 +894,8 @@ namespace olympia
                 // We may not have to re-activate all of the pending MMU miss instruction here
                 // However, re-activation must be scheduled somewhere else
 
-                if (inst_info_ptr->getInstPtr() == inst_ptr) {
+                if (inst_info_ptr->getInstPtr() == inst_ptr)
+                {
                     // Update issue priority for this outstanding TLB miss
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                     inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::MMU_RELOAD);
@@ -866,19 +911,21 @@ namespace olympia
         }
 
         sparta_assert(is_flushed_inst || is_found,
-            "Attempt to rehandle TLB lookup for instruction not yet in the issue queue!");
+                      "Attempt to rehandle TLB lookup for instruction not yet in the issue queue!");
     }
 
     // Update issue priority after cache reload
-    void LSU::updateIssuePriorityAfterCacheReload_(const InstPtr & inst_ptr,
+    void LSU::updateIssuePriorityAfterCacheReload_(const InstPtr &inst_ptr,
                                                    const bool is_flushed_inst)
     {
         bool is_found = false;
 
-        for (auto &inst_info_ptr : ldst_inst_queue_) {
-            const MemoryAccessInfoPtr & mem_info_ptr = inst_info_ptr->getMemoryAccessInfoPtr();
+        for (auto &inst_info_ptr : ldst_inst_queue_)
+        {
+            const MemoryAccessInfoPtr &mem_info_ptr = inst_info_ptr->getMemoryAccessInfoPtr();
 
-            if (mem_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::MISS) {
+            if (mem_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::MISS)
+            {
                 // Re-activate all cache-miss-pending instructions in the issue queue
                 inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_PENDING);
@@ -887,7 +934,8 @@ namespace olympia
                 // We may not have to re-activate all of the pending cache miss instruction here
                 // However, re-activation must be scheduled somewhere else
 
-                if (inst_info_ptr->getInstPtr() == inst_ptr) {
+                if (inst_info_ptr->getInstPtr() == inst_ptr)
+                {
                     // Update issue priority for this outstanding cache miss
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                     inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
@@ -903,14 +951,16 @@ namespace olympia
         }
 
         sparta_assert(is_flushed_inst || is_found,
-                    "Attempt to rehandle cache lookup for instruction not yet in the issue queue!");
+                      "Attempt to rehandle cache lookup for instruction not yet in the issue queue!");
     }
 
     // Update issue priority after store instruction retires
-    void LSU::updateIssuePriorityAfterStoreInstRetire_(const InstPtr & inst_ptr)
+    void LSU::updateIssuePriorityAfterStoreInstRetire_(const InstPtr &inst_ptr)
     {
-        for (auto &inst_info_ptr : ldst_inst_queue_) {
-            if (inst_info_ptr->getInstPtr() == inst_ptr) {
+        for (auto &inst_info_ptr : ldst_inst_queue_)
+        {
+            if (inst_info_ptr->getInstPtr() == inst_ptr)
+            {
 
                 inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_PENDING);
@@ -920,23 +970,24 @@ namespace olympia
         }
 
         sparta_assert(false,
-            "Attempt to update issue priority for instruction not yet in the issue queue!");
-
+                      "Attempt to update issue priority for instruction not yet in the issue queue!");
     }
 
     // Flush instruction issue queue
-    template<typename Comp>
-    void LSU::flushIssueQueue_(const Comp & flush)
+    template <typename Comp>
+    void LSU::flushIssueQueue_(const Comp &flush)
     {
         uint32_t credits_to_send = 0;
 
         auto iter = ldst_inst_queue_.begin();
-        while (iter != ldst_inst_queue_.end()) {
+        while (iter != ldst_inst_queue_.end())
+        {
             auto inst_id = (*iter)->getInstPtr()->getUniqueID();
 
             auto delete_iter = iter++;
 
-            if (flush(inst_id)) {
+            if (flush(inst_id))
+            {
                 ldst_inst_queue_.erase(delete_iter);
 
                 // NOTE:
@@ -948,7 +999,8 @@ namespace olympia
             }
         }
 
-        if (credits_to_send > 0) {
+        if (credits_to_send > 0)
+        {
             out_lsu_credits_.send(credits_to_send);
 
             ILOG("Flush " << credits_to_send << " instructions in issue queue!");
@@ -956,22 +1008,25 @@ namespace olympia
     }
 
     // Flush load/store pipe
-    template<typename Comp>
-    void LSU::flushLSPipeline_(const Comp & flush)
+    template <typename Comp>
+    void LSU::flushLSPipeline_(const Comp &flush)
     {
         uint32_t stage_id = 0;
-        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++) {
+        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++)
+        {
             // If the pipe stage is already invalid, no need to flush
-            if (!iter.isValid()) {
+            if (!iter.isValid())
+            {
                 continue;
             }
 
             auto inst_id = (*iter)->getInstPtr()->getUniqueID();
-            if (flush(inst_id)) {
+            if (flush(inst_id))
+            {
                 ldst_pipeline_.flushStage(iter);
 
                 ILOG("Flush Pipeline Stage[" << stage_id
-                     << "], Instruction ID: " << inst_id);
+                                             << "], Instruction ID: " << inst_id);
             }
         }
     }

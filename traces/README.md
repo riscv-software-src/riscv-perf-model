@@ -95,12 +95,14 @@ Using the [stf_lib]() in the [Sparcians](https://github.com/sparcians)
 repo, Olympia is capable of reading a RISC-V STF trace generated from
 a functional simulator.  Included in Olympia (in this directory) is a
 trace of the "hot spot" of Dhrystone generated from the Dromajo
-simulator.
+simulator. This directory also contains a trace of Coremark generated
+similarly.
 
 To run the STF file, just provide it to olympia:
 ```
 cd build
 ./olympia ../traces/dhrystone.zstf
+./olympia ../traces/core_riscv.zstf
 ```
 
 ### Generating an STF Trace with Dromajo
@@ -183,7 +185,26 @@ Copy `dhry_riscv.elf` into the buildroot and rebuild the root file system:
 % make -C buildroot-2020.05.1
 % cp buildroot-2020.05.1/output/images/rootfs.cpio .
 ```
-Run Dromajo with the flag `--stf_trace`, log in, and run Dhrystone for
+
+To build `coremark` (not included with olympia), clone RISC-V ported `coremark` from
+the below url. Set `RISCV_TOOLSUITE` to a local copy of a RISC-V toolchain location.
+```
+# Clone Coremark from EEMBC and cd into it
+% git clone --recurse-submodules https://github.com/riscv-boom/riscv-coremark.git
+% cd riscv-coremark/coremark
+
+# Build coremark
+% make RISCVTOOLS=$RISCV_TOOLSUITE PORT_DIR=../riscv64/ compile
+```
+
+Copy the generated `coremark.riscv` into the buildroot and rebuild the root file system:
+```
+% cp coremark.riscv ./buildroot-2020.05.1/output/target/sbin/
+% make -C buildroot-2020.05.1
+% cp buildroot-2020.05.1/output/images/rootfs.cpio .
+```
+
+Run Dromajo with the flag `--stf_trace`, log in, and run the benchmark for
 1000 iterations (as an example):
 
 ```

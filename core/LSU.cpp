@@ -18,7 +18,9 @@ namespace olympia
         ldst_inst_queue_size_(p->ldst_inst_queue_size),
 
         tlb_always_hit_(p->tlb_always_hit),
-        dl1_always_hit_(p->dl1_always_hit)
+        dl1_always_hit_(p->dl1_always_hit),
+        stall_pipeline_on_miss_(p->stall_pipeline_on_miss),
+        allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);

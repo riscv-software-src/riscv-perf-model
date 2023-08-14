@@ -54,6 +54,9 @@ namespace olympia
             PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
             PARAMETER(uint32_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(bool, dl1_always_hit, false, "DL1 will always hit")
+            // LSU microarchitecture parameters
+            PARAMETER(bool, stall_pipeline_on_miss, true, "Stall pipeline on miss event")
+            PARAMETER(bool, allow_speculative_load_exec, true, "Allow loads to proceed speculatively before all older store addresses are known")
         };
 
         /*!
@@ -408,7 +411,9 @@ namespace olympia
         LoadStorePipeline ldst_pipeline_
             {"LoadStorePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
 
-
+        // LSU Microarchitecture parameters
+        const bool stall_pipeline_on_miss_;
+        const bool allow_speculative_load_exec_;
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////

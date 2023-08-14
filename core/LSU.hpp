@@ -47,6 +47,8 @@ namespace olympia
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
+            PARAMETER(uint32_t, ld_queue_size, ldst_inst_queue_size, "Load Queue size")
+            PARAMETER(uint32_t, st_queue_size, ldst_inst_queue_size, "Store Queue Size")
             // Parameters for the TLB cache
             PARAMETER(bool, tlb_always_hit, false, "L1 TLB will always hit")
             PARAMETER(uint32_t, mmu_latency, 1, "Latency to mmu lookup")
@@ -376,6 +378,12 @@ namespace olympia
         using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
         LoadStoreIssueQueue ldst_inst_queue_;
         const uint32_t ldst_inst_queue_size_;
+        // Load Queue
+        sparta::Buffer<LoadStoreInstInfoPtr> load_queue_;
+        const uint32_t ld_queue_size_;
+        // Store Queue
+        sparta::Buffer<LoadStoreInstInfoPtr> store_queue_;
+        const uint32_t st_queue_size_;
 
         // TLB Cache
         SimpleTLB* tlb_cache_ = nullptr;

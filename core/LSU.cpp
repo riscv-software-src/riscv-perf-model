@@ -17,6 +17,11 @@ namespace olympia
         ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
         ldst_inst_queue_size_(p->ldst_inst_queue_size),
 
+        load_queue_("load_queue", p->ld_queue_size, getClock()),
+        ld_queue_size_(p->ld_queue_size),
+        store_queue_("store_queue", p->st_queue_size, getClock()),
+        st_queue_size_(p->st_queue_size),
+
         tlb_always_hit_(p->tlb_always_hit),
         mmu_latency_(p->mmu_latency),
         dl1_always_hit_(p->dl1_always_hit),
@@ -26,6 +31,9 @@ namespace olympia
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
+
+        load_queue_.enableCollection(node);
+        store_queue_.enableCollection(node);
 
 
         // Startup handler for sending initial credits
@@ -94,6 +102,14 @@ namespace olympia
     // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
     void LSU::sendInitialCredits_()
     {
+        setupScoreboard_();
+        out_lsu_credits_.send(ldst_inst_queue_size_);
+
+        ILOG("LSU initial credits for Dispatch Unit: " << ldst_inst_queue_size_);
+    }
+
+    // Setup scoreboard View
+    void LSU::setupScoreboard_() {
         // Setup scoreboard view upon register file
         std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
         for(const auto rf : reg_files)
@@ -102,9 +118,6 @@ namespace olympia
                                                                    core_types::regfile_names[rf],
                                                                    getContainer()));
         }
-        out_lsu_credits_.send(ldst_inst_queue_size_);
-
-        ILOG("LSU initial credits for Dispatch Unit: " << ldst_inst_queue_size_);
     }
 
     // Receive new load/store instruction from Dispatch Unit

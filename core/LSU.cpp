@@ -18,12 +18,7 @@ namespace olympia
         ldst_inst_queue_size_(p->ldst_inst_queue_size),
 
         tlb_always_hit_(p->tlb_always_hit),
-        dl1_always_hit_(p->dl1_always_hit),
-
-        issue_latency_(p->issue_latency),
-        mmu_latency_(p->mmu_latency),
-        cache_latency_(p->cache_latency),
-        complete_latency_(p->complete_latency)
+        dl1_always_hit_(p->dl1_always_hit)
     {
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);

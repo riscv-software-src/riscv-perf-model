@@ -54,11 +54,6 @@ namespace olympia
             PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
             PARAMETER(uint32_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(bool, dl1_always_hit, false, "DL1 will always hit")
-            // Parameters for event scheduling
-            PARAMETER(uint32_t, issue_latency, 1, "Instruction issue latency")
-            PARAMETER(uint32_t, mmu_latency, 1, "MMU/TLB access latency")
-            PARAMETER(uint32_t, cache_latency, 1, "Cache access latency")
-            PARAMETER(uint32_t, complete_latency, 1, "Instruction complete latency")
         };
 
         /*!
@@ -412,12 +407,6 @@ namespace olympia
         using LoadStorePipeline = sparta::Pipeline<MemoryAccessInfoPtr>;
         LoadStorePipeline ldst_pipeline_
             {"LoadStorePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
-
-        // Event Scheduling Parameters
-        const uint32_t issue_latency_;
-        const uint32_t mmu_latency_;
-        const uint32_t cache_latency_;
-        const uint32_t complete_latency_;
 
 
         ////////////////////////////////////////////////////////////////////////////////

@@ -49,6 +49,7 @@ namespace olympia
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             // Parameters for the TLB cache
             PARAMETER(bool, tlb_always_hit, false, "L1 TLB will always hit")
+            PARAMETER(uint32_t, mmu_latency, 1, "Latency to mmu lookup")
             // Parameters for the DL1 cache
             PARAMETER(uint32_t, dl1_line_size, 64, "DL1 line size (power of 2)")
             PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
@@ -383,6 +384,8 @@ namespace olympia
         bool mmu_pending_inst_flushed = false;
         // Keep track of the instruction that causes current outstanding TLB miss
         InstPtr mmu_pending_inst_ptr_ = nullptr;
+        // MMU latency parameter
+        const uint32_t mmu_latency_;
 
         // NOTE:
         // Depending on how many outstanding TLB misses the MMU could handle at the same time

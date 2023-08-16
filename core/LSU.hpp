@@ -493,11 +493,23 @@ namespace olympia
         // Pop completed load/store instruction out of issue queue
         void popIssueQueue_(const InstPtr &);
 
+        // Pop completed load instruction out of issue queue
+        void popLoadQueue_(const InstPtr &);
+
+        // Pop completed store instruction out of issue queue
+        void popStoreQueue_(const InstPtr &);
+
         // Arbitrate instruction issue from ldst_inst_queue
         const LoadStoreInstInfoPtr & arbitrateInstIssue_();
 
         // Check for ready to issue instructions
         bool isReadyToIssueInsts_() const;
+
+        // Append new load instruction into load queue
+        void appendLoadQueue_(const LoadStoreInstInfoPtr &);
+
+        // Append new store instruction into store queue
+        void appendStoreQueue_(const LoadStoreInstInfoPtr &);
 
         // Access MMU/TLB
         bool MMULookup_(const MemoryAccessInfoPtr &);

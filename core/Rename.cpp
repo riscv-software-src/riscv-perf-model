@@ -132,11 +132,12 @@ namespace olympia
         }
 
         const auto & srcs = inst_ptr->getRenameData().getSourceList();
-        if(inst_ptr->isStoreInst()){
-            // decrement counter for store data tracking
+        // decrement reference for store instruction to data register
+        if(inst_ptr->isStoreInst()) {
             const auto & data_reg = inst_ptr->getRenameData().getDataReg();
             --reference_counter_[data_reg.rf][data_reg.val];
         }
+
         // freeing references to PRF
         for(const auto & src: srcs)
         {
@@ -177,10 +178,6 @@ namespace olympia
         for(auto & i : *insts) {
             // create an index count for each instruction entered
             const auto & dests = i->getDestOpInfoList();
-            if(i->isLoadStoreInst()){
-                // For STORE/LOADs, addresses use INTEGER PRF
-                current_counts.cumulative_reg_counts[core_types::RegFile::RF_INTEGER]++;
-            }
             if(dests.size() > 0){
                 sparta_assert(dests.size() == 1); // we should only have one destination
                 const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);
@@ -271,8 +268,12 @@ namespace olympia
                 const auto & dests = renaming_inst->getDestOpInfoList();
                 for(const auto & src : srcs)
                 {
-                    if(renaming_inst->isLoadStoreInst()){
-                        if(src.field_id == mavis::InstMetaData::OperandFieldID::RS2){
+                    // we check for load/store separately because address operand
+                    // is always integer
+                    if(renaming_inst->isLoadStoreInst()) {
+                        // check for data operand existing based on RS2 existence
+                        // store data register info separately
+                        if(src.field_id == mavis::InstMetaData::OperandFieldID::RS2) {
                             const auto rf  = olympia::coreutils::determineRegisterFile(src);
                             const auto num = src.field_value;
                             auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
@@ -285,25 +286,22 @@ namespace olympia
                                 << sparta::printBitSet(bitmask)
                                 << " for '" << rf << "' scoreboard");
                         }
-                        else{
-                            core_types::RegFile rf = core_types::RegFile::RF_INTEGER;
+                        else {
+                            // address is always INTEGER
+                            const auto rf  = core_types::RF_INTEGER;
+                            const auto num = src.field_value;
                             auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                            const uint32_t prf = freelist_[rf].front();
-                            freelist_[rf].pop();
-                            renaming_inst->getRenameData().setSource({prf, rf});
+                            const uint32_t prf = map_table_[rf][num];
                             reference_counter_[rf][prf]++;
+                            renaming_inst->getRenameData().setSource({prf, rf});
                             bitmask.set(prf);
 
-                            // TODO: we set address register to ready for now, but
-                            // when we seperate address calculation for runahead
-                            // we would clear the scoreboard
-                            scoreboards_[rf]->set(bitmask);
-                            ILOG("\tsetup LSU address register bit mask "
+                            ILOG("\tsetup source register bit mask "
                                 << sparta::printBitSet(bitmask)
                                 << " for '" << rf << "' scoreboard");
                         }
                     }
-                    else{
+                    else {
                         const auto rf  = olympia::coreutils::determineRegisterFile(src);
                         const auto num = src.field_value;
                         auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);

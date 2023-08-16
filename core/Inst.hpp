@@ -99,6 +99,7 @@ namespace olympia
              const sparta::Clock             * clk) :
             opcode_info_    (opcode_info),
             inst_arch_info_ (inst_arch_info),
+            is_store_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::STORE)),
             status_state_(Status::FETCHED)
         {
             sparta_assert(inst_arch_info_ != nullptr,
@@ -219,7 +220,7 @@ namespace olympia
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
-        bool                   is_store_ = opcode_info_->getDestOpInfoList().size() == 0 && inst_arch_info_->isLoadStore();
+        bool                   is_store_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 

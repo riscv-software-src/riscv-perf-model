@@ -10,6 +10,7 @@
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "mavis/OpcodeInfo.h"
+#include "mavis/InstMetaData.h"
 
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
@@ -170,7 +171,7 @@ namespace olympia
         const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
 
         // Static instruction information
-        bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
+        bool        isStoreInst() const    { return opcode_info_->isInstType(mavis::InstMetaData::InstructionTypes::STORE);}
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked

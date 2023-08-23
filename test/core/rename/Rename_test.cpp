@@ -410,6 +410,7 @@ void runTest(int argc, char **argv)
         rename_tester.test_float(*my_rename);
     }
     else if(input_file == "raw_int_lsu.json"){
+        // testing RAW dependency for address operand
         cls.populateSimulation(&sim);
         sparta::RootTreeNode* root_node = sim.getRoot();
 
@@ -422,6 +423,7 @@ void runTest(int argc, char **argv)
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     }
     else if(input_file == "raw_float_lsu.json"){
+        // testing RAW dependency for data operand
         cls.populateSimulation(&sim);
         sparta::RootTreeNode* root_node = sim.getRoot();
 

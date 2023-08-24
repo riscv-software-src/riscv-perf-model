@@ -11,6 +11,7 @@
 #include "Dispatch.hpp"
 #include "Execute.hpp"
 #include "LSU.hpp"
+#include "MMU.hpp"
 #include "SimpleTLB.hpp"
 #include "BIU.hpp"
 #include "MSS.hpp"
@@ -53,13 +54,18 @@ namespace olympia{
         //! \brief Resouce Factory to build a Execute Unit
         ExecuteFactory  execute_rf;
 
+        //! \brief Resouce Factory to build a TLB Unit
+        sparta::ResourceFactory<olympia::SimpleTLB,
+                olympia::SimpleTLB::TLBParameterSet> tlb_rf;
+
+        //! \brief Resouce Factory to build a MMU Unit
+        sparta::ResourceFactory<olympia::MMU,
+                                olympia::MMU::MMUParameterSet> mmu_rf;
+
         //! \brief Resouce Factory to build a LSU Unit
         sparta::ResourceFactory<olympia::LSU,
                                 olympia::LSU::LSUParameterSet> lsu_rf;
 
-        //! \brief Resouce Factory to build a TLB Unit
-        sparta::ResourceFactory<olympia::SimpleTLB,
-                                olympia::SimpleTLB::TLBParameterSet> tlb_rf;
 
         //! \brief Resouce Factory to build a BIU Unit
         sparta::ResourceFactory<olympia_mss::BIU,

@@ -24,8 +24,9 @@
 #include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
-#include "SimpleTLB.hpp"
 #include "SimpleDL1.hpp"
+#include "LSU_MMU_Shared.h"
+#include "MMU.hpp"
 
 namespace olympia
 {
@@ -49,9 +50,6 @@ namespace olympia
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             PARAMETER(uint32_t, ld_queue_size, ldst_inst_queue_size, "Load Queue size")
             PARAMETER(uint32_t, st_queue_size, ldst_inst_queue_size, "Store Queue Size")
-            // Parameters for the TLB cache
-            PARAMETER(bool, tlb_always_hit, false, "L1 TLB will always hit")
-            PARAMETER(uint32_t, mmu_latency, 1, "Latency to mmu lookup")
             // Parameters for the DL1 cache
             PARAMETER(uint32_t, dl1_line_size, 64, "DL1 line size (power of 2)")
             PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
@@ -90,10 +88,8 @@ namespace olympia
 
 
         class LoadStoreInstInfo;
-        class MemoryAccessInfo;
 
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
-        using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
         using FlushCriteria = FlushManager::FlushingCriteria;
 
         enum class PipelineStage
@@ -104,123 +100,8 @@ namespace olympia
             NUM_STAGES
         };
 
-        // Forward declaration of the Pair Definition class is must as we are friending it.
-        class MemoryAccessInfoPairDef;
-        // Keep record of memory access information in LSU
-        class MemoryAccessInfo {
-        public:
-
-            // The modeler needs to alias a type called "SpartaPairDefinitionType" to the Pair Definition class of itself
-            using SpartaPairDefinitionType = MemoryAccessInfoPairDef;
-
-            enum class MMUState : std::uint32_t {
-                NO_ACCESS = 0,
-                __FIRST = NO_ACCESS,
-                MISS,
-                HIT,
-                NUM_STATES,
-                __LAST = NUM_STATES
-            };
-
-            enum class CacheState : std::uint64_t {
-                NO_ACCESS = 0,
-                __FIRST = NO_ACCESS,
-                MISS,
-                HIT,
-                NUM_STATES,
-                __LAST = NUM_STATES
-            };
-
-            MemoryAccessInfo() = delete;
-
-            MemoryAccessInfo(const InstPtr & inst_ptr) :
-                ldst_inst_ptr_(inst_ptr),
-                phyAddrIsReady_(false),
-                mmu_access_state_(MMUState::NO_ACCESS),
-
-                // Construct the State object here
-                cache_access_state_(CacheState::NO_ACCESS) {}
-
-            virtual ~MemoryAccessInfo() {}
-
-            // This Inst pointer will act as our portal to the Inst class
-            // and we will use this pointer to query values from functions of Inst class
-            const InstPtr & getInstPtr() const { return ldst_inst_ptr_; }
-
-            // This is a function which will be added in the SPARTA_ADDPAIRs API.
-            uint64_t getInstUniqueID() const {
-                const InstPtr &inst_ptr = getInstPtr();
-
-                return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
-            }
-
-            void setPhyAddrStatus(bool isReady) { phyAddrIsReady_ = isReady; }
-            bool getPhyAddrStatus() const { return phyAddrIsReady_; }
-
-            const MMUState & getMMUState() const {
-                return mmu_access_state_;
-            }
-
-            void setMMUState(const MMUState & state) {
-                mmu_access_state_ = state;
-            }
-
-            const CacheState & getCacheState() const {
-                return cache_access_state_;
-            }
-            void setCacheState(const CacheState & state) {
-                cache_access_state_ = state;
-            }
-
-            // This is a function which will be added in the addArgs API.
-            bool getPhyAddrIsReady() const{
-                return phyAddrIsReady_;
-            }
-
-
-        private:
-            // load/store instruction pointer
-            InstPtr ldst_inst_ptr_;
-
-            // Indicate MMU address translation status
-            bool phyAddrIsReady_;
-
-            // MMU access status
-            MMUState mmu_access_state_;
-
-            // Cache access status
-            CacheState cache_access_state_;
-
-            // Scoreboards
-            using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
-            ScoreboardViews scoreboard_views_;
-
-        };  // class MemoryAccessInfo
-
         // allocator for this object type
         sparta::SpartaSharedPointerAllocator<MemoryAccessInfo> memory_access_allocator;
-
-        /*!
-        * \class MemoryAccessInfoPairDef
-        * \brief Pair Definition class of the Memory Access Information that flows through the example/CoreModel
-        */
-
-        // This is the definition of the PairDefinition class of MemoryAccessInfo.
-        // This PairDefinition class could be named anything but it needs to inherit
-        // publicly from sparta::PairDefinition templatized on the actual class MemoryAcccessInfo.
-        class MemoryAccessInfoPairDef : public sparta::PairDefinition<MemoryAccessInfo>{
-        public:
-
-            // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-            MemoryAccessInfoPairDef() : PairDefinition<MemoryAccessInfo>(){
-                SPARTA_INVOKE_PAIRS(MemoryAccessInfo);
-            }
-            SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &MemoryAccessInfo::getInstUniqueID),
-                                  SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrIsReady),
-                                  SPARTA_ADDPAIR("mmu",   &MemoryAccessInfo::getMMUState),
-                                  SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
-                                  SPARTA_FLATTEN(         &MemoryAccessInfo::getInstPtr))
-        };
 
         // Forward declaration of the Pair Definition class is must as we are friending it.
         class LoadStoreInstInfoPairDef;
@@ -336,9 +217,9 @@ namespace olympia
                                   SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr))
         };
 
-        void setTLB(SimpleTLB& tlb)
+        void setMMU(MMU& mmu)
         {
-            tlb_cache_ = &tlb;
+            mmu_ = &mmu;
         }
     private:
 
@@ -386,18 +267,11 @@ namespace olympia
         const uint32_t st_queue_size_;
 
         // TLB Cache
-        SimpleTLB* tlb_cache_ = nullptr;
-        const bool tlb_always_hit_;
+        MMU* mmu_ = nullptr;
         bool mmu_busy_ = false;
         bool mmu_pending_inst_flushed = false;
         // Keep track of the instruction that causes current outstanding TLB miss
         InstPtr mmu_pending_inst_ptr_ = nullptr;
-        // MMU latency parameter
-        const uint32_t mmu_latency_;
-
-        // NOTE:
-        // Depending on how many outstanding TLB misses the MMU could handle at the same time
-        // This single slot could potentially be extended to a mmu pending miss queue
 
 
         // L1 Data Cache
@@ -511,14 +385,8 @@ namespace olympia
         // Append new store instruction into store queue
         void appendStoreQueue_(const LoadStoreInstInfoPtr &);
 
-        // Access MMU/TLB
-        bool MMULookup_(const MemoryAccessInfoPtr &);
-
         // Re-handle outstanding MMU access request
         void rehandleMMULookupReq_(const InstPtr &);
-
-        // Reload TLB entry
-        void reloadTLB_(uint64_t);
 
         // Access Cache
         bool cacheLookup_(const MemoryAccessInfoPtr &);
@@ -572,14 +440,6 @@ namespace olympia
             getStatisticSet(), "lsu_flushes",
             "Number of instruction flushes at LSU", sparta::Counter::COUNT_NORMAL
         };
-        sparta::Counter tlb_hits_{
-            getStatisticSet(), "tlb_hits",
-            "Number of TLB hits", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter tlb_misses_{
-            getStatisticSet(), "tlb_misses",
-            "Number of TLB misses", sparta::Counter::COUNT_NORMAL
-        };
         sparta::Counter dl1_cache_hits_{
             getStatisticSet(), "dl1_cache_hits",
             "Number of DL1 cache hits", sparta::Counter::COUNT_NORMAL
@@ -598,36 +458,36 @@ namespace olympia
     };
 
     inline std::ostream & operator<<(std::ostream & os,
-        const olympia::LSU::MemoryAccessInfo::MMUState & mmu_access_state){
+        const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
         switch(mmu_access_state){
-            case LSU::MemoryAccessInfo::MMUState::NO_ACCESS:
+            case olympia::MemoryAccessInfo::MMUState::NO_ACCESS:
                 os << "no_access";
                 break;
-            case LSU::MemoryAccessInfo::MMUState::MISS:
+            case olympia::MemoryAccessInfo::MMUState::MISS:
                 os << "miss";
                 break;
-            case LSU::MemoryAccessInfo::MMUState::HIT:
+            case olympia::MemoryAccessInfo::MMUState::HIT:
                 os << "hit";
                 break;
-            case LSU::MemoryAccessInfo::MMUState::NUM_STATES:
+            case olympia::MemoryAccessInfo::MMUState::NUM_STATES:
                 throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
         }
         return os;
     }
 
     inline std::ostream & operator<<(std::ostream & os,
-        const olympia::LSU::MemoryAccessInfo::CacheState & cache_access_state){
+        const olympia::MemoryAccessInfo::CacheState & cache_access_state){
         switch(cache_access_state){
-            case LSU::MemoryAccessInfo::CacheState::NO_ACCESS:
+            case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
                 os << "no_access";
                 break;
-            case LSU::MemoryAccessInfo::CacheState::MISS:
+            case olympia::MemoryAccessInfo::CacheState::MISS:
                 os << "miss";
                 break;
-            case LSU::MemoryAccessInfo::CacheState::HIT:
+            case olympia::MemoryAccessInfo::CacheState::HIT:
                 os << "hit";
                 break;
-            case LSU::MemoryAccessInfo::CacheState::NUM_STATES:
+            case olympia::MemoryAccessInfo::CacheState::NUM_STATES:
                 throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
         }
         return os;
@@ -701,14 +561,14 @@ namespace olympia
     }
 
     inline std::ostream & operator<<(std::ostream & os,
-                                     const olympia::LSU::MemoryAccessInfo & mem)
+                                     const olympia::MemoryAccessInfo & mem)
     {
         os << "memptr: " << mem.getInstPtr();
         return os;
     }
 
     inline std::ostream & operator<<(std::ostream & os,
-                                     const olympia::LSU::MemoryAccessInfoPtr & mem_ptr)
+                                     const olympia::MemoryAccessInfoPtr & mem_ptr)
     {
         os << *mem_ptr;
         return os;

@@ -22,8 +22,6 @@ namespace olympia
         store_queue_("store_queue", p->st_queue_size, getClock()),
         st_queue_size_(p->st_queue_size),
 
-        tlb_always_hit_(p->tlb_always_hit),
-        mmu_latency_(p->mmu_latency),
         dl1_always_hit_(p->dl1_always_hit),
         stall_pipeline_on_miss_(p->stall_pipeline_on_miss),
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
@@ -274,7 +272,7 @@ namespace olympia
         }
 
         // Access TLB, and check TLB hit or miss
-        bool TLB_HIT = MMULookup_(mem_access_info_ptr);
+        bool TLB_HIT = mmu_->Lookup(mem_access_info_ptr);
 
         if (TLB_HIT) {
             // Update memory access info
@@ -720,45 +718,6 @@ namespace olympia
         ILOG("Append new store instruction to store queue!");
     }
 
-
-    // Access MMU/TLB
-    bool LSU::MMULookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
-    {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t vaddr = inst_ptr->getTargetVAddr();
-
-        bool tlb_hit = false;
-
-        // C++ comma operator: assign tlb_hit first, then evaluate it. Just For Fun
-        if (tlb_hit = tlb_always_hit_, tlb_hit) {
-        }
-        else {
-            auto tlb_entry = tlb_cache_->peekLine(vaddr);
-            tlb_hit = (tlb_entry != nullptr) && tlb_entry->isValid();
-
-            // Update MRU replacement state if TLB HIT
-            if (tlb_hit) {
-                tlb_cache_->touch(*tlb_entry);
-            }
-        }
-
-
-        if (tlb_always_hit_) {
-            ILOG("TLB HIT all the time: vaddr=0x" << std::hex << vaddr);
-            tlb_hits_++;
-        }
-        else if (tlb_hit) {
-            ILOG("TLB HIT: vaddr=0x" << std::hex << vaddr);
-            tlb_hits_++;
-        }
-        else {
-            ILOG("TLB MISS: vaddr=0x" << std::hex << vaddr);
-            tlb_misses_++;
-        }
-
-        return tlb_hit;
-    }
-
     // Re-handle outstanding MMU access request
     void LSU::rehandleMMULookupReq_(const InstPtr & inst_ptr)
     {
@@ -789,22 +748,13 @@ namespace olympia
         ILOG("BIU Ack for an outstanding MMU miss is received!");
 
         // Reload TLB entry
-        reloadTLB_(inst_ptr->getTargetVAddr());
+        mmu_->reloadTLB_(inst_ptr->getTargetVAddr());
 
         // Update issue priority & Schedule an instruction (re-)issue event
         updateIssuePriorityAfterTLBReload_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
         ILOG("MMU rehandling event is scheduled!");
-    }
-
-    // Reload TLB entry
-    void LSU::reloadTLB_(uint64_t vaddr)
-    {
-        auto tlb_entry = &tlb_cache_->getLineForReplacementWithInvalidCheck(vaddr);
-        tlb_cache_->allocateWithMRUUpdate(*tlb_entry, vaddr);
-
-        ILOG("TLB reload complete!");
     }
 
     // Access Cache

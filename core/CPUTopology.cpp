@@ -69,21 +69,29 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->execute_rf
         },
         {
+                "mmu",
+                "cpu.core*",
+                "MMU Unit",
+                sparta::TreeNode::GROUP_NAME_NONE,
+                sparta::TreeNode::GROUP_IDX_NONE,
+                &factories->mmu_rf
+        },
+        {
+                "tlb",
+                "cpu.core*.mmu",
+                "TLB Unit",
+                sparta::TreeNode::GROUP_NAME_NONE,
+                sparta::TreeNode::GROUP_IDX_NONE,
+                &factories->tlb_rf,
+                true
+        },
+        {
             "lsu",
             "cpu.core*",
             "Load-Store Unit",
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
             &factories->lsu_rf
-        },
-        {
-            "tlb",
-            "cpu.core*.lsu",
-            "TLB Unit",
-            sparta::TreeNode::GROUP_NAME_NONE,
-            sparta::TreeNode::GROUP_IDX_NONE,
-            &factories->tlb_rf,
-            true
         },
         {
             "biu",

@@ -132,6 +132,12 @@ namespace olympia
         }
 
         const auto & srcs = inst_ptr->getRenameData().getSourceList();
+        // decrement reference for store instruction to data register
+        if(inst_ptr->isStoreInst()) {
+            const auto & data_reg = inst_ptr->getRenameData().getDataReg();
+            --reference_counter_[data_reg.rf][data_reg.val];
+        }
+
         // freeing references to PRF
         for(const auto & src: srcs)
         {
@@ -176,14 +182,6 @@ namespace olympia
                 sparta_assert(dests.size() == 1); // we should only have one destination
                 const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);
                 current_counts.cumulative_reg_counts[rf]++;
-            }
-            else{
-                // for other instructions check the sources
-                const auto & srcs = i->getSourceOpInfoList();
-                if(srcs.size() > 0){
-                    const auto rf = olympia::coreutils::determineRegisterFile(srcs[0]);
-                    current_counts.cumulative_reg_counts[rf]++;
-                }
             }
             uop_queue_.push(i);
             uop_queue_regcount_data_.push_back(current_counts);
@@ -266,30 +264,63 @@ namespace olympia
                 renaming_inst->setStatus(Inst::Status::RENAMED);
                 ILOG("sending inst to dispatch: " << renaming_inst);
 
-                // TODO: Register renaming for sources
                 const auto & srcs = renaming_inst->getSourceOpInfoList();
+                const auto & dests = renaming_inst->getDestOpInfoList();
                 for(const auto & src : srcs)
                 {
-                    const auto rf  = olympia::coreutils::determineRegisterFile(src);
-                    const auto num = src.field_value;
-                    auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                    const uint32_t prf = map_table_[rf][num];
-                    reference_counter_[rf][prf]++;
-                    renaming_inst->getRenameData().setSource({prf, rf});
-                    bitmask.set(prf);
-                    ILOG("\tsetup source register bit mask "
-                         << sparta::printBitSet(bitmask)
-                         << " for '" << rf << "' scoreboard");
-                }
+                    // we check for load/store separately because address operand
+                    // is always integer
+                    if(renaming_inst->isLoadStoreInst()) {
+                        // check for data operand existing based on RS2 existence
+                        // store data register info separately
+                        if(src.field_id == mavis::InstMetaData::OperandFieldID::RS2) {
+                            const auto rf  = olympia::coreutils::determineRegisterFile(src);
+                            const auto num = src.field_value;
+                            auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
+                            const uint32_t prf = map_table_[rf][num];
+                            reference_counter_[rf][prf]++;
+                            renaming_inst->getRenameData().setDataReg({prf, rf});
+                            bitmask.set(prf);
 
-                // TODO: Register renaming for destinations
-                const auto & dests = renaming_inst->getDestOpInfoList();
+                            ILOG("\tsetup store data register bit mask "
+                                << sparta::printBitSet(bitmask)
+                                << " for '" << rf << "' scoreboard");
+                        }
+                        else {
+                            // address is always INTEGER
+                            const auto rf  = core_types::RF_INTEGER;
+                            const auto num = src.field_value;
+                            auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
+                            const uint32_t prf = map_table_[rf][num];
+                            reference_counter_[rf][prf]++;
+                            renaming_inst->getRenameData().setSource({prf, rf});
+                            bitmask.set(prf);
+
+                            ILOG("\tsetup source register bit mask "
+                                << sparta::printBitSet(bitmask)
+                                << " for '" << rf << "' scoreboard");
+                        }
+                    }
+                    else {
+                        const auto rf  = olympia::coreutils::determineRegisterFile(src);
+                        const auto num = src.field_value;
+                        auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
+                        const uint32_t prf = map_table_[rf][num];
+                        reference_counter_[rf][prf]++;
+                        renaming_inst->getRenameData().setSource({prf, rf});
+                        bitmask.set(prf);
+
+                        ILOG("\tsetup source register bit mask "
+                            << sparta::printBitSet(bitmask)
+                            << " for '" << rf << "' scoreboard");
+                    }
+                }
+                
                 for(const auto & dest : dests)
                 {
                     const auto rf  = olympia::coreutils::determineRegisterFile(dest);
                     const auto num = dest.field_value;
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
-
                     const uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
                     renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf});

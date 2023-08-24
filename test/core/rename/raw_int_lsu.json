@@ -7,8 +7,9 @@
     },
     {
         "mnemonic": "sw",
-        "rs2": 3,
-        "vaddr" : "0xdeadbeef"
+        "rs2": 4,
+        "rs1": 3,
+        "imm": 5
     },
     {
         "mnemonic": "lw",

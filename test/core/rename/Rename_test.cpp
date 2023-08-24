@@ -409,7 +409,8 @@ void runTest(int argc, char **argv)
         cls.runSimulator(&sim, 4);
         rename_tester.test_float(*my_rename);
     }
-    else if(input_file == "raw_lsu.json"){
+    else if(input_file == "raw_int_lsu.json"){
+        // testing RAW dependency for address operand
         cls.populateSimulation(&sim);
         sparta::RootTreeNode* root_node = sim.getRoot();
 
@@ -417,7 +418,20 @@ void runTest(int argc, char **argv)
         olympia::LSUTester lsu_tester;
         olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.alu0")->getResourceAs<olympia::ExecutePipe*>();
         olympia::ExecutePipeTester executepipe_tester;
-        cls.runSimulator(&sim, 7);
+        cls.runSimulator(&sim, 6);
+        executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
+        lsu_tester.test_dependent_lsu_instruction(*my_lsu);
+    }
+    else if(input_file == "raw_float_lsu.json"){
+        // testing RAW dependency for data operand
+        cls.populateSimulation(&sim);
+        sparta::RootTreeNode* root_node = sim.getRoot();
+
+        olympia::LSU* my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
+        olympia::LSUTester lsu_tester;
+        olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.fpu0")->getResourceAs<olympia::ExecutePipe*>();
+        olympia::ExecutePipeTester executepipe_tester;
+        cls.runSimulator(&sim, 6);
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     }

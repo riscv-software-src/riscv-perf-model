@@ -85,6 +85,7 @@ namespace olympia
                                                          (dl1_associativity));
         dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));
         ILOG("LSU construct: #" << node->getGroupIdx());
+
     }
 
 
@@ -109,15 +110,40 @@ namespace olympia
     }
 
     // Receive new load/store instruction from Dispatch Unit
-    void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
+    void LSU::getInstsFromDispatch_(const InstPtr &inst_ptr)
     {
-        core_types::RegFile reg_file = core_types::RF_INTEGER;
-        const auto & srcs = inst_ptr->getSourceOpInfoList();
-        if(srcs.size() > 0){
-            reg_file = olympia::coreutils::determineRegisterFile(srcs[0]);
+        bool all_ready = true; // assume all ready
+        // address operand check
+        if (!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))) {
+            all_ready = false;
+            const auto &src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
+            scoreboard_views_[core_types::RF_INTEGER]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
+                                                                             [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                                                             {
+                                                                                 this->getInstsFromDispatch_(inst_ptr);
+                                                                             });
+            ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(src_bits));
         }
-        const auto & src_bits = inst_ptr->getSrcRegisterBitMask(reg_file);
-        if(scoreboard_views_[reg_file]->isSet(src_bits)){
+        else {
+            // we wait for address operand to be ready before checking data operand in the case of stores
+            // this way we avoid two live callbacks
+            if (inst_ptr->isStoreInst()) {
+                const auto rf = inst_ptr->getRenameData().getDataReg().rf;
+                const auto &data_bits = inst_ptr->getDataRegisterBitMask(rf);
+
+                if (!scoreboard_views_[rf]->isSet(data_bits)) {
+                    all_ready = false;
+                    scoreboard_views_[rf]->registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
+                                                                [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                                                {
+                                                                    this->getInstsFromDispatch_(inst_ptr);
+                                                                });
+                    ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
+                }
+            }
+        }
+
+        if (all_ready) {
             // Create load/store memory access info
             MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
                                                                                                         inst_ptr);
@@ -140,7 +166,6 @@ namespace olympia
             // (1)Instruction issue queue already has "something READY";
             // (2)Instruction issue arbitration is guaranteed to be sucessful.
 
-
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::SCHEDULED);
 
@@ -150,14 +175,7 @@ namespace olympia
             // either a new issue event, or a re-issue event
             // however, we can ONLY update instruction status as SCHEDULED for a new issue event
 
-
-            ILOG("Another issue event scheduled");
-        }
-        else{
-            scoreboard_views_[reg_file]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
-                                        [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask&)
-                                        {this->getInstsFromDispatch_(inst_ptr);});
-            ILOG("Registering Callback: " << inst_ptr);
+            ILOG("Another issue event scheduled " << inst_ptr);
         }
     }
 
@@ -432,7 +450,7 @@ namespace olympia
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool isStoreInst = inst_ptr->isStoreInst();
-
+        ILOG("Completing inst: " << inst_ptr);
         ILOG(mem_access_info_ptr);
 
         core_types::RegFile reg_file = core_types::RF_INTEGER;
@@ -554,7 +572,7 @@ namespace olympia
     // Append new load/store instruction into issue queue
     void LSU::appendIssueQueue_(const LoadStoreInstInfoPtr & inst_info_ptr)
     {
-        sparta_assert(ldst_inst_queue_.size() <= ldst_inst_queue_size_,
+        sparta_assert(ldst_inst_queue_.size() < ldst_inst_queue_size_,
                         "Appending issue queue causes overflows!");
 
         // Always append newly dispatched instructions to the back of issue queue

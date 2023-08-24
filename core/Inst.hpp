@@ -44,6 +44,9 @@ namespace olympia
             void setOriginalDestination(const Reg & destination){
                 original_dest_ = destination;
             }
+            void setDataReg(const Reg & data_reg){
+                data_reg_ = data_reg;
+            }
             void setSource(const Reg & source){
                 src_.emplace_back(source);
             }
@@ -53,9 +56,13 @@ namespace olympia
             const Reg & getOriginalDestination() const {
                 return original_dest_;
             }
+            const Reg & getDataReg() const {
+                return data_reg_;
+            }
         private:
             Reg original_dest_;
             RegList src_;
+            Reg data_reg_;
         };
 
         // Used by Mavis
@@ -92,6 +99,7 @@ namespace olympia
              const sparta::Clock             * clk) :
             opcode_info_    (opcode_info),
             inst_arch_info_ (inst_arch_info),
+            is_store_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::STORE)),
             status_state_(Status::FETCHED)
         {
             sparta_assert(inst_arch_info_ != nullptr,
@@ -170,7 +178,8 @@ namespace olympia
         const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
 
         // Static instruction information
-        bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
+        bool        isStoreInst() const    { return is_store_; }
+        bool        isLoadStoreInst() const {return inst_arch_info_->isLoadStore(); }
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
@@ -183,11 +192,17 @@ namespace olympia
         core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) {
             return dest_reg_bit_masks_[rf];
         }
+        core_types::RegisterBitMask & getDataRegisterBitMask(const core_types::RegFile rf) {
+            return store_data_mask_[rf];
+        }
         const core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) const {
             return src_reg_bit_masks_[rf];
         }
         const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
             return dest_reg_bit_masks_[rf];
+        }
+        const core_types::RegisterBitMask & getDataRegisterBitMask(const core_types::RegFile rf) const {
+            return store_data_mask_[rf];
         }
         RenameData & getRenameData() {
             return rename_data;
@@ -205,6 +220,7 @@ namespace olympia
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
+        bool                   is_store_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 
@@ -212,6 +228,7 @@ namespace olympia
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
         RegisterBitMaskArray src_reg_bit_masks_;
         RegisterBitMaskArray dest_reg_bit_masks_;
+        RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
     };
 

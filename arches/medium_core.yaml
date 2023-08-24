@@ -11,7 +11,7 @@ top.cpu.core0:
   rename.params.num_to_rename: 3
   dispatch.params.num_to_dispatch: 3
   rob.params.num_to_retire:    3
-  lsu.params:
+  dcache.params:
     dl1_size_kb: 32
 
 top.cpu.core0.extension.core_extensions:

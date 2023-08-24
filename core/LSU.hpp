@@ -25,8 +25,9 @@
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "SimpleDL1.hpp"
-#include "LSU_MMU_Shared.h"
+#include "LSU_MMU_Shared.hpp"
 #include "MMU.hpp"
+#include "DCache.hpp"
 
 namespace olympia
 {
@@ -50,11 +51,6 @@ namespace olympia
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             PARAMETER(uint32_t, ld_queue_size, ldst_inst_queue_size, "Load Queue size")
             PARAMETER(uint32_t, st_queue_size, ldst_inst_queue_size, "Store Queue Size")
-            // Parameters for the DL1 cache
-            PARAMETER(uint32_t, dl1_line_size, 64, "DL1 line size (power of 2)")
-            PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
-            PARAMETER(uint32_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
-            PARAMETER(bool, dl1_always_hit, false, "DL1 will always hit")
             // LSU microarchitecture parameters
             PARAMETER(bool, stall_pipeline_on_miss, true, "Stall pipeline on miss event")
             PARAMETER(bool, allow_speculative_load_exec, true, "Allow loads to proceed speculatively before all older store addresses are known")
@@ -221,6 +217,11 @@ namespace olympia
         {
             mmu_ = &mmu;
         }
+
+        void setDataCache(DCache& cache)
+        {
+            data_cache_ = &cache;
+        }
     private:
 
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
@@ -266,7 +267,7 @@ namespace olympia
         sparta::Buffer<LoadStoreInstInfoPtr> store_queue_;
         const uint32_t st_queue_size_;
 
-        // TLB Cache
+        // MMU unit
         MMU* mmu_ = nullptr;
         bool mmu_busy_ = false;
         bool mmu_pending_inst_flushed = false;
@@ -275,9 +276,7 @@ namespace olympia
 
 
         // L1 Data Cache
-        using DL1Handle = SimpleDL1::Handle;
-        DL1Handle dl1_cache_;
-        const bool dl1_always_hit_;
+        DCache* data_cache_ = nullptr;
         bool cache_busy_ = false;
         bool cache_pending_inst_flushed_ = false;
         // Keep track of the instruction that causes current outstanding cache miss
@@ -311,7 +310,7 @@ namespace olympia
         sparta::UniqueEvent<> uev_mmu_drive_biu_port_ {&unit_event_set_, "mmu_drive_biu_port",
                 CREATE_SPARTA_HANDLER(LSU, driveBIUPortFromMMU_)};
 
-        // Event to drive BIU request port from Cache
+        // Event to drive BIU request port from DCache
         sparta::UniqueEvent<> uev_cache_drive_biu_port_ {&unit_event_set_, "cache_drive_biu_port",
                 CREATE_SPARTA_HANDLER(LSU, driveBIUPortFromCache_)};
 
@@ -388,14 +387,8 @@ namespace olympia
         // Re-handle outstanding MMU access request
         void rehandleMMULookupReq_(const InstPtr &);
 
-        // Access Cache
-        bool cacheLookup_(const MemoryAccessInfoPtr &);
-
         // Re-handle outstanding cache access request
         void rehandleCacheLookupReq_(const InstPtr &);
-
-        // Reload cache line
-        void reloadCache_(uint64_t);
 
         // Update issue priority after dispatch
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);
@@ -440,14 +433,7 @@ namespace olympia
             getStatisticSet(), "lsu_flushes",
             "Number of instruction flushes at LSU", sparta::Counter::COUNT_NORMAL
         };
-        sparta::Counter dl1_cache_hits_{
-            getStatisticSet(), "dl1_cache_hits",
-            "Number of DL1 cache hits", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter dl1_cache_misses_{
-            getStatisticSet(), "dl1_cache_misses",
-            "Number of DL1 cache misses", sparta::Counter::COUNT_NORMAL
-        };
+
         sparta::Counter biu_reqs_{
             getStatisticSet(), "biu_reqs",
             "Number of BIU reqs", sparta::Counter::COUNT_NORMAL

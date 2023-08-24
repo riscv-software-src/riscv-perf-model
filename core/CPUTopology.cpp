@@ -69,6 +69,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->execute_rf
         },
         {
+                "dcache",
+                "cpu.core*",
+                "Data Cache Unit",
+                sparta::TreeNode::GROUP_NAME_NONE,
+                sparta::TreeNode::GROUP_IDX_NONE,
+                &factories->dcache_rf
+        },
+        {
                 "mmu",
                 "cpu.core*",
                 "MMU Unit",

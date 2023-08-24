@@ -22,7 +22,6 @@ namespace olympia
         store_queue_("store_queue", p->st_queue_size, getClock()),
         st_queue_size_(p->st_queue_size),
 
-        dl1_always_hit_(p->dl1_always_hit),
         stall_pipeline_on_miss_(p->stall_pipeline_on_miss),
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
@@ -80,14 +79,6 @@ namespace olympia
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle
         // Here we give cache the higher priority
-
-        // DL1 cache config
-        const uint32_t dl1_line_size = p->dl1_line_size;
-        const uint32_t dl1_size_kb = p->dl1_size_kb;
-        const uint32_t dl1_associativity = p->dl1_associativity;
-        std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
-                                                         (dl1_associativity));
-        dl1_cache_.reset(new SimpleDL1( getContainer(), dl1_size_kb, dl1_line_size, *repl ));
         ILOG("LSU construct: #" << node->getGroupIdx());
 
     }
@@ -368,22 +359,22 @@ namespace olympia
 
         if (cacheBypass) {
             if (isAlreadyHIT) {
-                ILOG("Cache Lookup is skipped (Cache already hit)!");
+                ILOG("DCache Lookup is skipped (DCache already hit)!");
             }
             else if (!phyAddrIsReady) {
-                ILOG("Cache Lookup is skipped (Physical address not ready)!");
+                ILOG("DCache Lookup is skipped (Physical address not ready)!");
             }
             else if (isUnretiredStore) {
-                ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
+                ILOG("DCache Lookup is skipped (Un-retired store instruction)!");
             }
             else {
-                sparta_assert(false, "Cache access is bypassed without a valid reason!");
+                sparta_assert(false, "DCache access is bypassed without a valid reason!");
             }
             return;
         }
 
         // Access cache, and check cache hit or miss
-        const bool CACHE_HIT = cacheLookup_(mem_access_info_ptr);
+        const bool CACHE_HIT = data_cache_->cacheLookup(mem_access_info_ptr);
 
         if (CACHE_HIT) {
             // Update memory access info
@@ -394,7 +385,7 @@ namespace olympia
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
 
             if (cache_busy_ == false) {
-                // Cache is now busy, no more CACHE MISS can be handled, RESET required on finish
+                // DCache is now busy, no more CACHE MISS can be handled, RESET required on finish
                 cache_busy_ = true;
                 // Keep record of the current CACHE MISS instruction
                 cache_pending_inst_ptr_ = mem_access_info_ptr->getInstPtr();
@@ -410,10 +401,10 @@ namespace olympia
                 // NOTE:
                 // The race between simultaneous MMU and cache requests is resolved by
                 // specifying precedence between these two competing events
-                ILOG("Cache is trying to drive BIU request port!");
+                ILOG("DCache is trying to drive BIU request port!");
             }
             else {
-                ILOG("Cache miss cannot be served right now due to another outstanding one!");
+                ILOG("DCache miss cannot be served right now due to another outstanding one!");
             }
 
             // NEW: Invalidate pipeline stage
@@ -444,10 +435,10 @@ namespace olympia
         }
 
         if (succeed) {
-            ILOG("Cache is driving the BIU request port!");
+            ILOG("DCache is driving the BIU request port!");
         }
         else {
-            ILOG("Cache is waiting to drive the BIU request port!");
+            ILOG("DCache is waiting to drive the BIU request port!");
         }
     }
 
@@ -757,47 +748,10 @@ namespace olympia
         ILOG("MMU rehandling event is scheduled!");
     }
 
-    // Access Cache
-    bool LSU::cacheLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
-    {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t phyAddr = inst_ptr->getRAdr();
-
-        bool cache_hit = false;
-
-        if (dl1_always_hit_) {
-            cache_hit = true;
-        }
-        else {
-            auto cache_line = dl1_cache_->peekLine(phyAddr);
-            cache_hit = (cache_line != nullptr) && cache_line->isValid();
-
-            // Update MRU replacement state if Cache HIT
-            if (cache_hit) {
-                dl1_cache_->touchMRU(*cache_line);
-            }
-        }
-
-        if (dl1_always_hit_) {
-            ILOG("DL1 Cache HIT all the time: phyAddr=0x" << std::hex << phyAddr);
-            dl1_cache_hits_++;
-        }
-        else if (cache_hit) {
-            ILOG("DL1 Cache HIT: phyAddr=0x" << std::hex << phyAddr);
-            dl1_cache_hits_++;
-        }
-        else {
-            ILOG("DL1 Cache MISS: phyAddr=0x" << std::hex << phyAddr);
-            dl1_cache_misses_++;
-        }
-
-        return cache_hit;
-    }
-
     // Re-handle outstanding cache access request
     void LSU::rehandleCacheLookupReq_(const InstPtr & inst_ptr)
     {
-        // Cache is no longer busy any more
+        // DCache is no longer busy any more
         cache_busy_ = false;
         cache_pending_inst_ptr_.reset();
 
@@ -825,22 +779,13 @@ namespace olympia
         ILOG("BIU Ack for an outstanding cache miss is received!");
 
         // Reload cache line
-        reloadCache_(inst_ptr->getRAdr());
+        data_cache_->reloadCache(inst_ptr->getRAdr());
 
         // Update issue priority & Schedule an instruction (re-)issue event
         updateIssuePriorityAfterCacheReload_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
-        ILOG("Cache rehandling event is scheduled!");
-    }
-
-    // Reload cache line
-    void LSU::reloadCache_(uint64_t phyAddr)
-    {
-        auto dl1_cache_line = &dl1_cache_->getLineForReplacementWithInvalidCheck(phyAddr);
-        dl1_cache_->allocateWithMRUUpdate(*dl1_cache_line, phyAddr);
-
-        ILOG("Cache reload complete!");
+        ILOG("DCache rehandling event is scheduled!");
     }
 
     // Update issue priority when newly dispatched instruction comes in

@@ -22,7 +22,7 @@ namespace olympia
             valid_(false)
         {
             sparta_assert(sparta::utils::is_power_of_2(line_size),
-                "Cache line size must be a power of 2. line_size=" << line_size);
+                "DCache line size must be a power of 2. line_size=" << line_size);
         }
 
         // Copy constructor
@@ -104,7 +104,7 @@ namespace olympia
                                                         line_size,
                                                         SimpleCacheLine(line_size),
                                                         rep),
-            sparta::TreeNode(parent, "l1cache", "Simple L1 Cache"),
+            sparta::TreeNode(parent, "l1cache", "Simple L1 DCache"),
             sparta::cache::PreloadableIF(),
             sparta::cache::PreloadDumpableIF(),
             preloadable_(this, std::bind(&SimpleDL1::preloadPkt_, this, _1),

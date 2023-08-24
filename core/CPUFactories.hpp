@@ -54,6 +54,11 @@ namespace olympia{
         //! \brief Resouce Factory to build a Execute Unit
         ExecuteFactory  execute_rf;
 
+
+        //! \brief Resouce Factory to build a MMU Unit
+        sparta::ResourceFactory<olympia::DCache,
+                olympia::DCache::CacheParameterSet> dcache_rf;
+
         //! \brief Resouce Factory to build a TLB Unit
         sparta::ResourceFactory<olympia::SimpleTLB,
                 olympia::SimpleTLB::TLBParameterSet> tlb_rf;

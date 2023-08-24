@@ -89,7 +89,7 @@ namespace olympia {
         // MMU access status
         MMUState mmu_access_state_;
 
-        // Cache access status
+        // DCache access status
         CacheState cache_access_state_;
 
         // Scoreboards

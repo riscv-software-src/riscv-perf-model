@@ -15,6 +15,7 @@ add_library(core
   ROB.cpp
   LSU.cpp
   MMU.cpp
+  DCache.cpp
   MavisUnit.cpp
   Preloader.cpp
   CPU.cpp

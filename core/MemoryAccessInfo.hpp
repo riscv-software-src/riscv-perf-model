@@ -57,7 +57,7 @@ namespace olympia {
 
         bool getPhyAddrStatus() const { return phyAddrIsReady_; }
 
-        const MMUState &getMMUState() const {
+        MMUState getMMUState() const {
             return mmu_access_state_;
         }
 
@@ -65,7 +65,7 @@ namespace olympia {
             mmu_access_state_ = state;
         }
 
-        const CacheState &getCacheState() const {
+        CacheState getCacheState() const {
             return cache_access_state_;
         }
 

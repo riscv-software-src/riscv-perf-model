@@ -254,18 +254,19 @@ namespace olympia
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         ILOG(mem_access_info_ptr);
 
-        bool isAlreadyHIT = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
-        bool MMUBypass = isAlreadyHIT;
+        bool is_already_hit = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
+        bool mmu_bypass = is_already_hit;
 
-        if (MMUBypass) {
+        if (mmu_bypass) {
             ILOG("MMU Lookup is skipped (TLB is already hit)!");
             return;
         }
 
         // Access TLB, and check TLB hit or miss
-        bool TLB_HIT = mmu_->Lookup(mem_access_info_ptr);
+        const bool tlb_hit = mmu_->memLookup(mem_access_info_ptr);
 
-        if (TLB_HIT) {
+        if (tlb_hit) {
+            InstPtr inst_ptr = mem_access_info_ptr->getInstPtr();
             // Update memory access info
             mem_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
             // Update physical address status
@@ -349,22 +350,22 @@ namespace olympia
 
         ILOG(mem_access_info_ptr);
 
-        const bool phyAddrIsReady =
+        const bool phy_addr_ready =
             mem_access_info_ptr->getPhyAddrStatus();
-        const bool isAlreadyHIT =
+        const bool is_already_hit =
             (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
-        const bool isUnretiredStore =
+        const bool is_unretired_store =
             inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
-        const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
+        const bool cache_bypass = is_already_hit || !phy_addr_ready || is_unretired_store;
 
-        if (cacheBypass) {
-            if (isAlreadyHIT) {
+        if (cache_bypass) {
+            if (is_already_hit) {
                 ILOG("DCache Lookup is skipped (DCache already hit)!");
             }
-            else if (!phyAddrIsReady) {
+            else if (!phy_addr_ready) {
                 ILOG("DCache Lookup is skipped (Physical address not ready)!");
             }
-            else if (isUnretiredStore) {
+            else if (is_unretired_store) {
                 ILOG("DCache Lookup is skipped (Un-retired store instruction)!");
             }
             else {
@@ -374,9 +375,9 @@ namespace olympia
         }
 
         // Access cache, and check cache hit or miss
-        const bool CACHE_HIT = data_cache_->cacheLookup(mem_access_info_ptr);
+        const bool cache_hit = data_cache_->dataLookup(mem_access_info_ptr);
 
-        if (CACHE_HIT) {
+        if (cache_hit) {
             // Update memory access info
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
         }
@@ -455,7 +456,7 @@ namespace olympia
 
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        bool isStoreInst = inst_ptr->isStoreInst();
+        bool is_store_inst = inst_ptr->isStoreInst();
         ILOG("Completing inst: " << inst_ptr);
         ILOG(mem_access_info_ptr);
 
@@ -469,7 +470,7 @@ namespace olympia
         }
 
         // Complete load instruction
-        if (!isStoreInst) {
+        if (!is_store_inst) {
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
                         "Load instruction cannot complete when cache is still a miss!");
 

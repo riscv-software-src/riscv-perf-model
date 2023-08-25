@@ -14,7 +14,7 @@ top.cpu.core0:
   dispatch.params.num_to_dispatch: 8
   rob.params.num_to_retire:    8
   dcache.params:
-    dl1_size_kb: 64
+    l1_size_kb: 64
 
 top.cpu.core0.extension.core_extensions:
   execution_topology:

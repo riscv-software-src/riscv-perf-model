@@ -16,22 +16,22 @@ namespace olympia {
             CacheParameterSet(sparta::TreeNode *n) : sparta::ParameterSet(n) {}
 
             // Parameters for the DL1 cache
-            PARAMETER(uint32_t, dl1_line_size, 64, "DL1 line size (power of 2)")
-            PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
-            PARAMETER(uint32_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
-            PARAMETER(bool, dl1_always_hit, false, "DL1 will always hit")
+            PARAMETER(uint32_t, l1_line_size, 64, "DL1 line size (power of 2)")
+            PARAMETER(uint32_t, l1_size_kb, 32, "Size of DL1 in KB (power of 2)")
+            PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
+            PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
         };
 
         DCache(sparta::TreeNode *n, const CacheParameterSet *p);
 
-        bool cacheLookup(const MemoryAccessInfoPtr &mem_access_info_ptr);
+        bool dataLookup(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
-        void reloadCache(uint64_t phyAddr);
+        void reloadCache(uint64_t phy_addr);
 
         static const char name[];
-        using DL1Handle = SimpleDL1::Handle;
-        DL1Handle dl1_cache_;
-        const bool dl1_always_hit_;
+        using L1Handle = SimpleDL1::Handle;
+        L1Handle l1_cache_;
+        const bool l1_always_hit_;
         // Keep track of the instruction that causes current outstanding cache miss
         InstPtr cache_pending_inst_ptr_ = nullptr;
 

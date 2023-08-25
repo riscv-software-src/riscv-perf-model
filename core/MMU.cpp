@@ -13,15 +13,14 @@ namespace olympia {
             mmu_latency_(p->mmu_latency) {
     }
 
-    bool MMU::Lookup(const MemoryAccessInfoPtr &mem_access_info_ptr) {
+    bool MMU::memLookup(const MemoryAccessInfoPtr &mem_access_info_ptr) {
         const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t vaddr = inst_ptr->getTargetVAddr();
 
-        bool tlb_hit = false;
+        bool tlb_hit = tlb_always_hit_;
 
         // C++ comma operator: assign tlb_hit first, then evaluate it. Just For Fun
-        if (tlb_hit = tlb_always_hit_, tlb_hit) {
-        } else {
+        if (!tlb_hit) {
             auto tlb_entry = tlb_cache_->peekLine(vaddr);
             tlb_hit = (tlb_entry != nullptr) && tlb_entry->isValid();
 

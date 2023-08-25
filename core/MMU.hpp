@@ -22,7 +22,7 @@ namespace olympia {
 
         MMU(sparta::TreeNode *node, const MMUParameterSet *p);
 
-        bool Lookup(const MemoryAccessInfoPtr &mem_access_info_ptr);
+        bool memLookup(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
         void setTLB(SimpleTLB &tlb);
 

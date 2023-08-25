@@ -5,47 +5,47 @@ namespace olympia {
 
     DCache::DCache(sparta::TreeNode *n, const CacheParameterSet *p) :
             sparta::Unit(n),
-            dl1_always_hit_(p->dl1_always_hit) {
+            l1_always_hit_(p->l1_always_hit) {
         // DL1 cache config
-        const uint32_t dl1_line_size = p->dl1_line_size;
-        const uint32_t dl1_size_kb = p->dl1_size_kb;
-        const uint32_t dl1_associativity = p->dl1_associativity;
+        const uint32_t l1_line_size = p->l1_line_size;
+        const uint32_t l1_size_kb = p->l1_size_kb;
+        const uint32_t l1_associativity = p->l1_associativity;
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
-                                                                   (dl1_associativity));
-        dl1_cache_.reset(new SimpleDL1(getContainer(), dl1_size_kb, dl1_line_size, *repl));
+                                                                   (l1_associativity));
+        l1_cache_.reset(new SimpleDL1(getContainer(), l1_size_kb, l1_line_size, *repl));
     }
 
     // Reload cache line
-    void DCache::reloadCache(uint64_t phyAddr)
+    void DCache::reloadCache(uint64_t phy_addr)
     {
-        auto dl1_cache_line = &dl1_cache_->getLineForReplacementWithInvalidCheck(phyAddr);
-        dl1_cache_->allocateWithMRUUpdate(*dl1_cache_line, phyAddr);
+        auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(phy_addr);
+        l1_cache_->allocateWithMRUUpdate(*l1_cache_line, phy_addr);
 
         ILOG("DCache reload complete!");
     }
 
     // Access DCache
-    bool DCache::cacheLookup(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    bool DCache::dataLookup(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t phyAddr = inst_ptr->getRAdr();
 
         bool cache_hit = false;
 
-        if (dl1_always_hit_) {
+        if (l1_always_hit_) {
             cache_hit = true;
         }
         else {
-            auto cache_line = dl1_cache_->peekLine(phyAddr);
+            auto cache_line = l1_cache_->peekLine(phyAddr);
             cache_hit = (cache_line != nullptr) && cache_line->isValid();
 
             // Update MRU replacement state if DCache HIT
             if (cache_hit) {
-                dl1_cache_->touchMRU(*cache_line);
+                l1_cache_->touchMRU(*cache_line);
             }
         }
 
-        if (dl1_always_hit_) {
+        if (l1_always_hit_) {
             ILOG("DL1 DCache HIT all the time: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_hits_++;
         }

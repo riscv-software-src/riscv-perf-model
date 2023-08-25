@@ -6,7 +6,7 @@
 #include "SimpleDL1.hpp"
 #include "Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
-#include "LSU_MMU_Shared.hpp"
+#include "MemoryAccessInfo.hpp"
 
 namespace olympia {
     class DCache : public sparta::Unit {

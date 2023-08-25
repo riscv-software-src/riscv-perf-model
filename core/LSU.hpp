@@ -25,7 +25,7 @@
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "SimpleDL1.hpp"
-#include "LSU_MMU_Shared.hpp"
+#include "MemoryAccessInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"
 

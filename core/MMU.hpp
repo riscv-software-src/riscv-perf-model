@@ -3,7 +3,7 @@
 #include <sparta/simulation/Unit.hpp>
 #include "Inst.hpp"
 #include "SimpleTLB.hpp"
-#include "LSU_MMU_Shared.hpp"
+#include "MemoryAccessInfo.hpp"
 
 namespace olympia {
 

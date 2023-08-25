@@ -11,6 +11,9 @@ namespace olympia {
             sparta::Unit(node),
             tlb_always_hit_(p->tlb_always_hit),
             mmu_latency_(p->mmu_latency) {
+
+        in_lsu_lookup_req_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(MMU, getInstsFromLSU_, MemoryAccessInfoPtr));
     }
 
     bool MMU::memLookup(const MemoryAccessInfoPtr &mem_access_info_ptr) {
@@ -51,6 +54,26 @@ namespace olympia {
         tlb_cache_->allocateWithMRUUpdate(*tlb_entry, vaddr);
 
         ILOG("TLB reload complete!");
+    }
+
+    void MMU::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
+        const bool hit = memLookup(memory_access_info_ptr);
+        if(hit){
+            memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
+            memory_access_info_ptr->setPhyAddrStatus(true);
+        }else{
+            memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
+            memory_access_info_ptr->setPhyAddrStatus(false);
+            mmu_pending_inst_ = memory_access_info_ptr;
+            uev_lookup_inst_.schedule(sparta::Clock::Cycle(mmu_latency_));
+        }
+        out_lsu_lookup_ack_.send(memory_access_info_ptr);
+    }
+
+    void MMU::lookupInst_() {
+        reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
+        out_lsu_lookup_req_.send(mmu_pending_inst_);
+        mmu_pending_inst_.reset();
     }
 
 }

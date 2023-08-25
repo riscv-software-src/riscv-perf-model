@@ -38,7 +38,11 @@ namespace olympia
         in_reorder_flush_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
 
+        in_mmu_lookup_req_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromMMU_, MemoryAccessInfoPtr));
 
+        in_mmu_lookup_ack_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
         // Allow the pipeline to create events and schedule work
         ldst_pipeline_.performOwnUpdates();
 
@@ -50,8 +54,11 @@ namespace olympia
         // setContinuing to false on any event).
         ldst_pipeline_.setContinuing(true);
 
-        ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
-                                                CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
+                                                CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq1_));
+
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::PostTick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
+                                              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq2_));
 
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
                                                 CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
@@ -170,10 +177,7 @@ namespace olympia
     // Receive MSS access acknowledge from Bus Interface Unit
     void LSU::getAckFromBIU_(const InstPtr & inst_ptr)
     {
-        if (inst_ptr == mmu_pending_inst_ptr_) {
-            rehandleMMULookupReq_(inst_ptr);
-        }
-        else if (inst_ptr == cache_pending_inst_ptr_) {
+        if (inst_ptr == cache_pending_inst_ptr_) {
             rehandleCacheLookupReq_(inst_ptr);
         }
         else {
@@ -222,10 +226,10 @@ namespace olympia
         ILOG("Issue/Re-issue Instruction: " << win_ptr->getInstPtr());
     }
 
-    // Handle MMU access request
-    void LSU::handleMMULookupReq_()
+    // Handle cache access request
+    void LSU::handleCacheLookupReq_()
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+        const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -234,58 +238,72 @@ namespace olympia
 
 
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+
         ILOG(mem_access_info_ptr);
 
-        bool is_already_hit = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
-        bool mmu_bypass = is_already_hit;
+        const bool phyAddrIsReady =
+                mem_access_info_ptr->getPhyAddrStatus();
+        const bool isAlreadyHIT =
+                (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
+        const bool isUnretiredStore =
+                inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
+        const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
 
-        if (mmu_bypass) {
-            ILOG("MMU Lookup is skipped (TLB is already hit)!");
+        if (cacheBypass) {
+            if (isAlreadyHIT) {
+                ILOG("Cache Lookup is skipped (Cache already hit)!");
+            }
+            else if (!phyAddrIsReady) {
+                ILOG("Cache Lookup is skipped (Physical address not ready)!");
+            }
+            else if (isUnretiredStore) {
+                ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
+            }
+            else {
+                sparta_assert(false, "Cache access is bypassed without a valid reason!");
+            }
             return;
         }
 
-        // Access TLB, and check TLB hit or miss
-        const bool tlb_hit = mmu_->memLookup(mem_access_info_ptr);
+        // Access cache, and check cache hit or miss
+        const bool CACHE_HIT = data_cache_->dataLookup(mem_access_info_ptr);
 
-        if (tlb_hit) {
-            InstPtr inst_ptr = mem_access_info_ptr->getInstPtr();
+        if (CACHE_HIT) {
             // Update memory access info
-            mem_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
-            // Update physical address status
-            mem_access_info_ptr->setPhyAddrStatus(true);
+            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
         }
         else {
             // Update memory access info
-            mem_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
+            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
 
-            if (mmu_busy_ == false) {
-                // MMU is busy, no more TLB MISS can be handled, RESET is required on finish
-                mmu_busy_ = true;
-                // Keep record of the current TLB MISS instruction
-                mmu_pending_inst_ptr_ = mem_access_info_ptr->getInstPtr();
+            if (cache_busy_ == false) {
+                // Cache is now busy, no more CACHE MISS can be handled, RESET required on finish
+                cache_busy_ = true;
+                // Keep record of the current CACHE MISS instruction
+                cache_pending_inst_ptr_ = mem_access_info_ptr->getInstPtr();
 
                 // NOTE:
-                // mmu_busy_ RESET could be done:
+                // cache_busy_ RESET could be done:
                 // as early as port-driven event for this miss finish, and
-                // as late as TLB reload event for this miss finish.
+                // as late as cache reload event for this miss finish.
 
                 // Schedule port-driven event in BIU
-                uev_mmu_drive_biu_port_.schedule(sparta::Clock::Cycle(0));
+                uev_cache_drive_biu_port_.schedule(sparta::Clock::Cycle(0));
 
                 // NOTE:
                 // The race between simultaneous MMU and cache requests is resolved by
                 // specifying precedence between these two competing events
-                ILOG("MMU is trying to drive BIU request port!");
+                ILOG("Cache is trying to drive BIU request port!");
             }
             else {
-                ILOG("MMU miss cannot be served right now due to another outstanding one!");
+                ILOG("Cache miss cannot be served right now due to another outstanding one!");
             }
 
             // NEW: Invalidate pipeline stage
-            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP));
+            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
         }
     }
-
     // Drive BIU request port from MMU
     void LSU::driveBIUPortFromMMU_()
     {
@@ -313,85 +331,6 @@ namespace olympia
         }
         else {
             ILOG("MMU is waiting to drive the BIU request port!");
-        }
-    }
-
-    // Handle cache access request
-    void LSU::handleCacheLookupReq_()
-    {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
-
-        // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id)) {
-            return;
-        }
-
-
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-
-        ILOG(mem_access_info_ptr);
-
-        const bool phy_addr_ready =
-            mem_access_info_ptr->getPhyAddrStatus();
-        const bool is_already_hit =
-            (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
-        const bool is_unretired_store =
-            inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
-        const bool cache_bypass = is_already_hit || !phy_addr_ready || is_unretired_store;
-
-        if (cache_bypass) {
-            if (is_already_hit) {
-                ILOG("DCache Lookup is skipped (DCache already hit)!");
-            }
-            else if (!phy_addr_ready) {
-                ILOG("DCache Lookup is skipped (Physical address not ready)!");
-            }
-            else if (is_unretired_store) {
-                ILOG("DCache Lookup is skipped (Un-retired store instruction)!");
-            }
-            else {
-                sparta_assert(false, "DCache access is bypassed without a valid reason!");
-            }
-            return;
-        }
-
-        // Access cache, and check cache hit or miss
-        const bool cache_hit = data_cache_->dataLookup(mem_access_info_ptr);
-
-        if (cache_hit) {
-            // Update memory access info
-            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-        }
-        else {
-            // Update memory access info
-            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-
-            if (cache_busy_ == false) {
-                // DCache is now busy, no more CACHE MISS can be handled, RESET required on finish
-                cache_busy_ = true;
-                // Keep record of the current CACHE MISS instruction
-                cache_pending_inst_ptr_ = mem_access_info_ptr->getInstPtr();
-
-                // NOTE:
-                // cache_busy_ RESET could be done:
-                // as early as port-driven event for this miss finish, and
-                // as late as cache reload event for this miss finish.
-
-                // Schedule port-driven event in BIU
-                uev_cache_drive_biu_port_.schedule(sparta::Clock::Cycle(0));
-
-                // NOTE:
-                // The race between simultaneous MMU and cache requests is resolved by
-                // specifying precedence between these two competing events
-                ILOG("DCache is trying to drive BIU request port!");
-            }
-            else {
-                ILOG("DCache miss cannot be served right now due to another outstanding one!");
-            }
-
-            // NEW: Invalidate pipeline stage
-            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
         }
     }
 
@@ -632,45 +571,6 @@ namespace olympia
         return false;
     }
 
-    // Re-handle outstanding MMU access request
-    void LSU::rehandleMMULookupReq_(const InstPtr & inst_ptr)
-    {
-        // MMU is no longer busy any more
-        mmu_busy_ = false;
-        mmu_pending_inst_ptr_.reset();
-
-        // NOTE:
-        // MMU may not have to wait until MSS Ack comes back
-        // MMU could be ready to service new TLB MISS once previous request has been sent
-        // However, that means MMU has to keep record of a list of pending instructions
-
-        // Check if this MMU miss Ack is for an already flushed instruction
-        if (mmu_pending_inst_flushed) {
-            mmu_pending_inst_flushed = false;
-            ILOG("BIU Ack for a flushed MMU miss is received!");
-
-            // Schedule an instruction (re-)issue event
-            // Note: some younger load/store instruction(s) might have been blocked by
-            // this outstanding miss
-            updateIssuePriorityAfterTLBReload_(inst_ptr, true);
-            if (isReadyToIssueInsts_()) {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-            }
-            return;
-        }
-
-        ILOG("BIU Ack for an outstanding MMU miss is received!");
-
-        // Reload TLB entry
-        mmu_->reloadTLB_(inst_ptr->getTargetVAddr());
-
-        // Update issue priority & Schedule an instruction (re-)issue event
-        updateIssuePriorityAfterTLBReload_(inst_ptr);
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-
-        ILOG("MMU rehandling event is scheduled!");
-    }
-
     // Re-handle outstanding cache access request
     void LSU::rehandleCacheLookupReq_(const InstPtr & inst_ptr)
     {
@@ -818,6 +718,56 @@ namespace olympia
         sparta_assert(false,
             "Attempt to update issue priority for instruction not yet in the issue queue!");
 
+    }
+
+    // Handle MMU access request
+    void LSU::handleMMULookupReq1_()
+    {
+        const auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+
+        // Check if flushing event occurred just now
+        if (!ldst_pipeline_.isValid(stage_id)) {
+            return;
+        }
+
+        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        ILOG(mem_access_info_ptr);
+        mmu_hit_ = false;
+        out_mmu_lookup_req_.send(mem_access_info_ptr);
+    }
+
+    // Handle MMU access request
+    void LSU::handleMMULookupReq2_()
+    {
+        if(!mmu_hit_)
+            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP));
+    }
+
+    void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
+        auto inst_ptr = memory_access_info_ptr->getInstPtr();
+        // MMU is no longer busy any more
+        mmu_busy_ = false;
+        mmu_pending_inst_ptr_.reset();
+        if (mmu_pending_inst_flushed) {
+            mmu_pending_inst_flushed = false;
+            // Update issue priority & Schedule an instruction (re-)issue event
+            updateIssuePriorityAfterTLBReload_(inst_ptr, true);
+            if (isReadyToIssueInsts_()) {
+                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            }
+            return;
+        }
+
+        updateIssuePriorityAfterTLBReload_(inst_ptr);
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+
+        ILOG("MMU rehandling event is scheduled!");
+    }
+
+    void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
+        mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrIsReady();
+        if(mmu_busy_ == false)
+            mmu_busy_ = true;
     }
 
     // Flush instruction issue queue

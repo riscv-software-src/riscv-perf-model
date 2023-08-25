@@ -265,7 +265,7 @@ namespace olympia
             {&unit_port_set_, "out_biu_req"};
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_
-            {&unit_port_set_, "out_mmu_lookup_req"};
+            {&unit_port_set_, "out_mmu_lookup_req", 0};
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_
                 {&unit_port_set_, "out_cache_lookup_req"};
@@ -285,6 +285,7 @@ namespace olympia
         bool mmu_pending_inst_flushed = false;
         // Keep track of the instruction that causes current outstanding TLB miss
         InstPtr mmu_pending_inst_ptr_ = nullptr;
+        bool mmu_hit_ = false;
 
 
         // L1 Data Cache
@@ -347,7 +348,9 @@ namespace olympia
         void issueInst_();
 
         // Handle MMU access request
-        void handleMMULookupReq_();
+        void handleMMULookupReq1_();
+
+        void handleMMULookupReq2_();
 
         // Drive BIU request port from MMU
         void driveBIUPortFromMMU_();
@@ -364,6 +367,9 @@ namespace olympia
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
 
+        void getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
+
+        void getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
@@ -380,9 +386,6 @@ namespace olympia
 
         // Check for ready to issue instructions
         bool isReadyToIssueInsts_() const;
-
-        // Re-handle outstanding MMU access request
-        void rehandleMMULookupReq_(const InstPtr &);
 
         // Re-handle outstanding cache access request
         void rehandleCacheLookupReq_(const InstPtr &);

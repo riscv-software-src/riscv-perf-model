@@ -30,6 +30,8 @@ namespace olympia {
 
         void reloadTLB_(uint64_t vaddr);
 
+        void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
+
 
         static const char name[];
         SimpleTLB *tlb_cache_ = nullptr;
@@ -41,8 +43,11 @@ namespace olympia {
 
         using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
 
+        MemoryAccessInfoPtr mmu_pending_inst_ = nullptr;
+
+
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
-                {&unit_port_set_, "in_lsu_lookup_req", 1};
+                {&unit_port_set_, "in_lsu_lookup_req", 0};
 
         sparta::SignalOutPort out_lsu_free_req_
                 {&unit_port_set_, "out_lsu_free_req", 0};
@@ -52,6 +57,11 @@ namespace olympia {
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
                 {&unit_port_set_, "out_lsu_lookup_req", 1};
+
+        sparta::UniqueEvent<> uev_lookup_inst_{&unit_event_set_, "lookup_inst",
+                                              CREATE_SPARTA_HANDLER(MMU, lookupInst_), 1};
+
+        void lookupInst_();
 
         sparta::Counter tlb_hits_{
                 getStatisticSet(), "tlb_hits",

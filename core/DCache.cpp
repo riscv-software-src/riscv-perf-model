@@ -6,6 +6,10 @@ namespace olympia {
     DCache::DCache(sparta::TreeNode *n, const CacheParameterSet *p) :
             sparta::Unit(n),
             l1_always_hit_(p->l1_always_hit) {
+
+        in_lsu_lookup_req_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
+
         // DL1 cache config
         const uint32_t l1_line_size = p->l1_line_size;
         const uint32_t l1_size_kb = p->l1_size_kb;
@@ -16,7 +20,7 @@ namespace olympia {
     }
 
     // Reload cache line
-    void DCache::reloadCache(uint64_t phy_addr)
+    void DCache::reloadCache_(uint64_t phy_addr)
     {
         auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(phy_addr);
         l1_cache_->allocateWithMRUUpdate(*l1_cache_line, phy_addr);
@@ -25,7 +29,7 @@ namespace olympia {
     }
 
     // Access DCache
-    bool DCache::dataLookup(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    bool DCache::dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t phyAddr = inst_ptr->getRAdr();
@@ -59,5 +63,27 @@ namespace olympia {
         }
 
         return cache_hit;
+    }
+
+    void DCache::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
+        const bool hit = dataLookup_(memory_access_info_ptr);
+        if(hit){
+            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+        }else{
+            if(!busy_) {
+                busy_ = true;
+                memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+                cache_pending_inst_ = memory_access_info_ptr;
+                uev_lookup_inst_.schedule(sparta::Clock::Cycle(1)); // Replace with call to BIU
+            }
+        }
+        out_lsu_lookup_ack_.send(memory_access_info_ptr);
+    }
+
+    void DCache::lookupInst_() {
+        out_lsu_lookup_req_.send(cache_pending_inst_);
+        reloadCache_(cache_pending_inst_->getInstPtr()->getTargetVAddr());
+        cache_pending_inst_.reset();
+        busy_ = false;
     }
 }

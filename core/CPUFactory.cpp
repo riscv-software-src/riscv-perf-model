@@ -92,8 +92,6 @@ auto olympia::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
         sparta_assert(core_tree_node != nullptr);
         (core_tree_node->getChild("mmu")->getResourceAs<olympia::MMU>())->
                 setTLB(*private_nodes_.at(num_of_cores)->getResourceAs<olympia::SimpleTLB>());
-        (core_tree_node->getChild("lsu")->getResourceAs<olympia::LSU>())->
-                setDataCache(*core_tree_node->getChild("dcache")->getResourceAs<olympia::DCache>());
         (core_tree_node->getChild("preloader")->getResourceAs<olympia::Preloader>())->
             preload();
     }

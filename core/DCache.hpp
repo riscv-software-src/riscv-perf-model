@@ -24,22 +24,34 @@ namespace olympia {
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
         };
 
+        static const char name[];
         DCache(sparta::TreeNode *n, const CacheParameterSet *p);
 
-        bool dataLookup(const MemoryAccessInfoPtr &mem_access_info_ptr);
+    private:
+        bool dataLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
-        void reloadCache(uint64_t phy_addr);
+        void reloadCache_(uint64_t phy_addr);
 
-        static const char name[];
+        void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
+
+        void lookupInst_();
+
         using L1Handle = SimpleDL1::Handle;
         L1Handle l1_cache_;
         const bool l1_always_hit_;
+        bool busy_;
         // Keep track of the instruction that causes current outstanding cache miss
-        InstPtr cache_pending_inst_ptr_ = nullptr;
+        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Input Ports
+        ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
-                {&unit_port_set_, "in_lsu_lookup_req", 1};
+                {&unit_port_set_, "in_lsu_lookup_req", 0};
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Output Ports
+        ////////////////////////////////////////////////////////////////////////////////
         sparta::SignalOutPort out_lsu_free_req_
                 {&unit_port_set_, "out_lsu_free_req", 0};
 
@@ -49,6 +61,11 @@ namespace olympia {
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
                 {&unit_port_set_, "out_lsu_lookup_req", 1};
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Events
+        ////////////////////////////////////////////////////////////////////////////////
+        sparta::UniqueEvent<> uev_lookup_inst_{&unit_event_set_, "uev_lookup_inst",
+                                               CREATE_SPARTA_HANDLER(DCache, lookupInst_), 1};
         sparta::Counter dl1_cache_hits_{
                 getStatisticSet(), "dl1_cache_hits",
                 "Number of DL1 cache hits", sparta::Counter::COUNT_NORMAL
@@ -57,5 +74,7 @@ namespace olympia {
                 getStatisticSet(), "dl1_cache_misses",
                 "Number of DL1 cache misses", sparta::Counter::COUNT_NORMAL
         };
+
+
     };
 }

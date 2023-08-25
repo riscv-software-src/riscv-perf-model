@@ -29,9 +29,6 @@ namespace olympia
         in_lsu_insts_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
 
-        in_biu_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromBIU_, InstPtr));
-
         in_rob_retire_ack_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
 
@@ -43,6 +40,12 @@ namespace olympia
 
         in_mmu_lookup_ack_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
+
+        in_cache_lookup_req_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromCache_, MemoryAccessInfoPtr));
+
+        in_cache_lookup_ack_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
         // Allow the pipeline to create events and schedule work
         ldst_pipeline_.performOwnUpdates();
 
@@ -60,8 +63,11 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::PostTick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
                                               CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq2_));
 
-        ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
-                                                CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
+                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq1_));
+
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::PostTick>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
+                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq2_));
 
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::COMPLETE),
                                                 CREATE_SPARTA_HANDLER(LSU, completeInst_));
@@ -170,17 +176,6 @@ namespace olympia
         }
     }
 
-    // Receive MSS access acknowledge from Bus Interface Unit
-    void LSU::getAckFromBIU_(const InstPtr & inst_ptr)
-    {
-        if (inst_ptr == cache_pending_inst_ptr_) {
-            rehandleCacheLookupReq_(inst_ptr);
-        }
-        else {
-            sparta_assert(false, "Unexpected BIU Ack event occurs!");
-        }
-    }
-
     // Receive update from ROB whenever store instructions retire
     void LSU::getAckFromROB_(const InstPtr & inst_ptr)
     {
@@ -222,8 +217,11 @@ namespace olympia
         ILOG("Issue/Re-issue Instruction: " << win_ptr->getInstPtr());
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Cache Subroutine
+    ////////////////////////////////////////////////////////////////////////////////
     // Handle cache access request
-    void LSU::handleCacheLookupReq_()
+    void LSU::handleCacheLookupReq1_()
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
 
@@ -232,103 +230,40 @@ namespace olympia
             return;
         }
 
-
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-
         ILOG(mem_access_info_ptr);
+        cache_hit_ = false;
+        out_cache_lookup_req_.send(mem_access_info_ptr);
+    }
 
-        const bool phyAddrIsReady =
-                mem_access_info_ptr->getPhyAddrStatus();
-        const bool isAlreadyHIT =
-                (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
-        const bool isUnretiredStore =
-                inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
-        const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
+    void LSU::handleCacheLookupReq2_(){
+        if(!cache_hit_)
+            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
+    }
 
-        if (cacheBypass) {
-            if (isAlreadyHIT) {
-                ILOG("Cache Lookup is skipped (Cache already hit)!");
+    void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr){
+        auto inst_ptr = memory_access_info_ptr->getInstPtr();
+        if (cache_pending_inst_flushed_) {
+            cache_pending_inst_flushed_ = false;
+            ILOG("BIU Ack for a flushed cache miss is received!");
+
+            // Schedule an instruction (re-)issue event
+            // Note: some younger load/store instruction(s) might have been blocked by
+            // this outstanding miss
+            updateIssuePriorityAfterCacheReload_(inst_ptr, true);
+            if (isReadyToIssueInsts_()) {
+                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
             }
-            else if (!phyAddrIsReady) {
-                ILOG("Cache Lookup is skipped (Physical address not ready)!");
-            }
-            else if (isUnretiredStore) {
-                ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
-            }
-            else {
-                sparta_assert(false, "Cache access is bypassed without a valid reason!");
-            }
+
             return;
         }
 
-        // Access cache, and check cache hit or miss
-        const bool CACHE_HIT = data_cache_->dataLookup(mem_access_info_ptr);
-
-        if (CACHE_HIT) {
-            // Update memory access info
-            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-        }
-        else {
-            // Update memory access info
-            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-
-            if (cache_busy_ == false) {
-                // Cache is now busy, no more CACHE MISS can be handled, RESET required on finish
-                cache_busy_ = true;
-                // Keep record of the current CACHE MISS instruction
-                cache_pending_inst_ptr_ = mem_access_info_ptr->getInstPtr();
-
-                // NOTE:
-                // cache_busy_ RESET could be done:
-                // as early as port-driven event for this miss finish, and
-                // as late as cache reload event for this miss finish.
-
-                // Schedule port-driven event in BIU
-                uev_cache_drive_biu_port_.schedule(sparta::Clock::Cycle(0));
-
-                // NOTE:
-                // The race between simultaneous MMU and cache requests is resolved by
-                // specifying precedence between these two competing events
-                ILOG("Cache is trying to drive BIU request port!");
-            }
-            else {
-                ILOG("Cache miss cannot be served right now due to another outstanding one!");
-            }
-
-            // NEW: Invalidate pipeline stage
-            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
-        }
+        updateIssuePriorityAfterCacheReload_(inst_ptr);
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
     }
 
-    // Drive BIU request port from cache
-    void LSU::driveBIUPortFromCache_()
-    {
-        bool succeed = false;
-
-        // Check if DataOutPort is available
-        if (!out_biu_req_.isDriven()) {
-            sparta_assert(cache_pending_inst_ptr_ != nullptr,
-                "Attempt to drive BIU port when no outstanding cache miss exists!");
-
-            // Port is available, drive the port immediately, and send request out
-            out_biu_req_.send(cache_pending_inst_ptr_);
-
-            succeed = true;
-
-            biu_reqs_++;
-        }
-        else {
-            // Port is being driven by another source, wait for one cycle and check again
-            uev_cache_drive_biu_port_.schedule(sparta::Clock::Cycle(1));
-        }
-
-        if (succeed) {
-            ILOG("DCache is driving the BIU request port!");
-        }
-        else {
-            ILOG("DCache is waiting to drive the BIU request port!");
-        }
+    void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr){
+        cache_hit_ = updated_memory_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT;
     }
 
     // Retire load/store instruction
@@ -440,7 +375,7 @@ namespace olympia
         }
 
         // Mark flushed flag for unfinished speculative cache access
-        if (cache_busy_ && flush(cache_pending_inst_ptr_->getUniqueID())) {
+        if (cache_busy_) {
             cache_pending_inst_flushed_ = true;
         }
 
@@ -536,46 +471,6 @@ namespace olympia
         ILOG("No instructions are ready to be issued");
 
         return false;
-    }
-
-    // Re-handle outstanding cache access request
-    void LSU::rehandleCacheLookupReq_(const InstPtr & inst_ptr)
-    {
-        // DCache is no longer busy any more
-        cache_busy_ = false;
-        cache_pending_inst_ptr_.reset();
-
-        // NOTE:
-        // Depending on cache is blocking or not,
-        // It may not have to wait until MMS Ack returns.
-        // However, that means cache has to keep record of a list of pending instructions
-
-        // Check if this cache miss Ack is for an already flushed instruction
-        if (cache_pending_inst_flushed_) {
-            cache_pending_inst_flushed_ = false;
-            ILOG("BIU Ack for a flushed cache miss is received!");
-
-            // Schedule an instruction (re-)issue event
-            // Note: some younger load/store instruction(s) might have been blocked by
-            // this outstanding miss
-            updateIssuePriorityAfterCacheReload_(inst_ptr, true);
-            if (isReadyToIssueInsts_()) {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-            }
-
-            return;
-        }
-
-        ILOG("BIU Ack for an outstanding cache miss is received!");
-
-        // Reload cache line
-        data_cache_->reloadCache(inst_ptr->getRAdr());
-
-        // Update issue priority & Schedule an instruction (re-)issue event
-        updateIssuePriorityAfterCacheReload_(inst_ptr);
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-
-        ILOG("DCache rehandling event is scheduled!");
     }
 
     // Update issue priority when newly dispatched instruction comes in

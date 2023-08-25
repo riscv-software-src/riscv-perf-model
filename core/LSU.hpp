@@ -207,11 +207,6 @@ namespace olympia
                                   SPARTA_ADDPAIR("state", &LoadStoreInstInfo::getState),
                                   SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr))
         };
-
-        void setDataCache(DCache& cache)
-        {
-            data_cache_ = &cache;
-        }
     private:
 
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
@@ -256,14 +251,11 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_lsu_credits_
             {&unit_port_set_, "out_lsu_credits"};
 
-        sparta::DataOutPort<InstPtr> out_biu_req_
-            {&unit_port_set_, "out_biu_req"};
-
         sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_
             {&unit_port_set_, "out_mmu_lookup_req", 0};
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_
-                {&unit_port_set_, "out_cache_lookup_req"};
+                {&unit_port_set_, "out_cache_lookup_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -281,11 +273,9 @@ namespace olympia
 
 
         // L1 Data Cache
-        DCache* data_cache_ = nullptr;
         bool cache_busy_ = false;
+        bool cache_hit_ = false;
         bool cache_pending_inst_flushed_ = false;
-        // Keep track of the instruction that causes current outstanding cache miss
-        InstPtr cache_pending_inst_ptr_ = nullptr;
 
         sparta::collection::Collectable<bool> cache_busy_collectable_{
             getContainer(), "dcache_busy", &cache_busy_};
@@ -308,10 +298,6 @@ namespace olympia
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                 CREATE_SPARTA_HANDLER(LSU, issueInst_)};
 
-        // Event to drive BIU request port from DCache
-        sparta::UniqueEvent<> uev_cache_drive_biu_port_ {&unit_event_set_, "cache_drive_biu_port",
-                CREATE_SPARTA_HANDLER(LSU, driveBIUPortFromCache_)};
-
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -326,9 +312,6 @@ namespace olympia
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 
-        // Receive MSS access acknowledge from Bus Interface Unit
-        void getAckFromBIU_(const InstPtr &);
-
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
 
@@ -340,21 +323,24 @@ namespace olympia
 
         void handleMMULookupReq2_();
 
-        // Handle cache access request
-        void handleCacheLookupReq_();
+        void getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
-        // Drive BIU request port from cache
-        void driveBIUPortFromCache_();
+        void getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
+
+        // Handle cache access request
+        void handleCacheLookupReq1_();
+
+        void handleCacheLookupReq2_();
+
+        void getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr);
+
+        void getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
 
         // Retire load/store instruction
         void completeInst_();
 
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
-
-        void getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
-
-        void getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
@@ -371,9 +357,6 @@ namespace olympia
 
         // Check for ready to issue instructions
         bool isReadyToIssueInsts_() const;
-
-        // Re-handle outstanding cache access request
-        void rehandleCacheLookupReq_(const InstPtr &);
 
         // Update issue priority after dispatch
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);

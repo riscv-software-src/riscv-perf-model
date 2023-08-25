@@ -218,10 +218,6 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_mmu_free_req"
         },
         {
-            "cpu.core*.lsu.ports.in_biu_ack",
-            "cpu.core*.biu.ports.out_biu_ack"
-        },
-        {
             "cpu.core*.biu.ports.out_mss_req_sync",
             "cpu.core*.mss.ports.in_mss_req_sync"
         },

@@ -217,9 +217,6 @@ namespace olympia
         sparta::DataInPort<InstQueue::value_type> in_lsu_insts_
             {&unit_port_set_, "in_lsu_insts", 1};
 
-        sparta::DataInPort<InstPtr> in_biu_ack_
-            {&unit_port_set_, "in_biu_ack", 1};
-
         sparta::DataInPort<InstPtr> in_rob_retire_ack_
             {&unit_port_set_, "in_rob_retire_ack", 1};
 

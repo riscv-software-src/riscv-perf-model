@@ -49,11 +49,6 @@ namespace olympia
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
-            PARAMETER(uint32_t, ld_queue_size, ldst_inst_queue_size, "Load Queue size")
-            PARAMETER(uint32_t, st_queue_size, ldst_inst_queue_size, "Store Queue Size")
-            // LSU microarchitecture parameters
-            PARAMETER(bool, stall_pipeline_on_miss, true, "Stall pipeline on miss event")
-            PARAMETER(bool, allow_speculative_load_exec, true, "Allow loads to proceed speculatively before all older store addresses are known")
         };
 
         /*!
@@ -260,12 +255,6 @@ namespace olympia
         using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
         LoadStoreIssueQueue ldst_inst_queue_;
         const uint32_t ldst_inst_queue_size_;
-        // Load Queue
-        sparta::Buffer<LoadStoreInstInfoPtr> load_queue_;
-        const uint32_t ld_queue_size_;
-        // Store Queue
-        sparta::Buffer<LoadStoreInstInfoPtr> store_queue_;
-        const uint32_t st_queue_size_;
 
         // MMU unit
         MMU* mmu_ = nullptr;
@@ -295,9 +284,6 @@ namespace olympia
         LoadStorePipeline ldst_pipeline_
             {"LoadStorePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
 
-        // LSU Microarchitecture parameters
-        const bool stall_pipeline_on_miss_;
-        const bool allow_speculative_load_exec_;
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
@@ -366,23 +352,11 @@ namespace olympia
         // Pop completed load/store instruction out of issue queue
         void popIssueQueue_(const InstPtr &);
 
-        // Pop completed load instruction out of issue queue
-        void popLoadQueue_(const InstPtr &);
-
-        // Pop completed store instruction out of issue queue
-        void popStoreQueue_(const InstPtr &);
-
         // Arbitrate instruction issue from ldst_inst_queue
         const LoadStoreInstInfoPtr & arbitrateInstIssue_();
 
         // Check for ready to issue instructions
         bool isReadyToIssueInsts_() const;
-
-        // Append new load instruction into load queue
-        void appendLoadQueue_(const LoadStoreInstInfoPtr &);
-
-        // Append new store instruction into store queue
-        void appendStoreQueue_(const LoadStoreInstInfoPtr &);
 
         // Re-handle outstanding MMU access request
         void rehandleMMULookupReq_(const InstPtr &);

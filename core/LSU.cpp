@@ -66,10 +66,6 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::COMPLETE),
                                                 CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
-
-        // Event precedence setup
-        uev_cache_drive_biu_port_ >> uev_mmu_drive_biu_port_;
-
         // NOTE:
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle
@@ -304,35 +300,6 @@ namespace olympia
             ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
         }
     }
-    // Drive BIU request port from MMU
-    void LSU::driveBIUPortFromMMU_()
-    {
-        bool succeed = false;
-
-        // Check if DataOutPort is available
-        if (!out_biu_req_.isDriven()) {
-            sparta_assert(mmu_pending_inst_ptr_ != nullptr,
-                "Attempt to drive BIU port when no outstanding TLB miss exists!");
-
-            // Port is available, drive port immediately, and send request out
-            out_biu_req_.send(mmu_pending_inst_ptr_);
-
-            succeed = true;
-
-            biu_reqs_++;
-        }
-        else {
-            // Port is being driven by another source, wait for one cycle and check again
-            uev_mmu_drive_biu_port_.schedule(sparta::Clock::Cycle(1));
-        }
-
-        if (succeed) {
-            ILOG("MMU is driving the BIU request port!");
-        }
-        else {
-            ILOG("MMU is waiting to drive the BIU request port!");
-        }
-    }
 
     // Drive BIU request port from cache
     void LSU::driveBIUPortFromCache_()
@@ -468,7 +435,7 @@ namespace olympia
         flushLSPipeline_(flush);
 
         // Mark flushed flag for unfinished speculative MMU access
-        if (mmu_busy_ && flush(mmu_pending_inst_ptr_->getUniqueID())) {
+        if (mmu_busy_) {
             mmu_pending_inst_flushed = true;
         }
 
@@ -720,6 +687,9 @@ namespace olympia
 
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // MMU subroutines
+    ////////////////////////////////////////////////////////////////////////////////
     // Handle MMU access request
     void LSU::handleMMULookupReq1_()
     {
@@ -745,9 +715,6 @@ namespace olympia
 
     void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
         auto inst_ptr = memory_access_info_ptr->getInstPtr();
-        // MMU is no longer busy any more
-        mmu_busy_ = false;
-        mmu_pending_inst_ptr_.reset();
         if (mmu_pending_inst_flushed) {
             mmu_pending_inst_flushed = false;
             // Update issue priority & Schedule an instruction (re-)issue event
@@ -766,8 +733,6 @@ namespace olympia
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
         mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrIsReady();
-        if(mmu_busy_ == false)
-            mmu_busy_ = true;
     }
 
     // Flush instruction issue queue

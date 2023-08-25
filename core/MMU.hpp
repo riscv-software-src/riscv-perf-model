@@ -10,7 +10,6 @@
 namespace olympia {
 
     class MMU : public sparta::Unit {
-
     public:
         class MMUParameterSet : public sparta::ParameterSet {
         public:
@@ -21,34 +20,40 @@ namespace olympia {
             PARAMETER(uint32_t, mmu_latency, 1, "Latency to mmu lookup")
         };
 
+        static const char name[];
 
         MMU(sparta::TreeNode *node, const MMUParameterSet *p);
 
-        bool memLookup(const MemoryAccessInfoPtr &mem_access_info_ptr);
-
         void setTLB(SimpleTLB &tlb);
+
+    private:
+
+        using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+        SimpleTLB *tlb_cache_ = nullptr;
+        const bool tlb_always_hit_;
+        // Keep track of the instruction that causes current outstanding TLB
+        MemoryAccessInfoPtr mmu_pending_inst_ = nullptr;
+        // MMU latency parameter
+        const uint32_t mmu_latency_;
+        bool busy_;
 
         void reloadTLB_(uint64_t vaddr);
 
+        bool memLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
+
         void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
+        void lookupInst_();
 
-        static const char name[];
-        SimpleTLB *tlb_cache_ = nullptr;
-        const bool tlb_always_hit_;
-        // Keep track of the instruction that causes current outstanding TLB miss
-        InstPtr mmu_pending_inst_ptr_ = nullptr;
-        // MMU latency parameter
-        const uint32_t mmu_latency_;
-
-        using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
-
-        MemoryAccessInfoPtr mmu_pending_inst_ = nullptr;
-
-
+        ////////////////////////////////////////////////////////////////////////////////
+        // Input Ports
+        ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
                 {&unit_port_set_, "in_lsu_lookup_req", 0};
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Output Ports
+        ////////////////////////////////////////////////////////////////////////////////
         sparta::SignalOutPort out_lsu_free_req_
                 {&unit_port_set_, "out_lsu_free_req", 0};
 
@@ -58,11 +63,13 @@ namespace olympia {
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
                 {&unit_port_set_, "out_lsu_lookup_req", 1};
 
-        sparta::UniqueEvent<> uev_lookup_inst_{&unit_event_set_, "lookup_inst",
+        ////////////////////////////////////////////////////////////////////////////////
+        // Events
+        ////////////////////////////////////////////////////////////////////////////////
+        sparta::UniqueEvent<> uev_lookup_inst_{&unit_event_set_, "uev_lookup_inst",
                                               CREATE_SPARTA_HANDLER(MMU, lookupInst_), 1};
 
-        void lookupInst_();
-
+        // Counters
         sparta::Counter tlb_hits_{
                 getStatisticSet(), "tlb_hits",
                 "Number of TLB hits", sparta::Counter::COUNT_NORMAL

@@ -208,11 +208,6 @@ namespace olympia
                                   SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr))
         };
 
-        void setMMU(MMU& mmu)
-        {
-            mmu_ = &mmu;
-        }
-
         void setDataCache(DCache& cache)
         {
             data_cache_ = &cache;
@@ -280,11 +275,8 @@ namespace olympia
         const uint32_t ldst_inst_queue_size_;
 
         // MMU unit
-        MMU* mmu_ = nullptr;
         bool mmu_busy_ = false;
         bool mmu_pending_inst_flushed = false;
-        // Keep track of the instruction that causes current outstanding TLB miss
-        InstPtr mmu_pending_inst_ptr_ = nullptr;
         bool mmu_hit_ = false;
 
 
@@ -315,10 +307,6 @@ namespace olympia
         // Event to issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                 CREATE_SPARTA_HANDLER(LSU, issueInst_)};
-
-        // Event to drive BIU request port from MMU
-        sparta::UniqueEvent<> uev_mmu_drive_biu_port_ {&unit_event_set_, "mmu_drive_biu_port",
-                CREATE_SPARTA_HANDLER(LSU, driveBIUPortFromMMU_)};
 
         // Event to drive BIU request port from DCache
         sparta::UniqueEvent<> uev_cache_drive_biu_port_ {&unit_event_set_, "cache_drive_biu_port",
@@ -351,9 +339,6 @@ namespace olympia
         void handleMMULookupReq1_();
 
         void handleMMULookupReq2_();
-
-        // Drive BIU request port from MMU
-        void driveBIUPortFromMMU_();
 
         // Handle cache access request
         void handleCacheLookupReq_();

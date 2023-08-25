@@ -10,13 +10,14 @@ namespace olympia {
     MMU::MMU(sparta::TreeNode *node, const MMUParameterSet *p) :
             sparta::Unit(node),
             tlb_always_hit_(p->tlb_always_hit),
-            mmu_latency_(p->mmu_latency) {
+            mmu_latency_(p->mmu_latency),
+            busy_(false){
 
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(MMU, getInstsFromLSU_, MemoryAccessInfoPtr));
     }
 
-    bool MMU::memLookup(const MemoryAccessInfoPtr &mem_access_info_ptr) {
+    bool MMU::memLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr) {
         const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t vaddr = inst_ptr->getTargetVAddr();
 
@@ -56,24 +57,30 @@ namespace olympia {
         ILOG("TLB reload complete!");
     }
 
+    // Get Lookup Requests from LSU
     void MMU::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
-        const bool hit = memLookup(memory_access_info_ptr);
+        const bool hit = memLookup_(memory_access_info_ptr);
         if(hit){
             memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
             memory_access_info_ptr->setPhyAddrStatus(true);
         }else{
-            memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
-            memory_access_info_ptr->setPhyAddrStatus(false);
-            mmu_pending_inst_ = memory_access_info_ptr;
-            uev_lookup_inst_.schedule(sparta::Clock::Cycle(mmu_latency_));
+            if(!busy_) {
+                busy_ = true;
+                memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
+                memory_access_info_ptr->setPhyAddrStatus(false);
+                mmu_pending_inst_ = memory_access_info_ptr;
+                uev_lookup_inst_.schedule(sparta::Clock::Cycle(mmu_latency_));
+            }
         }
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
     }
 
+    // TLB ready for memory access
     void MMU::lookupInst_() {
-        reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
         out_lsu_lookup_req_.send(mmu_pending_inst_);
+        reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
         mmu_pending_inst_.reset();
+        busy_ = false;
     }
 
 }

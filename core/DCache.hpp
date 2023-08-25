@@ -1,6 +1,8 @@
 #pragma once
 
 #include "sparta/simulation/Unit.hpp"
+#include "sparta/ports/DataPort.hpp"
+#include "sparta/ports/SignalPort.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "SimpleDL1.hpp"
@@ -35,6 +37,17 @@ namespace olympia {
         // Keep track of the instruction that causes current outstanding cache miss
         InstPtr cache_pending_inst_ptr_ = nullptr;
 
+        sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
+                {&unit_port_set_, "in_lsu_lookup_req", 1};
+
+        sparta::SignalOutPort out_lsu_free_req_
+                {&unit_port_set_, "out_lsu_free_req", 0};
+
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_ack_
+                {&unit_port_set_, "out_lsu_lookup_ack", 0};
+
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
+                {&unit_port_set_, "out_lsu_lookup_req", 1};
 
         sparta::Counter dl1_cache_hits_{
                 getStatisticSet(), "dl1_cache_hits",

@@ -186,6 +186,38 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.rob.ports.out_reorder_buffer_credits"
         },
         {
+            "cpu.core*.lsu.ports.out_cache_lookup_req",
+            "cpu.core*.dcache.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_lookup_ack",
+            "cpu.core*.lsu.ports.in_cache_lookup_ack"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_lookup_req",
+            "cpu.core*.lsu.ports.in_cache_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_free_req",
+            "cpu.core*.lsu.ports.in_cache_free_req"
+        },
+        {
+            "cpu.core*.lsu.ports.out_mmu_lookup_req",
+            "cpu.core*.mmu.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_lookup_ack",
+            "cpu.core*.lsu.ports.in_mmu_lookup_ack"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_lookup_req",
+            "cpu.core*.lsu.ports.in_mmu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_free_req",
+            "cpu.core*.lsu.ports.in_mmu_free_req"
+        },
+        {
             "cpu.core*.lsu.ports.out_biu_req",
             "cpu.core*.biu.ports.in_biu_req"
         },

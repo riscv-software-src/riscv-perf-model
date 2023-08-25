@@ -1,6 +1,8 @@
 #pragma once
 
 #include <sparta/simulation/Unit.hpp>
+#include "sparta/ports/SignalPort.hpp"
+#include "sparta/ports/DataPort.hpp"
 #include "Inst.hpp"
 #include "SimpleTLB.hpp"
 #include "MemoryAccessInfo.hpp"
@@ -39,6 +41,17 @@ namespace olympia {
 
         using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
 
+        sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
+                {&unit_port_set_, "in_lsu_lookup_req", 1};
+
+        sparta::SignalOutPort out_lsu_free_req_
+                {&unit_port_set_, "out_lsu_free_req", 0};
+
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_ack_
+                {&unit_port_set_, "out_lsu_lookup_ack", 0};
+
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
+                {&unit_port_set_, "out_lsu_lookup_req", 1};
 
         sparta::Counter tlb_hits_{
                 getStatisticSet(), "tlb_hits",

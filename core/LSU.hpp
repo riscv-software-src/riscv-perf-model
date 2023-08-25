@@ -237,6 +237,24 @@ namespace olympia
             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
 
+        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_req_
+                {&unit_port_set_, "in_mmu_lookup_req", 1};
+
+        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_
+                {&unit_port_set_, "in_mmu_lookup_ack", 0};
+
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_
+                {&unit_port_set_, "in_cache_lookup_req", 1};
+
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_
+                {&unit_port_set_, "in_cache_lookup_ack", 0};
+
+        sparta::SignalInPort in_cache_free_req_
+                {&unit_port_set_, "in_cache_free_req", 0};
+
+        sparta::SignalInPort in_mmu_free_req_
+                {&unit_port_set_, "in_mmu_free_req", 0};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
@@ -246,6 +264,11 @@ namespace olympia
         sparta::DataOutPort<InstPtr> out_biu_req_
             {&unit_port_set_, "out_biu_req"};
 
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_
+            {&unit_port_set_, "out_mmu_lookup_req"};
+
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_
+                {&unit_port_set_, "out_cache_lookup_req"};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States

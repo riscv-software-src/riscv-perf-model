@@ -82,7 +82,7 @@ namespace olympia {
 
     void DCache::lookupInst_() {
         out_lsu_lookup_req_.send(cache_pending_inst_);
-        reloadCache_(cache_pending_inst_->getInstPtr()->getTargetVAddr());
+        reloadCache_(cache_pending_inst_->getInstPtr()->getRAdr());
         cache_pending_inst_.reset();
         busy_ = false;
     }

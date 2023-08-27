@@ -15,11 +15,23 @@ namespace olympia
         memory_access_allocator(50, 30),   // 50 and 30 are arbitrary numbers here.  It can be tuned to an exact value.
         load_store_info_allocator(50, 30),
         ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
-        ldst_inst_queue_size_(p->ldst_inst_queue_size)
+        ldst_inst_queue_size_(p->ldst_inst_queue_size),
+        load_queue_("load_queue", p->ld_queue_size, getClock()),
+        load_queue_size_(p->ld_queue_size),
+        store_queue_("store_queue", p->st_queue_size, getClock()),
+        store_queue_size_(p->st_queue_size),
+        replay_buffer_("replay_buffer", p->st_queue_size, getClock()),
+        replay_buffer_size_(p->replay_buffer_size),
+        stall_pipeline_on_miss_(p->stall_pipeline_on_miss),
+        allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
+
+        load_queue_.enableCollection(node);
+        store_queue_.enableCollection(node);
+        replay_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
@@ -153,6 +165,12 @@ namespace olympia
             // Append to instruction issue queue
             appendIssueQueue_(inst_info_ptr);
 
+            if(inst_ptr->isStoreInst()){
+                appendStoreQueue_(inst_info_ptr);
+            }else {
+                appendLoadQueue_(inst_info_ptr);
+            }
+
             // Update issue priority & Schedule an instruction issue event
             updateIssuePriorityAfterNewDispatch_(inst_ptr);
             uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -203,7 +221,7 @@ namespace olympia
         lsu_insts_issued_++;
 
         // Append load/store pipe
-        ldst_pipeline_.append(win_ptr->getMemoryAccessInfoPtr());
+        ldst_pipeline_.append(win_ptr);
 
         // Update instruction issue info
         win_ptr->setState(LoadStoreInstInfo::IssueState::ISSUED);
@@ -230,7 +248,8 @@ namespace olympia
             return;
         }
 
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
+        const MemoryAccessInfoPtr & mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
         const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         ILOG(mem_access_info_ptr);
 
@@ -304,7 +323,8 @@ namespace olympia
         }
 
 
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
+        const MemoryAccessInfoPtr & mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool is_store_inst = inst_ptr->isStoreInst();
         ILOG("Completing inst: " << inst_ptr);
@@ -330,7 +350,9 @@ namespace olympia
             lsu_insts_completed_++;
 
             // Remove completed instruction from issue queue
-            popIssueQueue_(inst_ptr);
+            popIssueQueue_(load_store_info_ptr);
+
+            popLoadQueue_(load_store_info_ptr);
 
             // Update instruction issue queue credits to Dispatch Unit
             out_lsu_credits_.send(1, 0);
@@ -368,7 +390,9 @@ namespace olympia
             lsu_insts_completed_++;
 
             // Remove store instruction from issue queue
-            popIssueQueue_(inst_ptr);
+            popIssueQueue_(load_store_info_ptr);
+
+            popStoreQueue_(load_store_info_ptr);
 
             // Update instruction issue queue credits to Dispatch Unit
             out_lsu_credits_.send(1, 0);
@@ -436,55 +460,99 @@ namespace olympia
                         "Appending issue queue causes overflows!");
 
         // Always append newly dispatched instructions to the back of issue queue
+        uint32_t index = ldst_inst_queue_.size();
         ldst_inst_queue_.push_back(inst_info_ptr);
+        inst_info_ptr->setIssueQueueIndex(index);
 
         ILOG("Append new load/store instruction to issue queue!");
     }
 
-    // Pop completed load/store instruction out of issue queue
-    void LSU::popIssueQueue_(const InstPtr & inst_ptr)
-    {
-        // Look for the instruction to be completed, and remove it from issue queue
+    void LSU::appendLoadQueue_(const LoadStoreInstInfoPtr &inst_info_ptr) {
+        appendToQueue_(inst_info_ptr, load_queue_);
+    }
+
+    void LSU::appendStoreQueue_(const LoadStoreInstInfoPtr &inst_info_ptr) {
+        appendToQueue_(inst_info_ptr, store_queue_);
+    }
+
+    void inline LSU::appendToQueue_(const LoadStoreInstInfoPtr &inst_info_ptr, LoadStoreIssueQueue &queue){
+        sparta_assert(queue.size() < queue.capacity(),
+                      "Appending load queue causes overflows!");
+
+        // Always append newly dispatched instructions to the back of issue queue
+        uint32_t index = queue.size();
+        queue.push_back(inst_info_ptr);
+        inst_info_ptr->setQueueIndex(index);
+
+        ILOG("Append new instruction to queue!");
+    }
+
+    // Pop completed store instruction out of store queue
+    void LSU::popStoreQueue_(const LoadStoreInstInfoPtr & inst_info_ptr){
+        removeFromQueue_(inst_info_ptr, store_queue_);
+    }
+
+    void LSU::popLoadQueue_(const LoadStoreInstInfoPtr & inst_info_ptr){
+        removeFromQueue_(inst_info_ptr, load_queue_);
+    }
+
+    void LSU::popIssueQueue_(const LoadStoreInstInfoPtr & inst_info_ptr){
         for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
-            if ((*iter)->getInstPtr() == inst_ptr) {
+            if (*iter == inst_info_ptr) {
                 ldst_inst_queue_.erase(iter);
 
                 return;
             }
         }
 
-        sparta_assert(false, "Attempt to complete instruction no longer exiting in issue queue!");
+        sparta_assert(false, "Attempt to complete instruction no longer existing in the queue!");
+    }
+
+    void inline LSU::removeFromQueue_(const LoadStoreInstInfoPtr &inst_info_ptr, LoadStoreIssueQueue &queue){
+        for (auto iter = queue.begin(); iter != queue.end(); iter++) {
+            if (*iter == inst_info_ptr) {
+                queue.erase(iter);
+
+                return;
+            }
+        }
+
+        sparta_assert(false, "Attempt to complete instruction no longer existing in the queue!");
     }
 
     // Arbitrate instruction issue from ldst_inst_queue
     const LSU::LoadStoreInstInfoPtr & LSU::arbitrateInstIssue_()
     {
-        sparta_assert(ldst_inst_queue_.size() > 0, "Arbitration fails: issue is empty!");
+        if(allow_speculative_load_exec_) {
+            sparta_assert(ldst_inst_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
-        // Initialization of winner
-        auto win_ptr_iter = ldst_inst_queue_.begin();
+            // Initialization of winner
+            auto win_ptr_iter = ldst_inst_queue_.begin();
 
-        // Select the ready instruction with highest issue priority
-        for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
-            // Skip not ready-to-issue instruction
-            if (!(*iter)->isReady()) {
-                continue;
+            // Select the ready instruction with highest issue priority
+            for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
+                // Skip not ready-to-issue instruction
+                if (!(*iter)->isReady()) {
+                    continue;
+                }
+
+                // Pick winner
+                if (!(*win_ptr_iter)->isReady() || (*iter)->winArb(*win_ptr_iter)) {
+                    win_ptr_iter = iter;
+                }
+                // NOTE:
+                // If the inst pointed to by (*win_ptr_iter) is not ready (possible @initialization),
+                // Re-assign it pointing to the ready-to-issue instruction pointed by (*iter).
+                // Otherwise, both (*win_ptr_iter) and (*iter) point to ready-to-issue instructions,
+                // Pick the one with higher issue priority.
             }
 
-            // Pick winner
-            if (!(*win_ptr_iter)->isReady() || (*iter)->winArb(*win_ptr_iter)) {
-                win_ptr_iter = iter;
-            }
-            // NOTE:
-            // If the inst pointed to by (*win_ptr_iter) is not ready (possible @initialization),
-            // Re-assign it pointing to the ready-to-issue instruction pointed by (*iter).
-            // Otherwise, both (*win_ptr_iter) and (*iter) point to ready-to-issue instructions,
-            // Pick the one with higher issue priority.
+            sparta_assert((*win_ptr_iter)->isReady(), "Arbitration fails: no instruction is ready!");
+
+            return *win_ptr_iter;
+        }else{
+            sparta_assert(false, "Non speculative load exec not implemented");
         }
-
-        sparta_assert((*win_ptr_iter)->isReady(), "Arbitration fails: no instruction is ready!");
-
-        return *win_ptr_iter;
     }
 
     // Check for ready to issue instructions
@@ -625,7 +693,8 @@ namespace olympia
             return;
         }
 
-        const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
+        const MemoryAccessInfoPtr & mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
         ILOG(mem_access_info_ptr);
 
         bool mmu_bypass = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
@@ -643,11 +712,19 @@ namespace olympia
     // Handle MMU access request
     void LSU::handleMMULookupReq2_()
     {
-        if(!mmu_hit_) {
-            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP));
+        auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+
+        // If miss
+        if (!mmu_hit_) {
+            if (stall_pipeline_on_miss_) {
+                ldst_pipeline_.stall(stage_id, 1);
+            } else {
+                ldst_pipeline_.invalidateStage(stage_id);
+            }
         }
     }
 
+    // MMU ready with information
     void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
         const auto &inst_ptr = memory_access_info_ptr->getInstPtr();
         if (mmu_pending_inst_flushed) {
@@ -668,6 +745,39 @@ namespace olympia
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
         mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrIsReady();
+
+        if(mmu_hit_) {
+            if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && allow_speculative_load_exec_){
+                reIssueMatchingYoungerLoads(updated_memory_access_info_ptr);
+            }else if(!updated_memory_access_info_ptr->getInstPtr()->isStoreInst()){// TODO Update stores with matching load address
+                updateMatchingStoresWithLoad(updated_memory_access_info_ptr);
+            }
+        }
+    }
+
+    void LSU::reIssueMatchingYoungerLoads(const MemoryAccessInfoPtr &mem_access_info_ptr) {
+        const auto match_inst_ptr = mem_access_info_ptr->getInstPtr();
+        for (auto const &inst_info_ptr: load_queue_) {
+            if (!inst_info_ptr->isReady()) continue;
+            auto load_inst_ptr = inst_info_ptr->getInstPtr();
+
+            if (load_inst_ptr->getUniqueID() > match_inst_ptr->getUniqueID() &&
+                    load_inst_ptr->getTargetVAddr() == match_inst_ptr->getTargetVAddr()) {
+                inst_info_ptr->reIssue();
+            }
+        }
+    }
+
+    void LSU::updateMatchingStoresWithLoad(const MemoryAccessInfoPtr &mem_access_info_ptr) {
+        const auto match_inst_ptr = mem_access_info_ptr->getInstPtr();
+        for (auto const &inst_info_ptr: store_queue_) {
+            if(!inst_info_ptr->isReady()) continue;
+            auto store_inst_ptr = inst_info_ptr->getInstPtr();
+
+            if(store_inst_ptr->getTargetVAddr() == match_inst_ptr->getTargetVAddr()) {
+                inst_info_ptr->setHasDependentInst(true);
+            }
+        }
     }
 
     // Flush instruction issue queue

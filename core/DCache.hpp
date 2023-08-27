@@ -35,8 +35,6 @@ namespace olympia {
 
         void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
-        void lookupInst_();
-
         void getAckFromBIU_(const InstPtr &inst_ptr);
 
         using L1Handle = SimpleDL1::Handle;

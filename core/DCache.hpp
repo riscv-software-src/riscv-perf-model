@@ -37,6 +37,8 @@ namespace olympia {
 
         void lookupInst_();
 
+        void getAckFromBIU_(const InstPtr &inst_ptr);
+
         using L1Handle = SimpleDL1::Handle;
         L1Handle l1_cache_;
         const bool l1_always_hit_;
@@ -51,6 +53,9 @@ namespace olympia {
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
                 {&unit_port_set_, "in_lsu_lookup_req", 0};
 
+        sparta::DataInPort<InstPtr> in_biu_ack_
+                {&unit_port_set_, "in_biu_ack", 1};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
@@ -63,20 +68,25 @@ namespace olympia {
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
                 {&unit_port_set_, "out_lsu_lookup_req", 1};
 
+        sparta::DataOutPort<InstPtr> out_biu_req_
+                {&unit_port_set_, "out_biu_req"};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::UniqueEvent<> uev_lookup_inst_{&unit_event_set_, "uev_lookup_inst",
-                                               CREATE_SPARTA_HANDLER(DCache, lookupInst_), 1};
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Counters
+        ////////////////////////////////////////////////////////////////////////////////
         sparta::Counter dl1_cache_hits_{
                 getStatisticSet(), "dl1_cache_hits",
                 "Number of DL1 cache hits", sparta::Counter::COUNT_NORMAL
         };
+
         sparta::Counter dl1_cache_misses_{
                 getStatisticSet(), "dl1_cache_misses",
                 "Number of DL1 cache misses", sparta::Counter::COUNT_NORMAL
         };
-
-
     };
+
 }

@@ -202,6 +202,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_cache_free_req"
         },
         {
+            "cpu.core*.dcache.ports.out_biu_req",
+            "cpu.core*.biu.ports.in_biu_req"
+        },
+        {
+            "cpu.core*.biu.ports.out_biu_ack",
+            "cpu.core*.dcache.ports.in_biu_ack"
+        },
+        {
             "cpu.core*.lsu.ports.out_mmu_lookup_req",
             "cpu.core*.mmu.ports.in_lsu_lookup_req"
         },

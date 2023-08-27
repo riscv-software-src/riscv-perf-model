@@ -11,6 +11,9 @@ namespace olympia {
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
 
+        in_biu_ack_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromBIU_, InstPtr));
+
         // DL1 cache config
         const uint32_t l1_line_size = p->l1_line_size;
         const uint32_t l1_size_kb = p->l1_size_kb;
@@ -75,15 +78,17 @@ namespace olympia {
             if(!busy_) {
                 busy_ = true;
                 cache_pending_inst_ = memory_access_info_ptr;
-                uev_lookup_inst_.schedule(sparta::Clock::Cycle(cache_latency_)); // Replace with call to BIU
+                out_biu_req_.send(cache_pending_inst_->getInstPtr());
             }
         }
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
     }
 
-    void DCache::lookupInst_() {
-        busy_ = false;
-        reloadCache_(cache_pending_inst_->getInstPtr()->getRAdr());
+    void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
         out_lsu_lookup_req_.send(cache_pending_inst_);
+        reloadCache_(inst_ptr->getRAdr());
+        cache_pending_inst_.reset();
+        busy_ = false;
     }
+
 }

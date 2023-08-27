@@ -231,7 +231,34 @@ namespace olympia
         }
 
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
+        const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         ILOG(mem_access_info_ptr);
+
+        const bool phyAddrIsReady =
+                mem_access_info_ptr->getPhyAddrStatus();
+        const bool isAlreadyHIT =
+                (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
+        const bool isUnretiredStore =
+                inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
+        const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
+
+        if (cacheBypass) {
+            if (isAlreadyHIT) {
+                ILOG("Cache Lookup is skipped (Cache already hit)!");
+            }
+            else if (!phyAddrIsReady) {
+                ILOG("Cache Lookup is skipped (Physical address not ready)!");
+            }
+            else if (isUnretiredStore) {
+                ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
+            }
+            else {
+                sparta_assert(false, "Cache access is bypassed without a valid reason!");
+            }
+            cache_hit_ = true;
+            return;
+        }
+
         cache_hit_ = false;
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
@@ -334,6 +361,9 @@ namespace olympia
         else {
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
                         "Store inst cannot finish when cache is still a miss!");
+
+            sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
+                          "Store inst cannot finish when cache is still a miss!");
 
             lsu_insts_completed_++;
 
@@ -597,6 +627,16 @@ namespace olympia
 
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         ILOG(mem_access_info_ptr);
+
+        bool isAlreadyHIT = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
+        bool MMUBypass = isAlreadyHIT;
+
+        if (MMUBypass) {
+            ILOG("MMU Lookup is skipped (TLB is already hit)!");
+            mmu_hit_ = true;
+            return;
+        }
+
         mmu_hit_ = false;
         out_mmu_lookup_req_.send(mem_access_info_ptr);
     }

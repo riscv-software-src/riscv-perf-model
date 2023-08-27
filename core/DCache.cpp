@@ -5,7 +5,8 @@ namespace olympia {
 
     DCache::DCache(sparta::TreeNode *n, const CacheParameterSet *p) :
             sparta::Unit(n),
-            l1_always_hit_(p->l1_always_hit) {
+            l1_always_hit_(p->l1_always_hit),
+            cache_latency_(p->cache_latency){
 
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
@@ -70,20 +71,19 @@ namespace olympia {
         if(hit){
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
         }else{
+            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
             if(!busy_) {
                 busy_ = true;
-                memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
                 cache_pending_inst_ = memory_access_info_ptr;
-                uev_lookup_inst_.schedule(sparta::Clock::Cycle(1)); // Replace with call to BIU
+                uev_lookup_inst_.schedule(sparta::Clock::Cycle(cache_latency_)); // Replace with call to BIU
             }
         }
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
     }
 
     void DCache::lookupInst_() {
-        out_lsu_lookup_req_.send(cache_pending_inst_);
-        reloadCache_(cache_pending_inst_->getInstPtr()->getRAdr());
-        cache_pending_inst_.reset();
         busy_ = false;
+        reloadCache_(cache_pending_inst_->getInstPtr()->getRAdr());
+        out_lsu_lookup_req_.send(cache_pending_inst_);
     }
 }

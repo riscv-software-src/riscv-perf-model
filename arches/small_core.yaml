@@ -10,6 +10,7 @@ top.cpu.core0:
   rob.params.num_to_retire:    2
   dcache.params:
     l1_size_kb: 16
+    cache_latency: 4
 
 top.cpu.core0.extension.core_extensions:
   execution_topology:

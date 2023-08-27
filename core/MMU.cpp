@@ -64,10 +64,10 @@ namespace olympia {
             memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
             memory_access_info_ptr->setPhyAddrStatus(true);
         }else{
+            memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
+            memory_access_info_ptr->setPhyAddrStatus(false);
             if(!busy_) {
                 busy_ = true;
-                memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::MISS);
-                memory_access_info_ptr->setPhyAddrStatus(false);
                 mmu_pending_inst_ = memory_access_info_ptr;
                 uev_lookup_inst_.schedule(sparta::Clock::Cycle(mmu_latency_));
             }
@@ -77,10 +77,9 @@ namespace olympia {
 
     // TLB ready for memory access
     void MMU::lookupInst_() {
-        out_lsu_lookup_req_.send(mmu_pending_inst_);
-        reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
-        mmu_pending_inst_.reset();
         busy_ = false;
+        reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
+        out_lsu_lookup_req_.send(mmu_pending_inst_);
     }
 
 }

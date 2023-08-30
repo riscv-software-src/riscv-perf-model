@@ -36,7 +36,7 @@ namespace olympia {
                 ldst_inst_ptr_(inst_ptr),
                 phyAddrIsReady_(false),
                 mmu_access_state_(MMUState::NO_ACCESS),
-
+                dataIsReady_(false),
                 // Construct the State object here
                 cache_access_state_(CacheState::NO_ACCESS) {}
 
@@ -78,6 +78,14 @@ namespace olympia {
             return phyAddrIsReady_;
         }
 
+        bool getDataIsReady() const {
+            return dataIsReady_;
+        }
+
+        void setDataIsReady(bool isReady) {
+            dataIsReady_ = isReady;
+        }
+
 
     private:
         // load/store instruction pointer
@@ -88,6 +96,8 @@ namespace olympia {
 
         // MMU access status
         MMUState mmu_access_state_;
+
+        bool dataIsReady_;
 
         // DCache access status
         CacheState cache_access_state_;

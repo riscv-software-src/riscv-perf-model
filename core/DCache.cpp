@@ -73,8 +73,10 @@ namespace olympia {
         const bool hit = dataLookup_(memory_access_info_ptr);
         if(hit){
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+            memory_access_info_ptr->setDataIsReady(true);
         }else{
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+            memory_access_info_ptr->setDataIsReady(false);
             if(!busy_) {
                 busy_ = true;
                 cache_pending_inst_ = memory_access_info_ptr;
@@ -87,7 +89,6 @@ namespace olympia {
     void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
         busy_ = false;
         reloadCache_(inst_ptr->getRAdr());
-        cache_pending_inst_->setCacheState(MemoryAccessInfo::CacheState::HIT);
         out_lsu_lookup_req_.send(cache_pending_inst_);
         cache_pending_inst_.reset();
     }

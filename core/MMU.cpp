@@ -75,8 +75,6 @@ namespace olympia {
     // TLB ready for memory access
     void MMU::lookupInst_() {
         busy_ = false;
-        mmu_pending_inst_->setMMUState(MemoryAccessInfo::MMUState::HIT);
-        mmu_pending_inst_->setPhyAddrStatus(true);
         reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
         out_lsu_lookup_req_.send(mmu_pending_inst_);
         mmu_pending_inst_.reset();

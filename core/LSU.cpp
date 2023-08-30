@@ -299,15 +299,7 @@ namespace olympia
     }
 
     void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr){
-
-        if(!stall_pipeline_on_miss_) {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr){
-        cache_hit_ = updated_memory_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT;
-        auto inst_ptr = updated_memory_access_info_ptr->getInstPtr();
+        auto & inst_ptr = memory_access_info_ptr->getInstPtr();
         if (cache_pending_inst_flushed_) {
             cache_pending_inst_flushed_ = false;
             ILOG("BIU Ack for a flushed cache miss is received!");
@@ -322,9 +314,18 @@ namespace olympia
 
             return;
         }
-        if(!stall_pipeline_on_miss_) {
+        if(stall_pipeline_on_miss_) {
+            if(!cache_hit_) {
+                out_cache_lookup_req_.send(memory_access_info_ptr, 0);
+            }
+        } else {
             updateIssuePriorityAfterCacheReload_(inst_ptr);
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
+    }
+
+    void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr){
+        cache_hit_ = updated_memory_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT;
     }
 
     // Retire load/store instruction
@@ -745,16 +746,7 @@ namespace olympia
 
     // MMU ready with information
     void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
-        if(!stall_pipeline_on_miss_) {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-
-        ILOG("MMU rehandling event is scheduled!");
-    }
-
-    void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
-        mmu_hit_ = updated_memory_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT;
-        const auto &inst_ptr = updated_memory_access_info_ptr->getInstPtr();
+        const auto &inst_ptr = memory_access_info_ptr->getInstPtr();
         if (mmu_pending_inst_flushed) {
             mmu_pending_inst_flushed = false;
             // Update issue priority & Schedule an instruction (re-)issue event
@@ -764,9 +756,21 @@ namespace olympia
             }
             return;
         }
-        if(!stall_pipeline_on_miss_) {
+        if(stall_pipeline_on_miss_) {
+            if(!mmu_hit_){
+                out_mmu_lookup_req_.send(memory_access_info_ptr, 0);
+            }
+        }else{
             updateIssuePriorityAfterTLBReload_(inst_ptr);
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
+
+        ILOG("MMU rehandling event is scheduled!");
+    }
+
+    void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
+        mmu_hit_ = updated_memory_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT;
+
         if(mmu_hit_) {
 //            if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && allow_speculative_load_exec_){
 //                reIssueMatchingYoungerLoads(updated_memory_access_info_ptr);
@@ -782,7 +786,7 @@ namespace olympia
 
         if (ldst_pipeline_.isValid(cache_stage_id)) {
             const MemoryAccessInfoPtr & cache_mem_access_info_ptr = ldst_pipeline_[cache_stage_id]->getMemoryAccessInfoPtr();
-            if(cache_mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::MISS){
+            if(!cache_mem_access_info_ptr->getDataIsReady()){
                 ldst_pipeline_.stall(cache_stage_id, 1);
                 uev_pipe_stall_.schedule(sparta::Clock::Cycle(1));
             }

@@ -44,9 +44,26 @@ jobs:
         with:
           python-version: 3.8
 
+      # Cache the conda dependencies to
+      - name: Cache conda deps
+        uses: actions/cache@v3
+        with:
+          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-conda-${{ hashFiles('conda/environment.yml') }}
+          path: /usr/share/miniconda/envs/riscv_perf_model # Default path for conda
+
+      # Setup CCache to cache builds
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-ccache-${{ github.ref_name }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-ccache-master
+            ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-ccache
+
       - name: Setup Conda Environment
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
+          $CONDA/bin/conda config --set channel_priority strict
           $CONDA/bin/conda env update --file  ${{ github.workspace }}/conda/environment.yml
           $CONDA/bin/conda init bash
 

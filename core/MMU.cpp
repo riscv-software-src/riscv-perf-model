@@ -35,10 +35,7 @@ namespace olympia {
         }
 
 
-        if (tlb_always_hit_) {
-            ILOG("TLB HIT all the time: vaddr=0x" << std::hex << vaddr);
-            tlb_hits_++;
-        } else if (tlb_hit) {
+        if (tlb_hit) {
             ILOG("TLB HIT: vaddr=0x" << std::hex << vaddr);
             tlb_hits_++;
         } else {

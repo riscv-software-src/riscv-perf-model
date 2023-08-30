@@ -234,22 +234,22 @@ namespace olympia
         const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         ILOG(mem_access_info_ptr);
 
-        const bool phyAddrIsReady =
+        const bool phy_addr_is_ready =
                 mem_access_info_ptr->getPhyAddrStatus();
-        const bool isAlreadyHIT =
+        const bool is_already_hit =
                 (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
-        const bool isUnretiredStore =
+        const bool is_unretired_store =
                 inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
-        const bool cacheBypass = isAlreadyHIT || !phyAddrIsReady || isUnretiredStore;
+        const bool cache_bypass = is_already_hit || !phy_addr_is_ready || is_unretired_store;
 
-        if (cacheBypass) {
-            if (isAlreadyHIT) {
+        if (cache_bypass) {
+            if (is_already_hit) {
                 ILOG("Cache Lookup is skipped (Cache already hit)!");
             }
-            else if (!phyAddrIsReady) {
+            else if (!phy_addr_is_ready) {
                 ILOG("Cache Lookup is skipped (Physical address not ready)!");
             }
-            else if (isUnretiredStore) {
+            else if (is_unretired_store) {
                 ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
             }
             else {
@@ -628,10 +628,9 @@ namespace olympia
         const MemoryAccessInfoPtr & mem_access_info_ptr = ldst_pipeline_[stage_id];
         ILOG(mem_access_info_ptr);
 
-        bool isAlreadyHIT = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
-        bool MMUBypass = isAlreadyHIT;
+        bool mmu_bypass = (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
 
-        if (MMUBypass) {
+        if (mmu_bypass) {
             ILOG("MMU Lookup is skipped (TLB is already hit)!");
             mmu_hit_ = true;
             return;
@@ -644,12 +643,13 @@ namespace olympia
     // Handle MMU access request
     void LSU::handleMMULookupReq2_()
     {
-        if(!mmu_hit_)
+        if(!mmu_hit_) {
             ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP));
+        }
     }
 
     void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
-        auto inst_ptr = memory_access_info_ptr->getInstPtr();
+        const auto &inst_ptr = memory_access_info_ptr->getInstPtr();
         if (mmu_pending_inst_flushed) {
             mmu_pending_inst_flushed = false;
             // Update issue priority & Schedule an instruction (re-)issue event

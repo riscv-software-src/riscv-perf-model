@@ -85,10 +85,11 @@ namespace olympia {
     }
 
     void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
-        out_lsu_lookup_req_.send(cache_pending_inst_);
-        reloadCache_(inst_ptr->getRAdr());
-        cache_pending_inst_.reset();
         busy_ = false;
+        reloadCache_(inst_ptr->getRAdr());
+        cache_pending_inst_->setCacheState(MemoryAccessInfo::CacheState::HIT);
+        out_lsu_lookup_req_.send(cache_pending_inst_);
+        cache_pending_inst_.reset();
     }
 
 }

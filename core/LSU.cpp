@@ -69,16 +69,16 @@ namespace olympia
         // setContinuing to false on any event).
         ldst_pipeline_.setContinuing(true);
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
                                                 CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq1_));
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::PostTick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
                                               CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq2_));
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq1_));
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::PostTick>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq2_));
 
         ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::COMPLETE),
@@ -212,6 +212,10 @@ namespace olympia
     // Issue/Re-issue ready instructions in the issue queue
     void LSU::issueInst_()
     {
+        if(ldst_pipeline_.isStalledOrStalling() && stall_pipeline_on_miss_){
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+            return;
+        }
         // Instruction issue arbitration
         const LoadStoreInstInfoPtr & win_ptr = arbitrateInstIssue_();
         // NOTE:
@@ -228,7 +232,7 @@ namespace olympia
         win_ptr->setPriority(LoadStoreInstInfo::IssuePriority::LOWEST);
 
         // Schedule another instruction issue event if possible
-        if (isReadyToIssueInsts_()) {
+        if (isReadyToIssueInsts_() && !stall_pipeline_on_miss_) {
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
 
@@ -283,8 +287,15 @@ namespace olympia
     }
 
     void LSU::handleCacheLookupReq2_(){
-        if(!cache_hit_)
-            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
+        auto cache_lookup_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
+
+        if(!cache_hit_) {
+            if (stall_pipeline_on_miss_) {
+                uev_pipe_stall_.schedule(sparta::Clock::Cycle(0));
+            } else {
+                ldst_pipeline_.invalidateStage(cache_lookup_stage_id);
+            }
+        }
     }
 
     void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr){
@@ -304,8 +315,10 @@ namespace olympia
             return;
         }
 
-        updateIssuePriorityAfterCacheReload_(inst_ptr);
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        if(!stall_pipeline_on_miss_) {
+            updateIssuePriorityAfterCacheReload_(inst_ptr);
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        }
     }
 
     void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr){
@@ -523,36 +536,40 @@ namespace olympia
     // Arbitrate instruction issue from ldst_inst_queue
     const LSU::LoadStoreInstInfoPtr & LSU::arbitrateInstIssue_()
     {
-        if(allow_speculative_load_exec_) {
-            sparta_assert(ldst_inst_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
-            // Initialization of winner
-            auto win_ptr_iter = ldst_inst_queue_.begin();
+        sparta_assert(ldst_inst_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
-            // Select the ready instruction with highest issue priority
-            for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
-                // Skip not ready-to-issue instruction
-                if (!(*iter)->isReady()) {
-                    continue;
+        // Initialization of winner
+        auto win_ptr_iter = ldst_inst_queue_.begin();
+
+        // Select the ready instruction with highest issue priority
+        for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
+            // Skip not ready-to-issue instruction
+            if (!(*iter)->isReady()) {
+                continue;
+            }
+
+            if (stall_pipeline_on_miss_) {
+                if((*iter)->getPriority() == LoadStoreInstInfo::IssuePriority::NEW_DISP) {
+                    return *iter;
                 }
-
+            } else{
                 // Pick winner
                 if (!(*win_ptr_iter)->isReady() || (*iter)->winArb(*win_ptr_iter)) {
                     win_ptr_iter = iter;
                 }
-                // NOTE:
-                // If the inst pointed to by (*win_ptr_iter) is not ready (possible @initialization),
-                // Re-assign it pointing to the ready-to-issue instruction pointed by (*iter).
-                // Otherwise, both (*win_ptr_iter) and (*iter) point to ready-to-issue instructions,
-                // Pick the one with higher issue priority.
             }
-
-            sparta_assert((*win_ptr_iter)->isReady(), "Arbitration fails: no instruction is ready!");
-
-            return *win_ptr_iter;
-        }else{
-            sparta_assert(false, "Non speculative load exec not implemented");
+            // NOTE:
+            // If the inst pointed to by (*win_ptr_iter) is not ready (possible @initialization),
+            // Re-assign it pointing to the ready-to-issue instruction pointed by (*iter).
+            // Otherwise, both (*win_ptr_iter) and (*iter) point to ready-to-issue instructions,
+            // Pick the one with higher issue priority.
         }
+
+        sparta_assert((*win_ptr_iter)->isReady(), "Arbitration fails: no instruction is ready!");
+
+        return *win_ptr_iter;
+
     }
 
     // Check for ready to issue instructions
@@ -717,7 +734,7 @@ namespace olympia
         // If miss
         if (!mmu_hit_) {
             if (stall_pipeline_on_miss_) {
-                ldst_pipeline_.stall(stage_id, 1);
+                uev_pipe_stall_.schedule(sparta::Clock::Cycle(0));
             } else {
                 ldst_pipeline_.invalidateStage(stage_id);
             }
@@ -737,8 +754,10 @@ namespace olympia
             return;
         }
 
-        updateIssuePriorityAfterTLBReload_(inst_ptr);
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        if(!stall_pipeline_on_miss_) {
+            updateIssuePriorityAfterTLBReload_(inst_ptr);
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        }
 
         ILOG("MMU rehandling event is scheduled!");
     }
@@ -747,10 +766,29 @@ namespace olympia
         mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrIsReady();
 
         if(mmu_hit_) {
-            if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && allow_speculative_load_exec_){
-                reIssueMatchingYoungerLoads(updated_memory_access_info_ptr);
-            }else if(!updated_memory_access_info_ptr->getInstPtr()->isStoreInst()){// TODO Update stores with matching load address
-                updateMatchingStoresWithLoad(updated_memory_access_info_ptr);
+//            if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && allow_speculative_load_exec_){
+//                reIssueMatchingYoungerLoads(updated_memory_access_info_ptr);
+//            }else if(!updated_memory_access_info_ptr->getInstPtr()->isStoreInst()){// TODO Update stores with matching load address
+//                updateMatchingStoresWithLoad(updated_memory_access_info_ptr);
+//            }
+        }
+    }
+
+    void LSU::pipeStall_() {
+        auto mmu_stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+        auto cache_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
+
+        if (ldst_pipeline_.isValid(cache_stage_id)) {
+            const MemoryAccessInfoPtr & cache_mem_access_info_ptr = ldst_pipeline_[cache_stage_id]->getMemoryAccessInfoPtr();
+            if(cache_mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::MISS){
+                ldst_pipeline_.stall(cache_stage_id, 1);
+                uev_pipe_stall_.schedule(sparta::Clock::Cycle(1));
+            }
+        }else if (ldst_pipeline_.isValid(mmu_stage_id)) {
+            const MemoryAccessInfoPtr & mmu_mem_access_info_ptr = ldst_pipeline_[mmu_stage_id]->getMemoryAccessInfoPtr();
+            if(!mmu_mem_access_info_ptr->getPhyAddrIsReady()){
+                ldst_pipeline_.stall(mmu_stage_id, 1);
+                uev_pipe_stall_.schedule(sparta::Clock::Cycle(1));
             }
         }
     }
@@ -779,7 +817,6 @@ namespace olympia
             }
         }
     }
-
     // Flush instruction issue queue
     template<typename Comp>
     void LSU::flushIssueQueue_(const Comp & flush)

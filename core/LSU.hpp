@@ -346,6 +346,8 @@ namespace olympia
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                 CREATE_SPARTA_HANDLER(LSU, issueInst_)};
 
+        sparta::UniqueEvent<> uev_pipe_stall_{&unit_event_set_, "pipe_stall",
+                CREATE_SPARTA_HANDLER(LSU, pipeStall_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -390,6 +392,8 @@ namespace olympia
 
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
+
+        void pipeStall_();
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call

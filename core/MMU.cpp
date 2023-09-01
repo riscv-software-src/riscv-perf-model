@@ -55,6 +55,7 @@ namespace olympia {
     }
 
     // Get Lookup Requests from LSU
+    // Lookup is currently handled in 1 cycle
     void MMU::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
         const bool hit = memLookup_(memory_access_info_ptr);
         if(hit){

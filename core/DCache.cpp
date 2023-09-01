@@ -69,6 +69,7 @@ namespace olympia {
         return cache_hit;
     }
 
+    // Handle Lookup request from the LSU
     void DCache::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
         const bool hit = dataLookup_(memory_access_info_ptr);
         if(hit){
@@ -86,6 +87,7 @@ namespace olympia {
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
     }
 
+    // Send ready signal to the LSU
     void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
         busy_ = false;
         reloadCache_(inst_ptr->getRAdr());

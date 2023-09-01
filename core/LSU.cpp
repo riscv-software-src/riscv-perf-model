@@ -270,7 +270,8 @@ namespace olympia
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
-    void LSU::handleCacheLookupReq2_(){
+    // Second half of the CACHE_LOOKUP pipe stage
+    void LSU::handleCacheLookupReq2_() {
         auto cache_lookup_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
 
         if(!cache_hit_) {
@@ -282,8 +283,9 @@ namespace olympia
         }
     }
 
-    void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr){
-        auto & inst_ptr = memory_access_info_ptr->getInstPtr();
+    // Ready signal from the MMU
+    void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
+        auto &inst_ptr = memory_access_info_ptr->getInstPtr();
         if (cache_pending_inst_flushed_) {
             cache_pending_inst_flushed_ = false;
             ILOG("BIU Ack for a flushed cache miss is received!");
@@ -298,8 +300,8 @@ namespace olympia
 
             return;
         }
-        if(stall_pipeline_on_miss_) {
-            if(!cache_hit_) {
+        if (stall_pipeline_on_miss_) {
+            if (!cache_hit_) {
                 out_cache_lookup_req_.send(memory_access_info_ptr, 0);
             }
         } else {
@@ -461,7 +463,8 @@ namespace olympia
         ILOG("Append new load/store instruction to issue queue!");
     }
 
-    void LSU::popIssueQueue_(const LoadStoreInstInfoPtr & inst_info_ptr){
+    // Removes load/store instruction from the issue queue
+    void LSU::popIssueQueue_(const LoadStoreInstInfoPtr &inst_info_ptr) {
         for (auto iter = ldst_inst_queue_.begin(); iter != ldst_inst_queue_.end(); iter++) {
             if (*iter == inst_info_ptr) {
                 ldst_inst_queue_.erase(iter);
@@ -666,9 +669,8 @@ namespace olympia
         out_mmu_lookup_req_.send(mem_access_info_ptr);
     }
 
-    // Handle MMU access request
-    void LSU::handleMMULookupReq2_()
-    {
+    // Second half of the MMU Lookup pipe stage
+    void LSU::handleMMULookupReq2_() {
         auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
 
         // If miss
@@ -707,14 +709,6 @@ namespace olympia
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
         mmu_hit_ = updated_memory_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT;
-
-        if(mmu_hit_) {
-//            if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && allow_speculative_load_exec_){
-//                reIssueMatchingYoungerLoads(updated_memory_access_info_ptr);
-//            }else if(!updated_memory_access_info_ptr->getInstPtr()->isStoreInst()){// TODO Update stores with matching load address
-//                updateMatchingStoresWithLoad(updated_memory_access_info_ptr);
-//            }
-        }
     }
 
     void LSU::pipeStall_() {

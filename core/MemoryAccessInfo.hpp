@@ -8,7 +8,9 @@ namespace olympia {
     class MemoryAccessInfo {
     public:
 
-        // The modeler needs to alias a type called "SpartaPairDefinitionType" to the Pair Definition class of itself
+        // The modeler needs to alias a type called
+        // "SpartaPairDefinitionType" to the Pair Definition class of
+        // itself
         using SpartaPairDefinitionType = MemoryAccessInfoPairDef;
 
         enum class MMUState : std::uint32_t {
@@ -32,13 +34,13 @@ namespace olympia {
         MemoryAccessInfo() = delete;
 
         MemoryAccessInfo(
-                const InstPtr &inst_ptr) :
-                ldst_inst_ptr_(inst_ptr),
-                phyAddrIsReady_(false),
-                mmu_access_state_(MMUState::NO_ACCESS),
+            const InstPtr &inst_ptr) :
+            ldst_inst_ptr_(inst_ptr),
+            phy_addr_ready_(false),
+            mmu_access_state_(MMUState::NO_ACCESS),
 
-                // Construct the State object here
-                cache_access_state_(CacheState::NO_ACCESS) {}
+            // Construct the State object here
+            cache_access_state_(CacheState::NO_ACCESS) {}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -53,9 +55,9 @@ namespace olympia {
             return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
         }
 
-        void setPhyAddrStatus(bool isReady) { phyAddrIsReady_ = isReady; }
+        void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
-        bool getPhyAddrStatus() const { return phyAddrIsReady_; }
+        bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
         MMUState getMMUState() const {
             return mmu_access_state_;
@@ -73,18 +75,16 @@ namespace olympia {
             cache_access_state_ = state;
         }
 
-        // This is a function which will be added in the addArgs API.
-        bool getPhyAddrIsReady() const {
-            return phyAddrIsReady_;
+        bool isCacheHit() const {
+            return (cache_access_state_ == MemoryAccessInfo::CacheState::HIT);
         }
-
 
     private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
 
         // Indicate MMU address translation status
-        bool phyAddrIsReady_;
+        bool phy_addr_ready_;
 
         // MMU access status
         MMUState mmu_access_state_;
@@ -114,9 +114,9 @@ namespace olympia {
             SPARTA_INVOKE_PAIRS(MemoryAccessInfo);
         }
 
-        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID", &MemoryAccessInfo::getInstUniqueID),
-                              SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrIsReady),
-                              SPARTA_ADDPAIR("mmu", &MemoryAccessInfo::getMMUState),
+        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &MemoryAccessInfo::getInstUniqueID),
+                              SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrStatus),
+                              SPARTA_ADDPAIR("mmu",   &MemoryAccessInfo::getMMUState),
                               SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
                               SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr))
     };

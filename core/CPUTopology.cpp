@@ -69,29 +69,29 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->execute_rf
         },
         {
-                "dcache",
-                "cpu.core*",
-                "Data Cache Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->dcache_rf
+            "dcache",
+            "cpu.core*",
+            "Data Cache Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->dcache_rf
         },
         {
-                "mmu",
-                "cpu.core*",
-                "MMU Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->mmu_rf
+            "mmu",
+            "cpu.core*",
+            "MMU Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->mmu_rf
         },
         {
-                "tlb",
-                "cpu.core*.mmu",
-                "TLB Unit",
-                sparta::TreeNode::GROUP_NAME_NONE,
-                sparta::TreeNode::GROUP_IDX_NONE,
-                &factories->tlb_rf,
-                true
+            "tlb",
+            "cpu.core*.mmu",
+            "TLB Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->tlb_rf,
+            true
         },
         {
             "lsu",
@@ -293,7 +293,8 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
         const auto dispatch_ports     = core_node + ".dispatch.ports";
         const auto flushmanager_ports = core_node + ".flushmanager.ports";
 
-        auto execution_topology = olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
+        auto execution_topology =
+            olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
         for (auto exe_unit_pair : execution_topology)
         {
             const auto tgt_name   = exe_unit_pair[0];

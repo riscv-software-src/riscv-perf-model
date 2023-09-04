@@ -6,47 +6,47 @@ coding style and development guidelines that need to be adhered to.
 
 If code is found to violate these rules -- please fix it!
 
-* Any bug fix/enhancement _must be accompanied_ with a test that
-  illustrates the bug fix/enhancement.  No test == no acceptance.
-* Testing can be either be made within an existing test or the
-  addition of a new test.  The _test must be exercised_ by the regress
-  target.
-* Documentation fixes do not require a test (but grammar/spelling
-  issues should be fixed ;) )
-* As a general rule on development, adhere to the **existing coding
-  style** of the file being modified.  Look at the existing code and
-  _mimic it_.  Don't mix another preferred style with the existing
-  style -- stick with the original style.
+   * Any bug fix/enhancement _must be accompanied_ with a test that
+     illustrates the bug fix/enhancement.  No test == no acceptance.
+   * Testing can be either be made within an existing test or the
+     addition of a new test.  The _test must be exercised_ by the regress
+     target.
+   * Documentation fixes do not require a test (but grammar/spelling
+     issues should be fixed ;) )
+   * As a general rule on development, adhere to the **existing coding
+     style** of the file being modified.  Look at the existing code and
+     _mimic it_.  Don't mix another preferred style with the existing
+     style -- stick with the original style.
 
 
-* For new development, there are simple syntactical style rules:
+### For new development, there are simple syntactical style rules:
 
-1. Class names are `CamelCase` with the Camel's head up: `class
-   OlympiaUnit`
-1. Public class method names are `camelCase` with the camel's head
-   down: `void myMethod()`
-1. Private/protected class method names are `camelCase_` with the
-   camel's head down and a trailing `_`: `void myMethod_()`
-1. Member variable names that are `private` or `protected` must be all
-   `lower_case_` with a trailing `_` so developers know a member
-   variable is private or protected.
-1. Place an `_` between words on member variables: `my_data_member_`
-1. Header file guards are `#pragma once`
-1. Any function/class from `std` namespace must always be explicit:
-   `std::vector` NOT `vector`.  Never use `using namespace <blah>;` in
-   *any* header file
-1. Consider using source files for non-critical path code
-1. Try to keep methods short and concise
-1. Do not go nuts with `auto`.  This: `auto foo(const auto & in)` is irritating
+   1. Class names are `CamelCase` with the Camel's head up: `class
+      OlympiaUnit`
+   1. Public class method names are `camelCase` with the camel's head
+      down: `void myMethod()`
+   1. Private/protected class method names are `camelCase_` with the
+      camel's head down and a trailing `_`: `void myMethod_()`
+   1. Member variable names that are `private` or `protected` must be all
+      `lower_case_` with a trailing `_` so developers know a member
+      variable is private or protected.
+   1. Place an `_` between words on member variables: `my_data_member_`
+   1. Header file guards are `#pragma once`
+   1. Any function/class from `std` namespace must always be explicit:
+      `std::vector` NOT `vector`.  Never use `using namespace <blah>;` in
+      *any* header file
+   1. Consider using source files for non-critical path code
+   1. Try to keep methods short and concise
+   1. Do not go nuts with `auto`.  This: `auto foo(const auto & in)` is irritating
 
-* Coding style for using Sparta components
+### Coding style for using Sparta components
 
-1. When declaring a Port, name the variable with either an `in_`
-   prefix or an `out_` prefix
-1. When declaring an Event, name the variable with an `ev_` prefix
-1. When declaring a Statistic or Counter, name the stat/counter
-   variable with the _same name_ as the stat/counter that shows up in
-   a report.
+   1. When declaring a Port, name the variable with either an `in_`
+      prefix or an `out_` prefix
+   1. When declaring an Event, name the variable with an `ev_` prefix
+   1. When declaring a Statistic or Counter, name the stat/counter
+      variable with the _same name_ as the stat/counter that shows up in
+      a report.
 
 Example class style, header file:
 

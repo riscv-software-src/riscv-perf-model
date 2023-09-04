@@ -60,11 +60,11 @@ namespace olympia
         // setContinuing to false on any event).
         ldst_pipeline_.setContinuing(true);
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
+        ldst_pipeline_.registerHandlerAtStage
             (static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
+        ldst_pipeline_.registerHandlerAtStage
             (static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 

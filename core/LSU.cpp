@@ -29,25 +29,26 @@ namespace olympia
 
         // Port config
         in_lsu_insts_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
 
         in_rob_retire_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
 
         in_reorder_flush_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
 
         in_mmu_lookup_req_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromMMU_, MemoryAccessInfoPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromMMU_, MemoryAccessInfoPtr));
 
         in_mmu_lookup_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
 
         in_cache_lookup_req_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromCache_, MemoryAccessInfoPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromCache_, MemoryAccessInfoPtr));
 
         in_cache_lookup_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
+
         // Allow the pipeline to create events and schedule work
         ldst_pipeline_.performOwnUpdates();
 
@@ -59,20 +60,16 @@ namespace olympia
         // setContinuing to false on any event).
         ldst_pipeline_.setContinuing(true);
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
-                                                CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq1_));
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
+            (static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
+             CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
-                                              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq2_));
+        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
+            (static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
+             CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
-                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq1_));
-
-        ldst_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Tick>(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
-                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq2_));
-
-        ldst_pipeline_.registerHandlerAtStage(static_cast<uint32_t>(PipelineStage::COMPLETE),
-                                                CREATE_SPARTA_HANDLER(LSU, completeInst_));
+        ldst_pipeline_.registerHandlerAtStage
+            (static_cast<uint32_t>(PipelineStage::COMPLETE), CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
         // NOTE:
         // To resolve the race condition when:
@@ -182,15 +179,14 @@ namespace olympia
     void LSU::getAckFromROB_(const InstPtr & inst_ptr)
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
-                        "Get ROB Ack, but the store inst hasn't retired yet!");
+                      "Get ROB Ack, but the store inst hasn't retired yet!");
 
-        stores_retired_++;
+        ++stores_retired_;
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
-
-        ILOG("Get Ack from ROB! Retired store instruction: " << inst_ptr);
+        ILOG("ROB Ack: Retired store instruction: " << inst_ptr);
     }
 
     // Issue/Re-issue ready instructions in the issue queue
@@ -227,7 +223,7 @@ namespace olympia
     // Cache Subroutine
     ////////////////////////////////////////////////////////////////////////////////
     // Handle cache access request
-    void LSU::handleCacheLookupReq1_()
+    void LSU::handleCacheLookupReq_()
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
 
@@ -238,11 +234,28 @@ namespace olympia
 
         const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
         const MemoryAccessInfoPtr & mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
+        const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
+
+        // If we did not have an MMU hit from previous stage, invalidate and bail
+        if(false == phy_addr_is_ready) {
+            ILOG("Cache Lookup is skipped (Physical address not ready)!");
+            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP));
+            return;
+        }
+
         const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
         ILOG(mem_access_info_ptr);
 
-        const bool phy_addr_is_ready =
-                mem_access_info_ptr->getPhyAddrStatus();
+        // If have passed translation and the instruction is a store,
+        // then it's good to be retired (i.e. mark it completed).
+        // Stores typically do not cause a flush after a successful
+        // translation.  We now wait for the Retire block to "retire"
+        // it, meaning it's good to go to the cache
+        if(inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED)) {
+            inst_ptr->setStatus(Inst::Status::COMPLETED);
+            return;
+        }
+
         const bool is_already_hit =
                 (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
         const bool is_unretired_store =
@@ -251,13 +264,10 @@ namespace olympia
 
         if (cache_bypass) {
             if (is_already_hit) {
-                ILOG("Cache Lookup is skipped (Cache already hit)!");
-            }
-            else if (!phy_addr_is_ready) {
-                ILOG("Cache Lookup is skipped (Physical address not ready)!");
+                ILOG("Cache Lookup is skipped (Cache already hit)");
             }
             else if (is_unretired_store) {
-                ILOG("Cache Lookup is skipped (Un-retired store instruction)!");
+                ILOG("Cache Lookup is skipped (store instruction not oldest)");
             }
             else {
                 sparta_assert(false, "Cache access is bypassed without a valid reason!");
@@ -270,22 +280,10 @@ namespace olympia
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
-    // Second half of the CACHE_LOOKUP pipe stage
-    void LSU::handleCacheLookupReq2_() {
-        auto cache_lookup_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
-
-        if(!cache_hit_) {
-            if (stall_pipeline_on_miss_) {
-                uev_pipe_stall_.schedule(sparta::Clock::Cycle(0));
-            } else {
-                ldst_pipeline_.invalidateStage(cache_lookup_stage_id);
-            }
-        }
-    }
-
     // Ready signal from the MMU
     void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
         auto &inst_ptr = memory_access_info_ptr->getInstPtr();
+
         if (cache_pending_inst_flushed_) {
             cache_pending_inst_flushed_ = false;
             ILOG("BIU Ack for a flushed cache miss is received!");
@@ -310,8 +308,18 @@ namespace olympia
         }
     }
 
-    void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr){
-        cache_hit_ = updated_memory_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT;
+    void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr)
+    {
+        auto cache_lookup_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
+        cache_hit_ = updated_memory_access_info_ptr->isCacheHit();
+
+        if(!cache_hit_) {
+            if (stall_pipeline_on_miss_) {
+                uev_pipe_stall_.schedule(sparta::Clock::Cycle(0));
+            } else {
+                ldst_pipeline_.invalidateStage(cache_lookup_stage_id);
+            }
+        }
     }
 
     // Retire load/store instruction
@@ -324,9 +332,14 @@ namespace olympia
             return;
         }
 
-
         const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
         const MemoryAccessInfoPtr & mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
+
+        if(false == mem_access_info_ptr->isCacheHit()) {
+            ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
+            return;
+        }
+
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool is_store_inst = inst_ptr->isStoreInst();
         ILOG("Completing inst: " << inst_ptr);
@@ -344,7 +357,7 @@ namespace olympia
         // Complete load instruction
         if (!is_store_inst) {
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
-                        "Load instruction cannot complete when cache is still a miss!");
+                          "Load instruction cannot complete when cache is still a miss! " << mem_access_info_ptr);
 
             // Update instruction status
             inst_ptr->setStatus(Inst::Status::COMPLETED);
@@ -644,7 +657,7 @@ namespace olympia
     // MMU subroutines
     ////////////////////////////////////////////////////////////////////////////////
     // Handle MMU access request
-    void LSU::handleMMULookupReq1_()
+    void LSU::handleMMULookupReq_()
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
 
@@ -669,22 +682,10 @@ namespace olympia
         out_mmu_lookup_req_.send(mem_access_info_ptr);
     }
 
-    // Second half of the MMU Lookup pipe stage
-    void LSU::handleMMULookupReq2_() {
-        auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
-
-        // If miss
-        if (!mmu_hit_) {
-            if (stall_pipeline_on_miss_) {
-                uev_pipe_stall_.schedule(sparta::Clock::Cycle(0));
-            } else {
-                ldst_pipeline_.invalidateStage(stage_id);
-            }
-        }
-    }
 
     // MMU ready with information
-    void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
+    void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr)
+    {
         const auto &inst_ptr = memory_access_info_ptr->getInstPtr();
         if (mmu_pending_inst_flushed) {
             mmu_pending_inst_flushed = false;
@@ -708,7 +709,20 @@ namespace olympia
     }
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr) {
-        mmu_hit_ = updated_memory_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT;
+        ILOG("MMU Ack: "
+             << std::boolalpha << updated_memory_access_info_ptr->getPhyAddrStatus()
+             << " " << updated_memory_access_info_ptr);
+        mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrStatus();
+        auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+
+        // If miss
+        if (!mmu_hit_) {
+            if (stall_pipeline_on_miss_) {
+                uev_pipe_stall_.schedule(sparta::Clock::Cycle(0));
+            } else {
+                ldst_pipeline_.invalidateStage(stage_id);
+            }
+        }
     }
 
     void LSU::pipeStall_() {
@@ -723,7 +737,7 @@ namespace olympia
             }
         }else if (ldst_pipeline_.isValid(mmu_stage_id)) {
             const MemoryAccessInfoPtr & mmu_mem_access_info_ptr = ldst_pipeline_[mmu_stage_id]->getMemoryAccessInfoPtr();
-            if(!mmu_mem_access_info_ptr->getPhyAddrIsReady()){
+            if(!mmu_mem_access_info_ptr->getPhyAddrStatus()){
                 ldst_pipeline_.stall(mmu_stage_id, 1);
                 uev_pipe_stall_.schedule(sparta::Clock::Cycle(1));
             }

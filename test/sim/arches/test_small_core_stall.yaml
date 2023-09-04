@@ -1,0 +1,8 @@
+#
+# Set up the pipeline with stall on miss events
+#
+
+include: small_core.yaml
+
+top.cpu.core0:
+  lsu.params.stall_pipeline_on_miss: true

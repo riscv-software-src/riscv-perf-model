@@ -333,21 +333,13 @@ namespace olympia
 
 
         // Handle MMU access request
-        void handleMMULookupReq1_();
-
-        void handleMMULookupReq2_();
-
+        void handleMMULookupReq_();
         void getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
-
         void getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
 
         // Handle cache access request
-        void handleCacheLookupReq1_();
-
-        void handleCacheLookupReq2_();
-
+        void handleCacheLookupReq_();
         void getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr);
-
         void getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
 
         // Retire load/store instruction

@@ -12,10 +12,10 @@ If code is found to violate these rules -- please fix it!
    * Any bug fix/enhancement _must be accompanied_ with a test that
      illustrates the bug fix/enhancement.  No test == no acceptance.
    * Testing can be either be made within an existing test or the
-     addition of a new test.  The _test must be exercised_ by the regress
+     addition of a new test.  The _test must be exercised_ by the `regress`
      target.
    * Documentation fixes do not require a test (but grammar/spelling
-     issues should be fixed ;) )
+     issues should be fixed :wink: )
    * As a general rule on development, adhere to the **existing coding
      style** of the file being modified.  Look at the existing code and
      _mimic it_.  Don't mix another preferred style with the existing

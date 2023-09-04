@@ -11,7 +11,6 @@ file(CREATE_LINK ${SIM_BASE}/arches  ${CMAKE_CURRENT_BINARY_DIR}/arches SYMBOLIC
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/traces  ${CMAKE_CURRENT_BINARY_DIR}/traces SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/test/sim/json_tests  ${CMAKE_CURRENT_BINARY_DIR}/json_tests SYMBOLIC)
-file(CREATE_LINK ${SIM_BASE}/test/sim/arches/test_small_core_stall.yaml  ${CMAKE_CURRENT_BINARY_DIR}/arches/test_small_core_stall.yaml SYMBOLIC)
 
 # Tests
 sparta_named_test(olympia_json_test olympia --workload traces/example_json.json)

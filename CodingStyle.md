@@ -60,7 +60,7 @@ If code is found to violate these rules -- please fix it!
    1. When declaring a Statistic or Counter, name the stat/counter
       variable with the _same name_ as the stat/counter that shows up in
       a report.
-   1, To improve simulation performance, copy a parameter value to a local
+   1. To improve simulation performance, copy a parameter value to a local
       `const` data member in the initialization list:
       `my_parameter_value_(params->my_parameter_value)`
 
@@ -100,7 +100,7 @@ namespace olympia
         // A protected method
         void myUnitProtectedMethod_();
 
-        // A protected variable, initialied here
+        // A protected variable, initialized here
         uint32_t my_protected_variable_ = 0;
 
     private:
@@ -108,7 +108,7 @@ namespace olympia
         // A private method
         void myUnitPrivateMethod_();
 
-        // A private variable, initialied here
+        // A private variable, initialized here
         uint32_t my_private_variable_ = 0;
 
         //////////////////////////////////////////////////////////////////////

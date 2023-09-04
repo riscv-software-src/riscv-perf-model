@@ -6,6 +6,9 @@ coding style and development guidelines that need to be adhered to.
 
 If code is found to violate these rules -- please fix it!
 
+
+### General rules
+
    * Any bug fix/enhancement _must be accompanied_ with a test that
      illustrates the bug fix/enhancement.  No test == no acceptance.
    * Testing can be either be made within an existing test or the
@@ -19,7 +22,7 @@ If code is found to violate these rules -- please fix it!
      style -- stick with the original style.
 
 
-### For new development, there are simple syntactical style rules:
+### New development
 
    1. Class names are `CamelCase` with the Camel's head up: `class
       OlympiaUnit`

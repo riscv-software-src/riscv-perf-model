@@ -35,14 +35,16 @@ namespace olympia
         in_reorder_flush_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
 
-        in_mmu_lookup_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromMMU_, MemoryAccessInfoPtr));
+        in_mmu_lookup_req_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleMMUReadyReq_,
+                                            MemoryAccessInfoPtr));
 
         in_mmu_lookup_ack_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
 
-        in_cache_lookup_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstFromCache_, MemoryAccessInfoPtr));
+        in_cache_lookup_req_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleCacheReadyReq_,
+                                            MemoryAccessInfoPtr));
 
         in_cache_lookup_ack_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
@@ -273,7 +275,7 @@ namespace olympia
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
-    void LSU::getInstFromCache_(const MemoryAccessInfoPtr &memory_access_info_ptr)
+    void LSU::handleCacheReadyReq_(const MemoryAccessInfoPtr &memory_access_info_ptr)
     {
         auto inst_ptr = memory_access_info_ptr->getInstPtr();
         if (cache_pending_inst_flushed_) {
@@ -651,7 +653,7 @@ namespace olympia
         out_mmu_lookup_req_.send(mem_access_info_ptr);
     }
 
-    void LSU::getInstFromMMU_(const MemoryAccessInfoPtr &memory_access_info_ptr)
+    void LSU::handleMMUReadyReq_(const MemoryAccessInfoPtr &memory_access_info_ptr)
     {
         const auto &inst_ptr = memory_access_info_ptr->getInstPtr();
         if (mmu_pending_inst_flushed) {

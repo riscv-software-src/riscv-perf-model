@@ -42,6 +42,7 @@ If code is found to violate these rules -- please fix it!
    1. Do not go nuts with `auto`.  This: `auto foo(const auto & in)` is irritating
    1. NO TABS.  Ever.  Never ever.
    1. Spaces are 4
+   1. Delete all trailing whitespace
    1. Do not use single letter variable names.  Not only are these NOT
       descriptive, searching for their use in a function/class is difficult.
    1. Do not use Raw POD types (int, char).  Instead use [fixed

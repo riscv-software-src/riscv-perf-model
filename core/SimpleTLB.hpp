@@ -4,7 +4,9 @@
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/MathUtils.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/simulation/ParameterSet.hpp"
 
+#include "cache/TreePLRUReplacement.hpp"
 #include "cache/BasicCacheItem.hpp"
 #include "cache/SimpleCache2.hpp"
 #include "cache/ReplacementIF.hpp"

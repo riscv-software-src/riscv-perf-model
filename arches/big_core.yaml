@@ -13,8 +13,8 @@ top.cpu.core0:
   rename.params.num_float_renames: 64
   dispatch.params.num_to_dispatch: 8
   rob.params.num_to_retire:    8
-  lsu.params:
-    dl1_size_kb: 64
+  dcache.params:
+    l1_size_kb: 64
 
 top.cpu.core0.extension.core_extensions:
   execution_topology:

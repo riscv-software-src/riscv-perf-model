@@ -14,6 +14,8 @@ add_library(core
   InstGenerator.cpp
   ROB.cpp
   LSU.cpp
+  MMU.cpp
+  DCache.cpp
   MavisUnit.cpp
   Preloader.cpp
   CPU.cpp

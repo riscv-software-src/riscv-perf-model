@@ -9,6 +9,9 @@ If code is found to violate these rules -- please fix it!
 
 ### General rules
 
+   * Branch naming must include your username and a very brief description
+     of the issue at hand. For example, fix for issue 1234 which might
+     be a seg fault in LSU: git branch knutel/issue_1234_lsu_seg_fault
    * Any bug fix/enhancement _must be accompanied_ with a test that
      illustrates the bug fix/enhancement.  No test == no acceptance.
    * Testing can be either be made within an existing test or the

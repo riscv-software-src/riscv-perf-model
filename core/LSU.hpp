@@ -67,6 +67,14 @@ namespace olympia
                  << ": "
                  << memory_access_allocator.getNumAllocated()
                  << " MemoryAccessInfo objects allocated/created");
+
+            bool has_unretired_stores = std::any_of(
+                ldst_inst_queue_.begin(),
+                ldst_inst_queue_.end(),
+                [](LoadStoreInstInfoPtr inst){ return inst->getInstPtr()->isStoreInst() && inst->getInstPtr()->getStatus() != Inst::Status::RETIRED; })
+                && !ldst_inst_queue_.empty();
+
+            sparta_assert(!has_unretired_stores, "Issue queue has pending stores!!!");
         }
 
         //! name of this resource.

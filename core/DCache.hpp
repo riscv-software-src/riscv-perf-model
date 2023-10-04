@@ -5,6 +5,7 @@
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/resources/Pipeline.hpp"
 #include "SimpleDL1.hpp"
 #include "Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
@@ -28,6 +29,13 @@ namespace olympia {
         static const char name[];
         DCache(sparta::TreeNode *n, const CacheParameterSet *p);
 
+        enum class PipelineStage
+        {
+            LOOKUP = 0,
+            DATA = 1,
+            NUM_STAGES
+        };
+
     private:
         bool dataLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
@@ -37,6 +45,10 @@ namespace olympia {
 
         void getAckFromBIU_(const InstPtr &inst_ptr);
 
+        void lookupHandler_();
+
+        void dataHandler_();
+
         using L1Handle = SimpleDL1::Handle;
         L1Handle l1_cache_;
         const bool l1_always_hit_;
@@ -44,6 +56,10 @@ namespace olympia {
         uint32_t cache_latency_;
         // Keep track of the instruction that causes current outstanding cache miss
         MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
+
+        // Cache Pipeline
+        sparta::Pipeline<MemoryAccessInfoPtr> cache_pipeline_
+            {"CachePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
@@ -57,8 +73,8 @@ namespace olympia {
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::SignalOutPort out_lsu_free_req_
-                {&unit_port_set_, "out_lsu_free_req", 0};
+        sparta::SignalOutPort out_lsu_lookup_nack_
+                {&unit_port_set_, "out_lsu_lookup_nack", 0};
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_ack_
                 {&unit_port_set_, "out_lsu_lookup_ack", 0};
@@ -68,10 +84,6 @@ namespace olympia {
 
         sparta::DataOutPort<InstPtr> out_biu_req_
                 {&unit_port_set_, "out_biu_req"};
-
-        ////////////////////////////////////////////////////////////////////////////////
-        // Events
-        ////////////////////////////////////////////////////////////////////////////////
 
         ////////////////////////////////////////////////////////////////////////////////
         // Counters

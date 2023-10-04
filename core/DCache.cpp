@@ -3,11 +3,17 @@
 namespace olympia {
     const char DCache::name[] = "cache";
 
-    DCache::DCache(sparta::TreeNode *n, const CacheParameterSet *p) :
-            sparta::Unit(n),
+    DCache::DCache(sparta::TreeNode *node, const CacheParameterSet *p) :
+            sparta::Unit(node),
             l1_always_hit_(p->l1_always_hit),
-            cache_latency_(p->cache_latency){
+            cache_latency_(p->cache_latency)
+    {
+        // Pipeline config
+        cache_pipeline_.enableCollection(node);
+        cache_pipeline_.performOwnUpdates();
+        cache_pipeline_.setContinuing(true);
 
+        // Port config
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
 
@@ -21,6 +27,16 @@ namespace olympia {
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                                    (l1_associativity));
         l1_cache_.reset(new SimpleDL1(getContainer(), l1_size_kb, l1_line_size, *repl));
+
+        // Pipeline Handlers
+        cache_pipeline_.registerHandlerAtStage
+            (static_cast<uint32_t>(PipelineStage::LOOKUP),
+             CREATE_SPARTA_HANDLER(DCache, lookupHandler_));
+
+        cache_pipeline_.registerHandlerAtStage
+            (static_cast<uint32_t>(PipelineStage::DATA),
+             CREATE_SPARTA_HANDLER(DCache, dataHandler_));
+
     }
 
     // Reload cache line
@@ -90,5 +106,14 @@ namespace olympia {
         cache_pending_inst_.reset();
         busy_ = false;
     }
+    
+    void DCache::lookupHandler_()
+    {
 
+    }
+    
+    void DCache::dataHandler_()
+    {
+
+    }
 }

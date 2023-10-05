@@ -1016,10 +1016,7 @@ namespace olympia
         ILOG("Issue priority new dispatch " << inst_ptr);
         for (auto &inst_info_ptr : ldst_inst_queue_) {
             if (inst_info_ptr->getInstPtr() == inst_ptr) {
-                if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
-                {
-                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                }
+                inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::NEW_DISP);
 
                 return;
@@ -1041,7 +1038,7 @@ namespace olympia
 
             if (mem_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::MISS) {
                 // Re-activate all TLB-miss-pending instructions in the issue queue
-                if(!allow_speculative_load_exec_ || inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
+                if(!allow_speculative_load_exec_)// Speculative misses are marked as not ready and replay event would set them back to ready
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
@@ -1081,7 +1078,7 @@ namespace olympia
 
             if (mem_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::MISS) {
                 // Re-activate all cache-miss-pending instructions in the issue queue
-                if(!allow_speculative_load_exec_ || inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
+                if(!allow_speculative_load_exec_) // Speculative misses are marked as not ready and replay event would set them back to ready
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
@@ -1116,7 +1113,7 @@ namespace olympia
         for (auto &inst_info_ptr : ldst_inst_queue_) {
             if (inst_info_ptr->getInstPtr() == inst_ptr) {
 
-                if(!allow_speculative_load_exec_ || inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
+                if(!allow_speculative_load_exec_)// Speculative misses are marked as not ready and replay event would set them back to ready
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }

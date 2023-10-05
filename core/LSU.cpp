@@ -216,7 +216,9 @@ namespace olympia
             ILOG("Another issue event scheduled " << inst_ptr);
 
             if(isReadyToIssueInsts_())
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            {
+                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            }
         }
     }
 
@@ -241,7 +243,7 @@ namespace olympia
     // Issue/Re-issue ready instructions in the issue queue
     void LSU::issueInst_()
     {
-        if(replay_buffer_.size() > replay_buffer_size_){
+        if(allow_speculative_load_exec_ && replay_buffer_.size() > replay_buffer_size_){
             ILOG("Replay buffer full");
             return;
         }
@@ -254,8 +256,11 @@ namespace olympia
 
         lsu_insts_issued_++;
 
-        ILOG("Appending to replay queue " << win_ptr);
-        appendToQueue_(replay_buffer_, win_ptr);
+        if(allow_speculative_load_exec_)
+        {
+            ILOG("Appending to replay queue " << win_ptr);
+            appendToQueue_(replay_buffer_, win_ptr);
+        }
 
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr);
@@ -391,7 +396,10 @@ namespace olympia
         // If we did not have an MMU hit from previous stage, invalidate and bail
         if(false == phy_addr_is_ready) {
             ILOG("Cache Lookup is skipped (Physical address not ready)!" << load_store_info_ptr);
-            updateInstReplayReady(mem_access_info_ptr->getInstPtr());
+            if(allow_speculative_load_exec_)
+            {
+                updateInstReplayReady(mem_access_info_ptr->getInstPtr());
+            }
             ldst_pipeline_.invalidateStage(stage_id);
             return;
         }
@@ -481,7 +489,13 @@ namespace olympia
 
         if(false == mem_access_info_ptr->isCacheHit()) {
             ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
-            updateInstReplayReady(mem_access_info_ptr->getInstPtr());
+            if(load_store_info_ptr->getInstUniqueID() == 6){
+                ILOG("test");
+            }
+            if(allow_speculative_load_exec_)
+            {
+                updateInstReplayReady(mem_access_info_ptr->getInstPtr());
+            }
             ldst_pipeline_.invalidateStage(stage_id);
             return;
         }
@@ -493,6 +507,12 @@ namespace olympia
 
         ILOG("Data ready set for " << mem_access_info_ptr);
         mem_access_info_ptr->setDataReady(true);
+
+        if (isReadyToIssueInsts_())
+        {
+            ILOG("Cache read issue");
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        }
     }
 
     // Retire load/store instruction
@@ -539,8 +559,11 @@ namespace olympia
             ILOG("Removed issue queue "  << inst_ptr);
             popIssueQueue_(inst_ptr);
 
-            ILOG("Removed replay "  << inst_ptr);
-            removeFromQueue_(replay_buffer_, load_store_info_ptr);
+            if(allow_speculative_load_exec_)
+            {
+                ILOG("Removed replay " << inst_ptr);
+                removeFromQueue_(replay_buffer_, load_store_info_ptr);
+            }
 
             lsu_insts_completed_++;
             out_lsu_credits_.send(1, 0);
@@ -589,8 +612,11 @@ namespace olympia
             ILOG("Removed issue queue"  << inst_ptr);
             popIssueQueue_(inst_ptr);
 
-            ILOG("Removed replay " << load_store_info_ptr);
-            removeFromQueue_(replay_buffer_, load_store_info_ptr);
+            if(allow_speculative_load_exec_)
+            {
+                ILOG("Removed replay " << load_store_info_ptr);
+                removeFromQueue_(replay_buffer_, load_store_info_ptr);
+            }
 
             lsu_insts_completed_++;
             out_lsu_credits_.send(1, 0);
@@ -916,19 +942,27 @@ namespace olympia
         sparta_assert(ldst_inst_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
         auto win_ptr_iter = replay_buffer_.begin();
-        for (auto iter = replay_buffer_.begin(); iter != replay_buffer_.end(); iter++) {
-            if (!(*iter)->isReady()) {
-                continue;
+        if(allow_speculative_load_exec_)
+        {
+            for (auto iter = replay_buffer_.begin(); iter != replay_buffer_.end(); iter++)
+            {
+                if (!(*iter)->isReady())
+                {
+                    continue;
+                }
+                if (!(*win_ptr_iter)->isReady() || ((*iter)->winArb(*win_ptr_iter)))
+                {
+                    win_ptr_iter = iter;
+                }
             }
-            if (!(*win_ptr_iter)->isReady() || ((*iter)->winArb(*win_ptr_iter) )) {
-                win_ptr_iter = iter;
+            if (win_ptr_iter.isValid() && (*win_ptr_iter)->isReady() && allow_speculative_load_exec_)
+            {
+                return *win_ptr_iter;
             }
+            ILOG("No inst in replay ");
         }
-        if(win_ptr_iter.isValid() && (*win_ptr_iter)->isReady() && allow_speculative_load_exec_) {
-            return *win_ptr_iter;
-        }
-        ILOG("No inst in replay ");
-        if(!win_ptr_iter.isValid())
+
+        if (!allow_speculative_load_exec_ || !win_ptr_iter.isValid())
         {
             win_ptr_iter = ldst_inst_queue_.begin();
         }
@@ -959,7 +993,7 @@ namespace olympia
     // Check for ready to issue instructions
     bool LSU::isReadyToIssueInsts_() const
     {
-        if(replay_buffer_.size() >= replay_buffer_size_){
+        if(allow_speculative_load_exec_ && replay_buffer_.size() >= replay_buffer_size_){
             ILOG("Replay buffer is full");
             return false;
         }
@@ -1007,7 +1041,7 @@ namespace olympia
 
             if (mem_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::MISS) {
                 // Re-activate all TLB-miss-pending instructions in the issue queue
-                if(inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
+                if(!allow_speculative_load_exec_ || inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
@@ -1047,7 +1081,7 @@ namespace olympia
 
             if (mem_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::MISS) {
                 // Re-activate all cache-miss-pending instructions in the issue queue
-                if(inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
+                if(!allow_speculative_load_exec_ || inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
@@ -1082,7 +1116,7 @@ namespace olympia
         for (auto &inst_info_ptr : ldst_inst_queue_) {
             if (inst_info_ptr->getInstPtr() == inst_ptr) {
 
-                if(inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
+                if(!allow_speculative_load_exec_ || inst_info_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }

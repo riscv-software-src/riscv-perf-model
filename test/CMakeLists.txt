@@ -6,9 +6,7 @@ include(CTest)
 # Handy parallel processor library
 include(ProcessorCount)
 ProcessorCount(NUM_CORES)
-if (NUM_CORES GREATER 8)  # Max of 8 cores
-  set(NUM_CORE, 8)
-endif()
+
 if (NOT NUM_CORES EQUAL 0)
   set(CTEST_BUILD_FLAGS -j${NUM_CORES})
   set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${NUM_CORES})

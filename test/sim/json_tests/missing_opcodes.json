@@ -1,0 +1,14 @@
+[
+    {
+        "mnemonic": "sh3add.uw",
+        "rs1": 3,
+        "rs2": 1,
+        "rd": 4
+    },
+    {
+        "mnemonic": "bset",
+        "rs1": 3,
+        "rs2": 1,
+        "rd": 4
+    }
+]

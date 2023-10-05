@@ -69,21 +69,37 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->execute_rf
         },
         {
+            "dcache",
+            "cpu.core*",
+            "Data Cache Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->dcache_rf
+        },
+        {
+            "mmu",
+            "cpu.core*",
+            "MMU Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->mmu_rf
+        },
+        {
+            "tlb",
+            "cpu.core*.mmu",
+            "TLB Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->tlb_rf,
+            true
+        },
+        {
             "lsu",
             "cpu.core*",
             "Load-Store Unit",
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
             &factories->lsu_rf
-        },
-        {
-            "tlb",
-            "cpu.core*.lsu",
-            "TLB Unit",
-            sparta::TreeNode::GROUP_NAME_NONE,
-            sparta::TreeNode::GROUP_IDX_NONE,
-            &factories->tlb_rf,
-            true
         },
         {
             "biu",
@@ -170,12 +186,44 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.rob.ports.out_reorder_buffer_credits"
         },
         {
-            "cpu.core*.lsu.ports.out_biu_req",
+            "cpu.core*.lsu.ports.out_cache_lookup_req",
+            "cpu.core*.dcache.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_lookup_ack",
+            "cpu.core*.lsu.ports.in_cache_lookup_ack"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_lookup_req",
+            "cpu.core*.lsu.ports.in_cache_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_free_req",
+            "cpu.core*.lsu.ports.in_cache_free_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_biu_req",
             "cpu.core*.biu.ports.in_biu_req"
         },
         {
-            "cpu.core*.lsu.ports.in_biu_ack",
-            "cpu.core*.biu.ports.out_biu_ack"
+            "cpu.core*.biu.ports.out_biu_ack",
+            "cpu.core*.dcache.ports.in_biu_ack"
+        },
+        {
+            "cpu.core*.lsu.ports.out_mmu_lookup_req",
+            "cpu.core*.mmu.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_lookup_ack",
+            "cpu.core*.lsu.ports.in_mmu_lookup_ack"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_lookup_req",
+            "cpu.core*.lsu.ports.in_mmu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_free_req",
+            "cpu.core*.lsu.ports.in_mmu_free_req"
         },
         {
             "cpu.core*.biu.ports.out_mss_req_sync",
@@ -245,7 +293,8 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
         const auto dispatch_ports     = core_node + ".dispatch.ports";
         const auto flushmanager_ports = core_node + ".flushmanager.ports";
 
-        auto execution_topology = olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
+        auto execution_topology =
+            olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
         for (auto exe_unit_pair : execution_topology)
         {
             const auto tgt_name   = exe_unit_pair[0];

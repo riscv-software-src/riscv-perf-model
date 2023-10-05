@@ -82,9 +82,11 @@ namespace olympia
                 sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
             // Send instructions on their way to rename
             for(uint32_t i = 0; i < num_decode; ++i) {
-                insts->emplace_back(fetch_queue_.read(0));
+                const auto & inst = fetch_queue_.read(0);
+                insts->emplace_back(inst);
+                inst->setStatus(Inst::Status::RENAMED);
 
-                ILOG("Decoded: " << fetch_queue_.read(0));
+                ILOG("Decoded: " << inst);
 
                 fetch_queue_.pop();
             }

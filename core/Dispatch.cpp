@@ -186,9 +186,11 @@ namespace olympia
                         ++(unit_distribution_context_.context(target_unit));
                         ++(weighted_unit_distribution_context_.context(target_unit));
 
+                        ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
                         ILOG("Sending instruction: "
                              << ex_inst_ptr << " to " << disp->getName());
                         dispatched = true;
+
                         break;
                     }
                     else {

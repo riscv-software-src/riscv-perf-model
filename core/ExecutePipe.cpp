@@ -3,6 +3,7 @@
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "ExecutePipe.hpp"
+#include "CoreUtils.hpp"
 
 namespace olympia
 {
@@ -69,9 +70,10 @@ namespace olympia
     {
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
-        if(scoreboard_views_[reg_file_]->isSet(src_bits)){
+        if(scoreboard_views_[reg_file_]->isSet(src_bits))
+        {
             // Insert at the end if we are doing in order issue or if the scheduler is empty
-            ILOG("Sending to issue queue" << ex_inst);
+            ILOG("Sending to issue queue " << ex_inst);
             if (in_order_issue_ == true || ready_queue_.size() == 0) {
                 ready_queue_.emplace_back(ex_inst);
             }
@@ -100,17 +102,21 @@ namespace olympia
             }
         }
         else{
-            scoreboard_views_[reg_file_]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
-                                        [this, ex_inst](const sparta::Scoreboard::RegisterBitMask&)
-                                        {this->getInstsFromDispatch_(ex_inst);});
-            ILOG("Registering Callback: " << ex_inst);
+            scoreboard_views_[reg_file_]->
+                registerReadyCallback(src_bits, ex_inst->getUniqueID(),
+                                      [this, ex_inst](const sparta::Scoreboard::RegisterBitMask&)
+                                      {
+                                          this->getInstsFromDispatch_(ex_inst);
+                                      });
+            ILOG("Instruction NOT ready: " << ex_inst << " Bits needed:" << sparta::printBitSet(src_bits));
         }
     }
 
-    void ExecutePipe::issueInst_() {
+    void ExecutePipe::issueInst_()
+    {
         // Issue a random instruction from the ready queue
         sparta_assert_context(unit_busy_ == false && ready_queue_.size() > 0,
-                            "Somehow we're issuing on a busy unit or empty ready_queue");
+                              "Somehow we're issuing on a busy unit or empty ready_queue");
         // Issue the first instruction
         InstPtr & ex_inst_ptr = ready_queue_.front();
         auto & ex_inst = *ex_inst_ptr;
@@ -133,14 +139,22 @@ namespace olympia
     }
 
     // Called by the scheduler, scheduled by complete_inst_.
-    void ExecutePipe::completeInst_(const InstPtr & ex_inst) {
+    void ExecutePipe::completeInst_(const InstPtr & ex_inst)
+    {
+        ex_inst->setStatus(Inst::Status::COMPLETED);
         ILOG("Completing inst: " << ex_inst);
 
-        ex_inst->setStatus(Inst::Status::COMPLETED);
-
         // set scoreboard
-        const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);
-        scoreboard_views_[reg_file_]->setReady(dest_bits);
+        if(SPARTA_EXPECT_FALSE(ex_inst->getPipe() == InstArchInfo::TargetPipe::I2F)) {
+            sparta_assert(reg_file_ == core_types::RegFile::RF_INTEGER,
+                          "Got an I2F instruction in an ExecutionPipe that does not source the integer RF");
+            const auto & dest_bits = ex_inst->getDestRegisterBitMask(core_types::RegFile::RF_FLOAT);
+            scoreboard_views_[core_types::RegFile::RF_FLOAT]->setReady(dest_bits);
+        }
+        else {
+            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);
+            scoreboard_views_[reg_file_]->setReady(dest_bits);
+        }
 
         // We're not busy anymore
         unit_busy_ = false;

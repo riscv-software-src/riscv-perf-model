@@ -86,6 +86,11 @@ namespace olympia
 
         InstQueue      reorder_buffer_;
 
+        // Bool that indicates if the ROB stopped simulation.  If
+        // false and there are still instructions in the reorder
+        // buffer, the machine probably has a lock up
+        bool rob_stopped_simulation_{false};
+
         // Ports used by the ROB
         sparta::DataInPort<InstGroupPtr> in_reorder_buffer_write_{&unit_port_set_, "in_reorder_buffer_write", 1};
         sparta::DataOutPort<uint32_t> out_reorder_buffer_credits_{&unit_port_set_, "out_reorder_buffer_credits"};
@@ -117,6 +122,8 @@ namespace olympia
         void retireInstructions_();
         void checkForwardProgress_();
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
+        void dumpDebugContent_(std::ostream& output) const override final;
+        void onStartingTeardown_() override final;
 
     };
 }

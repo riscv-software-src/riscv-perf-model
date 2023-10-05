@@ -87,6 +87,13 @@ namespace olympia {
             return (cache_access_state_ == MemoryAccessInfo::CacheState::HIT);
         }
 
+        bool isDataReady() const {
+            return cache_data_ready_;
+        }
+
+        void setDataReady(bool is_ready) {
+            cache_data_ready_ = is_ready;
+        }
     private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -99,6 +106,8 @@ namespace olympia {
 
         // DCache access status
         CacheState cache_access_state_;
+
+        bool cache_data_ready_;
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;

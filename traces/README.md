@@ -177,7 +177,7 @@ to a local copy of a RISC-V gcc location.
 
 ```
 % cd dromajo/run
-% $RISCV_TOOLSUITE/bin/riscv64-unknown-elf-gcc -O3 -DTIME ../../*.c -o dhry_riscv.elf
+% $RISCV_TOOLSUITE/bin/riscv64-unknown-elf-gcc -O3 -DTIME ../../dhrystone/*.c -o dhry_riscv.elf
 ```
 Copy `dhry_riscv.elf` into the buildroot and rebuild the root file system:
 ```

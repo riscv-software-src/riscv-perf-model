@@ -1,0 +1,169 @@
+[
+    {
+        "mnemonic": "fcvt.w.s",
+        "fs3": 3,
+        "rd": 3
+    },
+    {
+        "mnemonic" : "fcvt.s.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.d.s",
+        "fs3" : 3,
+        "rd" : 3
+    },
+    {
+        "mnemonic" : "fle.s",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "flt.s",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "feq.s",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fle.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "flt.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "feq.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.w.s",
+        "fs3" : 3,
+        "rd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.wu.s",
+        "fs3" : 3,
+        "rd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.l.s",
+        "fs3" : 3,
+        "rd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.lu.s",
+        "fs3" : 3,
+        "rd" : 3
+    },
+    {
+        "mnemonic" : "fmv.x.w",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fclass.s",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.w.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.wu.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.l.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.lu.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fmv.x.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fclass.d",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.s.w",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.s.wu",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.s.l",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.s.lu",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fmv.w.x",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.d.w",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.d.wu",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.d.l",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fcvt.d.lu",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "fmv.d.x",
+        "rs3" : 3,
+        "fd" : 3
+    },
+    {
+        "mnemonic" : "add",
+        "rs1" : 3,
+        "rs2" : 3,
+        "rd" : 4
+    },
+    {
+        "mnemonic" : "fadd.d",
+        "fs1" : 3,
+        "fs2" : 3,
+        "fd" : 4
+    }
+]

@@ -51,6 +51,9 @@ sparta_named_test(olympia_coremark_test_report_html olympia -i 1M
 sparta_named_test(olympia_json_test_missing_opcodes olympia
   --workload json_tests/missing_opcodes.json)
 
+sparta_named_test(olympia_json_test_fp_transfers olympia
+  --workload json_tests/fp_transfers.json)
+
 # Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")
 foreach(ARCH_FULL_PATH ${TEST_YAML})

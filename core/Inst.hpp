@@ -13,6 +13,7 @@
 
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
+#include "MiscUtils.hpp"
 
 #include <cstdlib>
 #include <ostream>
@@ -100,6 +101,10 @@ namespace olympia
             opcode_info_    (opcode_info),
             inst_arch_info_ (inst_arch_info),
             is_store_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::STORE)),
+            is_transfer_(miscutils::isOneOf(inst_arch_info_->getTargetPipe(),
+                                            InstArchInfo::TargetPipe::I2F,
+                                            InstArchInfo::TargetPipe::F2I)),
+
             status_state_(Status::FETCHED)
         {
             sparta_assert(inst_arch_info_ != nullptr,
@@ -184,6 +189,7 @@ namespace olympia
 
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
+        bool        isTransfer() const     { return is_transfer_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
@@ -220,7 +226,8 @@ namespace olympia
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
-        bool                   is_store_ = false;
+        const bool             is_store_;
+        const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 

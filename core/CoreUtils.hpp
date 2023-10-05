@@ -23,8 +23,8 @@ namespace olympia::coreutils
     }
     inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
     {
-        static const std::map<mavis::InstMetaData::OperandTypes, core_types::RegFile> mavis_optype_to_regfile = { 
-            // mapping of supported types ... 
+        static const std::map<mavis::InstMetaData::OperandTypes, core_types::RegFile> mavis_optype_to_regfile = {
+            // mapping of supported types ...
             {mavis::InstMetaData::OperandTypes::SINGLE, core_types::RegFile::RF_FLOAT},
             {mavis::InstMetaData::OperandTypes::DOUBLE, core_types::RegFile::RF_FLOAT},
             {mavis::InstMetaData::OperandTypes::WORD, core_types::RegFile::RF_INTEGER},
@@ -37,4 +37,5 @@ namespace olympia::coreutils
         sparta_assert(false, "Unknown reg type: " << static_cast<uint32_t>(reg.operand_type));
         return core_types::RegFile::RF_INVALID;
     }
+
 }

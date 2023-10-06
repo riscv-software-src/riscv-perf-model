@@ -1,6 +1,7 @@
 #include "sparta/utils/SpartaAssert.hpp"
 #include "CoreUtils.hpp"
 #include "LSU.hpp"
+#include <string>
 
 #include "OlympiaAllocators.hpp"
 
@@ -27,9 +28,13 @@ namespace olympia
                                    load_store_info_allocator),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
                                  memory_access_allocator),
+        ldst_pipeline_("LoadStorePipeline",
+                       static_cast<uint32_t>(p->mmu_lookup_stage_length + p->cache_lookup_stage_length + p->cache_read_stage_length + 2), getClock()),
         stall_pipeline_on_miss_(p->stall_pipeline_on_miss),
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
+        setupPipelineLength(p);
+
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
@@ -81,23 +86,23 @@ namespace olympia
         ldst_pipeline_.setContinuing(true);
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(PipelineStage::ADDRESS_CALCULATION),
+            (static_cast<uint32_t>(ADDRESS_CALCULATION),
              CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(PipelineStage::MMU_LOOKUP),
+            (static_cast<uint32_t>(MMU_LOOKUP),
              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP),
+            (static_cast<uint32_t>(CACHE_LOOKUP),
              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(PipelineStage::CACHE_READ),
+            (static_cast<uint32_t>(CACHE_READ),
              CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(PipelineStage::COMPLETE),
+            (static_cast<uint32_t>(COMPLETE),
              CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
         uev_pipe_stall_ >> uev_issue_inst_;
@@ -109,15 +114,18 @@ namespace olympia
 
     }
 
-    LSU::~LSU()  {
-        DLOG(getContainer()->getLocation()
-             << ": "
-             << load_store_info_allocator_.getNumAllocated()
-             << " LoadStoreInstInfo objects allocated/created");
-        DLOG(getContainer()->getLocation()
-             << ": "
-             << memory_access_allocator_.getNumAllocated()
-             << " MemoryAccessInfo objects allocated/created");
+
+    LSU::~LSU()
+    {
+        DLOG(getContainer()->getLocation() << ": " << load_store_info_allocator_.getNumAllocated() << " LoadStoreInstInfo objects allocated/created");
+        DLOG(getContainer()->getLocation() << ": " << memory_access_allocator_.getNumAllocated() << " MemoryAccessInfo objects allocated/created");
+    }
+    void LSU::setupPipelineLength(const LSU::LSUParameterSet* p)
+    {
+        MMU_LOOKUP = p->mmu_lookup_stage_length;
+        CACHE_LOOKUP = MMU_LOOKUP + p->cache_lookup_stage_length;
+        CACHE_READ = CACHE_LOOKUP + p->cache_read_stage_length;
+        COMPLETE = CACHE_READ + 1;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +288,7 @@ namespace olympia
 
     void LSU::handleAddressCalculation_()
     {
-        auto stage_id = static_cast<uint32_t>(PipelineStage::ADDRESS_CALCULATION);
+        auto stage_id = static_cast<uint32_t>(ADDRESS_CALCULATION);
 
         if (!ldst_pipeline_.isValid(stage_id)) {
             return;
@@ -300,7 +308,7 @@ namespace olympia
     // Handle MMU access request
     void LSU::handleMMULookupReq_()
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+        const auto stage_id = static_cast<uint32_t>(MMU_LOOKUP);
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -335,7 +343,7 @@ namespace olympia
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr)
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
+        const auto stage_id = static_cast<uint32_t>(MMU_LOOKUP);
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -382,7 +390,7 @@ namespace olympia
     // Handle cache access request
     void LSU::handleCacheLookupReq_()
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
+        const auto stage_id = static_cast<uint32_t>(CACHE_LOOKUP);
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -476,7 +484,7 @@ namespace olympia
 
     void LSU::handleCacheRead_()
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::CACHE_READ);
+        const auto stage_id = static_cast<uint32_t>(CACHE_READ);
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -518,7 +526,7 @@ namespace olympia
     // Retire load/store instruction
     void LSU::completeInst_()
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::COMPLETE);
+        const auto stage_id = static_cast<uint32_t>(COMPLETE);
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -850,10 +858,10 @@ namespace olympia
     }
 
     void LSU::invalidatePipeline(const InstPtr & inst_ptr){
-        auto ac_stage_id = static_cast<uint32_t>(PipelineStage::ADDRESS_CALCULATION);
-        auto mmu_stage_id = static_cast<uint32_t>(PipelineStage::MMU_LOOKUP);
-        auto cache_lookup_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_LOOKUP);
-        auto cache_read_stage_id = static_cast<uint32_t>(PipelineStage::CACHE_READ);
+        auto ac_stage_id = static_cast<uint32_t>(ADDRESS_CALCULATION);
+        auto mmu_stage_id = static_cast<uint32_t>(MMU_LOOKUP);
+        auto cache_lookup_stage_id = static_cast<uint32_t>(CACHE_LOOKUP);
+        auto cache_read_stage_id = static_cast<uint32_t>(CACHE_READ);
 
         if(ldst_pipeline_.isValid(ac_stage_id)){
             auto &pipeline_inst = ldst_pipeline_[ac_stage_id]->getInstPtr();

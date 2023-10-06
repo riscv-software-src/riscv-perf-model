@@ -776,126 +776,126 @@
     {
         "mnemonic" : "fle.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "flt.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "feq.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fle.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "flt.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "feq.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.w.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.wu.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.l.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.lu.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fmv.x.w",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fclass.s",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.w.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.wu.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.l.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fcvt.lu.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fmv.x.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },
     {
         "mnemonic" : "fclass.d",
         "dispatch" : ["fpu"],
-        "pipe" : "i2f",
+        "pipe" : "f2i",
         "transfer" : true,
         "latency" : 2
     },

@@ -23,6 +23,7 @@ namespace olympia
         {"float",   InstArchInfo::TargetPipe::FLOAT},
         {"fmac",    InstArchInfo::TargetPipe::FMAC},
         {"i2f",     InstArchInfo::TargetPipe::I2F},
+        {"f2i",     InstArchInfo::TargetPipe::F2I},
         {"int",     InstArchInfo::TargetPipe::INT},
         {"lsu",     InstArchInfo::TargetPipe::LSU},
         {"mul",     InstArchInfo::TargetPipe::MUL},

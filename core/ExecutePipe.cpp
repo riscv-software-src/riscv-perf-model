@@ -145,11 +145,25 @@ namespace olympia
         ILOG("Completing inst: " << ex_inst);
 
         // set scoreboard
-        if(SPARTA_EXPECT_FALSE(ex_inst->getPipe() == InstArchInfo::TargetPipe::I2F)) {
-            sparta_assert(reg_file_ == core_types::RegFile::RF_INTEGER,
-                          "Got an I2F instruction in an ExecutionPipe that does not source the integer RF");
-            const auto & dest_bits = ex_inst->getDestRegisterBitMask(core_types::RegFile::RF_FLOAT);
-            scoreboard_views_[core_types::RegFile::RF_FLOAT]->setReady(dest_bits);
+        if(SPARTA_EXPECT_FALSE(ex_inst->isTransfer()))
+        {
+            if(ex_inst->getPipe() == InstArchInfo::TargetPipe::I2F)
+            {
+                // Integer source -> FP dest -- need to mark the appropriate destination SB
+                sparta_assert(reg_file_ == core_types::RegFile::RF_INTEGER,
+                              "Got an I2F instruction in an ExecutionPipe that does not source the integer RF: " << ex_inst);
+                const auto & dest_bits = ex_inst->getDestRegisterBitMask(core_types::RegFile::RF_FLOAT);
+                scoreboard_views_[core_types::RegFile::RF_FLOAT]->setReady(dest_bits);
+            }
+            else {
+                // FP source -> Integer dest -- need to mark the appropriate destination SB
+                sparta_assert(ex_inst->getPipe() == InstArchInfo::TargetPipe::F2I,
+                              "Instruction is marked transfer type, but I2F nor F2I: " << ex_inst);
+                sparta_assert(reg_file_ == core_types::RegFile::RF_FLOAT,
+                              "Got an F2I instruction in an ExecutionPipe that does not source the Float RF: " << ex_inst);
+                const auto & dest_bits = ex_inst->getDestRegisterBitMask(core_types::RegFile::RF_INTEGER);
+                scoreboard_views_[core_types::RegFile::RF_INTEGER]->setReady(dest_bits);
+            }
         }
         else {
             const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);

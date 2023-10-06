@@ -54,6 +54,7 @@ namespace olympia
             FLOAT,
             FMAC,
             I2F,
+            F2I,
             INT,
             LSU,
             MUL,

@@ -55,25 +55,13 @@ set (SIM_BASE ${PROJECT_SOURCE_DIR})
 set (OLYMPIA_VERSION "v0.1.0")
 add_definitions(-DOLYMPIA_VERSION=\"${OLYMPIA_VERSION}\")
 
-if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
-  set(SPARTA_BUILD_TYPE "release")
-elseif (CMAKE_BUILD_TYPE MATCHES "^[Ff]ast[Dd]ebug")
-  set(SPARTA_BUILD_TYPE "release")
-elseif (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
-  set(SPARTA_BUILD_TYPE "debug")
-elseif (CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")
-  set(SPARTA_BUILD_TYPE "release")
-else()
-  message (FATAL_ERROR "Please provide a CMAKE_BUILD_TYPE: -DCMAKE_BUILD_TYPE=Release|FastDebug|Debug|Profile")
-endif()
-
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Include directories
-include_directories (core mss)
+include_directories (core mss sim)
 include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
 

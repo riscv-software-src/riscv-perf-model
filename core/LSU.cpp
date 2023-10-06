@@ -2,6 +2,8 @@
 #include "CoreUtils.hpp"
 #include "LSU.hpp"
 
+#include "OlympiaAllocators.hpp"
+
 namespace olympia
 {
     const char LSU::name[] = "lsu";
@@ -12,10 +14,12 @@ namespace olympia
 
     LSU::LSU(sparta::TreeNode *node, const LSUParameterSet *p) :
         sparta::Unit(node),
-        memory_access_allocator(50, 30),   // 50 and 30 are arbitrary numbers here.  It can be tuned to an exact value.
-        load_store_info_allocator(50, 30),
         ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
-        ldst_inst_queue_size_(p->ldst_inst_queue_size)
+        ldst_inst_queue_size_(p->ldst_inst_queue_size),
+        load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
+                                   load_store_info_allocator),
+        memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
+                                 memory_access_allocator)
     {
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
@@ -79,6 +83,16 @@ namespace olympia
 
     }
 
+    LSU::~LSU()  {
+        DLOG(getContainer()->getLocation()
+             << ": "
+             << load_store_info_allocator_.getNumAllocated()
+             << " LoadStoreInstInfo objects allocated/created");
+        DLOG(getContainer()->getLocation()
+             << ": "
+             << memory_access_allocator_.getNumAllocated()
+             << " MemoryAccessInfo objects allocated/created");
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
@@ -141,12 +155,14 @@ namespace olympia
 
         if (all_ready) {
             // Create load/store memory access info
-            MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator,
-                                                                                                        inst_ptr);
+            MemoryAccessInfoPtr mem_info_ptr =
+                sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator_,
+                                                                         inst_ptr);
 
             // Create load/store instruction issue info
-            LoadStoreInstInfoPtr inst_info_ptr = sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator,
-                                                                                                        mem_info_ptr);
+            LoadStoreInstInfoPtr inst_info_ptr =
+                sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,
+                                                                          mem_info_ptr);
             lsu_insts_dispatched_++;
 
             // Append to instruction issue queue

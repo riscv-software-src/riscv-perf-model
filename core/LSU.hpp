@@ -56,6 +56,10 @@ namespace olympia
             // LSU microarchitecture parameters
             PARAMETER(bool, stall_pipeline_on_miss, false, "Stall pipeline on miss event")
             PARAMETER(bool, allow_speculative_load_exec, true, "Allow loads to proceed speculatively before all older store addresses are known")
+            // Pipeline length
+            PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
+            PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
+            PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
         };
 
         /*!
@@ -68,6 +72,7 @@ namespace olympia
         //! Destroy the LSU
         ~LSU();
 
+        void setupPipelineLength(const LSUParameterSet* p);
         //! name of this resource.
         static const char name[];
 
@@ -81,16 +86,6 @@ namespace olympia
 
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
         using FlushCriteria = FlushManager::FlushingCriteria;
-
-        enum class PipelineStage
-        {
-            ADDRESS_CALCULATION = 0,
-            MMU_LOOKUP = 1,
-            CACHE_LOOKUP = 2,
-            CACHE_READ = 3,
-            COMPLETE = 4,
-            NUM_STAGES
-        };
 
         // Forward declaration of the Pair Definition class is must as we are friending it.
         class LoadStoreInstInfoPairDef;
@@ -299,8 +294,13 @@ namespace olympia
 
         // Load/Store Pipeline
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_
-            {"LoadStorePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
+        LoadStorePipeline ldst_pipeline_;
+
+        uint32_t ADDRESS_CALCULATION = 0;
+        uint32_t MMU_LOOKUP = 1;
+        uint32_t CACHE_LOOKUP = 2;
+        uint32_t CACHE_READ = 3;
+        uint32_t COMPLETE = 4;
 
         // LSU Microarchitecture parameters
         const bool stall_pipeline_on_miss_;

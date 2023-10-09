@@ -94,6 +94,13 @@ namespace olympia {
         void setDataReady(bool is_ready) {
             cache_data_ready_ = is_ready;
         }
+
+        void reset() {
+            setCacheState(MemoryAccessInfo::CacheState::NO_ACCESS);
+            setDataReady(false);
+            setMMUState(MemoryAccessInfo::MMUState::NO_ACCESS);
+            setPhyAddrStatus(false);
+        }
     private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;

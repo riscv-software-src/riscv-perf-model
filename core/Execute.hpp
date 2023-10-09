@@ -49,6 +49,7 @@ namespace olympia
     {
     public:
         void onConfiguring(sparta::ResourceTreeNode* node) override;
+        void deleteSubtree(sparta::ResourceTreeNode*) override;
 
         ~ExecuteFactory() = default;
     private:

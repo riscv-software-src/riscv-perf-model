@@ -97,20 +97,7 @@ namespace olympia
         */
         Inst(const mavis::OpcodeInfo::PtrType& opcode_info,
              const InstArchInfo::PtrType     & inst_arch_info,
-             const sparta::Clock             * clk) :
-            opcode_info_    (opcode_info),
-            inst_arch_info_ (inst_arch_info),
-            is_store_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::STORE)),
-            is_transfer_(miscutils::isOneOf(inst_arch_info_->getTargetPipe(),
-                                            InstArchInfo::TargetPipe::I2F,
-                                            InstArchInfo::TargetPipe::F2I)),
-
-            status_state_(Status::FETCHED)
-        {
-            sparta_assert(inst_arch_info_ != nullptr,
-                          "Mavis decoded the instruction, but Olympia has no uarch data for it: "
-                          << getDisasm() << " " << std::hex << " opc: 0x" << getOpCode());
-        }
+             const sparta::Clock             * clk);
 
         // This is needed by Mavis as an optimization.  Try NOT to
         // implement it and let the compiler do it for us for speed.
@@ -311,8 +298,4 @@ namespace olympia
     // Instruction allocators
     using InstAllocator         = sparta::SpartaSharedPointerAllocator<Inst>;
     using InstArchInfoAllocator = sparta::SpartaSharedPointerAllocator<InstArchInfo>;
-
-    extern InstAllocator         inst_allocator;
-    extern InstArchInfoAllocator inst_arch_info_allocator;
-
 }

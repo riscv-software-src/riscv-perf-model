@@ -2,6 +2,7 @@
 #include "Dispatch.hpp"
 #include "MavisUnit.hpp"
 #include "CoreUtils.hpp"
+#include "OlympiaAllocators.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"
@@ -68,6 +69,9 @@ private:
     void buildTree_()  override
     {
         auto rtn = getRoot();
+
+        // Cerate the common Allocators
+        allocators_tn_.reset(new olympia::OlympiaAllocators(rtn));
 
         sparta::ResourceTreeNode * disp = nullptr;
 
@@ -193,6 +197,8 @@ private:
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_lsu_credits"),
                      root_node->getChildAs<sparta::Port>("lsu.ports.out_sink_credits"));
     }
+    // Allocators.  Last thing to delete
+    std::unique_ptr<olympia::OlympiaAllocators> allocators_tn_;
 
     olympia::DispatchFactory     dispatch_fact;
     olympia::MavisFactoy         mavis_fact;

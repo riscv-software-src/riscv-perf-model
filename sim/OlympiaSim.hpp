@@ -4,7 +4,10 @@
 
 #include "sparta/app/Simulation.hpp"
 
-namespace olympia{ class CPUFactory; }
+namespace olympia {
+    class CPUFactory;
+    class OlympiaAllocators;
+}
 
 /*!
  * \brief OlympiaSim which builds the model and configures it
@@ -39,6 +42,13 @@ private:
 
     //////////////////////////////////////////////////////////////////////
     // Setup
+
+    // Allocators.  Last thing to delete
+    std::unique_ptr<olympia::OlympiaAllocators> allocators_tn_;
+
+    // The CPU TN.  This must be declared _AFTER_ the allocators so it
+    // is destroyed first.
+    std::unique_ptr<sparta::TreeNode> cpu_tn_to_delete_;
 
     //! Build the tree with tree nodes, but does not instantiate the
     //! unit yet

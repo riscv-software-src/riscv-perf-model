@@ -8,6 +8,8 @@
 #include "mavis/Mavis.h"
 #include "MavisUnit.hpp"
 
+#include "OlympiaAllocators.hpp"
+
 namespace olympia
 {
 
@@ -67,8 +69,10 @@ namespace olympia
         mavis_facade_ (new MavisType(getISAFiles(n, p->isa_file_path, pseudo_file_path_),
                                      getUArchFiles(n, p, p->uarch_file_path, pseudo_file_path_),
                                      mavis_uid_list_, getUArchAnnotationOverrides(p),
-                                     InstPtrAllocator<InstAllocator>        (inst_allocator),
-                                     InstPtrAllocator<InstArchInfoAllocator>(inst_arch_info_allocator)))
+                                     InstPtrAllocator<InstAllocator>
+                                     (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_allocator),
+                                     InstPtrAllocator<InstArchInfoAllocator>
+                                     (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_arch_info_allocator)))
     {}
 
     /**

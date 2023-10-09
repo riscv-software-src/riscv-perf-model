@@ -1,7 +1,15 @@
+// <MemoryAccessInfo.hpp> -*- C++ -*-
+
 #pragma once
 
-namespace olympia {
+#include "sparta/resources/Scoreboard.hpp"
+#include "sparta/pairs/SpartaKeyPairs.hpp"
+#include "sparta/utils/SpartaSharedPointer.hpp"
+#include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 
+#include "Inst.hpp"
+
+namespace olympia {
 
     class MemoryAccessInfoPairDef;
 
@@ -99,9 +107,9 @@ namespace olympia {
     };
 
     /*!
-* \class MemoryAccessInfoPairDef
-* \brief Pair Definition class of the Memory Access Information that flows through the example/CoreModel
-*/
+     * \class MemoryAccessInfoPairDef
+     * \brief Pair Definition class of the Memory Access Information that flows through the example/CoreModel
+     */
 
     // This is the definition of the PairDefinition class of MemoryAccessInfo.
     // This PairDefinition class could be named anything but it needs to inherit
@@ -121,5 +129,6 @@ namespace olympia {
                               SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr))
     };
 
-    using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
 };

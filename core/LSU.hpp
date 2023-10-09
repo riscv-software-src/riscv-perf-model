@@ -58,16 +58,8 @@ namespace olympia
          */
         LSU(sparta::TreeNode* node, const LSUParameterSet* p);
 
-        ~LSU() {
-            DLOG(getContainer()->getLocation()
-                 << ": "
-                 << load_store_info_allocator.getNumAllocated()
-                 << " LoadStoreInstInfo objects allocated/created");
-            DLOG(getContainer()->getLocation()
-                 << ": "
-                 << memory_access_allocator.getNumAllocated()
-                 << " MemoryAccessInfo objects allocated/created");
-        }
+        //! Destroy the LSU
+        ~LSU();
 
         //! name of this resource.
         static const char name[];
@@ -90,9 +82,6 @@ namespace olympia
             COMPLETE = 2,       //4
             NUM_STAGES
         };
-
-        // allocator for this object type
-        sparta::SpartaSharedPointerAllocator<MemoryAccessInfo> memory_access_allocator;
 
         // Forward declaration of the Pair Definition class is must as we are friending it.
         class LoadStoreInstInfoPairDef;
@@ -186,7 +175,7 @@ namespace olympia
 
         };  // class LoadStoreInstInfo
 
-        sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo> load_store_info_allocator;
+        using LoadStoreInstInfoAllocator = sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo>;
 
         /*!
         * \class LoadStoreInstInfoPairDef
@@ -277,10 +266,15 @@ namespace olympia
         sparta::collection::Collectable<bool> cache_busy_collectable_{
             getContainer(), "dcache_busy", &cache_busy_};
 
+        // LSInstInfo allocator
+        LoadStoreInstInfoAllocator & load_store_info_allocator_;
+
+        // allocator for this object type
+        MemoryAccessInfoAllocator & memory_access_allocator_;
+
         // NOTE:
         // Depending on which kind of cache (e.g. blocking vs. non-blocking) is being used
         // This single slot could potentially be extended to a cache pending miss queue
-
 
         // Load/Store Pipeline
         using LoadStorePipeline = sparta::Pipeline<MemoryAccessInfoPtr>;
@@ -395,6 +389,11 @@ namespace olympia
             getStatisticSet(), "biu_reqs",
             "Number of BIU reqs", sparta::Counter::COUNT_NORMAL
         };
+
+
+        // When simulation is ending (error or not), this function
+        // will be called
+        void onStartingTeardown_() override {}
 
         friend class LSUTester;
 

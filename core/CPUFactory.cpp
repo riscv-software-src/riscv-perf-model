@@ -123,3 +123,8 @@ auto olympia::CPUFactory::getResourceNames() const -> const std::vector<std::str
 {
     return resource_names_;
 }
+
+// Destroy internal components
+void olympia::CPUFactory::deleteSubtree(sparta::ResourceTreeNode*) {
+    to_delete_.clear();
+}

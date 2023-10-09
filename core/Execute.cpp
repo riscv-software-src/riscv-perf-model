@@ -39,4 +39,9 @@ namespace olympia
             }
         }
     }
+
+    void ExecuteFactory::deleteSubtree(sparta::ResourceTreeNode*) {
+        exe_pipe_tns_.clear();
+    }
+
 }

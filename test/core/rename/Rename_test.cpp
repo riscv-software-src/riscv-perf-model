@@ -6,6 +6,7 @@
 #include "ExecutePipe.hpp"
 #include "LSU.hpp"
 #include "sim/OlympiaSim.hpp"
+#include "OlympiaAllocators.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"
@@ -39,74 +40,74 @@ olympia::InstAllocator inst_allocator(2000, 1000);
 
 class olympia::RenameTester
 {
-    public:
-        void test_clearing_rename_structures(olympia::Rename & rename){
-            // after all instructions have retired, we should have:
-            // num_rename_registers - 32 registers = freelist size
-            // because we initialize the first 32 registers
-            if (rename.reference_counter_[0].size() == 34){
-                EXPECT_TRUE(rename.freelist_[0].size() == 2);
-                // in the case of only two free PRFs, they should NOT be equal to each other
-                EXPECT_TRUE(rename.freelist_[0].front() != rename.freelist_[0].back());
-            }
-            else{
-                EXPECT_TRUE(rename.freelist_[0].size() == 96);
-            }
-            // we're only expecting one reference
-            EXPECT_TRUE(rename.reference_counter_[0][1] == 1);
-            EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
-
+public:
+    void test_clearing_rename_structures(olympia::Rename & rename){
+        // after all instructions have retired, we should have:
+        // num_rename_registers - 32 registers = freelist size
+        // because we initialize the first 32 registers
+        if (rename.reference_counter_[0].size() == 34){
+            EXPECT_TRUE(rename.freelist_[0].size() == 2);
+            // in the case of only two free PRFs, they should NOT be equal to each other
+            EXPECT_TRUE(rename.freelist_[0].front() != rename.freelist_[0].back());
         }
-        void test_one_instruction(olympia::Rename & rename){
-            // process only one instruction, check that freelist and map_tables are allocated correctly
-            if (rename.reference_counter_[0].size() == 34){
-                EXPECT_TRUE(rename.freelist_[0].size() == 1);
-            }
-            else{
-                EXPECT_TRUE(rename.freelist_[0].size() == 95);
-            }
-            // map table entry is valid, as it's been allocated
-            
-            // reference counters should now be 2 because the first instruction is:
-            // ADD x3 x1 x2 and both x1 -> prf1 and x2 -> prf2
-            EXPECT_TRUE(rename.reference_counter_[0][1] == 2);
-            EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
-        }
-        void test_multiple_instructions(olympia::Rename & rename){
-            // first two instructions are RAW
-            // so the second instruction should increase reference count
-            EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
-        }
-        void test_startup_rename_structures(olympia::Rename & rename){
-            // before starting, we should have:
-            // num_rename_registers - 32 registers = freelist size
-            // because we initialize the first 32 registers
-            if (rename.reference_counter_[0].size() == 34){
-                EXPECT_TRUE(rename.freelist_[0].size() == 2);
-            }
-            else{
-                EXPECT_TRUE(rename.freelist_[0].size() == 96);
-            }
-            // we're only expecting a value of 1 for registers x0 -> x31 because we initialize them
-            EXPECT_TRUE(rename.reference_counter_[0][1] == 1);
-            EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
-            EXPECT_TRUE(rename.reference_counter_[0][30] == 1);
-            EXPECT_TRUE(rename.reference_counter_[0][31] == 1);
-            //
-            EXPECT_TRUE(rename.reference_counter_[0][33] == 0);
-            EXPECT_TRUE(rename.reference_counter_[0][34] == 0);
-
-        }
-        void test_float(olympia::Rename & rename){
-            // ensure the correct register file is used
-            EXPECT_TRUE(rename.freelist_[1].size() == 94);
+        else{
             EXPECT_TRUE(rename.freelist_[0].size() == 96);
         }
+        // we're only expecting one reference
+        EXPECT_TRUE(rename.reference_counter_[0][1] == 1);
+        EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
+
+    }
+    void test_one_instruction(olympia::Rename & rename){
+        // process only one instruction, check that freelist and map_tables are allocated correctly
+        if (rename.reference_counter_[0].size() == 34){
+            EXPECT_TRUE(rename.freelist_[0].size() == 1);
+        }
+        else{
+            EXPECT_TRUE(rename.freelist_[0].size() == 95);
+        }
+        // map table entry is valid, as it's been allocated
+
+        // reference counters should now be 2 because the first instruction is:
+        // ADD x3 x1 x2 and both x1 -> prf1 and x2 -> prf2
+        EXPECT_TRUE(rename.reference_counter_[0][1] == 2);
+        EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
+    }
+    void test_multiple_instructions(olympia::Rename & rename){
+        // first two instructions are RAW
+        // so the second instruction should increase reference count
+        EXPECT_TRUE(rename.reference_counter_[0][2] == 2);
+    }
+    void test_startup_rename_structures(olympia::Rename & rename){
+        // before starting, we should have:
+        // num_rename_registers - 32 registers = freelist size
+        // because we initialize the first 32 registers
+        if (rename.reference_counter_[0].size() == 34){
+            EXPECT_TRUE(rename.freelist_[0].size() == 2);
+        }
+        else{
+            EXPECT_TRUE(rename.freelist_[0].size() == 96);
+        }
+        // we're only expecting a value of 1 for registers x0 -> x31 because we initialize them
+        EXPECT_TRUE(rename.reference_counter_[0][1] == 1);
+        EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
+        EXPECT_TRUE(rename.reference_counter_[0][30] == 1);
+        EXPECT_TRUE(rename.reference_counter_[0][31] == 1);
+        //
+        EXPECT_TRUE(rename.reference_counter_[0][33] == 0);
+        EXPECT_TRUE(rename.reference_counter_[0][34] == 0);
+
+    }
+    void test_float(olympia::Rename & rename){
+        // ensure the correct register file is used
+        EXPECT_TRUE(rename.freelist_[1].size() == 94);
+        EXPECT_TRUE(rename.freelist_[0].size() == 96);
+    }
 };
 
 class olympia::ExecutePipeTester
 {
-    public:
+public:
     void test_dependent_integer_first_instruction(olympia::ExecutePipe & executepipe){
         // testing RAW dependency for ExecutePipe
         // only alu0 should have an issued instruction
@@ -123,7 +124,7 @@ class olympia::ExecutePipeTester
 
 class olympia::LSUTester
 {
-    public:
+public:
     void test_dependent_lsu_instruction(olympia::LSU & lsu){
         // testing RAW dependency for LSU
         // we have an ADD instruction before we destination register 3
@@ -144,10 +145,10 @@ class RenameSim : public sparta::app::Simulation
 public:
 
     RenameSim(sparta::Scheduler * sched,
-                const std::string & mavis_isa_files,
-                const std::string & mavis_uarch_files,
-                const std::string & output_file,
-                const std::string & input_file) :
+              const std::string & mavis_isa_files,
+              const std::string & mavis_uarch_files,
+              const std::string & output_file,
+              const std::string & input_file) :
         sparta::app::Simulation("RenameSim", sched),
         input_file_(input_file),
         test_tap_(getRoot(), "info", output_file)
@@ -171,6 +172,9 @@ private:
     {
         auto rtn = getRoot();
 
+        // Cerate the common Allocators
+        allocators_tn_.reset(new olympia::OlympiaAllocators(rtn));
+
         sparta::ResourceTreeNode * disp = nullptr;
 
         // Create a Mavis Unit
@@ -183,18 +187,18 @@ private:
 
         // Create a Source Unit
         tns_to_delete_.emplace_back(new sparta::ResourceTreeNode(rtn,
-                                                                            core_test::SourceUnit::name,
-                                                                            sparta::TreeNode::GROUP_NAME_NONE,
-                                                                            sparta::TreeNode::GROUP_IDX_NONE,
-                                                                            "Source Unit",
-                                                                            &source_fact));
+                                                                 core_test::SourceUnit::name,
+                                                                 sparta::TreeNode::GROUP_NAME_NONE,
+                                                                 sparta::TreeNode::GROUP_IDX_NONE,
+                                                                 "Source Unit",
+                                                                 &source_fact));
         sparta::ResourceTreeNode * decode_unit = nullptr;
         tns_to_delete_.emplace_back(decode_unit = new sparta::ResourceTreeNode(rtn,
-                                                                            olympia::Decode::name,
-                                                                            sparta::TreeNode::GROUP_NAME_NONE,
-                                                                            sparta::TreeNode::GROUP_IDX_NONE,
-                                                                            "Decode Unit",
-                                                                            &source_fact));
+                                                                               olympia::Decode::name,
+                                                                               sparta::TreeNode::GROUP_NAME_NONE,
+                                                                               sparta::TreeNode::GROUP_IDX_NONE,
+                                                                               "Decode Unit",
+                                                                               &source_fact));
         decode_unit->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
         // Create Dispatch
         tns_to_delete_.emplace_back(disp = new sparta::ResourceTreeNode(rtn,
@@ -203,14 +207,14 @@ private:
                                                                         sparta::TreeNode::GROUP_IDX_NONE,
                                                                         "Dispatch Unit",
                                                                         &dispatch_fact));
-        
+
         // Create Rename
         sparta::ResourceTreeNode * rename_unit = new sparta::ResourceTreeNode(rtn,
-                                                                        olympia::Rename::name,
-                                                                        sparta::TreeNode::GROUP_NAME_NONE,
-                                                                        sparta::TreeNode::GROUP_IDX_NONE,
-                                                                        "Test Rename",
-                                                                        &rename_fact);
+                                                                              olympia::Rename::name,
+                                                                              sparta::TreeNode::GROUP_NAME_NONE,
+                                                                              sparta::TreeNode::GROUP_IDX_NONE,
+                                                                              "Test Rename",
+                                                                              &rename_fact);
         tns_to_delete_.emplace_back(rename_unit);
 
         // Create SinkUnit that represents the ROB
@@ -287,7 +291,7 @@ private:
 
         sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.in_reorder_buffer_credits"),
                      root_node->getChildAs<sparta::Port>("rob.ports.out_sink_credits"));
-        
+
         // Bind the Rename ports
         sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.out_dispatch_queue_write"),
                      root_node->getChildAs<sparta::Port>("dispatch.ports.in_dispatch_queue_write"));
@@ -311,7 +315,7 @@ private:
             sparta::bind(root_node->getChildAs<sparta::Port>("dispatch.ports.out_"+unit_name+"_write"),
                          root_node->getChildAs<sparta::Port>(unit_name + ".ports.in_sink_retire_inst"));
             sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
-                     root_node->getChildAs<sparta::Port>(unit_name+".ports.out_rob_retire_ack"));
+                         root_node->getChildAs<sparta::Port>(unit_name+".ports.out_rob_retire_ack"));
         }
 
         // Bind the "LSU" SinkUnit to Dispatch
@@ -324,9 +328,11 @@ private:
         sparta::bind(root_node->getChildAs<sparta::Port>("rename.ports.in_rename_retire_ack"),
                      root_node->getChildAs<sparta::Port>("lsu.ports.out_rob_retire_ack"));
     }
+    // Allocators.  Last thing to delete
+    std::unique_ptr<olympia::OlympiaAllocators> allocators_tn_;
 
     sparta::ResourceFactory<olympia::Decode,
-                                olympia::Decode::DecodeParameterSet> decode_fact;
+                            olympia::Decode::DecodeParameterSet> decode_fact;
     olympia::DispatchFactory        dispatch_fact;
     olympia::RenameFactory          rename_fact;
     olympia::MavisFactoy            mavis_fact;
@@ -383,11 +389,11 @@ void runTest(int argc, char **argv)
     uint32_t num_cores = 1;
     bool show_factories = false;
     OlympiaSim sim("simple",
-                    scheduler,
-                    num_cores, // cores
-                    input_file,
-                    ilimit,
-                    show_factories);
+                   scheduler,
+                   num_cores, // cores
+                   input_file,
+                   ilimit,
+                   show_factories);
 
     if(input_file == "raw_integer.json"){
         cls.populateSimulation(&sim);
@@ -398,7 +404,7 @@ void runTest(int argc, char **argv)
         olympia::ExecutePipeTester executepipe_tester;
         cls.runSimulator(&sim, 7);
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
-        executepipe_tester.test_dependent_integer_second_instruction(*my_executepipe1);        
+        executepipe_tester.test_dependent_integer_second_instruction(*my_executepipe1);
     }
     else if(input_file == "i2f.json"){
         cls.populateSimulation(&sim);

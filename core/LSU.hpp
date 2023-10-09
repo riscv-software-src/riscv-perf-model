@@ -49,12 +49,9 @@ namespace olympia
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
-            PARAMETER(uint32_t, st_queue_size, ldst_inst_queue_size, "Store Queue size")
-            PARAMETER(uint32_t, ld_queue_size, ldst_inst_queue_size, "Load Queue size")
             PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // LSU microarchitecture parameters
-            PARAMETER(bool, stall_pipeline_on_miss, false, "Stall pipeline on miss event")
             PARAMETER(bool, allow_speculative_load_exec, true, "Allow loads to proceed speculatively before all older store addresses are known")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
@@ -75,6 +72,7 @@ namespace olympia
         void setupPipelineLength(const LSUParameterSet* p);
         //! name of this resource.
         static const char name[];
+
 
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -258,12 +256,6 @@ namespace olympia
         LoadStoreIssueQueue ldst_inst_queue_;
         const uint32_t ldst_inst_queue_size_;
 
-        sparta::Buffer<LoadStoreInstInfoPtr> load_queue_;
-        const uint32_t load_queue_size_;
-
-        sparta::Buffer<LoadStoreInstInfoPtr> store_queue_;
-        const uint32_t store_queue_size_;
-
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
         const uint32_t replay_buffer_size_;
 
@@ -303,7 +295,6 @@ namespace olympia
         uint32_t COMPLETE = 4;
 
         // LSU Microarchitecture parameters
-        const bool stall_pipeline_on_miss_;
         const bool allow_speculative_load_exec_;
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -316,9 +307,6 @@ namespace olympia
 
         sparta::PayloadEvent<InstPtr> uev_replay_ready_{&unit_event_set_, "replay_ready",
                 CREATE_SPARTA_HANDLER_WITH_DATA(LSU, replayReady_, InstPtr)};
-
-        sparta::UniqueEvent<> uev_pipe_stall_{&unit_event_set_, "pipe_stall",
-                CREATE_SPARTA_HANDLER(LSU, pipeStall_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -358,9 +346,6 @@ namespace olympia
 
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
-
-        // Perform pipeline stall
-        void pipeStall_();
 
         // Instructions in the replay ready to issue
         void replayReady_(const InstPtr &);

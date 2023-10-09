@@ -17,10 +17,6 @@ namespace olympia
         sparta::Unit(node),
         ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
         ldst_inst_queue_size_(p->ldst_inst_queue_size),
-        load_queue_("load_queue", p->ld_queue_size, getClock()),
-        load_queue_size_(p->ld_queue_size),
-        store_queue_("store_queue", p->st_queue_size, getClock()),
-        store_queue_size_(p->st_queue_size),
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
@@ -30,7 +26,6 @@ namespace olympia
                                  memory_access_allocator),
         ldst_pipeline_("LoadStorePipeline",
                        static_cast<uint32_t>(p->mmu_lookup_stage_length + p->cache_lookup_stage_length + p->cache_read_stage_length + 2), getClock()),
-        stall_pipeline_on_miss_(p->stall_pipeline_on_miss),
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
         setupPipelineLength(p);
@@ -39,8 +34,6 @@ namespace olympia
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
 
-        load_queue_.enableCollection(node);
-        store_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
@@ -105,7 +98,6 @@ namespace olympia
             (static_cast<uint32_t>(COMPLETE),
              CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
-        uev_pipe_stall_ >> uev_issue_inst_;
         // NOTE:
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle
@@ -117,8 +109,13 @@ namespace olympia
 
     LSU::~LSU()
     {
-        DLOG(getContainer()->getLocation() << ": " << load_store_info_allocator_.getNumAllocated() << " LoadStoreInstInfo objects allocated/created");
-        DLOG(getContainer()->getLocation() << ": " << memory_access_allocator_.getNumAllocated() << " MemoryAccessInfo objects allocated/created");
+        DLOG(
+            getContainer()->getLocation()
+            << ": " << load_store_info_allocator_.getNumAllocated() << " LoadStoreInstInfo objects allocated/created"
+        );
+        DLOG(
+            getContainer()->getLocation()
+            << ": " << memory_access_allocator_.getNumAllocated() << " MemoryAccessInfo objects allocated/created");
     }
     void LSU::setupPipelineLength(const LSU::LSUParameterSet* p)
     {
@@ -355,7 +352,7 @@ namespace olympia
              << " " << updated_memory_access_info_ptr);
         mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrStatus();
 
-        if(mmu_hit_ && allow_speculative_load_exec_){
+        if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && mmu_hit_ && allow_speculative_load_exec_){
             ILOG("Aborting speculative loads " << updated_memory_access_info_ptr);
             abortYoungerLoads(updated_memory_access_info_ptr);
         }
@@ -497,9 +494,6 @@ namespace olympia
 
         if(false == mem_access_info_ptr->isCacheHit()) {
             ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
-            if(load_store_info_ptr->getInstUniqueID() == 6){
-                ILOG("test");
-            }
             if(allow_speculative_load_exec_)
             {
                 updateInstReplayReady(mem_access_info_ptr->getInstPtr());
@@ -685,10 +679,6 @@ namespace olympia
         // instruction issue arbitration should always succeed, even when flush happens.
         // Otherwise, assertion error is fired inside arbitrateInstIssue_()
     }
-
-    void LSU::pipeStall_()
-    {}
-
     void LSU::replayReady_(const InstPtr & replay_inst_ptr)
     {
         ILOG("Replay inst ready " << replay_inst_ptr);
@@ -702,7 +692,10 @@ namespace olympia
                 {
                     load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
-                load_store_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::HIGHEST);
+                auto issue_priority = load_store_info_ptr->getMemoryAccessInfoPtr()->getPhyAddrStatus()
+                                          ? LoadStoreInstInfo::IssuePriority::CACHE_PENDING
+                                          : LoadStoreInstInfo::IssuePriority::MMU_PENDING;
+                load_store_info_ptr->setPriority(issue_priority);
             }
         }
         if (isReadyToIssueInsts_())
@@ -782,6 +775,7 @@ namespace olympia
         return true;
     }
 
+    // Only called if allow_spec_load_exec is true
     void LSU::readyDependentLoads(const LoadStoreInstInfoPtr &store_inst_ptr){
         bool found = false;
         for(auto &ldst_inst_ptr: ldst_inst_queue_){
@@ -792,7 +786,6 @@ namespace olympia
 
             // Only ready loads which have register operands ready
             if(inst_ptr->getStatus() == Inst::Status::DISPATCHED &&
-//                inst_ptr->getTargetVAddr() == store_inst_ptr->getInstPtr()->getTargetVAddr() &&
                 scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))){
                 ILOG("Updating inst to schedule " << inst_ptr << " " << ldst_inst_ptr);
                 updateIssuePriorityAfterNewDispatch_(inst_ptr);
@@ -836,25 +829,28 @@ namespace olympia
                 }
             }
         }
-
-        ILOG("Age of the oldest instruction " << min_inst_age << " for " << inst_ptr);
+        if(min_inst_age == UINT64_MAX){
+            ILOG("No younger instruction to deallocate");
+            return;
+        }
+        ILOG("Age of the oldest instruction " << min_inst_age << " for " << inst_ptr << inst_ptr->getTargetVAddr());
         // Remove instructions younger than the oldest load that was removed
-        for (auto iter = queue.begin(); iter != queue.end(); iter++) {
-            if(!iter.isValid()){
-                break;
-            }
+        auto iter = queue.begin();
+        while(iter != queue.end()){
             if((*iter)->getInstPtr() == inst_ptr){
+                ++iter;
                 continue;
             }
-
-            if ((*iter)->getInstUniqueID() > min_inst_age){
+            if ((*iter)->getInstUniqueID() >= min_inst_age){
                 (*iter)->setState(LoadStoreInstInfo::IssueState::READY);
-                ILOG("Aborted younger load " << *iter);
+                ILOG("Aborted younger load " << *iter << (*iter)->getInstPtr()->getTargetVAddr());
                 invalidatePipeline((*iter)->getInstPtr());
-                queue.erase(iter);
+                (*iter)->getMemoryAccessInfoPtr()->reset();
+                queue.erase(iter++);
+            }else{
+                ++iter;
             }
         }
-        ILOG("Done");
     }
 
     void LSU::invalidatePipeline(const InstPtr & inst_ptr){
@@ -862,6 +858,7 @@ namespace olympia
         auto mmu_stage_id = static_cast<uint32_t>(MMU_LOOKUP);
         auto cache_lookup_stage_id = static_cast<uint32_t>(CACHE_LOOKUP);
         auto cache_read_stage_id = static_cast<uint32_t>(CACHE_READ);
+        auto complete_stage_id = static_cast<uint32_t>(COMPLETE);
 
         if(ldst_pipeline_.isValid(ac_stage_id)){
             auto &pipeline_inst = ldst_pipeline_[ac_stage_id]->getInstPtr();
@@ -885,6 +882,12 @@ namespace olympia
             auto &pipeline_inst = ldst_pipeline_[cache_read_stage_id]->getInstPtr();
             if(pipeline_inst == inst_ptr){
                 ldst_pipeline_.invalidateStage(cache_read_stage_id);
+            }
+        }
+        if(ldst_pipeline_.isValid(complete_stage_id)){
+            auto &pipeline_inst = ldst_pipeline_[complete_stage_id]->getInstPtr();
+            if(pipeline_inst == inst_ptr){
+                ldst_pipeline_.invalidateStage(complete_stage_id);
             }
         }
     }
@@ -1058,7 +1061,10 @@ namespace olympia
 
                 if (inst_info_ptr->getInstPtr() == inst_ptr) {
                     // Update issue priority for this outstanding TLB miss
-                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                    if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+                    {
+                        inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                    }
                     inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::MMU_RELOAD);
 
                     // NOTE:
@@ -1098,7 +1104,10 @@ namespace olympia
 
                 if (inst_info_ptr->getInstPtr() == inst_ptr) {
                     // Update issue priority for this outstanding cache miss
-                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                    if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+                    {
+                        inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                    }
                     inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
 
                     // NOTE:

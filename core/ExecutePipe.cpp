@@ -144,7 +144,6 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
         ILOG("Completing inst: " << ex_inst);
 
-<<<<<<< HEAD
         // set scoreboard
         if(SPARTA_EXPECT_FALSE(ex_inst->isTransfer()))
         {
@@ -169,22 +168,7 @@ namespace olympia
         else {
             const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);
             scoreboard_views_[reg_file_]->setReady(dest_bits);
-=======
-
-        // set destination scoreboard
-        core_types::RegFile dest_reg_file = reg_file_;
-        if(SPARTA_EXPECT_FALSE(ex_inst->getPipe() == InstArchInfo::TargetPipe::I2F)) {
-            if (reg_file_ == core_types::RegFile::RF_INTEGER) {
-                dest_reg_file = core_types::RegFile::RF_FLOAT;
-            }
-            else {
-                dest_reg_file = core_types::RegFile::RF_INTEGER;
-            }
->>>>>>> Fix I2F assertion failure in execute pipe
         }
-
-        const auto & dest_bits = ex_inst->getDestRegisterBitMask(dest_reg_file);
-        scoreboard_views_[dest_reg_file]->setReady(dest_bits);
 
         // We're not busy anymore
         unit_busy_ = false;

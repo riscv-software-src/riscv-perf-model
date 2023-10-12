@@ -41,7 +41,17 @@ namespace olympia {
         using MSHRFile = std::unordered_map<uint64_t, SimpleCacheLine>;
         MSHRFile mshr_file_;
 
-        bool dataLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
+        using L1Handle = SimpleDL1::Handle;
+        L1Handle l1_cache_;
+        const bool l1_always_hit_;
+        bool busy_;
+        uint32_t cache_latency_;
+        uint32_t max_mshr_entries_;
+
+        // To keep track of cache refill request
+        bool ongoing_cache_refill = false;
+
+        bool cacheLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
         void reloadCache_(uint64_t phy_addr);
 
@@ -52,15 +62,6 @@ namespace olympia {
         void lookupHandler_();
 
         void dataHandler_();
-
-        using L1Handle = SimpleDL1::Handle;
-        L1Handle l1_cache_;
-        const bool l1_always_hit_;
-        bool busy_;
-        uint32_t cache_latency_;
-        uint32_t max_mshr_entries_;
-        // Keep track of the instruction that causes current outstanding cache miss
-        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 
         // Cache Pipeline
         sparta::Pipeline<MemoryAccessInfoPtr> cache_pipeline_

@@ -24,6 +24,7 @@ namespace olympia {
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
+            PARAMETER(uint32_t, mshr_entries, 8, "Number of MSHR Entries")
         };
 
         static const char name[];
@@ -37,6 +38,9 @@ namespace olympia {
         };
 
     private:
+        using MSHRFile = std::unordered_map<uint64_t, SimpleCacheLine>;
+        MSHRFile mshr_file_;
+
         bool dataLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
         void reloadCache_(uint64_t phy_addr);
@@ -54,6 +58,7 @@ namespace olympia {
         const bool l1_always_hit_;
         bool busy_;
         uint32_t cache_latency_;
+        uint32_t max_mshr_entries_;
         // Keep track of the instruction that causes current outstanding cache miss
         MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 

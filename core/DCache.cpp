@@ -6,7 +6,8 @@ namespace olympia {
     DCache::DCache(sparta::TreeNode *node, const CacheParameterSet *p) :
             sparta::Unit(node),
             l1_always_hit_(p->l1_always_hit),
-            cache_latency_(p->cache_latency)
+            cache_latency_(p->cache_latency),
+            max_mshr_entries_(p->mshr_entries)
     {
         // Pipeline config
         cache_pipeline_.enableCollection(node);

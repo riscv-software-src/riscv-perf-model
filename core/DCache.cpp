@@ -7,7 +7,8 @@ namespace olympia {
             sparta::Unit(node),
             l1_always_hit_(p->l1_always_hit),
             cache_latency_(p->cache_latency),
-            max_mshr_entries_(p->mshr_entries)
+            max_mshr_entries_(p->mshr_entries),
+            mshr_file_("mshr_file",p->mshr_entries, getClock())
     {
         // Port config
         in_lsu_lookup_req_.registerConsumerHandler

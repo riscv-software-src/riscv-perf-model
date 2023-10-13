@@ -7,8 +7,8 @@ _example_ of an Out-of-Order RISC-V CPU Performance Model based on the
 [Sparta Modeling
 Framework](https://github.com/sparcians/map/tree/master/sparta).
 
-Olympia's intent is to provide a basis for RISC-V CPU development
-enabling the community to build upon Olympia, extending its
+Olympia's intent is to provide a starting point for RISC-V CPU performance modeling development
+enabling the community to build upon Olympia by extending its
 functionality in areas like branch prediction, prefetching/caching
 concepts, application profiling, middle-core design, etc.
 
@@ -19,7 +19,7 @@ or [STF](https://github.com/sparcians/stf_spec).  However, extending
 Olympia with a functional back-end to run applications natively is
 under development.
 
-# Build Directions
+## Building
 
 1. Set up a clean working `conda` environment by following the directions [here](https://github.com/riscv-software-src/riscv-perf-model/tree/master/conda)
 1. Download and build Sparta and checkout branch [map_v2](https://github.com/sparcians/map/tree/map_v2).  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/map_v2#building-map) to build _and install_ Sparta
@@ -33,13 +33,31 @@ under development.
 ```
 
 ################################################################################
-# Optimized
+# Enable conda environment (suggested)
+conda activate sparta
+
+################################################################################
+# Optimized, no symbols
 
 # A release build
 mkdir release; cd release
 
-# Assumes a build of sparta at /path/to/map/sparta/release
-cmake .. -DCMAKE_BUILD_TYPE=Release -DSPARTA_SEARCH_DIR=/path/to/map/sparta/release
+# Assumes sparta was installed in the conda environment.
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
+cmake .. -DCMAKE_BUILD_TYPE=Release
+
+# Just builds the simulator
+make olympia
+
+################################################################################
+# Fast Debug, optimized (not LTO) with debug symbols
+
+# A FastDebug build
+mkdir fastdebug; cd fastdebug
+
+# Assumes sparta was installed in the conda environment.
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
+cmake .. -DCMAKE_BUILD_TYPE=fastdebug
 
 # Just builds the simulator
 make olympia
@@ -50,8 +68,9 @@ make olympia
 # A debug build
 mkdir debug; cd debug
 
-# Assumes a build of sparta at /path/to/map/sparta/debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DSPARTA_SEARCH_DIR=/path/to/map/sparta/debug
+# Assumes sparta was installed in the conda environment.
+# If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 
 # Just builds the simulator
 make olympia
@@ -62,9 +81,20 @@ make regress
 
 ```
 
-# Example Usage
+## Developing
 
-## Get Help Messages
+Developing on Olympia is encouraged!  Please check out the
+[Issue](https://github.com/riscv-software-src/riscv-perf-model/issues)
+section for areas of needed contributions.  If there is no Assignee,
+the work isn't being done!
+
+When developing on Olympia, please adhere to the documented [Coding
+Style
+Guidelines](https://github.com/riscv-software-src/riscv-perf-model/blob/knutel/coding_style_guidelines/CodingStyle.md).
+
+## Example Usage
+
+### Get Help Messages
 ```
 ./olympia --help                  # Full help
 ./olympia --help-brief            # Brief help
@@ -72,7 +102,7 @@ make regress
 ./olympia --help-topic parameters # Help on parameters
 ```
 
-## Get Simulation Layout
+### Get Simulation Layout
 ```
 ./olympia --show-tree       --no-run # Show the full tree; do not run the simulator
 ./olympia --show-parameters --no-run # Show the parameter tree; do not run the simulator
@@ -80,7 +110,7 @@ make regress
 # ... more --show options; see help
 ```
 
-## Running
+### Running
 
 ```
 # Run a given JSON "trace" file
@@ -97,7 +127,7 @@ make regress
 ./olympia ../traces/dhry_riscv.zstf --report-all dhry_report.out
 ```
 
-## Generate and Consume Configuration Files
+### Generate and Consume Configuration Files
 
 ```
 # Generate a baseline config
@@ -111,7 +141,7 @@ dyff between baseline.yaml always_hit_DL1.yaml
 ./olympia -c always_hit_DL1.yaml -i1M ../traces/dhry_riscv.zstf
 ```
 
-## Generate Logs
+### Generate Logs
 ```
 # Log of all messages, different outputs
 ./olympia -i1K --auto-summary off ../traces/dhry_riscv.zstf \
@@ -126,7 +156,7 @@ dyff between baseline.yaml always_hit_DL1.yaml
    -l top.*.*.decode info decode_rob.log \
    -l top.*.*.rob    info decode_rob.log
 ```
-## Generate Reports
+### Generate Reports
 ```
 # Run with 1M instructions, generate a report from the top of the tree
 # with stats that are not hidden; turn off the auto reporting
@@ -146,7 +176,7 @@ cat reports/core_stats.yaml
 ./olympia -i1M ../traces/dhry_riscv.zstf --auto-summary off  --report "top" reports/core_stats.yaml my_html_report.html html
 ```
 
-## Generate More Complex Reports
+### Generate More Complex Reports
 ```
 # Using a report definition file, program the report collection to
 # start after 500K instructions
@@ -170,7 +200,7 @@ cat reports/core_timeseries.def
 python3 ./reports/plot_ts.y my_report_time_series_all.csv
 ```
 
-## Experimenting with Architectures
+### Experimenting with Architectures
 ```
 # By default, olympia uses the small_core architecture
 ./olympia -i1M  ../traces/dhry_riscv.zstf --auto-summary off --report-all report_small.out
@@ -187,7 +217,7 @@ diff -y -W 150 report_medium.out report_big.out
 
 ```
 
-## Generate and View a Pipeout
+### Generate and View a Pipeout
 ```
 ./olympia -i1M ../traces/dhry_riscv.zstf --debug-on-icount 100K -i 101K -z pipeout_1K --auto-summary off
 

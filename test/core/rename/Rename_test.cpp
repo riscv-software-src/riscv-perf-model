@@ -97,6 +97,11 @@ class olympia::RenameTester
             EXPECT_TRUE(rename.reference_counter_[0][34] == 0);
 
         }
+        void test_float(olympia::Rename & rename){
+            // ensure the correct register file is used
+            EXPECT_TRUE(rename.freelist_[1].size() == 94);
+            EXPECT_TRUE(rename.freelist_[0].size() == 96);
+        }
 };
 
 class olympia::ExecutePipeTester
@@ -395,7 +400,17 @@ void runTest(int argc, char **argv)
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         executepipe_tester.test_dependent_integer_second_instruction(*my_executepipe1);        
     }
-    else if(input_file == "raw_lsu.json"){
+    else if(input_file == "i2f.json"){
+        cls.populateSimulation(&sim);
+        sparta::RootTreeNode* root_node = sim.getRoot();
+        olympia::Rename* my_rename = root_node->getChild("cpu.core0.rename")->getResourceAs<olympia::Rename*>();
+
+        olympia::RenameTester rename_tester;
+        cls.runSimulator(&sim, 4);
+        rename_tester.test_float(*my_rename);
+    }
+    else if(input_file == "raw_int_lsu.json"){
+        // testing RAW dependency for address operand
         cls.populateSimulation(&sim);
         sparta::RootTreeNode* root_node = sim.getRoot();
 
@@ -403,7 +418,20 @@ void runTest(int argc, char **argv)
         olympia::LSUTester lsu_tester;
         olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.alu0")->getResourceAs<olympia::ExecutePipe*>();
         olympia::ExecutePipeTester executepipe_tester;
-        cls.runSimulator(&sim, 7);
+        cls.runSimulator(&sim, 6);
+        executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
+        lsu_tester.test_dependent_lsu_instruction(*my_lsu);
+    }
+    else if(input_file == "raw_float_lsu.json"){
+        // testing RAW dependency for data operand
+        cls.populateSimulation(&sim);
+        sparta::RootTreeNode* root_node = sim.getRoot();
+
+        olympia::LSU* my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
+        olympia::LSUTester lsu_tester;
+        olympia::ExecutePipe* my_executepipe = root_node->getChild("cpu.core0.execute.fpu0")->getResourceAs<olympia::ExecutePipe*>();
+        olympia::ExecutePipeTester executepipe_tester;
+        cls.runSimulator(&sim, 6);
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     }
@@ -417,13 +445,13 @@ void runTest(int argc, char **argv)
         olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
         olympia::RenameTester rename_tester;
         rename_tester.test_startup_rename_structures(*my_rename);
-        cls.runSimulator(& rename_sim, 2);
+        cls.runSimulator(&rename_sim, 2);
         rename_tester.test_one_instruction(*my_rename);
 
-        cls.runSimulator(& rename_sim, 3);
+        cls.runSimulator(&rename_sim, 3);
         rename_tester.test_multiple_instructions(*my_rename);
 
-        cls.runSimulator(& rename_sim);
+        cls.runSimulator(&rename_sim);
         rename_tester.test_clearing_rename_structures(*my_rename);
 
         EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");

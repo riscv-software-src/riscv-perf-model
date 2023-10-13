@@ -1,0 +1,21 @@
+[
+    {
+        "mnemonic": "add",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "sw",
+        "rs2": 4,
+        "rs1": 3,
+        "imm": 5
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 3,
+        "rs2": 4,
+        "rd":  5,
+        "vaddr" : "0xdeadbeef"
+    }
+]

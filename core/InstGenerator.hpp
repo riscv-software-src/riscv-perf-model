@@ -37,7 +37,8 @@ namespace olympia
         virtual ~InstGenerator() {}
         virtual InstPtr getNextInst(const sparta::Clock * clk) = 0;
         static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
-                                                              const std::string & filename);
+                                                              const std::string & filename,
+                                                              const bool skip_nonuser_mode);
         virtual bool isDone() const = 0;
 
     protected:
@@ -64,8 +65,12 @@ namespace olympia
     class TraceInstGenerator : public InstGenerator
     {
     public:
+        // Creates a TraceInstGenerator with the given mavis facade
+        // and filename.  The parameter skip_nonuser_mode allows the
+        // trace generator to skip system instructions if present
         TraceInstGenerator(MavisType * mavis_facade,
-                           const std::string &);
+                           const std::string & filename,
+                           const bool skip_nonuser_mode);
 
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 

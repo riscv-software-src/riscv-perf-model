@@ -90,8 +90,8 @@ namespace olympia
         // histogram counter for number of renames each time scheduleRenaming_ is called
         sparta::BasicHistogram<int> rename_histogram_;
         // map of ARF -> PRF
-        uint32_t map_table_[core_types::N_REGFILES][32]; 
-        
+        uint32_t map_table_[core_types::N_REGFILES][32];
+
         // reference counter for PRF
         std::array<std::vector<int32_t>, core_types::N_REGFILES> reference_counter_;
         // list of free PRF that are available to map
@@ -102,6 +102,39 @@ namespace olympia
             uint32_t cumulative_reg_counts[core_types::RegFile::N_REGFILES] = {0};
         };
         std::deque<RegCountData> uop_queue_regcount_data_;
+
+
+        ///////////////////////////////////////////////////////////////////////
+        // Stall counters
+        enum StallReason {
+            NO_DECODE_INSTS,     // No insts from Decode
+            NO_DISPATCH_CREDITS, // No credits from Dispatch
+            NO_RENAMES,          // Out of renames
+            NOT_STALLED,         // Made forward progress (dipatched
+                                 // all instructions or no
+                                 // instructions)
+            N_STALL_REASONS
+        };
+
+        StallReason current_stall_ = NO_DECODE_INSTS;
+        friend std::ostream&operator<<(std::ostream &, const StallReason &);
+
+        // Counters -- this is only supported in C++11 -- uses
+        // Counter's move semantics
+        std::array<sparta::CycleCounter, N_STALL_REASONS> stall_counters_{{
+                sparta::CycleCounter(getStatisticSet(), "stall_no_decode_insts",
+                                     "No Decode Insts",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_no_dispatch_credits",
+                                     "No Dispatch Credits",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_no_renames",
+                                     "No Renames",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
+                                     "Rename not stalled, all instructions renamed",
+                                     sparta::Counter::COUNT_NORMAL, getClock())
+            }};
 
         //! Rename setup
         void setupRename_();
@@ -128,6 +161,28 @@ namespace olympia
         friend class RenameTester;
 
     };
+
+    inline std::ostream&operator<<(std::ostream &os, const Rename::StallReason & stall)
+    {
+        switch(stall)
+        {
+            case Rename::StallReason::NO_DECODE_INSTS:
+                os << "NO_DECODE_INSTS";
+                break;
+            case Rename::StallReason::NO_DISPATCH_CREDITS:
+                os << "NO_DISPATCH_CREDITS";
+                break;
+            case Rename::StallReason::NO_RENAMES:
+                os << "NO_RENAMES";
+                break;
+            case Rename::StallReason::NOT_STALLED:
+                os << "NOT_STALLED";
+                break;
+            case Rename::StallReason::N_STALL_REASONS:
+                sparta_assert(false, "How'd we get here?");
+        }
+        return os;
+    }
 
     //! Rename's factory class. Don't create Rename without it
     class RenameFactory : public sparta::ResourceFactory<Rename, Rename::RenameParameterSet>

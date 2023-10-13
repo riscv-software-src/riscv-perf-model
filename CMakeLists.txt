@@ -65,9 +65,10 @@ include_directories (core mss sim)
 include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
 
-# The Core, MSS, and the simulator
-add_subdirectory(core)
-add_subdirectory(mss)
+# Mavis, the Core, MSS, and the simulator
+add_subdirectory (mavis)
+add_subdirectory (core)
+add_subdirectory (mss)
 
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})
@@ -80,7 +81,7 @@ add_executable(olympia
   sim/OlympiaSim.cpp
   sim/main.cpp
   )
-target_link_libraries (olympia core mss SPARTA::sparta ${STF_LINK_LIBS})
+target_link_libraries (olympia core mss SPARTA::sparta mavis ${STF_LINK_LIBS})
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   target_compile_options (core    PUBLIC -flto)
   target_compile_options (mss     PUBLIC -flto)

@@ -423,6 +423,11 @@ namespace olympia
             return;
         }
 
+        if(!inst_ptr->isStoreInst() && olderStoresExists(inst_ptr) && !allow_speculative_load_exec_){
+            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(CACHE_LOOKUP));
+            return;
+        }
+
         const bool is_already_hit =
                 (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
         const bool is_unretired_store =

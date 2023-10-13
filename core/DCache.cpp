@@ -9,11 +9,6 @@ namespace olympia {
             cache_latency_(p->cache_latency),
             max_mshr_entries_(p->mshr_entries)
     {
-        // Pipeline config
-        cache_pipeline_.enableCollection(node);
-        cache_pipeline_.performOwnUpdates();
-        cache_pipeline_.setContinuing(true);
-
         // Port config
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
@@ -28,6 +23,12 @@ namespace olympia {
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                                    (l1_associativity));
         l1_cache_.reset(new SimpleDL1(getContainer(), l1_size_kb, l1_line_size, *repl));
+        addr_decoder_ = l1_cache_->getAddrDecoder();
+
+        // Pipeline config
+        cache_pipeline_.enableCollection(node);
+        cache_pipeline_.performOwnUpdates();
+        cache_pipeline_.setContinuing(true);
 
         // Pipeline Handlers
         cache_pipeline_.registerHandlerAtStage
@@ -35,7 +36,7 @@ namespace olympia {
              CREATE_SPARTA_HANDLER(DCache, lookupHandler_));
 
         cache_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(PipelineStage::DATA),
+            (static_cast<uint32_t>(PipelineStage::DATA_READ),
              CREATE_SPARTA_HANDLER(DCache, dataHandler_));
     }
 
@@ -64,9 +65,9 @@ namespace olympia {
             cache_hit = (cache_line != nullptr) && cache_line->isValid();
 
             // Update MRU replacement state if DCache HIT
-            if (cache_hit) {
-                l1_cache_->touchMRU(*cache_line);
-            }
+            //if (cache_hit) {
+            //    l1_cache_->touchMRU(*cache_line);
+            //}
         }
 
         if (l1_always_hit_) {
@@ -85,15 +86,26 @@ namespace olympia {
         return cache_hit;
     }
 
+    const uint32_t DCache::mshrLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr) {
+        // TODO
+        return 0;
+    }
+
+    const uint32_t DCache::allocateMSHREntry_(uint64_t addr){
+        // TODO
+        auto block_address = addr_decoder_->calcBlockAddr(addr);
+        // Find free entry in MSHRFile and allocate it
+        return 0;
+    }
+    
     // Handle request from the LSU
     void DCache::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
-       
-        // Check if there is a cache refill request
-        if(ongoing_cache_refill) {
+        // Check if there is an incoming cache refill request from BIU
+        if(incoming_cache_refill_) {
             // Cache refill is given priority
             // nack signal is sent to the LSU 
             // LSU will have to replay the instruction
-            out_lsu_lookup_nack_.send(1);
+            out_lsu_lookup_nack_.send(0);
         }
         else {
             // Append to Cache Pipeline
@@ -103,88 +115,104 @@ namespace olympia {
 
     // Incoming Cache Refill request from BIU
     void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
-        reloadCache_(inst_ptr->getRAdr());
+        incoming_cache_refill_ = true;
+        // TODO
     }
-    
+
     // Cache Pipeline Lookup Stage
     void DCache::lookupHandler_()
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::LOOKUP);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto & inst_addr = inst_ptr->getRAdr(); // Address of LD/ST inst 
-
-        const auto & addr_decoder = l1_cache_->getAddrDecoder();
-        const uint64_t cache_line_address = addr_decoder->calcBlockAddr(inst_addr);
+        const auto & inst_target_addr = inst_ptr->getRAdr();
 
         // Check if instruction is a store
         bool is_store_inst = inst_ptr->isStoreInst();
         
-        const bool hit = cacheLookup_(mem_access_info_ptr);
+        const bool hit_on_cache = cacheLookup_(mem_access_info_ptr);
 
-        // Check if hit on MSHR entries
-        const bool hit_on_mshr_entries = (mshr_file_.find(cache_line_address) != mshr_file_.end());
-
-        if(hit){
+        if(hit_on_cache){
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
             // Send Lookup Ack to LSU and proceed to next stage
             out_lsu_lookup_ack_.send(mem_access_info_ptr);
-
-        }else{
+        }
+        else{
+          
             // Check MSHR Entries for address match
-            if(hit_on_mshr_entries){
-                if(is_store_inst) {
-                    // update Line fill buffer
-                }
+            auto mshr_idx = mshrLookup_(mem_access_info_ptr);
+
+            // if address matches
+            if(mshr_idx < max_mshr_entries_){
+
                 mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+
+                if(is_store_inst) {
+                    // update Line fill buffer; set valid bit to false TODO
+                    // mshr_file_[mshr_idx].setValid(false);
+                    mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+                }
                 // Send Lookup Ack to LSU and proceed to next stage
                 out_lsu_lookup_ack_.send(mem_access_info_ptr);
             }
             else {
                 // Check if MSHR entry available
-                if(mshr_file_.size() != max_mshr_entries_) {
-                    // Allocate MSHR entry
+                if(mshr_file_.size() < max_mshr_entries_) {
+                    uint32_t mshr_idx = allocateMSHREntry_(inst_target_addr);
+                    mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
 
                     if(is_store_inst) {
-                        // Update Line fill buffer
+                        // Update Line fill buffer; set dirty bit to false TODO
+                        // mshr_file_[mshr_idx].setValid(false);
+                        mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
                     }
-                    mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
                     // Send Lookup Ack to LSU and proceed to next stage
                     out_lsu_lookup_ack_.send(mem_access_info_ptr);
                 }
                 else {
-                    out_lsu_lookup_nack_.send(0);
+                    // Cache is unable to handle ld/st request
+                    out_lsu_lookup_nack_.send();
+                    // Drop instruction from pipeline TODO
                 }
             }
         }
     }
-    
+
+    // Cache Pipeline Data Read Stage
     void DCache::dataHandler_()
     {
-        const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA);
+        const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA_READ);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto & inst_addr = inst_ptr->getRAdr(); // Address of LD/ST inst 
-
-        const auto & addr_decoder = l1_cache_->getAddrDecoder();
-        const uint64_t cache_line_address = addr_decoder->calcBlockAddr(inst_addr);
+        const auto & inst_target_addr = inst_ptr->getRAdr();
 
         // Check if instruction is a store
         bool is_store_inst = inst_ptr->isStoreInst();
 
         if (mem_access_info_ptr->isCacheHit()) {
+          
+            auto cache_line = l1_cache_->getLine(inst_target_addr);
             if (is_store_inst) {
-                // Update Cache Line
+                // Write to cache line
+                cache_line->setValid(false);
             }
             // update replacement information
+            l1_cache_->touchMRU(*cache_line);
 
             mem_access_info_ptr->setDataIsReady(true);
+
+            // Send request back to LSU
+            out_lsu_lookup_req_.send(mem_access_info_ptr);
         }
         else {
-            // Initiate read from downstream
+            // Initiate read to downstream
+            uev_issue_downstream_read_.schedule(sparta::Clock::Cycle(0));
         }
-
-        // Send request back to LSU
-        out_lsu_lookup_req_.send(mem_access_info_ptr);
     }
+
+    void DCache::issueDownstreamRead_() {
+        // TODO
+        // If there is no ongoing refill request
+        // Issue MSHR Refill request to downstream
+    } 
 }

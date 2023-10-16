@@ -5,25 +5,24 @@ namespace olympia {
 
     DCache::DCache(sparta::TreeNode *node, const CacheParameterSet *p) :
             sparta::Unit(node),
+            mshr_entry_allocator(50, 30),    // 50 and 30 are arbitrary numbers here.  It can be tuned to an exact value.
             l1_always_hit_(p->l1_always_hit),
+            cache_line_size_(p->l1_line_size),
             cache_latency_(p->cache_latency),
             max_mshr_entries_(p->mshr_entries),
             mshr_file_("mshr_file",p->mshr_entries, getClock())
     {
         // Port config
         in_lsu_lookup_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, processInstsFromLSU_, MemoryAccessInfoPtr));
 
         in_biu_ack_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromBIU_, InstPtr));
 
         // DL1 cache config
-        const uint32_t l1_line_size = p->l1_line_size;
         const uint32_t l1_size_kb = p->l1_size_kb;
         const uint32_t l1_associativity = p->l1_associativity;
-        std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
-                                                                   (l1_associativity));
-        l1_cache_.reset(new SimpleDL1(getContainer(), l1_size_kb, l1_line_size, *repl));
+        l1_cache_.reset(new SimpleDL1(getContainer(), l1_size_kb, cache_line_size_, sparta::cache::TreePLRUReplacement(l1_associativity)));
         addr_decoder_ = l1_cache_->getAddrDecoder();
 
         // Pipeline config
@@ -87,30 +86,40 @@ namespace olympia {
         return cache_hit;
     }
 
-    const uint32_t DCache::mshrLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr) {
-        // TODO
-        return 0;
+    sparta::Buffer<DCache::MSHREntryInfoPtr>::iterator DCache::mshrLookup_(const uint64_t& block_address) {
+        sparta::Buffer<MSHREntryInfoPtr>::iterator it;
+
+        for(it = mshr_file_.begin(); it < mshr_file_.end(); it++) {
+            auto mshr_block_addr = (*it)->getBlockAddress();
+            if(mshr_block_addr == block_address){
+                // Address match
+                break;
+            }
+        }
+
+        return it;
     }
 
-    const uint32_t DCache::allocateMSHREntry_(uint64_t addr){
-        // TODO
-        auto block_address = addr_decoder_->calcBlockAddr(addr);
-        // Find free entry in MSHRFile and allocate it
-        return 0;
+    sparta::Buffer<DCache::MSHREntryInfoPtr>::iterator DCache::allocateMSHREntry_(uint64_t block_address){
+
+        MSHREntryInfoPtr mshr_entry = sparta::allocate_sparta_shared_pointer<MSHREntryInfo>(mshr_entry_allocator,
+                                                                                            block_address, cache_line_size_);
+        auto it = mshr_file_.push_back(mshr_entry);
+        return it;
     }
     
     // Handle request from the LSU
-    void DCache::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
+    void DCache::processInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
         // Check if there is an incoming cache refill request from BIU
         if(incoming_cache_refill_) {
             // Cache refill is given priority
-            // nack signal is sent to the LSU 
+            // nack signal is sent to the LSU
             // LSU will have to replay the instruction
             out_lsu_lookup_nack_.send(0);
         }
         else {
             // Append to Cache Pipeline
-            cache_pipeline_.append(memory_access_info_ptr);
+            cache_pipeline_.append(memory_access_info_ptr); // Data read stage executes in the next cycle
         }
     }
 
@@ -127,11 +136,12 @@ namespace olympia {
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         const auto & inst_target_addr = inst_ptr->getRAdr();
+        const uint64_t block_addr = addr_decoder_->calcBlockAddr(inst_target_addr);
 
         // Check if instruction is a store
-        bool is_store_inst = inst_ptr->isStoreInst();
+        const bool is_store_inst = inst_ptr->isStoreInst();
         
-        const bool hit_on_cache = cacheLookup_(mem_access_info_ptr);
+        const bool hit_on_cache = cacheLookup_(mem_access_info_ptr); // Check both MSHRFile and Cache
 
         if(hit_on_cache){
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
@@ -141,30 +151,41 @@ namespace olympia {
         else{
           
             // Check MSHR Entries for address match
-            auto mshr_idx = mshrLookup_(mem_access_info_ptr);
+            auto mshr_idx = mshrLookup_(block_addr);
 
             // if address matches
-            if(mshr_idx < max_mshr_entries_){
+            if(mshr_idx != mshr_file_.end()){
 
                 mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+                bool data_arrived = (*mshr_idx)->getDataArrived();
 
-                if(is_store_inst) {
-                    // update Line fill buffer; set valid bit to false TODO
-                    // mshr_file_[mshr_idx].setValid(false);
+                // if (LD or ST) and data arrived
+                if(data_arrived || is_store_inst) {
+                    // Update Line fill buffer only if ST
+                    (*mshr_idx)->setModified(is_store_inst);
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
                 }
+
+                // All ST are considered Hit
+                if(is_store_inst) {
+                    // Update Line fill buffer
+                    (*mshr_idx)->setModified(true);
+                    mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+                }
+
                 // Send Lookup Ack to LSU and proceed to next stage
                 out_lsu_lookup_ack_.send(mem_access_info_ptr);
+
             }
             else {
                 // Check if MSHR entry available
-                if(mshr_file_.size() < max_mshr_entries_) {
-                    uint32_t mshr_idx = allocateMSHREntry_(inst_target_addr);
+                if(mshr_file_.numFree() > 0) {
+                    auto mshr_idx = allocateMSHREntry_(block_addr);
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
 
                     if(is_store_inst) {
-                        // Update Line fill buffer; set dirty bit to false TODO
-                        // mshr_file_[mshr_idx].setValid(false);
+                        // Update Line fill buffer
+                        (*mshr_idx)->setModified(true);
                         mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
                     }
                     // Send Lookup Ack to LSU and proceed to next stage

@@ -6,13 +6,13 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/resources/Pipeline.hpp"
-#include "sparta/resources/Array.hpp"
+#include "sparta/resources/Buffer.hpp"
 #include "SimpleDL1.hpp"
 #include "Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
 #include "MemoryAccessInfo.hpp"
 #include <cache/AddrDecoderIF.hpp>
-#include <sparta/resources/Queue.hpp>
+#include <sparta/utils/SpartaSharedPointer.hpp>
 
 namespace olympia {
     class DCache : public sparta::Unit {
@@ -33,6 +33,10 @@ namespace olympia {
         static const char name[];
         DCache(sparta::TreeNode *n, const CacheParameterSet *p);
 
+        class MSHREntryInfo;
+        
+        using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
+
         enum class PipelineStage
         {
             LOOKUP = 0,
@@ -40,10 +44,9 @@ namespace olympia {
             NUM_STAGES
         };
 
-        class MSHREntry {
+        class MSHREntryInfo {
         public:
-            MSHREntry();
-            MSHREntry(const uint64_t& block_address, const uint64_t& line_size):
+            MSHREntryInfo(const uint64_t& block_address, const uint64_t& line_size):
                 line_fill_buffer_(line_size), block_address_(block_address){}
 
             const uint64_t & getBlockAddress() const {
@@ -67,6 +70,14 @@ namespace olympia {
                 line_fill_buffer_.setValid(v);
             }
 
+            bool isModified() {
+                return false;
+            }
+
+            void setModified(bool m) {
+                line_fill_buffer_.setModified(m);
+            }
+
             void setDataArrived(bool v) {
                 data_arrived_ = v;
             }
@@ -81,8 +92,11 @@ namespace olympia {
             bool data_arrived_ = false;
         };
 
+        // allocator
+        sparta::SpartaSharedPointerAllocator<MSHREntryInfo> mshr_entry_allocator;
+
     private:
-        using MSHRFile = sparta::Array<MSHREntry>;
+        using MSHRFile = sparta::Buffer<MSHREntryInfoPtr>;
         MSHRFile mshr_file_;
 
         using L1Handle = SimpleDL1::Handle;
@@ -91,6 +105,7 @@ namespace olympia {
         const bool l1_always_hit_;
         bool busy_;
         uint32_t cache_latency_;
+        uint64_t cache_line_size_;
         uint32_t max_mshr_entries_;
 
         // To keep track of cache refill requests
@@ -101,15 +116,15 @@ namespace olympia {
 
         bool cacheLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
-        const uint32_t mshrLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
+        sparta::Buffer<MSHREntryInfoPtr>::iterator mshrLookup_(const uint64_t &block_address);
 
         void reloadCache_(uint64_t phy_addr);
 
-        void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
+        void processInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
         void getAckFromBIU_(const InstPtr &inst_ptr);
 
-        const uint32_t allocateMSHREntry_(uint64_t block_address);
+        sparta::Buffer<MSHREntryInfoPtr>::iterator allocateMSHREntry_(uint64_t block_address);
 
         void lookupHandler_();
 

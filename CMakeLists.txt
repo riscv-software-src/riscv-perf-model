@@ -42,8 +42,6 @@ if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   setup_stf_linker(false)
 endif()
 
-
-
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)
 if (CCACHE_PROGRAM)
@@ -94,3 +92,21 @@ file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/re
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
+
+if(NOT CLANGFORMAT_EXECUTABLE)
+  set(CLANGFORMAT_EXECUTABLE clang-format)
+endif()
+
+
+set(CLANGFORMAT_SOURCES "$<TARGET_PROPERTY:olympia,SOURCES>")
+string(REPLACE ";" " " ${CLANGFORMAT_SOURCES} CLANGFORMAT_SOURCES)
+
+add_custom_target(olympia_clangformat
+  find core mss -name "*.[hc]pp" > clang-format-files.out
+  COMMAND
+     ${CLANGFORMAT_EXECUTABLE} -i --files=clang-format-files.out
+  WORKING_DIRECTORY
+     ${CMAKE_SOURCE_DIR}
+  COMMENT
+     "Formatting ${prefix} with ${CLANGFORMAT_EXECUTABLE} ..."
+  )

@@ -24,41 +24,38 @@ namespace olympia
      * ability to define parameter sets which may be useful
      * when implementing a preloader in your model.
      */
-    class Preloader : public sparta::Resource,
-                      public sparta::cache::PreloaderIF
+    class Preloader : public sparta::Resource, public sparta::cache::PreloaderIF
     {
-    public:
+      public:
         static constexpr char name[] = "preloader";
+
         class PreloaderParameterSet : public sparta::ParameterSet
         {
-        public:
-            PreloaderParameterSet(sparta::TreeNode* n) :
-                sparta::ParameterSet(n)
-            {}
+          public:
+            PreloaderParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
             PARAMETER(std::string, preload_file, "", "The path to the yaml file with preload data")
         };
 
-        Preloader(sparta::TreeNode* node, const PreloaderParameterSet* params) :
-            sparta::Resource(node),
-            sparta::cache::PreloaderIF(),
-            filepath_(params->preload_file)
-        {}
+        Preloader(sparta::TreeNode* node, const PreloaderParameterSet* params)
+            : sparta::Resource(node), sparta::cache::PreloaderIF(), filepath_(params->preload_file)
+        {
+        }
+
         virtual ~Preloader() = default;
         /**
          * Start the preload process. Should be called in the simulators
          * bind setup.
          */
         void preload();
-    private:
+
+      private:
         /**
          * override the method which is called for each packet that is parsed
          * in from the parsers to be preloaded.
          */
-        void preloadPacket_(const std::string& treenode,
-                            sparta::cache::PreloadPkt& pkt) override;
+        void preloadPacket_(const std::string & treenode, sparta::cache::PreloadPkt & pkt) override;
         //! Keep track of the params.
         const std::string filepath_; //! The path to the yaml file.
     };
 
-}
-
+} // namespace olympia

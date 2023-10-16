@@ -9,19 +9,21 @@
 
 #include "Inst.hpp"
 
-namespace olympia {
+namespace olympia
+{
 
     class MemoryAccessInfoPairDef;
 
-    class MemoryAccessInfo {
-    public:
-
+    class MemoryAccessInfo
+    {
+      public:
         // The modeler needs to alias a type called
         // "SpartaPairDefinitionType" to the Pair Definition class of
         // itself
         using SpartaPairDefinitionType = MemoryAccessInfoPairDef;
 
-        enum class MMUState : std::uint32_t {
+        enum class MMUState : std::uint32_t
+        {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
             MISS,
@@ -30,7 +32,8 @@ namespace olympia {
             __LAST = NUM_STATES
         };
 
-        enum class CacheState : std::uint64_t {
+        enum class CacheState : std::uint64_t
+        {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
             MISS,
@@ -41,24 +44,25 @@ namespace olympia {
 
         MemoryAccessInfo() = delete;
 
-        MemoryAccessInfo(
-            const InstPtr &inst_ptr) :
-            ldst_inst_ptr_(inst_ptr),
-            phy_addr_ready_(false),
-            mmu_access_state_(MMUState::NO_ACCESS),
+        MemoryAccessInfo(const InstPtr & inst_ptr)
+            : ldst_inst_ptr_(inst_ptr), phy_addr_ready_(false),
+              mmu_access_state_(MMUState::NO_ACCESS),
 
-            // Construct the State object here
-            cache_access_state_(CacheState::NO_ACCESS) {}
+              // Construct the State object here
+              cache_access_state_(CacheState::NO_ACCESS)
+        {
+        }
 
         virtual ~MemoryAccessInfo() {}
 
         // This Inst pointer will act as our portal to the Inst class
         // and we will use this pointer to query values from functions of Inst class
-        const InstPtr &getInstPtr() const { return ldst_inst_ptr_; }
+        const InstPtr & getInstPtr() const { return ldst_inst_ptr_; }
 
         // This is a function which will be added in the SPARTA_ADDPAIRs API.
-        uint64_t getInstUniqueID() const {
-            const InstPtr &inst_ptr = getInstPtr();
+        uint64_t getInstUniqueID() const
+        {
+            const InstPtr & inst_ptr = getInstPtr();
 
             return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
         }
@@ -67,27 +71,20 @@ namespace olympia {
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
-        MMUState getMMUState() const {
-            return mmu_access_state_;
-        }
+        MMUState getMMUState() const { return mmu_access_state_; }
 
-        void setMMUState(const MMUState &state) {
-            mmu_access_state_ = state;
-        }
+        void setMMUState(const MMUState & state) { mmu_access_state_ = state; }
 
-        CacheState getCacheState() const {
-            return cache_access_state_;
-        }
+        CacheState getCacheState() const { return cache_access_state_; }
 
-        void setCacheState(const CacheState &state) {
-            cache_access_state_ = state;
-        }
+        void setCacheState(const CacheState & state) { cache_access_state_ = state; }
 
-        bool isCacheHit() const {
+        bool isCacheHit() const
+        {
             return (cache_access_state_ == MemoryAccessInfo::CacheState::HIT);
         }
 
-    private:
+      private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
 
@@ -101,34 +98,39 @@ namespace olympia {
         CacheState cache_access_state_;
 
         // Scoreboards
-        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+        using ScoreboardViews
+            = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
         ScoreboardViews scoreboard_views_;
-
     };
 
     /*!
      * \class MemoryAccessInfoPairDef
-     * \brief Pair Definition class of the Memory Access Information that flows through the example/CoreModel
+     * \brief Pair Definition class of the Memory Access Information that flows through the
+     * example/CoreModel
      */
 
     // This is the definition of the PairDefinition class of MemoryAccessInfo.
     // This PairDefinition class could be named anything but it needs to inherit
     // publicly from sparta::PairDefinition templatized on the actual class MemoryAcccessInfo.
-    class MemoryAccessInfoPairDef : public sparta::PairDefinition<MemoryAccessInfo> {
-    public:
-
-        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-        MemoryAccessInfoPairDef() : PairDefinition<MemoryAccessInfo>() {
+    class MemoryAccessInfoPairDef : public sparta::PairDefinition<MemoryAccessInfo>
+    {
+      public:
+        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition
+        // class
+        MemoryAccessInfoPairDef() : PairDefinition<MemoryAccessInfo>()
+        {
             SPARTA_INVOKE_PAIRS(MemoryAccessInfo);
         }
 
-        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &MemoryAccessInfo::getInstUniqueID),
-                              SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrStatus),
-                              SPARTA_ADDPAIR("mmu",   &MemoryAccessInfo::getMMUState),
-                              SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
-                              SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr))
+        SPARTA_REGISTER_PAIRS(
+            SPARTA_ADDPAIR("DID", &MemoryAccessInfo::getInstUniqueID),
+            SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrStatus),
+            SPARTA_ADDPAIR("mmu", &MemoryAccessInfo::getMMUState),
+            SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
+            SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr)
+        )
     };
 
-    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+    using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
-};
+}; // namespace olympia

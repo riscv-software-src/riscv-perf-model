@@ -6,4 +6,4 @@ namespace olympia
 {
     // This pipeline supports around 135 outstanding example instructions.
     sparta::SpartaSharedPointerAllocator<InstGroup> instgroup_allocator(300, 250);
-}
+} // namespace olympia

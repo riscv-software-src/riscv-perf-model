@@ -27,21 +27,23 @@ namespace olympia
      */
     class SimulationConfiguration : public sparta::ExtensionsParamsOnly
     {
-    public:
+      public:
         SimulationConfiguration() : sparta::ExtensionsParamsOnly() {}
+
         virtual ~SimulationConfiguration() {}
 
-    private:
-        void postCreate() override {
-            sparta::ParameterSet * ps = getParameters();
-            if(nullptr == ps->getParameter("workload", false)) {
-                workload_param_.reset(new sparta::Parameter<std::string>(
-                                          "workload", "",
-                                          "Workload to run", ps));
+      private:
+        void postCreate() override
+        {
+            sparta::ParameterSet* ps = getParameters();
+            if (nullptr == ps->getParameter("workload", false))
+            {
+                workload_param_.reset(
+                    new sparta::Parameter<std::string>("workload", "", "Workload to run", ps)
+                );
             }
         }
 
         std::unique_ptr<sparta::Parameter<std::string>> workload_param_;
-
     };
-}
+} // namespace olympia

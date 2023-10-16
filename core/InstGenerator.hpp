@@ -16,7 +16,8 @@
 
 #include "stf-inc/stf_inst_reader.hpp"
 
-namespace nlohmann {
+namespace nlohmann
+{
     using json = class nlohmann::basic_json<>;
 }
 
@@ -32,53 +33,56 @@ namespace olympia
      */
     class InstGenerator
     {
-    public:
-        InstGenerator(MavisType * mavis_facade) : mavis_facade_(mavis_facade) {}
+      public:
+        InstGenerator(MavisType* mavis_facade) : mavis_facade_(mavis_facade) {}
+
         virtual ~InstGenerator() {}
-        virtual InstPtr getNextInst(const sparta::Clock * clk) = 0;
-        static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
-                                                              const std::string & filename,
-                                                              const bool skip_nonuser_mode);
+
+        virtual InstPtr getNextInst(const sparta::Clock* clk) = 0;
+        static std::unique_ptr<InstGenerator> createGenerator(
+            MavisType* mavis_facade, const std::string & filename, const bool skip_nonuser_mode
+        );
         virtual bool isDone() const = 0;
 
-    protected:
-        MavisType * mavis_facade_ = nullptr;
-        uint64_t    unique_id_ = 0;
+      protected:
+        MavisType* mavis_facade_ = nullptr;
+        uint64_t unique_id_ = 0;
     };
 
     // Generates instructions from a JSON file
     class JSONInstGenerator : public InstGenerator
     {
-    public:
-        JSONInstGenerator(MavisType * mavis_facade,
-                          const std::string & filename);
-        InstPtr getNextInst(const sparta::Clock * clk) override final;
+      public:
+        JSONInstGenerator(MavisType* mavis_facade, const std::string & filename);
+        InstPtr getNextInst(const sparta::Clock* clk) override final;
 
         bool isDone() const override final;
-    private:
+
+      private:
         std::unique_ptr<nlohmann::json> jobj_;
-        uint64_t                        curr_inst_index_ = 0;
-        uint64_t                        n_insts_ = 0;
+        uint64_t curr_inst_index_ = 0;
+        uint64_t n_insts_ = 0;
     };
 
     // Generates instructions from an STF Trace file
     class TraceInstGenerator : public InstGenerator
     {
-    public:
+      public:
         // Creates a TraceInstGenerator with the given mavis facade
         // and filename.  The parameter skip_nonuser_mode allows the
         // trace generator to skip system instructions if present
-        TraceInstGenerator(MavisType * mavis_facade,
-                           const std::string & filename,
-                           const bool skip_nonuser_mode);
+        TraceInstGenerator(
+            MavisType* mavis_facade, const std::string & filename, const bool skip_nonuser_mode
+        );
 
-        InstPtr getNextInst(const sparta::Clock * clk) override final;
+        InstPtr getNextInst(const sparta::Clock* clk) override final;
 
         bool isDone() const override final;
-    private:
+
+      private:
         std::unique_ptr<stf::STFInstReader> reader_;
 
         // Always points to the *next* stf inst
         stf::STFInstReader::iterator next_it_;
     };
-}
+} // namespace olympia

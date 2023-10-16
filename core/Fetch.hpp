@@ -5,7 +5,6 @@
 //! \brief Definition of the CoreModel Fetch unit
 //!
 
-
 #pragma once
 
 #include <string>
@@ -35,26 +34,31 @@ namespace olympia
      */
     class Fetch : public sparta::Unit
     {
-    public:
+      public:
         //! \brief Parameters for Fetch model
         class FetchParameterSet : public sparta::ParameterSet
         {
-        public:
-            FetchParameterSet(sparta::TreeNode* n) :
-                sparta::ParameterSet(n)
+          public:
+            FetchParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n)
             {
-                auto non_zero_validator = [](uint32_t & val, const sparta::TreeNode*)->bool {
-                    if(val > 0) {
+                auto non_zero_validator = [](uint32_t & val, const sparta::TreeNode*) -> bool
+                {
+                    if (val > 0)
+                    {
                         return true;
                     }
                     return false;
                 };
-                num_to_fetch.addDependentValidationCallback(non_zero_validator,
-                                                            "Num to fetch must be greater than 0");
+                num_to_fetch.addDependentValidationCallback(
+                    non_zero_validator, "Num to fetch must be greater than 0"
+                );
             }
 
-            PARAMETER(uint32_t, num_to_fetch,          4, "Number of instructions to fetch")
-            PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
+            PARAMETER(uint32_t, num_to_fetch, 4, "Number of instructions to fetch")
+            PARAMETER(
+                bool, skip_nonuser_mode, false,
+                "For STF traces, skip system instructions if present"
+            )
         };
 
         /**
@@ -63,35 +67,33 @@ namespace olympia
          * @param node The node that represents (has a pointer to) the Fetch
          * @param p The Fetch's parameter set
          */
-        Fetch(sparta::TreeNode * name,
-              const FetchParameterSet * p);
+        Fetch(sparta::TreeNode* name, const FetchParameterSet* p);
 
         ~Fetch();
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
-        static const char * name;
+        static const char* name;
 
-    private:
-
+      private:
         ////////////////////////////////////////////////////////////////////////////////
         // Ports
 
         // Internal DataOutPort to the decode unit's fetch queue
-        sparta::DataOutPort<InstGroupPtr> out_fetch_queue_write_ {&unit_port_set_, "out_fetch_queue_write"};
+        sparta::DataOutPort<InstGroupPtr> out_fetch_queue_write_{
+            &unit_port_set_, "out_fetch_queue_write"};
 
         // Internal DataInPort from decode's fetch queue for credits
-        sparta::DataInPort<uint32_t> in_fetch_queue_credits_
-            {&unit_port_set_, "in_fetch_queue_credits", sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<uint32_t> in_fetch_queue_credits_{
+            &unit_port_set_, "in_fetch_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // Incoming flush from Retire w/ redirect
-        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
-            {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_{
+            &unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
-
 
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
@@ -100,7 +102,7 @@ namespace olympia
         uint32_t credits_inst_queue_ = 0;
 
         // Unit's clock
-        const sparta::Clock * my_clk_ = nullptr;
+        const sparta::Clock* my_clk_ = nullptr;
 
         // Instruction generation
         std::unique_ptr<InstGenerator> inst_generator_;
@@ -129,4 +131,4 @@ namespace olympia
         bool speculative_path_ = false;
     };
 
-}
+} // namespace olympia

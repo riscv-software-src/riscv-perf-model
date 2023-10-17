@@ -21,51 +21,42 @@ namespace olympia
     class InstGroup
     {
         using InstVector = std::vector<InstQueue::value_type>;
-
-      public:
-        using iterator = InstVector::iterator;
+    public:
+        using iterator       = InstVector::iterator;
         using const_iterator = InstVector::const_iterator;
 
-        void emplace_back(const typename InstQueue::value_type & inst)
-        {
+        void emplace_back(const typename InstQueue::value_type & inst) {
             insts_.emplace_back(inst);
         }
 
         iterator begin() { return insts_.begin(); }
-
-        iterator end() { return insts_.end(); }
+        iterator end()   { return insts_.end(); }
 
         const_iterator begin() const { return insts_.begin(); }
+        const_iterator end()   const { return insts_.end(); }
 
-        const_iterator end() const { return insts_.end(); }
+        std::size_t size() const  { return insts_.size(); }
+        bool        empty() const { return insts_.empty(); }
 
-        std::size_t size() const { return insts_.size(); }
-
-        bool empty() const { return insts_.empty(); }
-
-      private:
+    private:
         InstVector insts_;
     };
-
     extern sparta::SpartaSharedPointerAllocator<InstGroup> instgroup_allocator;
     using InstGroupPtr = sparta::SpartaSharedPointer<InstGroup>;
 
-    inline std::ostream & operator<<(std::ostream & os, const InstGroup & inst_grp)
-    {
+    inline std::ostream & operator<<(std::ostream & os, const InstGroup & inst_grp) {
         std::string next = "";
         std::stringstream str;
-        for (auto inst : inst_grp)
-        {
-            str << next << HEX8(inst->getPC()) << " UID(" << inst->getUniqueID() << ") "
-                << " PID(" << inst->getProgramID() << ") "
-                << " " << inst->getMnemonic();
+        for(auto inst : inst_grp) {
+            str << next << HEX8(inst->getPC())
+               << " UID(" << inst->getUniqueID() << ") "
+               << " PID(" << inst->getProgramID() << ") "
+               << " " << inst->getMnemonic();
             next = ", ";
         }
         return (os << str.str());
     }
-
-    inline std::ostream & operator<<(std::ostream & os, const InstGroupPtr & inst_grp_ptr)
-    {
+    inline std::ostream & operator<<(std::ostream & os, const InstGroupPtr & inst_grp_ptr) {
         return os << *inst_grp_ptr;
     }
-} // namespace olympia
+}

@@ -51,10 +51,10 @@ BreakBeforeBinaryOperators: All
 BreakBeforeConceptDeclarations: true
 BreakBeforeBraces: Allman
 BreakBeforeInheritanceComma: false
-BreakInheritanceList: BeforeColon
+BreakInheritanceList: AfterColon
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
-BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializers: AfterColon
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: true
 ColumnLimit:     100

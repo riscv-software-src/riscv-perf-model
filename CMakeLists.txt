@@ -97,12 +97,12 @@ if(NOT CLANGFORMAT_EXECUTABLE)
   set(CLANGFORMAT_EXECUTABLE clang-format)
 endif()
 
-
-set(CLANGFORMAT_SOURCES "$<TARGET_PROPERTY:olympia,SOURCES>")
-string(REPLACE ";" " " ${CLANGFORMAT_SOURCES} CLANGFORMAT_SOURCES)
-
+#
+# CPUTopology is pretty clean as it is.  There's an option to NOT
+# collapse the array of structures in clang-format v16, but we're not
+# there yet
 add_custom_target(olympia_clangformat
-  find core mss -name "*.[hc]pp" > clang-format-files.out
+  find core mss -name "*.[hc]pp" | grep -v CPUTopology.cpp > clang-format-files.out
   COMMAND
      ${CLANGFORMAT_EXECUTABLE} -i --files=clang-format-files.out
   WORKING_DIRECTORY

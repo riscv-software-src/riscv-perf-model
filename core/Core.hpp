@@ -16,16 +16,12 @@ namespace olympia
     // sparta::TreeNode
     class Core : public sparta::Unit
     {
-    public:
-
+      public:
         //! \brief Parameters for Core model
         class CoreParameterSet : public sparta::ParameterSet
         {
-        public:
-            CoreParameterSet(sparta::TreeNode* n) :
-                sparta::ParameterSet(n)
-            { }
-
+          public:
+            CoreParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
         };
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
@@ -44,8 +40,8 @@ namespace olympia
          * type, NOT sparta::ParameterSet.
          * \param ports Fully configured ports for this component.
          */
-        Core(sparta::TreeNode * node, const CoreParameterSet * params);
+        Core(sparta::TreeNode* node, const CoreParameterSet* params);
 
         ~Core() {}
     };
-}
+} // namespace olympia

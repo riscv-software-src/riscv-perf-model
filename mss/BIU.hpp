@@ -52,8 +52,8 @@ namespace olympia_mss
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataInPort<olympia::InstQueue::value_type> in_biu_req_{
-            &unit_port_set_, "in_biu_req", 1};
+        sparta::DataInPort<olympia::InstQueue::value_type> in_biu_req_{&unit_port_set_,
+                                                                       "in_biu_req", 1};
 
         sparta::SyncInPort<bool> in_mss_ack_sync_{&unit_port_set_, "in_mss_ack_sync", getClock()};
 
@@ -63,8 +63,8 @@ namespace olympia_mss
 
         sparta::DataOutPort<olympia::InstPtr> out_biu_ack_{&unit_port_set_, "out_biu_ack"};
 
-        sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_{
-            &unit_port_set_, "out_mss_req_sync", getClock()};
+        sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_{&unit_port_set_, "out_mss_req_sync",
+                                                                getClock()};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -83,12 +83,12 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Event to handle BIU request from LSU
-        sparta::UniqueEvent<> ev_handle_biu_req_{
-            &unit_event_set_, "handle_biu_req", CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
+        sparta::UniqueEvent<> ev_handle_biu_req_{&unit_event_set_, "handle_biu_req",
+                                                 CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
 
         // Event to handle MSS Ack
-        sparta::UniqueEvent<> ev_handle_mss_ack_{
-            &unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
+        sparta::UniqueEvent<> ev_handle_mss_ack_{&unit_event_set_, "handle_mss_ack",
+                                                 CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks

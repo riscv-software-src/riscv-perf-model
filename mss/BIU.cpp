@@ -13,17 +13,16 @@ namespace olympia_mss
     // Constructor
     ////////////////////////////////////////////////////////////////////////////////
 
-    BIU::BIU(sparta::TreeNode* node, const BIUParameterSet* p)
-        : sparta::Unit(node), biu_req_queue_size_(p->biu_req_queue_size),
-          biu_latency_(p->biu_latency)
+    BIU::BIU(sparta::TreeNode* node, const BIUParameterSet* p) :
+        sparta::Unit(node),
+        biu_req_queue_size_(p->biu_req_queue_size),
+        biu_latency_(p->biu_latency)
     {
         in_biu_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromLSU_, olympia::InstPtr)
-        );
+            CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromLSU_, olympia::InstPtr));
 
         in_mss_ack_sync_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool)
-        );
+            CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
         in_mss_ack_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
         ILOG("BIU construct: #" << node->getGroupIdx());

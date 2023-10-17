@@ -49,15 +49,15 @@ namespace olympia_mss
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::SyncInPort<olympia::InstPtr> in_mss_req_sync_{
-            &unit_port_set_, "in_mss_req_sync", getClock()};
+        sparta::SyncInPort<olympia::InstPtr> in_mss_req_sync_{&unit_port_set_, "in_mss_req_sync",
+                                                              getClock()};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::SyncOutPort<bool> out_mss_ack_sync_{
-            &unit_port_set_, "out_mss_ack_sync", getClock()};
+        sparta::SyncOutPort<bool> out_mss_ack_sync_{&unit_port_set_, "out_mss_ack_sync",
+                                                    getClock()};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -70,8 +70,8 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Event to handle MSS request from BIU
-        sparta::UniqueEvent<> ev_handle_mss_req_{
-            &unit_event_set_, "handle_mss_req", CREATE_SPARTA_HANDLER(MSS, handle_MSS_req_)};
+        sparta::UniqueEvent<> ev_handle_mss_req_{&unit_event_set_, "handle_mss_req",
+                                                 CREATE_SPARTA_HANDLER(MSS, handle_MSS_req_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks

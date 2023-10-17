@@ -1,6 +1,5 @@
 // <Flush.h> -*- C++ -*-
 
-
 /**
  * \file   FlushManager.h
  *
@@ -37,17 +36,14 @@ namespace olympia
      */
     class FlushManager : public sparta::Unit
     {
-    public:
+      public:
         typedef uint64_t FlushingCriteria;
         static constexpr char name[] = "flushmanager";
 
         class FlushManagerParameters : public sparta::ParameterSet
         {
-        public:
-            FlushManagerParameters(sparta::TreeNode* n) :
-                sparta::ParameterSet(n)
-            { }
-
+          public:
+            FlushManagerParameters(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
         };
 
         /*!
@@ -55,7 +51,7 @@ namespace olympia
          * \param rc     The parent resource tree node
          * \param params Pointer to the flush manager parameters
          */
-        FlushManager(sparta::TreeNode *rc, const FlushManagerParameters * params) :
+        FlushManager(sparta::TreeNode* rc, const FlushManagerParameters* params) :
             Unit(rc, name),
             out_retire_flush_(getPortSet(), "out_retire_flush", false),
             in_retire_flush_(getPortSet(), "in_retire_flush", 0),
@@ -63,36 +59,32 @@ namespace olympia
             in_fetch_flush_redirect_(getPortSet(), "in_fetch_flush_redirect", 0)
         {
             (void)params;
-            in_retire_flush_.
-                registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
-                                                                      forwardRetireFlush_,
-                                                                      FlushingCriteria));
-            in_fetch_flush_redirect_.
-                registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
-                                                                      forwardFetchRedirectFlush_,
-                                                                      uint64_t));
+            in_retire_flush_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
+                FlushManager, forwardRetireFlush_, FlushingCriteria));
+            in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
+                FlushManager, forwardFetchRedirectFlush_, uint64_t));
         }
 
-    private:
-
+      private:
         // Flushing criteria
         sparta::DataOutPort<FlushingCriteria> out_retire_flush_;
-        sparta::DataInPort <FlushingCriteria> in_retire_flush_;
+        sparta::DataInPort<FlushingCriteria> in_retire_flush_;
 
         // Flush redirect for Fetch
         sparta::DataOutPort<uint64_t> out_fetch_flush_redirect_;
-        sparta::DataInPort <uint64_t> in_fetch_flush_redirect_;
+        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_;
 
         // Internal method used to forward the flush to the attached
         // listeners
-        void forwardRetireFlush_(const FlushingCriteria & flush_data) {
+        void forwardRetireFlush_(const FlushingCriteria & flush_data)
+        {
             out_retire_flush_.send(flush_data);
         }
 
         // Internal method used to forward the fetch redirect
-        void forwardFetchRedirectFlush_(const uint64_t & flush_data) {
+        void forwardFetchRedirectFlush_(const uint64_t & flush_data)
+        {
             out_fetch_flush_redirect_.send(flush_data);
         }
     };
-}
-
+} // namespace olympia

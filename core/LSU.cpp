@@ -24,12 +24,17 @@ namespace olympia
                                    load_store_info_allocator),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
                                  memory_access_allocator),
-        ldst_pipeline_("LoadStorePipeline",
-                       static_cast<uint32_t>(p->mmu_lookup_stage_length + p->cache_lookup_stage_length + p->cache_read_stage_length + 2), getClock()),
+        address_calculation_stage_(0),
+        mmu_lookup_stage_(address_calculation_stage_ + p->mmu_lookup_stage_length),
+        cache_lookup_stage_(mmu_lookup_stage_ + p->cache_lookup_stage_length),
+        cache_read_stage_(cache_lookup_stage_ + p->cache_read_stage_length),
+        complete_stage_(cache_read_stage_ + 1), // Complete stage is after the cache read stage
+        ldst_pipeline_("LoadStorePipeline",(complete_stage_ + 1), getClock()),
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
-        setupPipelineLength(p);
-
+        sparta_assert(p->mmu_lookup_stage_length > 0, "MMU lookup stage should atleast be one cycle");
+        sparta_assert(p->cache_read_stage_length > 0, "Cache read stage should atleast be one cycle");
+        sparta_assert(p->cache_lookup_stage_length > 0, "Cache lookup stage should atleast be one cycle");
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
@@ -79,23 +84,23 @@ namespace olympia
         ldst_pipeline_.setContinuing(true);
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(ADDRESS_CALCULATION),
+            (address_calculation_stage_,
              CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(MMU_LOOKUP),
+            (mmu_lookup_stage_,
              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(CACHE_LOOKUP),
+            (cache_lookup_stage_,
              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(CACHE_READ),
+            (cache_read_stage_,
              CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
 
         ldst_pipeline_.registerHandlerAtStage
-            (static_cast<uint32_t>(COMPLETE),
+            (complete_stage_,
              CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
         // NOTE:
@@ -116,13 +121,6 @@ namespace olympia
         DLOG(
             getContainer()->getLocation()
             << ": " << memory_access_allocator_.getNumAllocated() << " MemoryAccessInfo objects allocated/created");
-    }
-    void LSU::setupPipelineLength(const LSU::LSUParameterSet* p)
-    {
-        MMU_LOOKUP = p->mmu_lookup_stage_length;
-        CACHE_LOOKUP = MMU_LOOKUP + p->cache_lookup_stage_length;
-        CACHE_READ = CACHE_LOOKUP + p->cache_read_stage_length;
-        COMPLETE = CACHE_READ + 1;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -153,10 +151,10 @@ namespace olympia
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr &inst_ptr)
     {
-        if(!instPresentInQueues(inst_ptr)){
+        if(!instInQueue_(ldst_inst_queue_, inst_ptr)){
             ILOG("New instruction added to the ldst queue " << inst_ptr);
+            allocateInstToQueues_(inst_ptr);
             lsu_insts_dispatched_++;
-            allocateInstToQueues(inst_ptr);
         }
 
         bool all_ready = true; // assume all ready
@@ -189,7 +187,7 @@ namespace olympia
                 }
             }else if (false == allow_speculative_load_exec_){ // Its a load
                 // Load instruction is ready is when both address and older stores addresses are known
-                all_ready = allOlderStoresIssued(inst_ptr);
+                all_ready = allOlderStoresIssued_(inst_ptr);
                 if(all_ready)
                 {
                     ILOG("Load instruction " << inst_ptr << " is ready to be scheduled");
@@ -285,7 +283,7 @@ namespace olympia
 
     void LSU::handleAddressCalculation_()
     {
-        auto stage_id = static_cast<uint32_t>(ADDRESS_CALCULATION);
+        auto stage_id = address_calculation_stage_;
 
         if (!ldst_pipeline_.isValid(stage_id)) {
             return;
@@ -305,7 +303,7 @@ namespace olympia
     // Handle MMU access request
     void LSU::handleMMULookupReq_()
     {
-        const auto stage_id = static_cast<uint32_t>(MMU_LOOKUP);
+        const auto stage_id = mmu_lookup_stage_;
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -319,7 +317,6 @@ namespace olympia
 
         if (mmu_bypass) {
             ILOG("MMU Lookup is skipped (TLB is already hit)! " << load_store_info_ptr);
-            mmu_hit_ = true;
             return;
         }
 
@@ -329,18 +326,17 @@ namespace olympia
         {
             if (mem_access_info_ptr->getInstPtr()->isStoreInst())
             {
-                readyDependentLoads(load_store_info_ptr);
+                readyDependentLoads_(load_store_info_ptr);
             }
         }
 
-        mmu_hit_ = false;
         out_mmu_lookup_req_.send(mem_access_info_ptr);
         ILOG(mem_access_info_ptr << load_store_info_ptr);
     }
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr)
     {
-        const auto stage_id = static_cast<uint32_t>(MMU_LOOKUP);
+        const auto stage_id = mmu_lookup_stage_;
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -350,11 +346,11 @@ namespace olympia
         ILOG("MMU Ack: "
              << std::boolalpha << updated_memory_access_info_ptr->getPhyAddrStatus()
              << " " << updated_memory_access_info_ptr);
-        mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrStatus();
+        const bool mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrStatus();
 
         if(updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && mmu_hit_ && allow_speculative_load_exec_){
             ILOG("Aborting speculative loads " << updated_memory_access_info_ptr);
-            abortYoungerLoads(updated_memory_access_info_ptr);
+            abortYoungerLoads_(updated_memory_access_info_ptr);
         }
     }
 
@@ -387,14 +383,12 @@ namespace olympia
     // Handle cache access request
     void LSU::handleCacheLookupReq_()
     {
-        const auto stage_id = static_cast<uint32_t>(CACHE_LOOKUP);
-
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id)) {
+        if (!ldst_pipeline_.isValid(cache_lookup_stage_)) {
             return;
         }
 
-        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
+        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[cache_lookup_stage_];
         const MemoryAccessInfoPtr &mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
         const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
 
@@ -403,15 +397,14 @@ namespace olympia
             ILOG("Cache Lookup is skipped (Physical address not ready)!" << load_store_info_ptr);
             if(allow_speculative_load_exec_)
             {
-                updateInstReplayReady(mem_access_info_ptr->getInstPtr());
+                updateInstReplayReady_(mem_access_info_ptr->getInstPtr());
             }
-            ldst_pipeline_.invalidateStage(stage_id);
+            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             return;
         }
 
         const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
-        ILOG(load_store_info_ptr);
-        ILOG(mem_access_info_ptr);
+        ILOG(load_store_info_ptr << " " << mem_access_info_ptr);
 
         // If have passed translation and the instruction is a store,
         // then it's good to be retired (i.e. mark it completed).
@@ -419,12 +412,25 @@ namespace olympia
         // translation.  We now wait for the Retire block to "retire"
         // it, meaning it's good to go to the cache
         if(inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED)) {
+            ILOG("Store marked as completed " << inst_ptr);
             inst_ptr->setStatus(Inst::Status::COMPLETED);
+            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            if(allow_speculative_load_exec_)
+            {
+                updateInstReplayReady_(inst_ptr);
+            }
             return;
         }
 
-        if(!inst_ptr->isStoreInst() && olderStoresExists(inst_ptr) && !allow_speculative_load_exec_){
-            ldst_pipeline_.invalidateStage(static_cast<uint32_t>(CACHE_LOOKUP));
+        if(!inst_ptr->isStoreInst() && olderStoresExists_(inst_ptr) && allow_speculative_load_exec_){
+            ILOG("Dropping speculative load " << inst_ptr);
+            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            if(allow_speculative_load_exec_)
+            {
+                updateInstReplayReady_(inst_ptr);
+            }
             return;
         }
 
@@ -444,16 +450,13 @@ namespace olympia
             else {
                 sparta_assert(false, "Cache access is bypassed without a valid reason!");
             }
-            cache_hit_ = true;
             return;
         }
 
-        cache_hit_ = false;
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
     void LSU::getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr){
-        cache_hit_ = updated_memory_access_info_ptr->isCacheHit();
     }
 
     void LSU::handleCacheReadyReq_(const MemoryAccessInfoPtr &memory_access_info_ptr)
@@ -486,14 +489,12 @@ namespace olympia
 
     void LSU::handleCacheRead_()
     {
-        const auto stage_id = static_cast<uint32_t>(CACHE_READ);
-
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id)) {
+        if (!ldst_pipeline_.isValid(cache_read_stage_)) {
             return;
         }
 
-        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[stage_id];
+        const LoadStoreInstInfoPtr &load_store_info_ptr = ldst_pipeline_[cache_read_stage_];
         const MemoryAccessInfoPtr &mem_access_info_ptr = load_store_info_ptr->getMemoryAccessInfoPtr();
         ILOG(mem_access_info_ptr);
 
@@ -501,9 +502,9 @@ namespace olympia
             ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
             if(allow_speculative_load_exec_)
             {
-                updateInstReplayReady(mem_access_info_ptr->getInstPtr());
+                updateInstReplayReady_(mem_access_info_ptr->getInstPtr());
             }
-            ldst_pipeline_.invalidateStage(stage_id);
+            ldst_pipeline_.invalidateStage(cache_read_stage_);
             return;
         }
 
@@ -525,7 +526,7 @@ namespace olympia
     // Retire load/store instruction
     void LSU::completeInst_()
     {
-        const auto stage_id = static_cast<uint32_t>(COMPLETE);
+        const auto stage_id = complete_stage_;
 
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(stage_id)) {
@@ -616,7 +617,7 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
                           "Store inst cannot finish when cache is still a miss! " << inst_ptr);
 
-            ILOG("Removed issue queue"  << inst_ptr);
+            ILOG("Removed issue queue "  << inst_ptr);
             popIssueQueue_(inst_ptr);
 
             if(allow_speculative_load_exec_)
@@ -710,7 +711,7 @@ namespace olympia
         }
     }
 
-    void LSU::updateInstReplayReady(const InstPtr &inst_ptr){
+    void LSU::updateInstReplayReady_(const InstPtr &inst_ptr){
         for(auto iter = replay_buffer_.begin(); iter != replay_buffer_.end(); iter++)
         {
             auto &load_store_info_ptr = *iter;
@@ -735,17 +736,17 @@ namespace olympia
 
     bool LSU::instPresentInQueues(const InstPtr &inst_ptr)
     {
-        return instInQueue(ldst_inst_queue_, inst_ptr);
+        return instInQueue_(ldst_inst_queue_, inst_ptr);
     }
 
-    bool LSU::instInQueue(LoadStoreIssueQueue &queue,const InstPtr &inst_ptr)
+    bool LSU::instInQueue_(LoadStoreIssueQueue &queue,const InstPtr &inst_ptr)
     {
         return std::any_of(queue.begin(), queue.end(),
                            [inst_ptr](auto & ldst_info_ptr)
                            { return inst_ptr == ldst_info_ptr->getInstPtr(); });
     }
 
-    LSU::LoadStoreInstInfoPtr LSU::createLoadStoreInst(const InstPtr &inst_ptr){
+    LSU::LoadStoreInstInfoPtr LSU::createLoadStoreInst_(const InstPtr &inst_ptr){
         // Create load/store memory access info
         MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator_,
                                                                                                     inst_ptr);
@@ -755,17 +756,17 @@ namespace olympia
         return inst_info_ptr;
     }
 
-    void LSU::allocateInstToQueues(const InstPtr &inst_ptr)
+    void LSU::allocateInstToQueues_(const InstPtr &inst_ptr)
     {
-        auto inst_info_ptr = createLoadStoreInst(inst_ptr);
+        auto inst_info_ptr = createLoadStoreInst_(inst_ptr);
         appendIssueQueue_(inst_info_ptr);
     }
 
-    bool LSU::allOlderStoresIssued(const InstPtr &inst_ptr){
-        return olderStoresIssued(ldst_inst_queue_, inst_ptr);
+    bool LSU::allOlderStoresIssued_(const InstPtr &inst_ptr){
+        return olderStoresIssued_(ldst_inst_queue_, inst_ptr);
     }
 
-    bool LSU::olderStoresIssued(LoadStoreIssueQueue &queue, const InstPtr &inst_ptr)
+    bool LSU::olderStoresIssued_(LoadStoreIssueQueue &queue, const InstPtr &inst_ptr)
     {
         for(const auto &ldst_info_ptr: queue){
             const auto &ldst_inst_ptr = ldst_info_ptr->getInstPtr();
@@ -781,7 +782,7 @@ namespace olympia
     }
 
     // Only called if allow_spec_load_exec is true
-    void LSU::readyDependentLoads(const LoadStoreInstInfoPtr &store_inst_ptr){
+    void LSU::readyDependentLoads_(const LoadStoreInstInfoPtr &store_inst_ptr){
         bool found = false;
         for(auto &ldst_inst_ptr: ldst_inst_queue_){
             auto &inst_ptr = ldst_inst_ptr->getInstPtr();
@@ -806,13 +807,13 @@ namespace olympia
         }
     }
 
-    void LSU::abortYoungerLoads(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr)
+    void LSU::abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         auto & inst_ptr = memory_access_info_ptr->getInstPtr();
-        deallocateYoungerLoadFromQueue(replay_buffer_, inst_ptr);
+        deallocateYoungerLoadFromQueue_(replay_buffer_, inst_ptr);
     }
 
-    void LSU::deallocateYoungerLoadFromQueue(LoadStoreIssueQueue & queue, const InstPtr & inst_ptr)
+    void LSU::deallocateYoungerLoadFromQueue_(LoadStoreIssueQueue & queue, const InstPtr & inst_ptr)
     {
         uint64_t min_inst_age = UINT64_MAX;
         // Find oldest instruction age with the same Virtual address
@@ -849,7 +850,7 @@ namespace olympia
             if ((*iter)->getInstUniqueID() >= min_inst_age){
                 (*iter)->setState(LoadStoreInstInfo::IssueState::READY);
                 ILOG("Aborted younger load " << *iter << (*iter)->getInstPtr()->getTargetVAddr());
-                invalidatePipeline((*iter)->getInstPtr());
+                invalidatePipeline_((*iter)->getInstPtr());
                 (*iter)->getMemoryAccessInfoPtr()->reset();
                 queue.erase(iter++);
             }else{
@@ -858,41 +859,37 @@ namespace olympia
         }
     }
 
-    void LSU::invalidatePipeline(const InstPtr & inst_ptr){
-        auto ac_stage_id = static_cast<uint32_t>(ADDRESS_CALCULATION);
-        auto mmu_stage_id = static_cast<uint32_t>(MMU_LOOKUP);
-        auto cache_lookup_stage_id = static_cast<uint32_t>(CACHE_LOOKUP);
-        auto cache_read_stage_id = static_cast<uint32_t>(CACHE_READ);
-        auto complete_stage_id = static_cast<uint32_t>(COMPLETE);
+    void LSU::invalidatePipeline_(const InstPtr & inst_ptr){
+        ILOG("InvalidatePipeline called");
 
-        if(ldst_pipeline_.isValid(ac_stage_id)){
-            auto &pipeline_inst = ldst_pipeline_[ac_stage_id]->getInstPtr();
+        if(ldst_pipeline_.isValid(address_calculation_stage_)){
+            auto &pipeline_inst = ldst_pipeline_[address_calculation_stage_]->getInstPtr();
             if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(ac_stage_id);
+                ldst_pipeline_.invalidateStage(address_calculation_stage_);
             }
         }
-        if(ldst_pipeline_.isValid(mmu_stage_id)){
-            auto &pipeline_inst = ldst_pipeline_[mmu_stage_id]->getInstPtr();
+        if(ldst_pipeline_.isValid(mmu_lookup_stage_)){
+            auto &pipeline_inst = ldst_pipeline_[mmu_lookup_stage_]->getInstPtr();
             if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(mmu_stage_id);
+                ldst_pipeline_.invalidateStage(mmu_lookup_stage_);
             }
         }
-        if(ldst_pipeline_.isValid(cache_lookup_stage_id)){
-            auto &pipeline_inst = ldst_pipeline_[cache_lookup_stage_id]->getInstPtr();
+        if(ldst_pipeline_.isValid(cache_lookup_stage_)){
+            auto &pipeline_inst = ldst_pipeline_[cache_lookup_stage_]->getInstPtr();
             if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(cache_lookup_stage_id);
+                ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             }
         }
-        if(ldst_pipeline_.isValid(cache_read_stage_id)){
-            auto &pipeline_inst = ldst_pipeline_[cache_read_stage_id]->getInstPtr();
+        if(ldst_pipeline_.isValid(cache_read_stage_)){
+            auto &pipeline_inst = ldst_pipeline_[cache_read_stage_]->getInstPtr();
             if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(cache_read_stage_id);
+                ldst_pipeline_.invalidateStage(cache_read_stage_);
             }
         }
-        if(ldst_pipeline_.isValid(complete_stage_id)){
-            auto &pipeline_inst = ldst_pipeline_[complete_stage_id]->getInstPtr();
+        if(ldst_pipeline_.isValid(complete_stage_)){
+            auto &pipeline_inst = ldst_pipeline_[complete_stage_]->getInstPtr();
             if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(complete_stage_id);
+                ldst_pipeline_.invalidateStage(complete_stage_);
             }
         }
     }
@@ -946,6 +943,7 @@ namespace olympia
         ) == std::end(queue);
 
         sparta_assert(exists,  "Cannot push duplicate instructions into the queue " << inst_info_ptr);
+
         // Always append newly dispatched instructions to the back of issue queue
         queue.push_back(inst_info_ptr);
 
@@ -1135,7 +1133,7 @@ namespace olympia
         for (auto &inst_info_ptr : ldst_inst_queue_) {
             if (inst_info_ptr->getInstPtr() == inst_ptr) {
 
-                if(!allow_speculative_load_exec_)// Speculative misses are marked as not ready and replay event would set them back to ready
+                if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)// Speculative misses are marked as not ready and replay event would set them back to ready
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
@@ -1148,6 +1146,17 @@ namespace olympia
         sparta_assert(false,
             "Attempt to update issue priority for instruction not yet in the issue queue!");
 
+    }
+
+    bool LSU::olderStoresExists_(const InstPtr & inst_ptr)
+    {
+        for(const auto &ldst_inst : ldst_inst_queue_){
+            const auto &ldst_inst_ptr = ldst_inst->getInstPtr();
+            if(ldst_inst_ptr->isStoreInst() && ldst_inst_ptr->getUniqueID() < inst_ptr->getUniqueID()){
+                return true;
+            }
+        }
+        return false;
     }
 
     // Flush instruction issue queue

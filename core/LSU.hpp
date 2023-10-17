@@ -69,7 +69,6 @@ namespace olympia
         //! Destroy the LSU
         ~LSU();
 
-        void setupPipelineLength(const LSUParameterSet* p);
         //! name of this resource.
         static const char name[];
 
@@ -263,12 +262,10 @@ namespace olympia
         // MMU unit
         bool mmu_busy_ = false;
         bool mmu_pending_inst_flushed = false;
-        bool mmu_hit_ = false;
 
 
         // L1 Data Cache
         bool cache_busy_ = false;
-        bool cache_hit_ = false;
         bool cache_pending_inst_flushed_ = false;
 
         sparta::collection::Collectable<bool> cache_busy_collectable_{
@@ -284,15 +281,16 @@ namespace olympia
         // Depending on which kind of cache (e.g. blocking vs. non-blocking) is being used
         // This single slot could potentially be extended to a cache pending miss queue
 
+        const int address_calculation_stage_;
+        const int mmu_lookup_stage_;
+        const int cache_lookup_stage_;
+        const int cache_read_stage_;
+        const int complete_stage_;
+
+
         // Load/Store Pipeline
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
         LoadStorePipeline ldst_pipeline_;
-
-        uint32_t ADDRESS_CALCULATION = 0;
-        uint32_t MMU_LOOKUP = 1;
-        uint32_t CACHE_LOOKUP = 2;
-        uint32_t CACHE_READ = 3;
-        uint32_t COMPLETE = 4;
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
@@ -351,7 +349,7 @@ namespace olympia
         void replayReady_(const InstPtr &);
 
         // Mark instruction as not ready and schedule replay ready
-        void updateInstReplayReady(const InstPtr &);
+        void updateInstReplayReady_(const InstPtr &);
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
@@ -361,23 +359,23 @@ namespace olympia
         bool instPresentInQueues(const InstPtr &inst_ptr);
 
         // Check if the instruction is present in a specific queue
-        bool instInQueue(LoadStoreIssueQueue &queue,const InstPtr &inst_ptr);
+        bool instInQueue_(LoadStoreIssueQueue &queue,const InstPtr &inst_ptr);
 
-        LoadStoreInstInfoPtr createLoadStoreInst(const InstPtr &inst_ptr);
-        void allocateInstToQueues(const InstPtr &inst_ptr);
+        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr &inst_ptr);
+        void allocateInstToQueues_(const InstPtr &inst_ptr);
 
-        bool allOlderStoresIssued(const InstPtr &inst_ptr);
+        bool allOlderStoresIssued_(const InstPtr &inst_ptr);
 
-        bool olderStoresIssued(LoadStoreIssueQueue &queue, const InstPtr &inst_ptr);
+        bool olderStoresIssued_(LoadStoreIssueQueue &queue, const InstPtr &inst_ptr);
 
-        void readyDependentLoads(const LoadStoreInstInfoPtr &);
+        void readyDependentLoads_(const LoadStoreInstInfoPtr &);
 
-        void abortYoungerLoads(const MemoryAccessInfoPtr &);
+        void abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr);
 
-        void deallocateYoungerLoadFromQueue(LoadStoreIssueQueue &, const InstPtr &);
+        void deallocateYoungerLoadFromQueue_(LoadStoreIssueQueue & queue, const InstPtr & inst_ptr);
 
         // Remove instrunction from pipeline which share the same address
-        void invalidatePipeline(const InstPtr &);
+        void invalidatePipeline_(const InstPtr &);
 
         // Append new store instruction into store queue
         void appendToQueue_(LoadStoreIssueQueue &, const LoadStoreInstInfoPtr &);
@@ -457,6 +455,7 @@ namespace olympia
 
         friend class LSUTester;
 
+        bool olderStoresExists_(const InstPtr & inst_ptr);
     };
 
     inline std::ostream & operator<<(std::ostream & os,

@@ -114,15 +114,18 @@ namespace olympia {
         // To arbitrate between incoming request from LSU and Cache refills from BIU
         bool incoming_cache_refill_ = false;
 
+        // Ongoing Refill request
+        sparta::Buffer<MSHREntryInfoPtr>::iterator current_refill_mshr_entry_;
+
         bool cacheLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
         sparta::Buffer<MSHREntryInfoPtr>::iterator mshrLookup_(const uint64_t &block_address);
 
-        void reloadCache_(uint64_t phy_addr);
-
         void processInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
-        void getAckFromBIU_(const InstPtr &inst_ptr);
+        void getRefillFromBIU_(const InstPtr &inst_ptr);
+
+        void incomingRefillBIU_();
 
         sparta::Buffer<MSHREntryInfoPtr>::iterator allocateMSHREntry_(uint64_t block_address);
 
@@ -131,6 +134,8 @@ namespace olympia {
         void dataHandler_();
 
         void issueDownstreamRead_();
+
+        void cacheRefillWrite_();
 
         // Cache Pipeline
         sparta::Pipeline<MemoryAccessInfoPtr> cache_pipeline_
@@ -163,9 +168,14 @@ namespace olympia {
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////
-        
         sparta::UniqueEvent<> uev_issue_downstream_read_{&unit_event_set_, "issue_downstream_read",
                 CREATE_SPARTA_HANDLER(DCache, issueDownstreamRead_)};
+
+        sparta::UniqueEvent<> uev_cache_refill_write_{&unit_event_set_, "cache_refill_write",
+                CREATE_SPARTA_HANDLER(DCache, cacheRefillWrite_)};
+
+        sparta::UniqueEvent<> uev_biu_incoming_refill_{&unit_event_set_, "biu_incoming_refill",
+                CREATE_SPARTA_HANDLER(DCache, incomingRefillBIU_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Counters

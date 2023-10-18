@@ -17,7 +17,7 @@ namespace olympia {
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, processInstsFromLSU_, MemoryAccessInfoPtr));
 
         in_biu_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromBIU_, InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getRefillFromBIU_, InstPtr));
 
         // DL1 cache config
         const uint32_t l1_size_kb = p->l1_size_kb;
@@ -26,6 +26,7 @@ namespace olympia {
         addr_decoder_ = l1_cache_->getAddrDecoder();
 
         // Pipeline config
+
         cache_pipeline_.enableCollection(node);
         cache_pipeline_.performOwnUpdates();
         cache_pipeline_.setContinuing(true);
@@ -65,9 +66,9 @@ namespace olympia {
             cache_hit = (cache_line != nullptr) && cache_line->isValid();
 
             // Update MRU replacement state if DCache HIT
-            //if (cache_hit) {
-            //    l1_cache_->touchMRU(*cache_line);
-            //}
+            if (cache_hit) {
+                l1_cache_->touchMRU(*cache_line);
+            }
         }
 
         if (l1_always_hit_) {
@@ -115,7 +116,7 @@ namespace olympia {
             // Cache refill is given priority
             // nack signal is sent to the LSU
             // LSU will have to replay the instruction
-            out_lsu_lookup_nack_.send(0);
+            out_lsu_lookup_nack_.send(1);
         }
         else {
             // Append to Cache Pipeline
@@ -124,9 +125,27 @@ namespace olympia {
     }
 
     // Incoming Cache Refill request from BIU
-    void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
+    // Precedence: Before S1 (Cache Lookup)
+    void DCache::getRefillFromBIU_(const InstPtr &inst_ptr) {
+        // change inst_ptr to cache_line TODO
         incoming_cache_refill_ = true;
-        // TODO
+        
+        // Write cache line to line fill buffer of ongoing mshr entry refill request
+        (*current_refill_mshr_entry_)->setDataArrived(true);
+
+        // Proceed to next stage (next cycle)
+        uev_cache_refill_write_.schedule(1);
+    }
+
+    void DCache::incomingRefillBIU_() {
+        // temporary event
+        incoming_cache_refill_ = true;
+        
+        // Write cache line to line fill buffer of ongoing mshr entry refill request
+        (*current_refill_mshr_entry_)->setDataArrived(true);
+
+        // Proceed to next stage (next cycle)
+        uev_cache_refill_write_.schedule(1);
     }
 
     // Cache Pipeline Lookup Stage
@@ -159,17 +178,11 @@ namespace olympia {
                 mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
                 bool data_arrived = (*mshr_idx)->getDataArrived();
 
-                // if (LD or ST) and data arrived
+                // if LD and data arrived, Hit
+                // All ST are considered Hit
                 if(data_arrived || is_store_inst) {
                     // Update Line fill buffer only if ST
                     (*mshr_idx)->setModified(is_store_inst);
-                    mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-                }
-
-                // All ST are considered Hit
-                if(is_store_inst) {
-                    // Update Line fill buffer
-                    (*mshr_idx)->setModified(true);
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
                 }
 
@@ -211,7 +224,7 @@ namespace olympia {
         // Check if instruction is a store
         bool is_store_inst = inst_ptr->isStoreInst();
 
-        if (mem_access_info_ptr->isCacheHit()) {
+        if  (mem_access_info_ptr->isCacheHit()) {
           
             auto cache_line = l1_cache_->getLine(inst_target_addr);
             if (is_store_inst) {
@@ -233,8 +246,40 @@ namespace olympia {
     }
 
     void DCache::issueDownstreamRead_() {
-        // TODO
         // If there is no ongoing refill request
         // Issue MSHR Refill request to downstream
+        if(ongoing_cache_refill_) {
+            return;
+        }
+
+        // Requests are sent in FIFO order
+        current_refill_mshr_entry_ = mshr_file_.begin();
+
+        // Send BIU request
+        // out_biu_req_.send(cache_line);
+        // Temp fix: call event after fixed time (4 cycles)
+        uev_biu_incoming_refill_.schedule(4);
+        // Only 1 ongoing refill request at any time
+        ongoing_cache_refill_ = true;
     } 
+
+    void DCache::cacheRefillWrite_() {
+        incoming_cache_refill_ = false;
+        // Write line buffer into cache
+        // Initiate write to downstream in case victim line TODO
+        auto line_buffer = (*current_refill_mshr_entry_)->getLineFillBuffer();
+        auto block_address = (*current_refill_mshr_entry_)->getBlockAddress();
+        auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(block_address);
+
+        // Write line buffer data onto cache line
+        (*l1_cache_line) = line_buffer;
+        l1_cache_->allocateWithMRUUpdate(*l1_cache_line, block_address);
+
+        // Deallocate MSHR entry (after a cycle)
+        mshr_file_.erase(current_refill_mshr_entry_);
+        ongoing_cache_refill_ = false;
+        // reissue downstream read (also after a cycle)
+        uev_issue_downstream_read_.schedule(1);
+
+    }
 }

@@ -58,8 +58,10 @@ namespace olympia
         // Required by BasicCacheSet
         bool isValid() const { return valid_; }
 
+        bool isModified() const { return modified_; }
+
         // Required by SimpleCache2
-        void setModified(bool m) { (void) m; }
+        void setModified(bool m) { modified_ = m; }
 
         // Required by SimpleCache2
         bool read(uint64_t offset, uint32_t size, uint32_t *buf) const
@@ -84,6 +86,7 @@ namespace olympia
     private:
         uint64_t line_size_ = 0;
         bool valid_ = false;
+        bool modified_ = false;
 
     }; // class SimpleCacheLine
 

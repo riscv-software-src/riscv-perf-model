@@ -47,7 +47,7 @@ namespace olympia {
         class MSHREntryInfo {
         public:
             MSHREntryInfo(const uint64_t& block_address, const uint64_t& line_size):
-                line_fill_buffer_(line_size), block_address_(block_address){}
+                line_fill_buffer_(line_size), block_address_(block_address){ line_fill_buffer_.setValid(true); }
 
             const uint64_t & getBlockAddress() const {
                 return block_address_;
@@ -71,7 +71,7 @@ namespace olympia {
             }
 
             bool isModified() {
-                return false;
+                return line_fill_buffer_.isModified();
             }
 
             void setModified(bool m) {

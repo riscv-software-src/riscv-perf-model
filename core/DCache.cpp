@@ -6,11 +6,11 @@ namespace olympia {
     DCache::DCache(sparta::TreeNode *node, const CacheParameterSet *p) :
             sparta::Unit(node),
             mshr_entry_allocator(50, 30),    // 50 and 30 are arbitrary numbers here.  It can be tuned to an exact value.
+            mshr_file_("mshr_file",p->mshr_entries, getClock()),
             l1_always_hit_(p->l1_always_hit),
-            cache_line_size_(p->l1_line_size),
             cache_latency_(p->cache_latency),
-            max_mshr_entries_(p->mshr_entries),
-            mshr_file_("mshr_file",p->mshr_entries, getClock())
+            cache_line_size_(p->l1_line_size),
+            max_mshr_entries_(p->mshr_entries)
     {
         // Port config
         in_lsu_lookup_req_.registerConsumerHandler
@@ -26,7 +26,6 @@ namespace olympia {
         addr_decoder_ = l1_cache_->getAddrDecoder();
 
         // Pipeline config
-
         cache_pipeline_.enableCollection(node);
         cache_pipeline_.performOwnUpdates();
         cache_pipeline_.setContinuing(true);
@@ -41,16 +40,7 @@ namespace olympia {
              CREATE_SPARTA_HANDLER(DCache, dataHandler_));
     }
 
-    // Reload cache line
-    void DCache::reloadCache_(uint64_t phy_addr)
-    {
-        auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(phy_addr);
-        l1_cache_->allocateWithMRUUpdate(*l1_cache_line, phy_addr);
-
-        ILOG("DCache reload complete!");
-    }
-
-    // Access DCache
+    // L1 Cache lookup
     bool DCache::cacheLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
@@ -87,9 +77,10 @@ namespace olympia {
         return cache_hit;
     }
 
+    // MSHR File Lookup
     sparta::Buffer<DCache::MSHREntryInfoPtr>::iterator DCache::mshrLookup_(const uint64_t& block_address) {
-        sparta::Buffer<MSHREntryInfoPtr>::iterator it;
 
+        sparta::Buffer<MSHREntryInfoPtr>::iterator it;
         for(it = mshr_file_.begin(); it < mshr_file_.end(); it++) {
             auto mshr_block_addr = (*it)->getBlockAddress();
             if(mshr_block_addr == block_address){
@@ -101,6 +92,7 @@ namespace olympia {
         return it;
     }
 
+    // MSHR Entry allocation in case of miss
     sparta::Buffer<DCache::MSHREntryInfoPtr>::iterator DCache::allocateMSHREntry_(uint64_t block_address){
 
         MSHREntryInfoPtr mshr_entry = sparta::allocate_sparta_shared_pointer<MSHREntryInfo>(mshr_entry_allocator,
@@ -160,7 +152,7 @@ namespace olympia {
         // Check if instruction is a store
         const bool is_store_inst = inst_ptr->isStoreInst();
         
-        const bool hit_on_cache = cacheLookup_(mem_access_info_ptr); // Check both MSHRFile and Cache
+        const bool hit_on_cache = cacheLookup_(mem_access_info_ptr);
 
         if(hit_on_cache){
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
@@ -229,12 +221,12 @@ namespace olympia {
             auto cache_line = l1_cache_->getLine(inst_target_addr);
             if (is_store_inst) {
                 // Write to cache line
-                cache_line->setValid(false);
+                cache_line->setModified(false);
             }
             // update replacement information
             l1_cache_->touchMRU(*cache_line);
 
-            mem_access_info_ptr->setDataIsReady(true);
+            mem_access_info_ptr->setDataReady(true);
 
             // Send request back to LSU
             out_lsu_lookup_req_.send(mem_access_info_ptr);
@@ -245,6 +237,7 @@ namespace olympia {
         }
     }
 
+    // Send cache refill request
     void DCache::issueDownstreamRead_() {
         // If there is no ongoing refill request
         // Issue MSHR Refill request to downstream
@@ -255,14 +248,16 @@ namespace olympia {
         // Requests are sent in FIFO order
         current_refill_mshr_entry_ = mshr_file_.begin();
 
-        // Send BIU request
-        // out_biu_req_.send(cache_line);
-        // Temp fix: call event after fixed time (4 cycles)
-        uev_biu_incoming_refill_.schedule(4);
         // Only 1 ongoing refill request at any time
         ongoing_cache_refill_ = true;
-    } 
 
+        // Send BIU request
+        // out_biu_req_.send(cache_line);
+        // (Temporary) call event after fixed time (4 cycles)
+        uev_biu_incoming_refill_.schedule(4);
+    }
+
+    // Line Fill buffer written to cache
     void DCache::cacheRefillWrite_() {
         incoming_cache_refill_ = false;
         // Write line buffer into cache
@@ -278,7 +273,7 @@ namespace olympia {
         // Deallocate MSHR entry (after a cycle)
         mshr_file_.erase(current_refill_mshr_entry_);
         ongoing_cache_refill_ = false;
-        // reissue downstream read (also after a cycle)
+        // reissue downstream read (after a cycle)
         uev_issue_downstream_read_.schedule(1);
 
     }

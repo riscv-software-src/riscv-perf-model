@@ -87,8 +87,8 @@ namespace olympia {
             }
             
         private:
-            uint64_t block_address_;
             SimpleCacheLine line_fill_buffer_;
+            uint64_t block_address_;
             bool data_arrived_ = false;
         };
 
@@ -103,10 +103,9 @@ namespace olympia {
         L1Handle l1_cache_;
         const sparta::cache::AddrDecoderIF *addr_decoder_;
         const bool l1_always_hit_;
-        bool busy_;
-        uint32_t cache_latency_;
-        uint64_t cache_line_size_;
-        uint32_t max_mshr_entries_;
+        const uint32_t cache_latency_;
+        const uint64_t cache_line_size_;
+        const uint32_t max_mshr_entries_;
 
         // To keep track of cache refill requests
         bool ongoing_cache_refill_ = false;
@@ -117,24 +116,33 @@ namespace olympia {
         // Ongoing Refill request
         sparta::Buffer<MSHREntryInfoPtr>::iterator current_refill_mshr_entry_;
 
+        // Cache Lookup
         bool cacheLookup_(const MemoryAccessInfoPtr &mem_access_info_ptr);
 
+        // MSHR entry lookup in MSHR File
         sparta::Buffer<MSHREntryInfoPtr>::iterator mshrLookup_(const uint64_t &block_address);
 
+        // Callback function for handling incoming Cache requests from LSU
         void processInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
+        // Callback function for handling incoming cache refill data from BIU
         void getRefillFromBIU_(const InstPtr &inst_ptr);
 
         void incomingRefillBIU_();
 
+        // Allocate MSHR entry in MSHR File
         sparta::Buffer<MSHREntryInfoPtr>::iterator allocateMSHREntry_(uint64_t block_address);
 
+        // Cache Lookup Stage
         void lookupHandler_();
 
+        // Cache Data Read Stage
         void dataHandler_();
 
+        // Issue cache refill request to BIU
         void issueDownstreamRead_();
 
+        // Write Line Buffer data to Cache
         void cacheRefillWrite_();
 
         // Cache Pipeline

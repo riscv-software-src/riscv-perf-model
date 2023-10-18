@@ -246,10 +246,6 @@ namespace olympia
     // Issue/Re-issue ready instructions in the issue queue
     void LSU::issueInst_()
     {
-        if(allow_speculative_load_exec_ && replay_buffer_.size() > replay_buffer_size_){
-            ILOG("Replay buffer full");
-            return;
-        }
         // Instruction issue arbitration
         const LoadStoreInstInfoPtr & win_ptr = arbitrateInstIssue_();
         // NOTE:

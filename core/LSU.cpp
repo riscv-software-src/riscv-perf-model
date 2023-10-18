@@ -477,6 +477,7 @@ namespace olympia
             return;
         }
 
+        if(inst_ptr->getUniqueID() == 33)
         ILOG("Cache ready for " << memory_access_info_ptr);
         updateIssuePriorityAfterCacheReload_(inst_ptr);
 
@@ -542,7 +543,7 @@ namespace olympia
         }
 
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        bool is_store_inst = inst_ptr->isStoreInst();
+        const bool is_store_inst = inst_ptr->isStoreInst();
         ILOG("Completing inst: " << inst_ptr);
         ILOG(mem_access_info_ptr);
 
@@ -862,34 +863,12 @@ namespace olympia
     void LSU::invalidatePipeline_(const InstPtr & inst_ptr){
         ILOG("InvalidatePipeline called");
 
-        if(ldst_pipeline_.isValid(address_calculation_stage_)){
-            auto &pipeline_inst = ldst_pipeline_[address_calculation_stage_]->getInstPtr();
-            if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(address_calculation_stage_);
-            }
-        }
-        if(ldst_pipeline_.isValid(mmu_lookup_stage_)){
-            auto &pipeline_inst = ldst_pipeline_[mmu_lookup_stage_]->getInstPtr();
-            if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(mmu_lookup_stage_);
-            }
-        }
-        if(ldst_pipeline_.isValid(cache_lookup_stage_)){
-            auto &pipeline_inst = ldst_pipeline_[cache_lookup_stage_]->getInstPtr();
-            if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-            }
-        }
-        if(ldst_pipeline_.isValid(cache_read_stage_)){
-            auto &pipeline_inst = ldst_pipeline_[cache_read_stage_]->getInstPtr();
-            if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(cache_read_stage_);
-            }
-        }
-        if(ldst_pipeline_.isValid(complete_stage_)){
-            auto &pipeline_inst = ldst_pipeline_[complete_stage_]->getInstPtr();
-            if(pipeline_inst == inst_ptr){
-                ldst_pipeline_.invalidateStage(complete_stage_);
+        for(int stage = 0; stage <= complete_stage_; stage++){
+            if(ldst_pipeline_.isValid(stage)){
+                auto &pipeline_inst = ldst_pipeline_[stage]->getInstPtr();
+                if(pipeline_inst == inst_ptr){
+                    ldst_pipeline_.invalidateStage(stage);
+                }
             }
         }
     }
@@ -1081,7 +1060,7 @@ namespace olympia
         }
 
         sparta_assert(is_flushed_inst || is_found,
-            "Attempt to rehandle TLB lookup for instruction not yet in the issue queue!");
+            "Attempt to rehandle TLB lookup for instruction not yet in the issue queue! " << inst_ptr);
     }
 
     // Update issue priority after cache reload
@@ -1104,27 +1083,27 @@ namespace olympia
                 // NOTE:
                 // We may not have to re-activate all of the pending cache miss instruction here
                 // However, re-activation must be scheduled somewhere else
+            }
 
-                if (inst_info_ptr->getInstPtr() == inst_ptr) {
-                    // Update issue priority for this outstanding cache miss
-                    if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
-                    {
-                        inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                    }
-                    inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
-
-                    // NOTE:
-                    // The priority should be set in such a way that
-                    // the outstanding miss is always re-issued earlier than other pending miss
-                    // Here we have CACHE_RELOAD > CACHE_PENDING > MMU_RELOAD
-
-                    is_found = true;
+            if (inst_info_ptr->getInstPtr() == inst_ptr) {
+                // Update issue priority for this outstanding cache miss
+                if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+                {
+                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
+                inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
+
+                // NOTE:
+                // The priority should be set in such a way that
+                // the outstanding miss is always re-issued earlier than other pending miss
+                // Here we have CACHE_RELOAD > CACHE_PENDING > MMU_RELOAD
+
+                is_found = true;
             }
         }
 
         sparta_assert(is_flushed_inst || is_found,
-                    "Attempt to rehandle cache lookup for instruction not yet in the issue queue!");
+                    "Attempt to rehandle cache lookup for instruction not yet in the issue queue! " << inst_ptr);
     }
 
     // Update issue priority after store instruction retires

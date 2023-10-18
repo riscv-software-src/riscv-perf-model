@@ -72,7 +72,8 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
   string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
   sparta_named_test(olympia_arch_${ARCH_NAME}_drhy_test olympia
-          -i500K --workload traces/dhry_riscv.zstf
+          -i200K --workload traces/dhry_riscv.zstf
+          --arch-search-dir ${SIM_BASE}/test/sim/lsu_arch_configs/
           --arch ${ARCH_FULL_PATH})
 endforeach()
 
@@ -80,6 +81,7 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
   string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
   sparta_named_test(olympia_arch_${ARCH_NAME}_coremark_test olympia
-          -i500K --workload traces/core_riscv.zstf
+          -i200K --workload traces/core_riscv.zstf
+          --arch-search-dir ${SIM_BASE}/test/sim/lsu_arch_configs/
           --arch ${ARCH_FULL_PATH})
 endforeach()

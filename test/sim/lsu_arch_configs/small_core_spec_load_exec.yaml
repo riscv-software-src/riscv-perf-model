@@ -1,0 +1,9 @@
+#
+# Set up the pipeline for a 2-wide machine
+#
+
+include: small_core.yaml
+
+top.cpu.core0:
+  lsu.params:
+    allow_speculative_load_exec: true

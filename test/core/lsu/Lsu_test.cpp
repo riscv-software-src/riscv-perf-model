@@ -52,6 +52,14 @@ class olympia::LSUTester
     void test_replay_issue_abort(olympia::LSU &lsu, int count) {
         EXPECT_EQUAL(lsu.replay_buffer_.size(), count);
     }
+
+    void test_pipeline_stages(olympia::LSU &lsu) {
+        EXPECT_EQUAL(lsu.address_calculation_stage_, 0);
+        EXPECT_EQUAL(lsu.mmu_lookup_stage_, 1);
+        EXPECT_EQUAL(lsu.cache_lookup_stage_, 3);
+        EXPECT_EQUAL(lsu.cache_read_stage_, 4);
+        EXPECT_EQUAL(lsu.complete_stage_, 6);
+    }
 };
 
 const char USAGE[] =
@@ -75,10 +83,10 @@ void runTest(int argc, char **argv)
         ("output_file",
          sparta::app::named_value<std::vector<std::string>>("output_file", &datafiles),
          "Specifies the output file")
-            ("input-file",
-             sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
-             "Provide a JSON instruction stream",
-             "Provide a JSON file with instructions to run through Execute");
+        ("input-file",
+         sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
+         "Provide a JSON instruction stream",
+         "Provide a JSON file with instructions to run through Execute");
 
     po::positional_options_description& pos_opts = cls.getPositionalOptions();
     pos_opts.add("output_file", -1); // example, look for the <data file> at the end
@@ -101,14 +109,16 @@ void runTest(int argc, char **argv)
                    ilimit,
                    show_factories);
 
+
     cls.populateSimulation(&sim);
     sparta::RootTreeNode* root_node = sim.getRoot();
 
     olympia::LSU *my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
     olympia::LSUTester lsupipe_tester;
+    lsupipe_tester.test_pipeline_stages(*my_lsu);
     cls.runSimulator(&sim, 7);
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
-    cls.runSimulator(&sim, 24);
+    cls.runSimulator(&sim, 30);
     lsupipe_tester.test_replay_issue_abort(*my_lsu, 2); // Abort younger loads
     cls.runSimulator(&sim);
 }

@@ -8,6 +8,9 @@ top.cpu.core0:
   rename.params.num_to_rename: 2
   dispatch.params.num_to_dispatch: 2
   rob.params.num_to_retire:    2
+  lsu.params:
+    cache_lookup_stage_length: 2
+    cache_read_stage_length: 2
   dcache.params:
     l1_size_kb: 16
 

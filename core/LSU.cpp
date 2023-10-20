@@ -27,9 +27,9 @@ namespace olympia
         address_calculation_stage_(0),
         mmu_lookup_stage_(address_calculation_stage_ + p->mmu_lookup_stage_length),
         cache_lookup_stage_(mmu_lookup_stage_ + p->cache_lookup_stage_length),
-        cache_read_stage_(cache_lookup_stage_ + p->cache_read_stage_length),
-        complete_stage_(cache_read_stage_ + 1), // Complete stage is after the cache read stage
-        ldst_pipeline_("LoadStorePipeline",(complete_stage_ + 1), getClock()),
+        cache_read_stage_(cache_lookup_stage_ + 1), // Get data from the cache in the cycle after cache lookup
+        complete_stage_(cache_read_stage_ +  p->cache_read_stage_length), // Complete stage is after the cache read stage
+        ldst_pipeline_("LoadStorePipeline",(complete_stage_ + 1), getClock()), // complete_stage_ + 1 is number of stages
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
         sparta_assert(p->mmu_lookup_stage_length > 0, "MMU lookup stage should atleast be one cycle");

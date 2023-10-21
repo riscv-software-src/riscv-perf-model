@@ -108,7 +108,10 @@ namespace olympia {
             // Cache refill is given priority
             // nack signal is sent to the LSU
             // LSU will have to replay the instruction
-            out_lsu_lookup_nack_.send(1);
+            // out_lsu_lookup_nack_.send(1);
+            // Temporary: send miss instead of nack
+            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+            out_lsu_lookup_ack_.send(memory_access_info_ptr,1);
         }
         else {
             // Append to Cache Pipeline
@@ -198,7 +201,11 @@ namespace olympia {
                 }
                 else {
                     // Cache is unable to handle ld/st request
-                    out_lsu_lookup_nack_.send();
+                    // out_lsu_lookup_nack_.send();
+
+                    // Temporary: send miss instead of nack
+                    mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+                    out_lsu_lookup_ack_.send(mem_access_info_ptr);
                     // Drop instruction from pipeline TODO
                 }
             }

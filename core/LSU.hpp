@@ -319,6 +319,9 @@ namespace olympia
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 
+        // Callback from Scoreboard to inform Operand Readiness
+        void handleOperandIssueCheck_(const InstPtr & inst_ptr);
+
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
 

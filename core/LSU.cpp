@@ -845,7 +845,8 @@ namespace olympia
                 (*iter)->setState(LoadStoreInstInfo::IssueState::READY);
                 ILOG("Aborted younger load " << *iter << (*iter)->getInstPtr()->getTargetVAddr());
                 invalidatePipeline_((*iter)->getInstPtr());
-                (*iter)->getMemoryAccessInfoPtr()->reset();
+                (*iter)->getMemoryAccessInfoPtr()->setPhyAddrStatus(false);
+                (*iter)->getMemoryAccessInfoPtr()->setMMUState(MemoryAccessInfo::MMUState::NO_ACCESS);
                 queue.erase(iter++);
             }else{
                 ++iter;

@@ -48,7 +48,8 @@ namespace olympia {
             mmu_access_state_(MMUState::NO_ACCESS),
 
             // Construct the State object here
-            cache_access_state_(CacheState::NO_ACCESS) {}
+            cache_access_state_(CacheState::NO_ACCESS),
+            cache_data_ready_(false){}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -93,13 +94,6 @@ namespace olympia {
 
         void setDataReady(bool is_ready) {
             cache_data_ready_ = is_ready;
-        }
-
-        void reset() {
-            setCacheState(MemoryAccessInfo::CacheState::NO_ACCESS);
-            setDataReady(false);
-            setMMUState(MemoryAccessInfo::MMUState::NO_ACCESS);
-            setPhyAddrStatus(false);
         }
     private:
         // load/store instruction pointer

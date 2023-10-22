@@ -149,14 +149,16 @@ namespace olympia
     }
 
     // Receive new load/store instruction from Dispatch Unit
-    void LSU::getInstsFromDispatch_(const InstPtr &inst_ptr)
+    void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
-        if(!instInQueue_(ldst_inst_queue_, inst_ptr)){
-            ILOG("New instruction added to the ldst queue " << inst_ptr);
-            allocateInstToQueues_(inst_ptr);
-            lsu_insts_dispatched_++;
-        }
+        ILOG("New instruction added to the ldst queue " << inst_ptr);
+        allocateInstToQueues_(inst_ptr);
+        handleOperandIssueCheck_(inst_ptr);
+        lsu_insts_dispatched_++;
+    }
 
+    // Callback from Scoreboard to inform Operand Readiness
+    void LSU::handleOperandIssueCheck_(const InstPtr &inst_ptr){
         bool all_ready = true; // assume all ready
         // address operand check
         if (!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))) {
@@ -164,8 +166,7 @@ namespace olympia
             const auto &src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
             scoreboard_views_[core_types::RF_INTEGER]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
                                                                              [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                                                                             {
-                                                                                 this->getInstsFromDispatch_(inst_ptr);
+                                                                             { this->handleOperandIssueCheck_(inst_ptr);
                                                                              });
             ILOG("Instruction NOT ready: " << inst_ptr << " Address Bits needed:" << sparta::printBitSet(src_bits));
         }
@@ -179,24 +180,20 @@ namespace olympia
                 if (!scoreboard_views_[rf]->isSet(data_bits)) {
                     all_ready = false;
                     scoreboard_views_[rf]->registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
-                                                                [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                                                                {
-                                                                    this->getInstsFromDispatch_(inst_ptr);
-                                                                });
+                                                                 [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                                                 { this->handleOperandIssueCheck_(inst_ptr);
+                                                                 });
                     ILOG("Instruction NOT ready: " << inst_ptr << " Data Bits needed:" << sparta::printBitSet(data_bits));
                 }
             }else if (false == allow_speculative_load_exec_){ // Its a load
                 // Load instruction is ready is when both address and older stores addresses are known
                 all_ready = allOlderStoresIssued_(inst_ptr);
-                if(all_ready)
-                {
-                    ILOG("Load instruction " << inst_ptr << " is ready to be scheduled");
-                }else{
-                    ILOG("Load instruction " << inst_ptr << " not dispatched");
-                }
             }
         }
 
+        // Load are ready when operands are ready
+        // Stores are ready when both operands and data is ready
+        // If speculative loads are allowed older store are not checked for Physical address
         if (all_ready) {
             // Update issue priority & Schedule an instruction issue event
             updateIssuePriorityAfterNewDispatch_(inst_ptr);

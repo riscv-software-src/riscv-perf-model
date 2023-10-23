@@ -470,7 +470,6 @@ namespace olympia
             return;
         }
 
-        if(inst_ptr->getUniqueID() == 33)
         ILOG("Cache ready for " << memory_access_info_ptr);
         updateIssuePriorityAfterCacheReload_(inst_ptr);
 

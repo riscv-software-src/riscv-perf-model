@@ -47,7 +47,7 @@ index a3f932a..a955816 100644
      include_directories(/usr/local/include /usr/local/include/libelf /opt/homebrew/include /opt/homebrew/include/libelf)
      target_link_libraries(dromajo_cosim -L/usr/local/lib -L/opt/homebrew/lib -lelf)
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 2d8e9cc..a0a4bab 100644
+index 2d8e9cc..df8b09d 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
 @@ -52,6 +52,13 @@
@@ -72,96 +72,94 @@ index 2d8e9cc..a0a4bab 100644
      n_cycles++;
      /* Note: we assume NULL is represented as a zero number */
      code_ptr          = NULL;
-@@ -1807,6 +1815,92 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+@@ -1807,6 +1815,90 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
          }
          /* update PC for next instruction */
      jump_insn:;
 +
++        if(s->machine->common.vm_stf_trace) { //if cmd line specifies tracing
 +
-+        // HERE HERE stf trace support
-+      if(s->machine->common.vm_stf_trace) { //if cmd line specifies tracing
++            int hartid = s->mhartid; //FIXME
++            RISCVCPUState *cpu = s->machine->cpu_state[hartid];
 +
-+        int hartid = 0; //FIXME
-+        RISCVCPUState *cpu = s->machine->cpu_state[hartid];
++            bool isStart = insn == START_TRACE_OPC;
++            bool isStop  = insn == STOP_TRACE_OPC;
 +
-+        bool isStart = insn == START_TRACE_OPC;
-+        bool isStop  = insn == STOP_TRACE_OPC;
++            if(isStart) {
++                s->machine->common.vm_stf_trace_enabled = true;
++                fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Started at 0x%lx\n", GET_PC());
 +
-+        if(isStart) {
-+          s->machine->common.vm_stf_trace_enabled = true;
-+          fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Started at 0x%lx\n", GET_PC());
++                s->machine->common.vm_stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;
 +
-+          s->machine->common.vm_stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;
++                if((bool)stf_writer == false) {
++                    stf_writer.open(s->machine->common.vm_stf_trace);
++                    stf_writer.addTraceInfo(stf::TraceInfoRecord(
++                               stf::STF_GEN::STF_GEN_DROMAJO, 1, 1, 0,"Trace from Dromajo"));
++                    stf_writer.setISA(stf::ISA::RISCV);
++                    stf_writer.setHeaderIEM(stf::INST_IEM::STF_INST_IEM_RV64);
++                    stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_RV64);
++                    stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_PHYSICAL_ADDRESS);
++                    stf_writer.setHeaderPC(GET_PC());
++                    stf_writer.finalizeHeader();
++                }
++            } else if(isStop) {
 +
-+          if((bool)stf_writer == false) {
-+            stf_writer.open(s->machine->common.vm_stf_trace);
-+            stf_writer.addTraceInfo(stf::TraceInfoRecord(
-+                       stf::STF_GEN::STF_GEN_DROMAJO, 1, 1, 0,"Trace from Dromajo"));
-+            stf_writer.setISA(stf::ISA::RISCV);
-+            stf_writer.setHeaderIEM(stf::INST_IEM::STF_INST_IEM_RV64);
-+            stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_RV64);
-+            stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_PHYSICAL_ADDRESS);
-+            stf_writer.setHeaderPC(GET_PC());
-+            stf_writer.finalizeHeader();
-+          }
-+        } else if(isStop) {
-+          s->machine->common.vm_stf_trace_enabled = false;
-+          fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Stopped at 0x%lx\n", GET_PC());
-+          fprintf(dromajo_stderr, ">>> DROMAJO: Traced %ld insts\n",
-+                                   s->machine->common.vm_stf_count);
-+          stf_writer.close();
-+        }
-+
-+        if(!isStart && s->machine->common.vm_stf_trace_enabled) {
-+
-+          //int priv = riscv_get_priv_level(cpu);
-+          uint32_t insn_raw = insn;
-+          uint64_t last_pc  = virt_machine_get_pc(s->machine, hartid);
-+
-+          if(s->machine->common.vm_no_stf_priv_check
-+             || ((s->priv == 0)
-+                 && (cpu->pending_exception == -1)
-+                 && (s->machine->common.vm_stf_prog_asid == ((cpu->satp >> 4) & 0xFFFF))))
-+          {
-+            ++s->machine->common.vm_stf_count;
-+            const uint32_t inst_width = ((insn_raw & 0x3) == 0x3) ? 4 : 2;
-+            bool skip_record = false;
-+            if(cpu->info != ctf_nop) {
-+              stf_writer << stf::InstPCTargetRecord(GET_PC());
-+            } else {
-+
-+              if(GET_PC() != last_pc + inst_width) {
-+                  skip_record = true;
-+              }
++                s->machine->common.vm_stf_trace_enabled = false;
++                fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Stopped at 0x%lx\n", GET_PC());
++                fprintf(dromajo_stderr, ">>> DROMAJO: Traced %ld insts\n",
++                                         s->machine->common.vm_stf_count);
++                stf_writer.close();
 +            }
 +
-+            if(false == skip_record)
-+            {
-+              // If the last instruction were a load/store,
-+              // record the last vaddr, size, and if it were a
-+              // read or write.
-+              if(cpu->last_data_vaddr
-+                   != std::numeric_limits<decltype(cpu->last_data_vaddr)>::max())
-+              {
-+                  stf_writer << stf::InstMemAccessRecord(cpu->last_data_vaddr,
-+                                                         cpu->last_data_size,
-+                                                         0,
-+                                                         (cpu->last_data_type == 0) ?
-+                                                         stf::INST_MEM_ACCESS::READ :
-+                                                         stf::INST_MEM_ACCESS::WRITE);
-+                  stf_writer << stf::InstMemContentRecord(0); // empty content for now
-+              }
++            if(!isStart && s->machine->common.vm_stf_trace_enabled) {
 +
-+              if(inst_width == 4) {
-+                  stf_writer << stf::InstOpcode32Record(insn_raw);
-+              }
-+              else {
-+                  stf_writer << stf::InstOpcode16Record(insn_raw & 0xFFFF);
-+              }
++                uint32_t insn_raw = insn;
++                uint64_t last_pc  = virt_machine_get_pc(s->machine, hartid);
++
++                if(s->machine->common.vm_no_stf_priv_check
++                   || ((s->priv == 0)
++                       && (cpu->pending_exception == -1)
++                       && (s->machine->common.vm_stf_prog_asid == ((cpu->satp >> 4) & 0xFFFF))))
++                {
++                    ++s->machine->common.vm_stf_count;
++                    const uint32_t inst_width = ((insn_raw & 0x3) == 0x3) ? 4 : 2;
++                    bool skip_record = false;
++                    if(cpu->info != ctf_nop) {
++                        stf_writer << stf::InstPCTargetRecord(GET_PC());
++                    } else {
++
++                      if(GET_PC() != last_pc + inst_width) {
++                          skip_record = true;
++                      }
++                    }
++
++                    if(false == skip_record)
++                    {
++                        // If the last instruction were a load/store,
++                        // record the last vaddr, size, and if it were a
++                        // read or write.
++                        if(cpu->last_data_vaddr
++                            != std::numeric_limits<decltype(cpu->last_data_vaddr)>::max())
++                        {
++                            stf_writer << stf::InstMemAccessRecord(cpu->last_data_vaddr,
++                                                                   cpu->last_data_size,
++                                                                   0,
++                                                                   (cpu->last_data_type == 0) ?
++                                                                   stf::INST_MEM_ACCESS::READ :
++                                                                   stf::INST_MEM_ACCESS::WRITE);
++                            stf_writer << stf::InstMemContentRecord(0); // empty content for now
++                        }
++
++                        if(inst_width == 4) {
++                            stf_writer << stf::InstOpcode32Record(insn_raw);
++                        }
++                        else {
++                            stf_writer << stf::InstOpcode16Record(insn_raw & 0xFFFF);
++                        }
++                    }
++                }
 +            }
-+          }
 +        }
-+      }
      } /* end of main loop */
  illegal_insn:
      s->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;

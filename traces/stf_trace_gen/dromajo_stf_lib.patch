@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index a3f932a..9c93d56 100644
+index a3f932a..a955816 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -39,7 +39,7 @@
@@ -20,7 +20,7 @@ index a3f932a..9c93d56 100644
          -g
          -Wall
          -Wno-parentheses
-@@ -138,6 +138,22 @@ else ()
+@@ -138,6 +138,25 @@ else ()
    target_link_libraries(dromajo_cosim_test dromajo_cosim)
  endif ()
  
@@ -35,6 +35,9 @@ index a3f932a..9c93d56 100644
 +target_link_directories(dromajo PRIVATE ${STF_LIB_BASE}/build/lib)
 +target_link_libraries(dromajo ${STF_LINK_LIBS})
 +
++target_link_directories(dromajo_cosim PRIVATE ${STF_LIB_BASE}/build/lib)
++target_link_libraries(dromajo_cosim ${STF_LINK_LIBS})
++
 +# Add STF library to the build
 +add_subdirectory (${STF_LIB_BASE})
 +
@@ -44,7 +47,7 @@ index a3f932a..9c93d56 100644
      include_directories(/usr/local/include /usr/local/include/libelf /opt/homebrew/include /opt/homebrew/include/libelf)
      target_link_libraries(dromajo_cosim -L/usr/local/lib -L/opt/homebrew/lib -lelf)
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 2d8e9cc..7c54bfd 100644
+index 2d8e9cc..a0a4bab 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
 @@ -52,6 +52,13 @@
@@ -83,12 +86,12 @@ index 2d8e9cc..7c54bfd 100644
 +
 +        bool isStart = insn == START_TRACE_OPC;
 +        bool isStop  = insn == STOP_TRACE_OPC;
-+        
++
 +        if(isStart) {
 +          s->machine->common.vm_stf_trace_enabled = true;
 +          fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Started at 0x%lx\n", GET_PC());
 +
-+          s->machine->common.vm_stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;          
++          s->machine->common.vm_stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;
 +
 +          if((bool)stf_writer == false) {
 +            stf_writer.open(s->machine->common.vm_stf_trace);
@@ -148,7 +151,7 @@ index 2d8e9cc..7c54bfd 100644
 +                                                         stf::INST_MEM_ACCESS::WRITE);
 +                  stf_writer << stf::InstMemContentRecord(0); // empty content for now
 +              }
-+              
++
 +              if(inst_width == 4) {
 +                  stf_writer << stf::InstOpcode32Record(insn_raw);
 +              }
@@ -163,10 +166,19 @@ index 2d8e9cc..7c54bfd 100644
  illegal_insn:
      s->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;
 diff --git a/include/machine.h b/include/machine.h
-index c359091..ed6dac8 100644
+index c359091..41b3b01 100644
 --- a/include/machine.h
 +++ b/include/machine.h
-@@ -142,6 +142,8 @@ typedef struct {
+@@ -41,6 +41,8 @@
+ #include <stdint.h>
+ 
+ #include "json.h"
++#include "stf-inc/stf_writer.hpp"
++#include "stf-inc/stf_record_types.hpp"
+ 
+ typedef struct RISCVMachine RISCVMachine;
+ 
+@@ -142,6 +144,8 @@ typedef struct {
      VMEthEntry       tab_eth[MAX_ETH_DEVICE];
      int              eth_count;
      uint64_t         htif_base_addr;
@@ -175,12 +187,12 @@ index c359091..ed6dac8 100644
  
      char *cmdline;      /* bios or kernel command line */
      BOOL  accel_enable; /* enable acceleration (KVM) */
-@@ -206,6 +208,13 @@ typedef struct VirtMachine {
+@@ -206,6 +210,13 @@ typedef struct VirtMachine {
      uint64_t maxinsns;
      uint64_t trace;
  
 +    const char *   vm_stf_trace = nullptr; //stf file
-+    bool           vm_stf_trace_enabled; 
++    bool           vm_stf_trace_enabled;
 +    bool           vm_no_stf_priv_check; //disable privilege checks in trace generation
 +    uint64_t       vm_stf_prog_asid;
 +    uint64_t       vm_stf_count;
@@ -219,7 +231,7 @@ index c13239a..0cb0754 100644
  FILE *simpoint_bb_file = nullptr;
  int   simpoint_roi     = 0;  // start without ROI enabled
 diff --git a/src/dromajo_cosim.cpp b/src/dromajo_cosim.cpp
-index 24faded..2ae8bbf 100644
+index 24faded..7e09fcb 100644
 --- a/src/dromajo_cosim.cpp
 +++ b/src/dromajo_cosim.cpp
 @@ -27,6 +27,11 @@
@@ -229,7 +241,7 @@ index 24faded..2ae8bbf 100644
 +//STF: cosim shares riscv_cpu_interp, dromajo_template.h
 +#include "stf-inc/stf_writer.hpp"
 +#include "stf-inc/stf_record_types.hpp"
-+stf::STFWriter stf_writer; 
++stf::STFWriter stf_writer;
 +
  #ifdef GOLDMEM_INORDER
  void check_inorder_load(int cid, uint64_t addr, uint8_t sz, uint64_t ld_data, bool io_map);

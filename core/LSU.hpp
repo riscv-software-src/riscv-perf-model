@@ -28,6 +28,7 @@
 #include "MemoryAccessInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"
+#include <sparta/events/SchedulingPhases.hpp>
 
 namespace olympia
 {
@@ -223,13 +224,13 @@ namespace olympia
                 {&unit_port_set_, "in_mmu_lookup_ack", 0};
 
         sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_
-                {&unit_port_set_, "in_cache_lookup_req", 1};
+                {&unit_port_set_, "in_cache_lookup_req", sparta::SchedulingPhase::Update, 0};
 
         sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_
-                {&unit_port_set_, "in_cache_lookup_ack", 0};
+                {&unit_port_set_, "in_cache_lookup_ack", sparta::SchedulingPhase::Update, 0};
 
-        sparta::SignalInPort in_cache_free_req_
-                {&unit_port_set_, "in_cache_free_req", 0};
+        sparta::SignalInPort in_cache_lookup_nack_
+                {&unit_port_set_, "in_cache_lookup_nack", 0};
 
         sparta::SignalInPort in_mmu_free_req_
                 {&unit_port_set_, "in_mmu_free_req", 0};

@@ -12,6 +12,7 @@
 #include "cache/TreePLRUReplacement.hpp"
 #include "MemoryAccessInfo.hpp"
 #include <cache/AddrDecoderIF.hpp>
+#include <sparta/events/SchedulingPhases.hpp>
 #include <sparta/utils/SpartaSharedPointer.hpp>
 
 namespace olympia {
@@ -156,7 +157,7 @@ namespace olympia {
                 {&unit_port_set_, "in_lsu_lookup_req", 0};
 
         sparta::DataInPort<InstPtr> in_biu_ack_
-                {&unit_port_set_, "in_biu_ack", 0};
+                {&unit_port_set_, "in_biu_ack", sparta::SchedulingPhase::Update, 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -176,13 +177,13 @@ namespace olympia {
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::UniqueEvent<> uev_issue_downstream_read_{&unit_event_set_, "issue_downstream_read",
+        sparta::UniqueEvent<sparta::SchedulingPhase::Update> uev_issue_downstream_read_{&unit_event_set_, "issue_downstream_read",
                 CREATE_SPARTA_HANDLER(DCache, issueDownstreamRead_)};
 
-        sparta::UniqueEvent<> uev_cache_refill_write_{&unit_event_set_, "cache_refill_write",
+        sparta::UniqueEvent<sparta::SchedulingPhase::Update> uev_cache_refill_write_{&unit_event_set_, "cache_refill_write",
                 CREATE_SPARTA_HANDLER(DCache, cacheRefillWrite_)};
 
-        sparta::UniqueEvent<> uev_biu_incoming_refill_{&unit_event_set_, "biu_incoming_refill",
+        sparta::UniqueEvent<sparta::SchedulingPhase::Update> uev_biu_incoming_refill_{&unit_event_set_, "biu_incoming_refill",
                 CREATE_SPARTA_HANDLER(DCache, incomingRefillBIU_)};
 
         ////////////////////////////////////////////////////////////////////////////////

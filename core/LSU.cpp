@@ -510,8 +510,8 @@ namespace olympia
             return;
         }
 
-        ILOG("Data ready set for " << mem_access_info_ptr);
-        mem_access_info_ptr->setDataReady(true);
+        // ILOG("Data ready set for " << mem_access_info_ptr);
+        // mem_access_info_ptr->setDataReady(true);
 
         if (isReadyToIssueInsts_())
         {

@@ -1,4 +1,6 @@
 #include "DCache.hpp"
+#include "MemoryAccessInfo.hpp"
+#include <sparta/events/SchedulingPhases.hpp>
 
 namespace olympia {
     const char DCache::name[] = "cache";
@@ -31,13 +33,17 @@ namespace olympia {
         cache_pipeline_.setContinuing(true);
 
         // Pipeline Handlers
-        cache_pipeline_.registerHandlerAtStage
+        cache_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
             (static_cast<uint32_t>(PipelineStage::LOOKUP),
              CREATE_SPARTA_HANDLER(DCache, lookupHandler_));
 
-        cache_pipeline_.registerHandlerAtStage
+        cache_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
             (static_cast<uint32_t>(PipelineStage::DATA_READ),
              CREATE_SPARTA_HANDLER(DCache, dataHandler_));
+
+        // Set precedence
+        // Cache Read stage must happen before Cache Lookup stage
+        // cache_pipeline_.setDefaultStagePrecedence(sparta::Pipeline<MemoryAccessInfoPtr>::Precedence::BACKWARD);
     }
 
     // L1 Cache lookup
@@ -217,21 +223,22 @@ namespace olympia {
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA_READ);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto & inst_target_addr = inst_ptr->getRAdr();
+        //const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+        //const auto & inst_target_addr = inst_ptr->getRAdr();
 
         // Check if instruction is a store
-        bool is_store_inst = inst_ptr->isStoreInst();
+        //bool is_store_inst = inst_ptr->isStoreInst();
 
         if  (mem_access_info_ptr->isCacheHit()) {
           
-            auto cache_line = l1_cache_->getLine(inst_target_addr);
-            if (is_store_inst) {
+            // auto cache_line = l1_cache_->getLine(inst_target_addr);
+            // if (is_store_inst) {
+                // What happens in case of mshr hits; cacheline would be a nullptr
                 // Write to cache line
-                cache_line->setModified(false);
-            }
+                // cache_line->setModified(false);
+            //}
             // update replacement information
-            l1_cache_->touchMRU(*cache_line);
+            // l1_cache_->touchMRU(*cache_line);
 
             mem_access_info_ptr->setDataReady(true);
 
@@ -255,6 +262,10 @@ namespace olympia {
         // Requests are sent in FIFO order
         current_refill_mshr_entry_ = mshr_file_.begin();
 
+        if(current_refill_mshr_entry_ == mshr_file_.end()){
+            return;
+        }
+
         // Only 1 ongoing refill request at any time
         ongoing_cache_refill_ = true;
 
@@ -271,11 +282,11 @@ namespace olympia {
         // Initiate write to downstream in case victim line TODO
         auto line_buffer = (*current_refill_mshr_entry_)->getLineFillBuffer();
         auto block_address = (*current_refill_mshr_entry_)->getBlockAddress();
-        auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(block_address);
+        auto l1_cache_line = l1_cache_->getLineForReplacementWithInvalidCheck(block_address);
 
         // Write line buffer data onto cache line
-        (*l1_cache_line) = line_buffer;
-        l1_cache_->allocateWithMRUUpdate(*l1_cache_line, block_address);
+        l1_cache_line = line_buffer;
+        l1_cache_->allocateWithMRUUpdate(l1_cache_line, block_address);
 
         // Deallocate MSHR entry (after a cycle)
         mshr_file_.erase(current_refill_mshr_entry_);

@@ -187,6 +187,18 @@ namespace olympia {
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
                 }
 
+                if(!is_store_inst && !data_arrived) {
+                    // Check if LMQ is full
+                    if((*mshr_idx)->isLoadMissQueueFull()) {
+                        // nack
+                        // Temporary: send miss instead of nack
+                        mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+                        return;
+                    }
+                    // Enqueue Load in LMQ
+                    (*mshr_idx)->enqueueLoad(mem_access_info_ptr);
+                }
+
                 // Send Lookup Ack to LSU and proceed to next stage
                 out_lsu_lookup_ack_.send(mem_access_info_ptr);
 
@@ -201,6 +213,17 @@ namespace olympia {
                         // Update Line fill buffer
                         (*mshr_idx)->setModified(true);
                         mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+                    } 
+                    else {
+                        // Check if LMQ is full
+                        if((*mshr_idx)->isLoadMissQueueFull()) {
+                            // nack
+                            // Temporary: send miss instead of nack
+                            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+                            return;
+                        }
+                        // Enqueue Load in LMQ
+                        (*mshr_idx)->enqueueLoad(mem_access_info_ptr);
                     }
                     // Send Lookup Ack to LSU and proceed to next stage
                     out_lsu_lookup_ack_.send(mem_access_info_ptr);
@@ -223,27 +246,9 @@ namespace olympia {
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA_READ);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
-        //const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        //const auto & inst_target_addr = inst_ptr->getRAdr();
-
-        // Check if instruction is a store
-        //bool is_store_inst = inst_ptr->isStoreInst();
 
         if  (mem_access_info_ptr->isCacheHit()) {
-          
-            // auto cache_line = l1_cache_->getLine(inst_target_addr);
-            // if (is_store_inst) {
-                // What happens in case of mshr hits; cacheline would be a nullptr
-                // Write to cache line
-                // cache_line->setModified(false);
-            //}
-            // update replacement information
-            // l1_cache_->touchMRU(*cache_line);
-
             mem_access_info_ptr->setDataReady(true);
-
-            // Send request back to LSU
-            out_lsu_lookup_req_.send(mem_access_info_ptr);
         }
         else {
             // Initiate read to downstream

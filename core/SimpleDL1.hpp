@@ -39,6 +39,7 @@ namespace olympia
             BasicCacheItem::operator=(rhs);
             line_size_ = rhs.line_size_;
             valid_ = rhs.valid_;
+            modified_ = rhs.modified_;
 
             return *this;
         }

@@ -12,7 +12,8 @@ namespace olympia {
             l1_always_hit_(p->l1_always_hit),
             cache_latency_(p->cache_latency),
             cache_line_size_(p->l1_line_size),
-            max_mshr_entries_(p->mshr_entries)
+            max_mshr_entries_(p->mshr_entries),
+            load_miss_queue_size_(p->load_miss_queue_size)
     {
         // Port config
         in_lsu_lookup_req_.registerConsumerHandler
@@ -40,10 +41,13 @@ namespace olympia {
         cache_pipeline_.registerHandlerAtStage<sparta::SchedulingPhase::Update>
             (static_cast<uint32_t>(PipelineStage::DATA_READ),
              CREATE_SPARTA_HANDLER(DCache, dataHandler_));
+    }
 
-        // Set precedence
-        // Cache Read stage must happen before Cache Lookup stage
-        // cache_pipeline_.setDefaultStagePrecedence(sparta::Pipeline<MemoryAccessInfoPtr>::Precedence::BACKWARD);
+    DCache::~DCache() {
+        DLOG(
+            getContainer()->getLocation()
+            << ": " << mshr_entry_allocator.getNumAllocated() << " MSHREntryInfo objects allocated/created"
+        );
     }
 
     // L1 Cache lookup
@@ -102,7 +106,10 @@ namespace olympia {
     sparta::Buffer<DCache::MSHREntryInfoPtr>::iterator DCache::allocateMSHREntry_(uint64_t block_address){
 
         MSHREntryInfoPtr mshr_entry = sparta::allocate_sparta_shared_pointer<MSHREntryInfo>(mshr_entry_allocator,
-                                                                                            block_address, cache_line_size_);
+                                                                                            block_address, 
+                                                                                            cache_line_size_, 
+                                                                                            load_miss_queue_size_,
+                                                                                            getClock());
         auto it = mshr_file_.push_back(mshr_entry);
         return it;
     }
@@ -110,6 +117,7 @@ namespace olympia {
     // Handle request from the LSU
     void DCache::processInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
         // Check if there is an incoming cache refill request from BIU
+        ILOG("Incoming Instruction from LSU " << memory_access_info_ptr->getInstPtr());
         if(incoming_cache_refill_) {
             // Cache refill is given priority
             // nack signal is sent to the LSU
@@ -118,9 +126,12 @@ namespace olympia {
             // Temporary: send miss instead of nack
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
             out_lsu_lookup_ack_.send(memory_access_info_ptr,1);
+
+            ILOG("Unable to handle LSU request. Incoming Cache refill");
         }
         else {
             // Append to Cache Pipeline
+            ILOG("Cache request appended to pipeline");
             cache_pipeline_.append(memory_access_info_ptr); // Data read stage executes in the next cycle
         }
     }
@@ -139,11 +150,20 @@ namespace olympia {
     }
 
     void DCache::incomingRefillBIU_() {
+        ILOG("Incoming Refill from BIU");
         // temporary event
         incoming_cache_refill_ = true;
         
         // Write cache line to line fill buffer of ongoing mshr entry refill request
         (*current_refill_mshr_entry_)->setDataArrived(true);
+
+        // Wake up all dependant loads
+        MemoryAccessInfoPtr dependant_load_inst = (*current_refill_mshr_entry_)->dequeueLoad();
+        while(dependant_load_inst != nullptr) {
+            out_lsu_lookup_req_.send(dependant_load_inst);
+            dependant_load_inst = (*current_refill_mshr_entry_)->dequeueLoad();
+        }
+        ILOG("Waking up dependant load instructions");
 
         // Proceed to next stage (next cycle)
         uev_cache_refill_write_.schedule(1);
@@ -158,6 +178,8 @@ namespace olympia {
         const auto & inst_target_addr = inst_ptr->getRAdr();
         const uint64_t block_addr = addr_decoder_->calcBlockAddr(inst_target_addr);
 
+        ILOG("Cache Lookup Stage, Instruction: " << mem_access_info_ptr->getInstPtr());
+
         // Check if instruction is a store
         const bool is_store_inst = inst_ptr->isStoreInst();
         
@@ -169,73 +191,79 @@ namespace olympia {
             out_lsu_lookup_ack_.send(mem_access_info_ptr);
         }
         else{
-          
             // Check MSHR Entries for address match
             auto mshr_idx = mshrLookup_(block_addr);
 
             // if address matches
             if(mshr_idx != mshr_file_.end()){
+                ILOG("MSHR Entry Exists");
 
                 mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
                 bool data_arrived = (*mshr_idx)->getDataArrived();
 
-                // if LD and data arrived, Hit
                 // All ST are considered Hit
-                if(data_arrived || is_store_inst) {
+                if(is_store_inst) {
                     // Update Line fill buffer only if ST
-                    (*mshr_idx)->setModified(is_store_inst);
+                    ILOG("Write to Line fill buffer (ST)");
+                    (*mshr_idx)->setModified(true);
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-                }
+                } else {
+                    if (data_arrived) {
+                        ILOG("Hit on Line fill buffer (LD)");
+                        mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+                    } else {
+                        // Check if LMQ is full
+                        if((*mshr_idx)->isLoadMissQueueFull()) {
+                            ILOG("Load miss and LMQ full (nack)");
+                            // nack
+                            // Temporary: send miss instead of nack
+                            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+                            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+                            return;
+                        }
 
-                if(!is_store_inst && !data_arrived) {
-                    // Check if LMQ is full
-                    if((*mshr_idx)->isLoadMissQueueFull()) {
-                        // nack
-                        // Temporary: send miss instead of nack
-                        mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-                        return;
+                        ILOG("Load miss and enqueue load instruction to LMQ");
+                        // Enqueue Load in LMQ
+                        (*mshr_idx)->enqueueLoad(mem_access_info_ptr);
                     }
-                    // Enqueue Load in LMQ
-                    (*mshr_idx)->enqueueLoad(mem_access_info_ptr);
                 }
 
-                // Send Lookup Ack to LSU and proceed to next stage
+                ILOG("Send Lookup Ack to LSU"); // Send Lookup Ack to LSU and proceed to next stage
                 out_lsu_lookup_ack_.send(mem_access_info_ptr);
 
             }
             else {
                 // Check if MSHR entry available
                 if(mshr_file_.numFree() > 0) {
+                    ILOG("Allocate MSHR Entry");
                     auto mshr_idx = allocateMSHREntry_(block_addr);
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
 
                     if(is_store_inst) {
+                        ILOG("Write to Line fill buffer (ST)");
                         // Update Line fill buffer
                         (*mshr_idx)->setModified(true);
                         mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
                     } 
                     else {
-                        // Check if LMQ is full
-                        if((*mshr_idx)->isLoadMissQueueFull()) {
-                            // nack
-                            // Temporary: send miss instead of nack
-                            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-                            return;
-                        }
+                        // LMQ cannot be full
+                        assert(!(*mshr_idx)->isLoadMissQueueFull());
+                        ILOG("Load miss and enqueue load inst to LMQ");
                         // Enqueue Load in LMQ
                         (*mshr_idx)->enqueueLoad(mem_access_info_ptr);
                     }
                     // Send Lookup Ack to LSU and proceed to next stage
+                    ILOG("Send Lookup Ack to LSU"); // Send Lookup Ack to LSU and proceed to next stage
                     out_lsu_lookup_ack_.send(mem_access_info_ptr);
                 }
                 else {
                     // Cache is unable to handle ld/st request
                     // out_lsu_lookup_nack_.send();
 
+                    ILOG("No MSHR Entry available (nack)");
                     // Temporary: send miss instead of nack
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
                     out_lsu_lookup_ack_.send(mem_access_info_ptr);
-                    // Drop instruction from pipeline TODO
                 }
             }
         }
@@ -246,11 +274,14 @@ namespace olympia {
     {
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA_READ);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
+        ILOG("Cache Data Stage, Instruction: " << mem_access_info_ptr->getInstPtr());
 
         if  (mem_access_info_ptr->isCacheHit()) {
+            ILOG("Set DataReady to true");
             mem_access_info_ptr->setDataReady(true);
         }
         else {
+            ILOG("Issue Downstream read");
             // Initiate read to downstream
             uev_issue_downstream_read_.schedule(sparta::Clock::Cycle(0));
         }
@@ -261,6 +292,7 @@ namespace olympia {
         // If there is no ongoing refill request
         // Issue MSHR Refill request to downstream
         if(ongoing_cache_refill_) {
+            ILOG("Cannot issue downstream read; ongoing cache refill")
             return;
         }
 
@@ -268,6 +300,7 @@ namespace olympia {
         current_refill_mshr_entry_ = mshr_file_.begin();
 
         if(current_refill_mshr_entry_ == mshr_file_.end()){
+            ILOG("No MSHR entry to be issued");
             return;
         }
 
@@ -278,6 +311,7 @@ namespace olympia {
         // out_biu_req_.send(cache_line);
         // (Temporary) call event after fixed time (4 cycles)
         uev_biu_incoming_refill_.schedule(4);
+        ILOG("Downstream read issued");
     }
 
     // Line Fill buffer written to cache
@@ -285,14 +319,15 @@ namespace olympia {
         incoming_cache_refill_ = false;
         // Write line buffer into cache
         // Initiate write to downstream in case victim line TODO
-        auto line_buffer = (*current_refill_mshr_entry_)->getLineFillBuffer();
+        // auto line_buffer = (*current_refill_mshr_entry_)->getLineFillBuffer();
         auto block_address = (*current_refill_mshr_entry_)->getBlockAddress();
-        auto l1_cache_line = l1_cache_->getLineForReplacementWithInvalidCheck(block_address);
+        auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(block_address);
 
         // Write line buffer data onto cache line
-        l1_cache_line = line_buffer;
-        l1_cache_->allocateWithMRUUpdate(l1_cache_line, block_address);
+        (*l1_cache_line).setModified((*current_refill_mshr_entry_)->isModified());
+        l1_cache_->allocateWithMRUUpdate(*l1_cache_line, block_address);
 
+        ILOG("Deallocate MSHR Entry");
         // Deallocate MSHR entry (after a cycle)
         mshr_file_.erase(current_refill_mshr_entry_);
         ongoing_cache_refill_ = false;

@@ -35,6 +35,8 @@ namespace olympia {
         static const char name[];
         DCache(sparta::TreeNode *n, const CacheParameterSet *p);
 
+        ~DCache();
+
         class MSHREntryInfo;
         
         using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
@@ -48,11 +50,14 @@ namespace olympia {
 
         class MSHREntryInfo {
         public:
-            MSHREntryInfo(const uint64_t& block_address, const uint64_t& line_size, const uint32_t load_miss_queue_size, sparta::Clock* clock):
+            MSHREntryInfo(const uint64_t& block_address, const uint64_t& line_size, const uint32_t load_miss_queue_size, const sparta::Clock* clock):
                 line_fill_buffer_(line_size), 
                 block_address_(block_address),
                 load_miss_queue_("load_miss_queue", load_miss_queue_size, clock)
             { line_fill_buffer_.setValid(true); }
+
+            ~MSHREntryInfo() {
+            }
 
             const uint64_t & getBlockAddress() const {
                 return block_address_;
@@ -105,7 +110,7 @@ namespace olympia {
                 return mem_access_info_ptr;
             }
 
-            const bool isLoadMissQueueFull() {
+            bool isLoadMissQueueFull() const{
                 return (load_miss_queue_.numFree() == 0);
             }
             
@@ -130,6 +135,7 @@ namespace olympia {
         const uint32_t cache_latency_;
         const uint64_t cache_line_size_;
         const uint32_t max_mshr_entries_;
+        const uint32_t load_miss_queue_size_;
 
         // To keep track of cache refill requests
         bool ongoing_cache_refill_ = false;

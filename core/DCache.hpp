@@ -29,6 +29,7 @@ namespace olympia {
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
             PARAMETER(uint32_t, mshr_entries, 8, "Number of MSHR Entries")
+            PARAMETER(uint32_t, load_miss_queue_size, 8, "Load miss queue size")
         };
 
         static const char name[];
@@ -47,8 +48,11 @@ namespace olympia {
 
         class MSHREntryInfo {
         public:
-            MSHREntryInfo(const uint64_t& block_address, const uint64_t& line_size):
-                line_fill_buffer_(line_size), block_address_(block_address){ line_fill_buffer_.setValid(true); }
+            MSHREntryInfo(const uint64_t& block_address, const uint64_t& line_size, const uint32_t load_miss_queue_size, sparta::Clock* clock):
+                line_fill_buffer_(line_size), 
+                block_address_(block_address),
+                load_miss_queue_("load_miss_queue", load_miss_queue_size, clock)
+            { line_fill_buffer_.setValid(true); }
 
             const uint64_t & getBlockAddress() const {
                 return block_address_;
@@ -86,10 +90,29 @@ namespace olympia {
             const bool& getDataArrived() {
                 return data_arrived_;
             }
+
+            void enqueueLoad(MemoryAccessInfoPtr mem_access_info_ptr) {
+                load_miss_queue_.push(mem_access_info_ptr);
+            }
+
+            MemoryAccessInfoPtr dequeueLoad() {
+                if (load_miss_queue_.empty())
+                    return nullptr;
+
+                MemoryAccessInfoPtr mem_access_info_ptr = load_miss_queue_.front();
+                load_miss_queue_.pop();
+
+                return mem_access_info_ptr;
+            }
+
+            const bool isLoadMissQueueFull() {
+                return (load_miss_queue_.numFree() == 0);
+            }
             
         private:
             SimpleCacheLine line_fill_buffer_;
             uint64_t block_address_;
+            sparta::Queue<MemoryAccessInfoPtr> load_miss_queue_;
             bool data_arrived_ = false;
         };
 

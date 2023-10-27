@@ -1,0 +1,38 @@
+#
+# Set up the pipeline for a 2-wide machine
+#
+
+top.cpu.core0:
+  fetch.params.num_to_fetch:   2
+  decode.params.num_to_decode: 2
+  rename.params.num_to_rename: 2
+  dispatch.params.num_to_dispatch: 2
+  rob.params.num_to_retire:    2
+  lsu.params:
+    allow_speculative_load_exec: false
+  dcache.params:
+    l1_size_kb: 16
+
+top.cpu.core0.extension.core_extensions:
+  execution_topology:
+    [["alu", "1"],
+     ["fpu", "1"],
+     ["br",  "1"]]
+
+top.cpu.core0.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+    [["",     "alu0", "fpu0", "br0", "lsu"],   # <-- TO
+     ["alu0",    "1",    "1",   "1",   "1"],
+     ["fpu0",    "1",    "1",   "1",   "1"],
+     ["br0",     "1",    "1",   "1",   "1"],
+     ["lsu",     "1",    "1",   "1",   "1"]]
+
+  float.params.latency_matrix: |
+    [["",     "alu0", "fpu0", "br0", "lsu"],   # <-- TO
+     ["alu0",    "1",    "1",   "1",   "1"],
+     ["fpu0",    "1",    "1",   "1",   "1"],
+     ["br0",     "1",    "1",   "1",   "1"],
+     ["lsu",     "1",    "1",   "1",   "1"]]

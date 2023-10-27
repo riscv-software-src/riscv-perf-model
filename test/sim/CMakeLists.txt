@@ -11,6 +11,7 @@ file(CREATE_LINK ${SIM_BASE}/arches  ${CMAKE_CURRENT_BINARY_DIR}/arches SYMBOLIC
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/traces  ${CMAKE_CURRENT_BINARY_DIR}/traces SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/test/sim/json_tests  ${CMAKE_CURRENT_BINARY_DIR}/json_tests SYMBOLIC)
+file(CREATE_LINK ${SIM_BASE}/test/sim/lsu_arch_configs ${CMAKE_CURRENT_BINARY_DIR}/lsu_arch_configs SYMBOLIC)
 
 # Tests
 sparta_named_test(olympia_json_test olympia --workload traces/example_json.json)
@@ -62,4 +63,25 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   sparta_named_test(olympia_arch_${ARCH_NAME}_test olympia
     -i500K --workload traces/dhry_riscv.zstf
     --arch ${ARCH_NAME})
+endforeach()
+
+
+
+file(GLOB TEST_YAML "${SIM_BASE}/test/sim/lsu_arch_configs/*.yaml")
+foreach(ARCH_FULL_PATH ${TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  sparta_named_test(olympia_arch_${ARCH_NAME}_drhy_test olympia
+          -i200K --workload traces/dhry_riscv.zstf
+          --arch-search-dir ${SIM_BASE}/test/sim/lsu_arch_configs/
+          --arch ${ARCH_FULL_PATH})
+endforeach()
+
+foreach(ARCH_FULL_PATH ${TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  sparta_named_test(olympia_arch_${ARCH_NAME}_coremark_test olympia
+          -i200K --workload traces/core_riscv.zstf
+          --arch-search-dir ${SIM_BASE}/test/sim/lsu_arch_configs/
+          --arch ${ARCH_FULL_PATH})
 endforeach()

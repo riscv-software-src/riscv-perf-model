@@ -48,7 +48,8 @@ namespace olympia {
             mmu_access_state_(MMUState::NO_ACCESS),
 
             // Construct the State object here
-            cache_access_state_(CacheState::NO_ACCESS) {}
+            cache_access_state_(CacheState::NO_ACCESS),
+            cache_data_ready_(false){}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -87,6 +88,13 @@ namespace olympia {
             return (cache_access_state_ == MemoryAccessInfo::CacheState::HIT);
         }
 
+        bool isDataReady() const {
+            return cache_data_ready_;
+        }
+
+        void setDataReady(bool is_ready) {
+            cache_data_ready_ = is_ready;
+        }
     private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -99,6 +107,8 @@ namespace olympia {
 
         // DCache access status
         CacheState cache_access_state_;
+
+        bool cache_data_ready_;
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
@@ -131,4 +141,55 @@ namespace olympia {
 
     using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::MemoryAccessInfo::CacheState & cache_access_state){
+        switch(cache_access_state){
+        case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
+            os << "no_access";
+            break;
+        case olympia::MemoryAccessInfo::CacheState::MISS:
+            os << "miss";
+            break;
+        case olympia::MemoryAccessInfo::CacheState::HIT:
+            os << "hit";
+            break;
+        case olympia::MemoryAccessInfo::CacheState::NUM_STATES:
+            throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
+        }
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
+        switch(mmu_access_state){
+        case olympia::MemoryAccessInfo::MMUState::NO_ACCESS:
+            os << "no_access";
+            break;
+        case olympia::MemoryAccessInfo::MMUState::MISS:
+            os << "miss";
+            break;
+        case olympia::MemoryAccessInfo::MMUState::HIT:
+            os << "hit";
+            break;
+        case olympia::MemoryAccessInfo::MMUState::NUM_STATES:
+            throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
+        }
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::MemoryAccessInfo & mem)
+    {
+        os << "memptr: " << mem.getInstPtr();
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::MemoryAccessInfoPtr & mem_ptr)
+    {
+        os << *mem_ptr;
+        return os;
+    }
+
 };

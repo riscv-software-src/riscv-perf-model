@@ -112,6 +112,12 @@ namespace olympia
         }
 
         void setStatus(Status status) {
+            sparta_assert(status_state_ != status,
+                          "Status being set twice to the same value: "
+                          << status << " " << *this);
+            sparta_assert(status > status_state_,
+                          "Cannot go backwards in status.  Current: "
+                          << status_state_ << " New: " << status << *this);
             status_state_ = status;
             if(getStatus() == Status::COMPLETED) {
                 if(ev_retire_ != 0) {

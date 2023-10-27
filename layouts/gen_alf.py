@@ -82,9 +82,11 @@ for block in ['alu','fpu','br']:
         num += 1
 
 #-------------------------------------------------- LSU
-sl_grp.addScheduleLine('.*lsu.lsu_inst_queue.lsu_inst_queue', ["LSU IQ"], mini_split=[80,20])
-sl_grp.addScheduleLine('.*lsu.dcache_busy', ["DL1 busy"])
-sl_grp.addScheduleLine('.*lsu.LoadStorePipeline.LoadStorePipeline', ["LSU Pipe"], space=True)
+sl_grp.addScheduleLine('.*lsu.lsu_inst_queue.lsu_inst_queue', ["LSU IQ[\1]"], mini_split=[80,20])
+sl_grp.addScheduleLine('.*lsu.replay_buffer.replay_buffer([0-9]+)', ["LSU Replay[\1]"], mini_split=[80,20])
+
+sl_grp.addScheduleLine('.*lsu.LoadStorePipeline.LoadStorePipeline', ["LSU Pipe"], space=True, reverse=False)
+sl_grp.addScheduleLine('.*lsu.dcache_busy', ["DL1 busy"], nomunge=True)
 
 #-------------------------------------------------- Retire
 sl_grp.addScheduleLine('.*rob.ReorderBuffer.ReorderBuffer([0-9]+)', [r"ROB[\1]"], mini_split=[80,20], space=True)

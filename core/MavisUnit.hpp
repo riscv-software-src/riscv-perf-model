@@ -22,37 +22,38 @@
 #include "InstAllocation.hpp"
 
 // To reduce compile time and binary bloat, foward declare Mavis
-template <typename InstType, typename AnnotationType, typename InstTypeAllocator,
-          typename AnnotationTypeAllocator>
+template<typename InstType,
+         typename AnnotationType,
+         typename InstTypeAllocator,
+         typename AnnotationTypeAllocator>
 class Mavis;
 
 namespace olympia
 {
-    using MavisType = Mavis<Inst, InstArchInfo, InstPtrAllocator<InstAllocator>,
+    using MavisType = Mavis<Inst,
+                            InstArchInfo,
+                            InstPtrAllocator<InstAllocator>,
                             InstPtrAllocator<InstArchInfoAllocator>>;
 
     // Handy UIDs that the modeler can assign to an instruction for
     // compare
-    constexpr mavis::InstructionUniqueID MAVIS_UID_NOP = 1;
+    constexpr mavis::InstructionUniqueID MAVIS_UID_NOP        = 1;
 
     // This is a sparta tree node wrapper around the Mavis facade object
     // Used to provide global access to the facade
-    class MavisUnit : public sparta::Unit
-    {
-      public:
+    class MavisUnit : public sparta::Unit {
+    public:
         //! Mavis parameters
-        class MavisParameters : public sparta::ParameterSet
-        {
-          public:
-            explicit MavisParameters(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+        class MavisParameters : public sparta::ParameterSet {
+        public:
+            explicit MavisParameters(sparta::TreeNode *n) :
+                sparta::ParameterSet(n)
+            {}
 
-            PARAMETER(std::string, isa_file_path, "mavis_isa_files",
-                      "Where are the mavis isa files?")
-            PARAMETER(std::string, uarch_file_path, "arches/isa_json",
-                      "Where are the mavis uarch files?")
-            PARAMETER(std::string, pseudo_file_path, "",
-                      "Where are the mavis pseudo isa/usarch files? (default: uarch_file_path)")
-            PARAMETER(std::string, uarch_overrides_json, "", "JSON uArch overrides")
+            PARAMETER(std::string,   isa_file_path,    "mavis_isa_files", "Where are the mavis isa files?")
+            PARAMETER(std::string,   uarch_file_path,  "arches/isa_json", "Where are the mavis uarch files?")
+            PARAMETER(std::string,   pseudo_file_path,  "", "Where are the mavis pseudo isa/usarch files? (default: uarch_file_path)")
+            PARAMETER(std::string,   uarch_overrides_json, "", "JSON uArch overrides")
             PARAMETER(std::vector<std::string>, uarch_overrides, {}, R"(uArch overrides.
     Format : <mnemonic>, <attribute> : <value>
     Example: -p .....params.uarch_overrides "[ "add, latency : 100", "lw, dispatch : ["iex","lsu"] ]"
@@ -64,32 +65,36 @@ namespace olympia
         //! Mavis's factory class
         class Factory : public sparta::ResourceFactory<MavisUnit, MavisParameters>
         {
-          public:
-            // void onConfiguring(sparta::ResourceTreeNode* node) override;
+        public:
+            //void onConfiguring(sparta::ResourceTreeNode* node) override;
             Factory() = default;
         };
 
         // Constructor
-        MavisUnit(sparta::TreeNode*, const MavisParameters*);
+        MavisUnit(sparta::TreeNode *, const MavisParameters*);
 
         // Destructor
         ~MavisUnit();
 
         // Access the mavis facade
-        MavisType* getFacade() { return mavis_facade_.get(); }
+        MavisType* getFacade() {
+            return mavis_facade_.get();
+        }
 
-      private:
+    private:
+
         //! Mavis Instruction ID's that we want to use in Olympia
-        static inline mavis::InstUIDList mavis_uid_list_{
-            {"nop", MAVIS_UID_NOP},
-        };
+        static inline mavis::InstUIDList mavis_uid_list_ {
+            { "nop",             MAVIS_UID_NOP },
+                };
 
-        const std::string pseudo_file_path_;      ///< Path to olympia pseudo ISA/uArch JSON files
-        std::unique_ptr<MavisType> mavis_facade_; ///< Mavis facade object
+        const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
+        std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object
     };
 
-    using MavisFactoy = sparta::ResourceFactory<MavisUnit, MavisUnit::MavisParameters>;
+    using MavisFactoy = sparta::ResourceFactory<MavisUnit,
+                                                MavisUnit::MavisParameters>;
 
-    MavisType* getMavis(sparta::TreeNode*);
+    MavisType *getMavis(sparta::TreeNode *);
 
 } // namespace olympia

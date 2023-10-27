@@ -1,5 +1,7 @@
 // <Decode.h> -*- C++ -*-
 
+
+
 #pragma once
 
 #include <string>
@@ -25,14 +27,16 @@ namespace olympia
      */
     class Decode : public sparta::Unit
     {
-      public:
+    public:
         //! \brief Parameters for Decode model
         class DecodeParameterSet : public sparta::ParameterSet
         {
-          public:
-            DecodeParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+        public:
+            DecodeParameterSet(sparta::TreeNode* n) :
+                sparta::ParameterSet(n)
+            { }
 
-            PARAMETER(uint32_t, num_to_decode, 4, "Number of instructions to process")
+            PARAMETER(uint32_t, num_to_decode,     4, "Number of instructions to process")
             PARAMETER(uint32_t, fetch_queue_size, 10, "Size of the fetch queue")
         };
 
@@ -42,38 +46,36 @@ namespace olympia
          * @param node The node that represents (has a pointer to) the Decode
          * @param p The Decode's parameter set
          */
-        Decode(sparta::TreeNode* node, const DecodeParameterSet* p);
+        Decode(sparta::TreeNode * node,
+               const DecodeParameterSet * p);
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static constexpr char name[] = "decode";
 
-      private:
+    private:
+
         // The internal instruction queue
         InstQueue fetch_queue_;
 
         // Port listening to the fetch queue appends - Note the 1 cycle delay
-        sparta::DataInPort<InstGroupPtr> fetch_queue_write_in_{&unit_port_set_,
-                                                               "in_fetch_queue_write", 1};
-        sparta::DataOutPort<uint32_t> fetch_queue_credits_outp_{&unit_port_set_,
-                                                                "out_fetch_queue_credits"};
+        sparta::DataInPort<InstGroupPtr> fetch_queue_write_in_     {&unit_port_set_, "in_fetch_queue_write", 1};
+        sparta::DataOutPort<uint32_t>    fetch_queue_credits_outp_ {&unit_port_set_, "out_fetch_queue_credits"};
 
         // Port to the uop queue in dispatch (output and credits)
-        sparta::DataOutPort<InstGroupPtr> uop_queue_outp_{&unit_port_set_, "out_uop_queue_write"};
-        sparta::DataInPort<uint32_t> uop_queue_credits_in_{&unit_port_set_, "in_uop_queue_credits",
-                                                           sparta::SchedulingPhase::Tick, 0};
+        sparta::DataOutPort<InstGroupPtr> uop_queue_outp_      {&unit_port_set_, "out_uop_queue_write"};
+        sparta::DataInPort<uint32_t>      uop_queue_credits_in_{&unit_port_set_, "in_uop_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // For flush
-        sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_{
-            &unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
+             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
         // The decode instruction event
-        sparta::UniqueEvent<> ev_decode_insts_event_{&unit_event_set_, "decode_insts_event",
-                                                     CREATE_SPARTA_HANDLER(Decode, decodeInsts_)};
+        sparta::UniqueEvent<> ev_decode_insts_event_  {&unit_event_set_, "decode_insts_event", CREATE_SPARTA_HANDLER(Decode, decodeInsts_)};
 
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();
-        void fetchBufferAppended_(const InstGroupPtr &);
+        void fetchBufferAppended_   (const InstGroupPtr &);
         void receiveUopQueueCredits_(const uint32_t &);
         void decodeInsts_();
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
@@ -81,4 +83,4 @@ namespace olympia
         uint32_t uop_queue_credits_ = 0;
         const uint32_t num_to_decode_;
     };
-} // namespace olympia
+}

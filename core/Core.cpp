@@ -9,9 +9,8 @@
 
 namespace olympia
 {
-    Core::Core(sparta::TreeNode* node, // TreeNode which owns this. Publish child nodes to this
-               const CoreParameterSet* p) :
-        // Core::ParameterSet, not generic SPARTA set
+    Core::Core(sparta::TreeNode * node, // TreeNode which owns this. Publish child nodes to this
+               const CoreParameterSet * p) : // Core::ParameterSet, not generic SPARTA set
         sparta::Unit(node)
     {
         // Now parameters and ports are fixed and sparta device tree is
@@ -28,4 +27,4 @@ namespace olympia
         // here and attach counters to this node's CounterSet.
     }
 
-} // namespace olympia
+}

@@ -1,5 +1,6 @@
 // <CPUFactories.h> -*- C++ -*-
 
+
 #pragma once
 
 #include "sparta/simulation/ResourceFactory.hpp"
@@ -19,8 +20,7 @@
 #include "Preloader.hpp"
 #include "MavisUnit.hpp"
 
-namespace olympia
-{
+namespace olympia{
 
     /**
      * @file  CPUFactories.h
@@ -31,17 +31,19 @@ namespace olympia
      * 1. Contain resource factories to build each core of the CPU
      * 2. Contain resource factories to build microarchitectural units in each core
      */
-    struct CPUFactories
-    {
+    struct CPUFactories{
 
         //! \brief Resouce Factory to build a Core Unit
-        sparta::ResourceFactory<olympia::Core, olympia::Core::CoreParameterSet> core_rf;
+        sparta::ResourceFactory<olympia::Core,
+                                olympia::Core::CoreParameterSet> core_rf;
 
         //! \brief Resouce Factory to build a Fetch Unit
-        sparta::ResourceFactory<olympia::Fetch, olympia::Fetch::FetchParameterSet> fetch_rf;
+        sparta::ResourceFactory<olympia::Fetch,
+                                olympia::Fetch::FetchParameterSet> fetch_rf;
 
         //! \brief Resouce Factory to build a Decode Unit
-        sparta::ResourceFactory<olympia::Decode, olympia::Decode::DecodeParameterSet> decode_rf;
+        sparta::ResourceFactory<olympia::Decode,
+                                olympia::Decode::DecodeParameterSet> decode_rf;
 
         //! \brief Resouce Factory to build a Rename Unit
         RenameFactory rename_rf;
@@ -50,39 +52,47 @@ namespace olympia
         DispatchFactory dispatch_rf;
 
         //! \brief Resouce Factory to build a Execute Unit
-        ExecuteFactory execute_rf;
+        ExecuteFactory  execute_rf;
+
 
         //! \brief Resouce Factory to build a MMU Unit
-        sparta::ResourceFactory<olympia::DCache, olympia::DCache::CacheParameterSet> dcache_rf;
+        sparta::ResourceFactory<olympia::DCache,
+                olympia::DCache::CacheParameterSet> dcache_rf;
 
         //! \brief Resouce Factory to build a TLB Unit
-        sparta::ResourceFactory<olympia::SimpleTLB, olympia::SimpleTLB::TLBParameterSet> tlb_rf;
+        sparta::ResourceFactory<olympia::SimpleTLB,
+                olympia::SimpleTLB::TLBParameterSet> tlb_rf;
 
         //! \brief Resouce Factory to build a MMU Unit
-        sparta::ResourceFactory<olympia::MMU, olympia::MMU::MMUParameterSet> mmu_rf;
+        sparta::ResourceFactory<olympia::MMU,
+                                olympia::MMU::MMUParameterSet> mmu_rf;
 
         //! \brief Resouce Factory to build a LSU Unit
-        sparta::ResourceFactory<olympia::LSU, olympia::LSU::LSUParameterSet> lsu_rf;
+        sparta::ResourceFactory<olympia::LSU,
+                                olympia::LSU::LSUParameterSet> lsu_rf;
+
 
         //! \brief Resouce Factory to build a BIU Unit
-        sparta::ResourceFactory<olympia_mss::BIU, olympia_mss::BIU::BIUParameterSet> biu_rf;
+        sparta::ResourceFactory<olympia_mss::BIU,
+                                olympia_mss::BIU::BIUParameterSet> biu_rf;
 
         //! \brief Resouce Factory to build a MSS Unit
-        sparta::ResourceFactory<olympia_mss::MSS, olympia_mss::MSS::MSSParameterSet> mss_rf;
+        sparta::ResourceFactory<olympia_mss::MSS,
+                                olympia_mss::MSS::MSSParameterSet> mss_rf;
 
         //! \brief Resouce Factory to build a ROB Unit
-        sparta::ResourceFactory<olympia::ROB, olympia::ROB::ROBParameterSet> rob_rf;
+        sparta::ResourceFactory<olympia::ROB,
+                                olympia::ROB::ROBParameterSet> rob_rf;
 
         //! \brief Resouce Factory to build a Flush Unit
         sparta::ResourceFactory<olympia::FlushManager,
-                                olympia::FlushManager::FlushManagerParameters>
-            flushmanager_rf;
+                                olympia::FlushManager::FlushManagerParameters> flushmanager_rf;
 
         //! \brief Resouce Factory to build a Preloader Unit
-        sparta::ResourceFactory<olympia::Preloader, olympia::Preloader::PreloaderParameterSet>
-            preloader_rf;
+        sparta::ResourceFactory<olympia::Preloader,
+                                olympia::Preloader::PreloaderParameterSet> preloader_rf;
 
         //! \brief Set up the Mavis Decode functional unit
-        MavisFactoy mavis_rf;
+        MavisFactoy  mavis_rf;
     }; // struct CPUFactories
-} // namespace olympia
+}  // namespace olympia

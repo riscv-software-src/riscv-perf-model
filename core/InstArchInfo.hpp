@@ -32,11 +32,10 @@ namespace olympia
      */
     class InstArchInfo
     {
-      public:
+    public:
         using PtrType = sparta::SpartaSharedPointer<InstArchInfo>;
 
-        enum TargetUnit : std::uint16_t
-        {
+        enum TargetUnit : std::uint16_t{
             ALU,
             FPU,
             BR,
@@ -45,11 +44,9 @@ namespace olympia
             NONE,
             UNKNOWN = NONE
         };
-
         static constexpr uint32_t N_TARGET_UNITS = static_cast<uint32_t>(TargetUnit::UNKNOWN);
 
-        enum class TargetPipe : std::uint16_t
-        {
+        enum class TargetPipe : std::uint16_t{
             BR,
             CMOV,
             DIV,
@@ -73,11 +70,14 @@ namespace olympia
         static const TargetPipeMap execution_pipe_map;
 
         // Called by Mavis during its initialization
-        explicit InstArchInfo(const nlohmann::json & jobj) { update(jobj); }
+        explicit InstArchInfo(const nlohmann::json& jobj)
+        {
+            update(jobj);
+        }
 
         // Called by Mavis if, during initialization, changes are
         // dynamically made to an instruction.
-        void update(const nlohmann::json & jobj);
+        void update(const nlohmann::json& jobj);
 
         //! Return the target unit for this instruction type
         TargetUnit getTargetUnit() const { return tgt_unit_; }
@@ -86,41 +86,39 @@ namespace olympia
         TargetPipe getTargetPipe() const { return tgt_pipe_; }
 
         //! Return the execution time (latency) of the instruction
-        uint32_t getExecutionTime() const { return execute_time_; }
+        uint32_t   getExecutionTime() const { return execute_time_; }
 
         //! Is this instruction a load/store type?
-        bool isLoadStore() const { return is_load_store_; }
+        bool       isLoadStore() const { return is_load_store_; }
 
-      private:
+    private:
         TargetUnit tgt_unit_ = TargetUnit::UNKNOWN;
         TargetPipe tgt_pipe_ = TargetPipe::UNKNOWN;
-        uint32_t execute_time_ = 0;
-        bool is_load_store_ = false;
+        uint32_t   execute_time_ = 0;
+        bool       is_load_store_ = false;
     };
 
-    inline std::ostream & operator<<(std::ostream & os, const InstArchInfo::TargetUnit & unit)
-    {
-        switch (unit)
-        {
-        case InstArchInfo::TargetUnit::ALU:
-            os << "ALU";
-            break;
-        case InstArchInfo::TargetUnit::FPU:
-            os << "FPU";
-            break;
-        case InstArchInfo::TargetUnit::BR:
-            os << "BR";
-            break;
-        case InstArchInfo::TargetUnit::LSU:
-            os << "LSU";
-            break;
-        case InstArchInfo::TargetUnit::ROB:
-            os << "ROB";
-            break;
-        case InstArchInfo::TargetUnit::UNKNOWN:
-            throw sparta::SpartaException("Got UNKNOWN/NONE target unit.");
+    inline std::ostream & operator<<(std::ostream & os, const InstArchInfo::TargetUnit & unit) {
+        switch(unit) {
+            case InstArchInfo::TargetUnit::ALU:
+                os << "ALU";
+                break;
+            case InstArchInfo::TargetUnit::FPU:
+                os << "FPU";
+                break;
+            case InstArchInfo::TargetUnit::BR:
+                os << "BR";
+                break;
+            case InstArchInfo::TargetUnit::LSU:
+                os << "LSU";
+                break;
+            case InstArchInfo::TargetUnit::ROB:
+                os << "ROB";
+                break;
+            case InstArchInfo::TargetUnit::UNKNOWN:
+                throw sparta::SpartaException("Got UNKNOWN/NONE target unit.");
         }
         return os;
     }
 
-} // namespace olympia
+}

@@ -121,7 +121,6 @@ namespace olympia {
         if(incoming_cache_refill_) {
             // Cache refill is given priority
             // nack signal is sent to the LSU
-            // LSU will have to replay the instruction
             // out_lsu_lookup_nack_.send(1);
             // Temporary: send miss instead of nack
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
@@ -247,7 +246,7 @@ namespace olympia {
                     } 
                     else {
                         // LMQ cannot be full
-                        assert(!(*mshr_idx)->isLoadMissQueueFull());
+                        sparta_assert(!(*mshr_idx)->isLoadMissQueueFull());
                         ILOG("Load miss and enqueue load inst to LMQ");
                         // Enqueue Load in LMQ
                         (*mshr_idx)->enqueueLoad(mem_access_info_ptr);
@@ -319,13 +318,13 @@ namespace olympia {
         incoming_cache_refill_ = false;
         // Write line buffer into cache
         // Initiate write to downstream in case victim line TODO
-        // auto line_buffer = (*current_refill_mshr_entry_)->getLineFillBuffer();
         auto block_address = (*current_refill_mshr_entry_)->getBlockAddress();
         auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(block_address);
 
         // Write line buffer data onto cache line
-        (*l1_cache_line).setModified((*current_refill_mshr_entry_)->isModified());
-        l1_cache_->allocateWithMRUUpdate(*l1_cache_line, block_address);
+        l1_cache_line->reset(block_address);
+        l1_cache_line->setModified((*current_refill_mshr_entry_)->isModified());
+        l1_cache_->touchMRU(*l1_cache_line);
 
         ILOG("Deallocate MSHR Entry");
         // Deallocate MSHR entry (after a cycle)

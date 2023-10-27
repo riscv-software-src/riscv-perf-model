@@ -13,20 +13,22 @@ namespace olympia_mss
     // Constructor
     ////////////////////////////////////////////////////////////////////////////////
 
-    BIU::BIU(sparta::TreeNode* node, const BIUParameterSet* p) :
+    BIU::BIU(sparta::TreeNode *node, const BIUParameterSet *p) :
         sparta::Unit(node),
         biu_req_queue_size_(p->biu_req_queue_size),
         biu_latency_(p->biu_latency)
     {
-        in_biu_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromLSU_, olympia::InstPtr));
+        in_biu_req_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromLSU_, olympia::InstPtr));
 
-        in_mss_ack_sync_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
+        in_mss_ack_sync_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
         in_mss_ack_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
+
 
         ILOG("BIU construct: #" << node->getGroupIdx());
     }
+
 
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
@@ -39,8 +41,7 @@ namespace olympia_mss
 
         // Schedule BIU request handling event only when:
         // (1)BIU is not busy, and (2)Request queue is not empty
-        if (!biu_busy_)
-        {
+        if (!biu_busy_) {
             // NOTE:
             // We could set this flag immediately here, but a better/cleaner way to do this is:
             // (1)Schedule the handling event immediately;
@@ -51,8 +52,7 @@ namespace olympia_mss
             // The handling event must be scheduled immediately (0 delay). Otherwise,
             // BIU could potentially send another request to MSS before the busy flag is set
         }
-        else
-        {
+        else {
             ILOG("This request cannot be serviced right now, MSS is already busy!");
         }
     }
@@ -75,8 +75,7 @@ namespace olympia_mss
 
         // Schedule BIU request handling event only when:
         // (1)BIU is not busy, and (2)Request queue is not empty
-        if (biu_req_queue_.size() > 0)
-        {
+        if (biu_req_queue_.size() > 0) {
             ev_handle_biu_req_.schedule(sparta::Clock::Cycle(0));
         }
 
@@ -86,8 +85,7 @@ namespace olympia_mss
     // Receive MSS access acknowledge
     void BIU::getAckFromMSS_(const bool & done)
     {
-        if (done)
-        {
+        if (done) {
             ev_handle_mss_ack_.schedule(sparta::Clock::Cycle(0));
 
             ILOG("MSS Ack is received!");
@@ -99,14 +97,15 @@ namespace olympia_mss
         sparta_assert(false, "MSS is NOT done!");
     }
 
+
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call
     ////////////////////////////////////////////////////////////////////////////////
 
     // Append BIU request queue
-    void BIU::appendReqQueue_(const olympia::InstPtr & inst_ptr)
+    void BIU::appendReqQueue_(const olympia::InstPtr& inst_ptr)
     {
-        sparta_assert(biu_req_queue_.size() <= biu_req_queue_size_, "BIU request queue overflows!");
+        sparta_assert(biu_req_queue_.size() <= biu_req_queue_size_ ,"BIU request queue overflows!");
 
         // Push new requests from back
         biu_req_queue_.emplace_back(inst_ptr);
@@ -114,4 +113,4 @@ namespace olympia_mss
         ILOG("Append BIU request queue!");
     }
 
-} // namespace olympia_mss
+}

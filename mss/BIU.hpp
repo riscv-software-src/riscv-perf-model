@@ -24,13 +24,15 @@ namespace olympia_mss
 {
     class BIU : public sparta::Unit
     {
-      public:
+    public:
         //! Parameters for BIU model
         class BIUParameterSet : public sparta::ParameterSet
         {
-          public:
+        public:
             // Constructor for BIUParameterSet
-            BIUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+            BIUParameterSet(sparta::TreeNode* n):
+                sparta::ParameterSet(n)
+            { }
 
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_latency, 1, "Send bus request latency")
@@ -43,28 +45,34 @@ namespace olympia_mss
         // name of this resource.
         static const char name[];
 
+
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
 
-      private:
+
+    private:
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataInPort<olympia::InstQueue::value_type> in_biu_req_{&unit_port_set_,
-                                                                       "in_biu_req", 1};
+        sparta::DataInPort<olympia::InstQueue::value_type> in_biu_req_
+            {&unit_port_set_, "in_biu_req", 1};
 
-        sparta::SyncInPort<bool> in_mss_ack_sync_{&unit_port_set_, "in_mss_ack_sync", getClock()};
+        sparta::SyncInPort<bool> in_mss_ack_sync_
+            {&unit_port_set_, "in_mss_ack_sync", getClock()};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataOutPort<olympia::InstPtr> out_biu_ack_{&unit_port_set_, "out_biu_ack"};
+        sparta::DataOutPort<olympia::InstPtr> out_biu_ack_
+            {&unit_port_set_, "out_biu_ack"};
 
-        sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_{&unit_port_set_, "out_mss_req_sync",
-                                                                getClock()};
+        sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_
+            {&unit_port_set_, "out_mss_req_sync", getClock()};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -78,17 +86,19 @@ namespace olympia_mss
 
         bool biu_busy_ = false;
 
+
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
 
         // Event to handle BIU request from LSU
-        sparta::UniqueEvent<> ev_handle_biu_req_{&unit_event_set_, "handle_biu_req",
-                                                 CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
+        sparta::UniqueEvent<> ev_handle_biu_req_
+            {&unit_event_set_, "handle_biu_req", CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
 
         // Event to handle MSS Ack
-        sparta::UniqueEvent<> ev_handle_mss_ack_{&unit_event_set_, "handle_mss_ack",
-                                                 CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
+        sparta::UniqueEvent<> ev_handle_mss_ack_
+            {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -107,11 +117,14 @@ namespace olympia_mss
         // Q: Does the argument list has to be "const DataType &" ?
         void getAckFromMSS_(const bool &);
 
+
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
 
         // Append BIU request queue
         void appendReqQueue_(const olympia::InstPtr &);
+
+
     };
-} // namespace olympia_mss
+}

@@ -12,16 +12,17 @@ namespace olympia_mss
     // Constructor
     ////////////////////////////////////////////////////////////////////////////////
 
-    MSS::MSS(sparta::TreeNode* node, const MSSParameterSet* p) :
+    MSS::MSS(sparta::TreeNode *node, const MSSParameterSet *p) :
         sparta::Unit(node),
         mss_latency_(p->mss_latency)
     {
-        in_mss_req_sync_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia::InstPtr));
+        in_mss_req_sync_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia::InstPtr));
         in_mss_req_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
         ILOG("MSS construct: #" << node->getGroupIdx());
     }
+
 
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
@@ -33,13 +34,11 @@ namespace olympia_mss
         sparta_assert((inst_ptr != nullptr), "MSS is not handling a valid request!");
 
         // Handle MSS request event can only be scheduled when MMS is not busy
-        if (!mss_busy_)
-        {
+        if (!mss_busy_) {
             mss_busy_ = true;
             ev_handle_mss_req_.schedule(mss_latency_);
         }
-        else
-        {
+        else {
             // Assumption: MSS can handle a single request each time
             sparta_assert(false, "MSS can never receive requests from BIU when it's busy!");
         }
@@ -56,8 +55,10 @@ namespace olympia_mss
         ILOG("MSS is done!");
     }
 
+
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call
     ////////////////////////////////////////////////////////////////////////////////
 
-} // namespace olympia_mss
+
+}

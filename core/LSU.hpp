@@ -465,46 +465,12 @@ namespace olympia
         // will be called
         void onStartingTeardown_() override {}
 
+        bool olderStoresExists_(const InstPtr & inst_ptr);
+
         friend class LSUTester;
 
-        bool olderStoresExists_(const InstPtr & inst_ptr);
     };
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
-        switch(mmu_access_state){
-            case olympia::MemoryAccessInfo::MMUState::NO_ACCESS:
-                os << "no_access";
-                break;
-            case olympia::MemoryAccessInfo::MMUState::MISS:
-                os << "miss";
-                break;
-            case olympia::MemoryAccessInfo::MMUState::HIT:
-                os << "hit";
-                break;
-            case olympia::MemoryAccessInfo::MMUState::NUM_STATES:
-                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
-        }
-        return os;
-    }
-
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::CacheState & cache_access_state){
-        switch(cache_access_state){
-            case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
-                os << "no_access";
-                break;
-            case olympia::MemoryAccessInfo::CacheState::MISS:
-                os << "miss";
-                break;
-            case olympia::MemoryAccessInfo::CacheState::HIT:
-                os << "hit";
-                break;
-            case olympia::MemoryAccessInfo::CacheState::NUM_STATES:
-                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
-        }
-        return os;
-    }
 
     inline std::ostream& operator<<(std::ostream& os,
         const olympia::LSU::LoadStoreInstInfo::IssuePriority& rank){
@@ -572,21 +538,6 @@ namespace olympia
         os << *ls_info;
         return os;
     }
-
-    inline std::ostream & operator<<(std::ostream & os,
-                                     const olympia::MemoryAccessInfo & mem)
-    {
-        os << "memptr: " << mem.getInstPtr();
-        return os;
-    }
-
-    inline std::ostream & operator<<(std::ostream & os,
-                                     const olympia::MemoryAccessInfoPtr & mem_ptr)
-    {
-        os << *mem_ptr;
-        return os;
-    }
-
 
     class LSUTester;
 } // namespace olympia

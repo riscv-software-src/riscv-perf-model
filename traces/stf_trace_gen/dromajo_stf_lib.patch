@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 3bd8505..bd183bf 100644
+index a3f932a..70c6cb3 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -39,7 +39,7 @@
@@ -32,10 +32,10 @@ index 3bd8505..bd183bf 100644
 +################################################################################
 +
  if (${CMAKE_HOST_APPLE})
-     include_directories(/usr/local/include /usr/local/include/libelf)
-     target_link_libraries(dromajo_cosim -L/usr/local/lib -lelf)
+     include_directories(/usr/local/include /usr/local/include/libelf /opt/homebrew/include /opt/homebrew/include/libelf)
+     target_link_libraries(dromajo_cosim -L/usr/local/lib -L/opt/homebrew/lib -lelf)
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 925808b..bb233e2 100644
+index 2d8e9cc..8b1684d 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
 @@ -52,6 +52,8 @@
@@ -47,7 +47,7 @@ index 925808b..bb233e2 100644
  static inline intx_t glue(div, XLEN)(intx_t a, intx_t b) {
      if (b == 0) {
          return -1;
-@@ -272,6 +274,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+@@ -278,6 +280,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
      }
  
      s->pending_exception = -1;
@@ -56,7 +56,7 @@ index 925808b..bb233e2 100644
      /* Note: we assume NULL is represented as a zero number */
      code_ptr          = NULL;
 diff --git a/include/machine.h b/include/machine.h
-index cc89de2..2b0115a 100644
+index c359091..6bf16b3 100644
 --- a/include/machine.h
 +++ b/include/machine.h
 @@ -205,6 +205,7 @@ typedef struct VirtMachine {
@@ -68,10 +68,10 @@ index cc89de2..2b0115a 100644
      /* For co-simulation only, they are -1 if nothing is pending. */
      bool cosim;
 diff --git a/include/riscv_cpu.h b/include/riscv_cpu.h
-index 9dfb2cc..b509c9f 100644
+index 2f71c99..2de97a3 100644
 --- a/include/riscv_cpu.h
 +++ b/include/riscv_cpu.h
-@@ -170,6 +170,9 @@ typedef struct RISCVCPUState {
+@@ -202,6 +202,9 @@ typedef struct RISCVCPUState {
      int          most_recently_written_reg;
  
      target_ulong last_data_paddr;
@@ -94,7 +94,7 @@ index b220030..d80fb22 100644
      "memory_base_addr":0x80000000
  }
 diff --git a/src/dromajo.cpp b/src/dromajo.cpp
-index 1169f23..47c5ecf 100644
+index c13239a..e27f709 100644
 --- a/src/dromajo.cpp
 +++ b/src/dromajo.cpp
 @@ -46,6 +46,11 @@
@@ -121,12 +121,17 @@ index 1169f23..47c5ecf 100644
 +uint64_t stf_count = 0;
 +////////////////////////////////////////////////////////////////////////////////
 +
- int iterate_core(RISCVMachine *m, int hartid) {
-     if (m->common.maxinsns-- <= 0)
-         /* Succeed after N instructions without failure. */
-@@ -139,6 +152,92 @@ int iterate_core(RISCVMachine *m, int hartid) {
-     if (last_pc == virt_machine_get_pc(m, hartid))
-         return 0;
+ static int iterate_core(RISCVMachine *m, int hartid, int n_cycles) {
+     m->common.maxinsns -= n_cycles;
+ 
+@@ -143,10 +156,96 @@ static int iterate_core(RISCVMachine *m, int hartid, int n_cycles) {
+         n_cycles = 1;
+         do_trace = true;
+     } else
+-      m->common.trace -= n_cycles;
++        m->common.trace -= n_cycles;
+ 
+     int keep_going = virt_machine_run(m, hartid, n_cycles);
  
 +    if(m->common.stf_trace) {
 +        // check for start trace marker
@@ -214,22 +219,31 @@ index 1169f23..47c5ecf 100644
 +        return keep_going;
 +    }
 +
-     if (m->common.trace) {
-         --m->common.trace;
+     if (!do_trace) {
          return keep_going;
+     }
+@@ -223,7 +322,7 @@ int main(int argc, char **argv) {
+     if (!m)
+         return 1;
+ 
+-    int n_cycles = 10000;
++    int n_cycles = 1;
+     execution_start_ts = get_current_time_in_seconds();
+     execution_progress_meassure = &m->cpu_state[0]->minstret;
+     signal(SIGINT, sigintr_handler);
 diff --git a/src/dromajo_main.cpp b/src/dromajo_main.cpp
-index 8feb504..2c62ab8 100644
+index aeb1912..2fdaef2 100644
 --- a/src/dromajo_main.cpp
 +++ b/src/dromajo_main.cpp
-@@ -559,6 +559,7 @@ static void usage(const char *prog, const char *msg) {
+@@ -560,6 +560,7 @@ static void usage(const char *prog, const char *msg) {
              "       --maxinsns terminates execution after a number of instructions\n"
              "       --terminate-event name of the validate event to terminate execution\n"
              "       --trace start trace dump after a number of instructions. Trace disabled by default\n"
-+            "       --stf_trace <filename>  Dump an STF trace to the given file\n"
++	     "       --stf_trace <filename>  Dump an STF trace to the given file\n"
              "       --ignore_sbi_shutdown continue simulation even upon seeing the SBI_SHUTDOWN call\n"
              "       --dump_memories dump memories that could be used to load a cosimulation\n"
              "       --memory_size sets the memory size in MiB (default 256 MiB)\n"
-@@ -617,6 +618,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+@@ -618,6 +619,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
      long        ncpus                    = 0;
      uint64_t    maxinsns                 = 0;
      uint64_t    trace                    = UINT64_MAX;
@@ -237,8 +251,8 @@ index 8feb504..2c62ab8 100644
      long        memory_size_override     = 0;
      uint64_t    memory_addr_override     = 0;
      bool        ignore_sbi_shutdown      = false;
-@@ -637,7 +639,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
- #endif
+@@ -640,7 +642,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+     bool        allow_ctrlc              = false;
  
      dromajo_stdout = stdout;
 -    dromajo_stderr = stderr;
@@ -246,26 +260,26 @@ index 8feb504..2c62ab8 100644
  
      optind = 0;
  
-@@ -651,6 +653,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+@@ -654,6 +656,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
              {"save",                    required_argument, 0,  's' },
              {"simpoint",                required_argument, 0,  'S' },
              {"maxinsns",                required_argument, 0,  'm' }, // CFG
-+            {"stf_trace",               required_argument, 0,  'z' },
++	     {"stf_trace",               required_argument, 0,  'z' },
              {"trace   ",                required_argument, 0,  't' },
              {"ignore_sbi_shutdown",     required_argument, 0,  'P' }, // CFG
              {"dump_memories",                 no_argument, 0,  'D' }, // CFG
-@@ -727,6 +730,10 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+@@ -734,6 +737,10 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
                  trace = (uint64_t)atoll(optarg);
                  break;
  
-+            case 'z':
-+                stf_trace = strdup(optarg);
-+                break;
++	    case 'z':
++		stf_trace = strdup(optarg);
++		break;
 +
              case 'P': ignore_sbi_shutdown = true; break;
  
              case 'D': dump_memories = true; break;
-@@ -1028,6 +1035,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+@@ -1058,6 +1065,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
  
      s->common.snapshot_save_name = snapshot_save_name;
      s->common.trace              = trace;
@@ -274,7 +288,7 @@ index 8feb504..2c62ab8 100644
      // Allow the command option argument to overwrite the value
      // specified in the configuration file
 diff --git a/src/riscv_cpu.cpp b/src/riscv_cpu.cpp
-index ddacaea..f02ff51 100644
+index c7e8926..9c49919 100644
 --- a/src/riscv_cpu.cpp
 +++ b/src/riscv_cpu.cpp
 @@ -153,6 +153,9 @@ static inline void track_write(RISCVCPUState *s, uint64_t vaddr, uint64_t paddr,
@@ -298,10 +312,10 @@ index ddacaea..f02ff51 100644
  
      return data;
 diff --git a/src/riscv_machine.cpp b/src/riscv_machine.cpp
-index 2942762..55a4e8a 100644
+index 195fe40..d110a5d 100644
 --- a/src/riscv_machine.cpp
 +++ b/src/riscv_machine.cpp
-@@ -412,8 +412,9 @@ static void plic_set_irq(void *opaque, int irq_num, int state) {
+@@ -413,8 +413,9 @@ static void plic_set_irq(void *opaque, int irq_num, int state) {
      }
  }
  
@@ -312,12 +326,12 @@ index 2942762..55a4e8a 100644
      if (!pr || !pr->is_ram)
          return NULL;
      return pr->phys_mem + (uintptr_t)(paddr - pr->addr);
-@@ -889,7 +890,7 @@ static void load_elf_image(RISCVMachine *s, const uint8_t *image, size_t image_l
+@@ -891,7 +892,7 @@ void load_elf_image(RISCVMachine *s, const uint8_t *image, size_t image_len) {
                     can't fix this without a substantial rewrite as the handling of IO devices
                     depends on this. */
                  cpu_register_ram(s->mem_map, ph->p_vaddr, rounded_size, 0);
 -            memcpy(get_ram_ptr(s, ph->p_vaddr), image + ph->p_offset, ph->p_filesz);
-+            memcpy(get_ram_ptr(s, ph->p_vaddr, ph->p_filesz), image + ph->p_offset, ph->p_filesz);
++	    memcpy(get_ram_ptr(s, ph->p_vaddr, ph->p_filesz), image + ph->p_offset, ph->p_filesz);
          }
  }
  

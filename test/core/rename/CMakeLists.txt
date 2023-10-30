@@ -4,7 +4,7 @@ target_link_libraries (core mss)
 
 add_executable(Rename_test Rename_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
 
-target_link_libraries(Rename_test core common_test ${STF_LINK_LIBS} SPARTA::sparta)
+target_link_libraries(Rename_test core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)

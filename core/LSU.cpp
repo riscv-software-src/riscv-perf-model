@@ -402,7 +402,7 @@ namespace olympia
         // Stores typically do not cause a flush after a successful
         // translation.  We now wait for the Retire block to "retire"
         // it, meaning it's good to go to the cache
-        if(inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED)) {
+        if(inst_ptr->isStoreInst() && (inst_ptr->getStatus() == Inst::Status::SCHEDULED)) {
             ILOG("Store marked as completed " << inst_ptr);
             inst_ptr->setStatus(Inst::Status::COMPLETED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
@@ -495,6 +495,7 @@ namespace olympia
             {
                 updateInstReplayReady_(load_store_info_ptr);
             }
+            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_read_stage_);
             return;
         }
@@ -549,8 +550,21 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
                           "Load instruction cannot complete when cache is still a miss! " << mem_access_info_ptr);
 
-            // Update instruction status
-            inst_ptr->setStatus(Inst::Status::COMPLETED);
+            // TODO: Investigate why the stage is called twice
+            if(load_store_info_ptr->isRetired() || inst_ptr->getStatus() == Inst::Status::COMPLETED){
+                ILOG("Inst was already completed or retired " << load_store_info_ptr);
+                if(!load_store_info_ptr->getIssueQueueIterator().isValid()){
+                    ILOG("Load was removed previously " << load_store_info_ptr);
+                    if(isReadyToIssueInsts_())
+                    {
+                        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                    }
+                    return;
+                }
+            }else{
+                // Update instruction status
+                inst_ptr->setStatus(Inst::Status::COMPLETED);
+            }
 
             // Remove completed instruction from queues
             ILOG("Removed issue queue "  << inst_ptr);
@@ -585,12 +599,7 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
                         "Store instruction cannot complete when TLB is still a miss!");
 
-            // Update instruction status
-            inst_ptr->setStatus(Inst::Status::COMPLETED);
-
-            ILOG("Complete Store Instruction: "
-                 << inst_ptr->getMnemonic()
-                 << " uid(" << inst_ptr->getUniqueID() << ")");
+            ILOG("Store was completed but waiting for retire " << load_store_info_ptr);
 
             if(isReadyToIssueInsts_())
             {
@@ -605,6 +614,12 @@ namespace olympia
 
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
                           "Store inst cannot finish when cache is still a miss! " << inst_ptr);
+
+            // TODO: Investigate why the stage is called twice
+            if(load_store_info_ptr->isRetired() && !load_store_info_ptr->getIssueQueueIterator().isValid()){
+                ILOG("Inst was already retired " << load_store_info_ptr);
+                return;
+            }
 
             ILOG("Removed issue queue "  << inst_ptr);
             popIssueQueue_(load_store_info_ptr);

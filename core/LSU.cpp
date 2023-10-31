@@ -80,7 +80,10 @@ namespace olympia
         // Both cache and MMU try to drive the single BIU port at the same cycle
         // Here we give cache the higher priority
         ILOG("LSU construct: #" << node->getGroupIdx());
+    }
 
+    void LSU::onRobDrained_(const bool &val){
+        retire_done_and_is_drained_ = val;
     }
 
     LSU::~LSU()  {
@@ -92,6 +95,11 @@ namespace olympia
              << ": "
              << memory_access_allocator_.getNumAllocated()
              << " MemoryAccessInfo objects allocated/created");
+
+        if(retire_done_and_is_drained_){
+            bool ldst_queue_empty_ = ldst_inst_queue_.empty();
+            sparta_assert(ldst_queue_empty_, "Issue queue has pending instructions");
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

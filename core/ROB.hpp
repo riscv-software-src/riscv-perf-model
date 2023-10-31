@@ -116,6 +116,8 @@ namespace olympia
         sparta::Event<> ev_ensure_forward_progress_{&unit_event_set_, "forward_progress_check",
                 CREATE_SPARTA_HANDLER(ROB, checkForwardProgress_)};
 
+        std::unique_ptr<sparta::NotificationSource<bool>> rob_drained_notif_source_;
+
         void sendInitialCredits_();
         void retireEvent_();
         void robAppended_(const InstGroup &);

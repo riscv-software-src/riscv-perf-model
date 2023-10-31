@@ -53,6 +53,12 @@ namespace olympia
         // simulation continuing on.
         ev_ensure_forward_progress_.setContinuing(false);
 
+        rob_drained_notif_source_.reset(new sparta::NotificationSource<bool>(
+            this->getContainer(),
+            "rob_notif_channel",
+            "Notification channel for rob",
+            "rob_notif_channel"
+        ));
         // Send initial credits to anyone that cares.  Probably Dispatch.
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ROB, sendInitialCredits_));
     }
@@ -198,6 +204,7 @@ namespace olympia
 
     void ROB::onStartingTeardown_() {
         if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
+            rob_drained_notif_source_->postNotification(true);
             std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
             dumpDebugContent_(std::cerr);
         }

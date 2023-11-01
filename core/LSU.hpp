@@ -244,11 +244,11 @@ namespace olympia
         sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_
                 {&unit_port_set_, "in_mmu_lookup_ack", 0};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_
-                {&unit_port_set_, "in_cache_lookup_req", 0};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_data_ready_
+                {&unit_port_set_, "in_cache_data_ready", 0};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_
-                {&unit_port_set_, "in_cache_lookup_ack", sparta::SchedulingPhase::Update, 0};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_resp_
+                {&unit_port_set_, "in_cache_lookup_resp", sparta::SchedulingPhase::Update, 0};
 
         sparta::SignalInPort in_cache_lookup_nack_
                 {&unit_port_set_, "in_cache_lookup_nack", 0};

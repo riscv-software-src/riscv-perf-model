@@ -129,7 +129,7 @@ namespace olympia {
             // out_lsu_lookup_nack_.send(1);
             // Temporary: send miss instead of nack
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-            out_lsu_lookup_ack_.send(memory_access_info_ptr,1);
+            out_lsu_lookup_resp_.send(memory_access_info_ptr,1);
 
             ILOG("Unable to handle LSU request" << memory_access_info_ptr << "; Incoming Cache refill");
         }
@@ -165,7 +165,7 @@ namespace olympia {
         // Wake up all dependant loads
         MemoryAccessInfoPtr dependant_load_inst = (*current_refill_mshr_entry_)->dequeueLoad();
         while(dependant_load_inst != nullptr) {
-            out_lsu_lookup_req_.send(dependant_load_inst);
+            out_lsu_data_ready_.send(dependant_load_inst);
             dependant_load_inst = (*current_refill_mshr_entry_)->dequeueLoad();
         }
         ILOG("Waking up dependant load instructions on block address:0x" << std::hex << (*current_refill_mshr_entry_)->getBlockAddress());
@@ -194,7 +194,7 @@ namespace olympia {
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
             // Send Lookup Ack to LSU and proceed to next stage
             ILOG("Send Lookup "<< mem_access_info_ptr->getCacheState() << " to LSU");
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            out_lsu_lookup_resp_.send(mem_access_info_ptr);
         }
         else{
             // Check MSHR Entries for address match
@@ -224,7 +224,7 @@ namespace olympia {
                             // nack
                             // Temporary: send miss instead of nack
                             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-                            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+                            out_lsu_lookup_resp_.send(mem_access_info_ptr);
                             return;
                         }
 
@@ -235,7 +235,7 @@ namespace olympia {
                 }
 
                 ILOG("Send Lookup "<< mem_access_info_ptr->getCacheState() << " to LSU"); // Send Lookup Ack to LSU and proceed to next stage
-                out_lsu_lookup_ack_.send(mem_access_info_ptr);
+                out_lsu_lookup_resp_.send(mem_access_info_ptr);
 
             }
             else {
@@ -258,7 +258,7 @@ namespace olympia {
                     }
                     // Send Lookup Ack to LSU and proceed to next stage
                     ILOG("Send Lookup "<< mem_access_info_ptr->getCacheState() << " to LSU"); // Send Lookup Ack to LSU and proceed to next stage
-                    out_lsu_lookup_ack_.send(mem_access_info_ptr);
+                    out_lsu_lookup_resp_.send(mem_access_info_ptr);
                 }
                 else {
                     // Cache is unable to handle ld/st request
@@ -267,7 +267,7 @@ namespace olympia {
                     ILOG("No MSHR Entry available (nack), block_address:0x" << std::hex << block_addr);
                     // Temporary: send miss instead of nack
                     mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-                    out_lsu_lookup_ack_.send(mem_access_info_ptr);
+                    out_lsu_lookup_resp_.send(mem_access_info_ptr);
                 }
             }
         }

@@ -550,21 +550,14 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
                           "Load instruction cannot complete when cache is still a miss! " << mem_access_info_ptr);
 
-            // TODO: Investigate why the stage is called twice
-            if(load_store_info_ptr->isRetired() || inst_ptr->getStatus() == Inst::Status::COMPLETED){
-                ILOG("Inst was already completed or retired " << load_store_info_ptr);
-                if(!load_store_info_ptr->getIssueQueueIterator().isValid()){
-                    ILOG("Load was removed previously " << load_store_info_ptr);
-                    if(isReadyToIssueInsts_())
-                    {
-                        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                    }
-                    return;
-                }
-            }else{
-                // Update instruction status
-                inst_ptr->setStatus(Inst::Status::COMPLETED);
+            if (load_store_info_ptr->isRetired() || inst_ptr->getStatus() == Inst::Status::COMPLETED)
+            {
+                ILOG("Load was previously completed or retired " << load_store_info_ptr);
+                return;
             }
+
+            // Mark instruction as completed
+            inst_ptr->setStatus(Inst::Status::COMPLETED);
 
             // Remove completed instruction from queues
             ILOG("Removed issue queue "  << inst_ptr);
@@ -615,8 +608,7 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
                           "Store inst cannot finish when cache is still a miss! " << inst_ptr);
 
-            // TODO: Investigate why the stage is called twice
-            if(load_store_info_ptr->isRetired() && !load_store_info_ptr->getIssueQueueIterator().isValid()){
+            if(!load_store_info_ptr->getIssueQueueIterator().isValid()){
                 ILOG("Inst was already retired " << load_store_info_ptr);
                 return;
             }

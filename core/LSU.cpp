@@ -64,11 +64,11 @@ namespace olympia
             (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_,
                                              MemoryAccessInfoPtr));
 
-        in_cache_lookup_req_.registerConsumerHandler(
+        in_cache_data_ready_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleCacheReadyReq_,
                                             MemoryAccessInfoPtr));
 
-        in_cache_lookup_ack_.registerConsumerHandler
+        in_cache_lookup_resp_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_,
                                              MemoryAccessInfoPtr));
 

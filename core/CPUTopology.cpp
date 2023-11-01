@@ -190,12 +190,12 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.dcache.ports.in_lsu_lookup_req"
         },
         {
-            "cpu.core*.dcache.ports.out_lsu_lookup_ack",
-            "cpu.core*.lsu.ports.in_cache_lookup_ack"
+            "cpu.core*.dcache.ports.out_lsu_lookup_resp",
+            "cpu.core*.lsu.ports.in_cache_lookup_resp"
         },
         {
-            "cpu.core*.dcache.ports.out_lsu_lookup_req",
-            "cpu.core*.lsu.ports.in_cache_lookup_req"
+            "cpu.core*.dcache.ports.out_lsu_data_ready",
+            "cpu.core*.lsu.ports.in_cache_data_ready"
         },
         {
             "cpu.core*.dcache.ports.out_lsu_lookup_nack",

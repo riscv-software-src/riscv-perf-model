@@ -65,14 +65,13 @@ namespace olympia {
 
             void setBlockAddress(uint64_t block_address) {
                 block_address_ = block_address;
-                line_fill_buffer_.setAddr(block_address);
             }
 
             SimpleCacheLine& getLineFillBuffer() {
                 return line_fill_buffer_;
             }
 
-            bool isValid() {
+            bool isValid() const {
                 return line_fill_buffer_.isValid();
             }
 
@@ -80,7 +79,7 @@ namespace olympia {
                 line_fill_buffer_.setValid(v);
             }
 
-            bool isModified() {
+            bool isModified() const {
                 return line_fill_buffer_.isModified();
             }
 

@@ -326,6 +326,7 @@ namespace olympia
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
 
+        void dumpDebugContent_(std::ostream& output) const override final;
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////

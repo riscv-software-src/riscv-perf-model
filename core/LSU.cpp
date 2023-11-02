@@ -461,6 +461,14 @@ namespace olympia
         // Otherwise, assertion error is fired inside arbitrateInstIssue_()
     }
 
+    void LSU::dumpDebugContent_(std::ostream & output) const
+    {
+        output << "LSU Contents" << std::endl;
+        for (const auto & entry : ldst_inst_queue_)
+        {
+            output << '\t' << entry << std::endl;
+        }
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call

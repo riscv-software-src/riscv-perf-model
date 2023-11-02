@@ -133,6 +133,14 @@ public:
         // while the ADD instruction is running, the STORE instruction should NOT issue
         EXPECT_TRUE(lsu.lsu_insts_issued_ == 0);
     }
+
+    void clear_entries(olympia::LSU &lsu){
+        auto iter = lsu.ldst_inst_queue_.begin();
+        while(iter != lsu.ldst_inst_queue_.end()){
+            auto x(iter++);
+            lsu.ldst_inst_queue_.erase(x);
+        }
+    }
 };
 
 //
@@ -427,6 +435,7 @@ void runTest(int argc, char **argv)
         cls.runSimulator(&sim, 6);
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
+        lsu_tester.clear_entries(*my_lsu);
     }
     else if(input_file == "raw_float_lsu.json"){
         // testing RAW dependency for data operand
@@ -440,6 +449,7 @@ void runTest(int argc, char **argv)
         cls.runSimulator(&sim, 6);
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
+        lsu_tester.clear_entries(*my_lsu);
     }
     else{
         sparta::Scheduler sched;

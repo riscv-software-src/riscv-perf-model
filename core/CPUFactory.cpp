@@ -96,8 +96,7 @@ auto olympia::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
             preload();
         auto rob = core_tree_node->getChild("rob")->getResourceAs<olympia::ROB>()->getContainer();
         auto lsu = core_tree_node->getChild("lsu")->getResourceAs<olympia::LSU>();
-        rob->registerForNotification<bool, LSU, &LSU::onRobDrained_>
-            (lsu, "rob_notif_channel");
+        rob->REGISTER_FOR_NOTIFICATION(onRobDrained_, bool, "rob_notif_channel");
     }
 }
 

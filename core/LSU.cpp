@@ -97,8 +97,7 @@ namespace olympia
              << " MemoryAccessInfo objects allocated/created");
 
         if(retire_done_and_is_drained_){
-            bool ldst_queue_empty_ = ldst_inst_queue_.empty();
-            sparta_assert(ldst_queue_empty_, "Issue queue has pending instructions");
+            sparta_assert(ldst_inst_queue_.empty(), "Issue queue has pending instructions");
         }
     }
 

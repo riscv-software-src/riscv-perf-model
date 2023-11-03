@@ -20,7 +20,7 @@ namespace olympia {
         const uint32_t l1_associativity = p->l1_associativity;
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                                    (l1_associativity));
-        l1_cache_.reset(new SimpleDL1(getContainer(), l1_size_kb, l1_line_size, *repl));
+        l1_cache_.reset(new CacheFuncModel(getContainer(), l1_size_kb, l1_line_size, *repl));
     }
 
     // Reload cache line

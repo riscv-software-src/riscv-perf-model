@@ -5,7 +5,7 @@
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/LogUtils.hpp"
-#include "SimpleDL1.hpp"
+#include "CacheFuncModel.hpp"
 #include "Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
 #include "MemoryAccessInfo.hpp"
@@ -37,7 +37,7 @@ namespace olympia {
 
         void getAckFromBIU_(const InstPtr &inst_ptr);
 
-        using L1Handle = SimpleDL1::Handle;
+        using L1Handle = CacheFuncModel::Handle;
         L1Handle l1_cache_;
         const bool l1_always_hit_;
         bool busy_;

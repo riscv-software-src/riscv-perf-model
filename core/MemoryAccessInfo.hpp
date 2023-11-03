@@ -11,15 +11,8 @@
 
 namespace olympia {
 
-    class MemoryAccessInfoPairDef;
-
     class MemoryAccessInfo {
     public:
-
-        // The modeler needs to alias a type called
-        // "SpartaPairDefinitionType" to the Pair Definition class of
-        // itself
-        using SpartaPairDefinitionType = MemoryAccessInfoPairDef;
 
         enum class MMUState : std::uint32_t {
             NO_ACCESS = 0,
@@ -110,35 +103,8 @@ namespace olympia {
 
         bool cache_data_ready_;
 
-        // Scoreboards
-        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
-        ScoreboardViews scoreboard_views_;
 
     };
-
-    /*!
-     * \class MemoryAccessInfoPairDef
-     * \brief Pair Definition class of the Memory Access Information that flows through the example/CoreModel
-     */
-
-    // This is the definition of the PairDefinition class of MemoryAccessInfo.
-    // This PairDefinition class could be named anything but it needs to inherit
-    // publicly from sparta::PairDefinition templatized on the actual class MemoryAcccessInfo.
-    class MemoryAccessInfoPairDef : public sparta::PairDefinition<MemoryAccessInfo> {
-    public:
-
-        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-        MemoryAccessInfoPairDef() : PairDefinition<MemoryAccessInfo>() {
-            SPARTA_INVOKE_PAIRS(MemoryAccessInfo);
-        }
-
-        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &MemoryAccessInfo::getInstUniqueID),
-                              SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrStatus),
-                              SPARTA_ADDPAIR("mmu",   &MemoryAccessInfo::getMMUState),
-                              SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
-                              SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr))
-    };
-
     using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
 

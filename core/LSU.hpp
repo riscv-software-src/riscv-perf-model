@@ -13,6 +13,7 @@
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/resources/Pipeline.hpp"
 #include "sparta/resources/Buffer.hpp"
+#include "sparta/resources/PriorityQueue.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
@@ -191,12 +192,26 @@ namespace olympia
                 replay_queue_iterator_ = iter;
             }
 
+            bool isInReadyQueue() const
+            {
+                return in_ready_queue_;
+            }
+
+            void setInReadyQueue(bool inReadyQueue)
+            {
+                in_ready_queue_ = inReadyQueue;
+            }
+
+            friend bool operator < (const LoadStoreInstInfoPtr &lhs, const LoadStoreInstInfoPtr &rhs) {
+                return lhs->getInstUniqueID() < rhs->getInstUniqueID();
+            }
           private:
             MemoryAccessInfoPtr mem_access_info_ptr_;
             sparta::State<IssuePriority> rank_;
             sparta::State<IssueState> state_;
             LoadStoreInstIterator issue_queue_iterator_;
             LoadStoreInstIterator replay_queue_iterator_;
+            bool in_ready_queue_;
         };  // class LoadStoreInstInfo
 
         using LoadStoreInstInfoAllocator = sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo>;
@@ -278,8 +293,9 @@ namespace olympia
 
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
         const uint32_t replay_buffer_size_;
-
         const uint32_t replay_issue_delay_;
+
+        sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
         // MMU unit
         bool mmu_busy_ = false;
         bool mmu_pending_inst_flushed = false;
@@ -326,6 +342,9 @@ namespace olympia
 
         sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{&unit_event_set_, "replay_ready",
                 CREATE_SPARTA_HANDLER_WITH_DATA(LSU, replayReady_, LoadStoreInstInfoPtr)};
+
+        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_append_ready_{&unit_event_set_, "append_ready",
+                CREATE_SPARTA_HANDLER_WITH_DATA(LSU, appendReady_, LoadStoreInstInfoPtr)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -375,6 +394,9 @@ namespace olympia
         // Mark instruction as not ready and schedule replay ready
         void updateInstReplayReady_(const LoadStoreInstInfoPtr &);
 
+        // Instructions in the replay ready to issue
+        void appendReady_(const LoadStoreInstInfoPtr &);
+
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
@@ -387,6 +409,8 @@ namespace olympia
 
         void readyDependentLoads_(const LoadStoreInstInfoPtr &);
 
+        bool instOperandReady_(const InstPtr &);
+
         void abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr);
 
         // Remove instruction from pipeline which share the same address
@@ -397,6 +421,11 @@ namespace olympia
 
         // Pop completed load/store instruction out of replay queue
         void removeInstFromReplayQueue_(const LoadStoreInstInfoPtr & inst_to_remove);
+        void removeInstFromReplayQueue_(const InstPtr & inst_to_remove);
+
+        void appendToReadyQueue_(const LoadStoreInstInfoPtr &);
+
+        void appendToReadyQueue_(const InstPtr &);
 
         // Pop completed load/store instruction out of issue queue
         void popIssueQueue_(const LoadStoreInstInfoPtr &);

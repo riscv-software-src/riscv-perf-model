@@ -67,7 +67,10 @@ namespace olympia_mss
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataOutPort<olympia::InstPtr> out_biu_ack_
+        sparta::DataOutPort<bool> out_biu_ack_
+            {&unit_port_set_, "out_biu_ack"};
+
+        sparta::DataOutPort<olympia::InstPtr> out_biu_resp_
             {&unit_port_set_, "out_biu_ack"};
 
         sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_
@@ -91,7 +94,7 @@ namespace olympia_mss
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
 
-        // Event to handle BIU request from LSU
+        // Event to handle BIU request from L2Cache
         sparta::UniqueEvent<> ev_handle_biu_req_
             {&unit_event_set_, "handle_biu_req", CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
 
@@ -104,8 +107,8 @@ namespace olympia_mss
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
 
-        // Receive new BIU request from LSU
-        void getReqFromLSU_(const olympia::InstPtr &);
+        // Receive new BIU request from L2Cache
+        void getReqFromL2Cache_(const olympia::InstPtr &);
 
         // Handle BIU request
         void handle_BIU_Req_();

@@ -19,7 +19,7 @@ namespace olympia_mss
         biu_latency_(p->biu_latency)
     {
         in_biu_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromLSU_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromL2Cache_, olympia::InstPtr));
 
         in_mss_ack_sync_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
@@ -34,8 +34,8 @@ namespace olympia_mss
     // Callbacks
     ////////////////////////////////////////////////////////////////////////////////
 
-    // Receive new BIU request from LSU
-    void BIU::getReqFromLSU_(const olympia::InstPtr & inst_ptr)
+    // Receive new BIU request from L2Cache
+    void BIU::getReqFromL2Cache_(const olympia::InstPtr & inst_ptr)
     {
         appendReqQueue_(inst_ptr);
 
@@ -69,7 +69,9 @@ namespace olympia_mss
     // Handle MSS Ack
     void BIU::handle_MSS_Ack_()
     {
-        out_biu_ack_.send(biu_req_queue_.front());
+        out_biu_resp_.send(biu_req_queue_.front(), biu_latency_);
+        out_biu_ack_.send(true);
+        
         biu_req_queue_.pop_front();
         biu_busy_ = false;
 
@@ -96,7 +98,6 @@ namespace olympia_mss
         // Right now we expect MSS ack is always true
         sparta_assert(false, "MSS is NOT done!");
     }
-
 
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call

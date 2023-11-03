@@ -1,0 +1,93 @@
+#Name:     
+#Cmdline:  
+#Exe:      
+#SimulatorVersion:
+#Repro:    
+#Start:    Thursday Thu Oct 26 12:21:09 2023
+#Elapsed:  0.134161s
+{0000000000 00000000 top.l2cache info} L2Cache: L2Cache construct: #4294967295
+{0000000000 00000000 top.l2cache info} L2Cache: Starting BIU credits = 4
+{0000000000 00000000 top.lsu info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Requested
+{0000000000 00000000 top.il1 info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Requested
+{0000000001 00000001 top.l2cache info} getReqFromLSU_: Request received from LSU on the port
+{0000000001 00000001 top.l2cache info} appendLSUReqQueue_: Append LSU->L2Cache request queue!
+{0000000001 00000001 top.l2cache info} getReqFromIL1_: Request received from IL1 on the port
+{0000000001 00000001 top.l2cache info} appendIL1ReqQueue_: Append IL1->L2Cache request queue!
+{0000000001 00000001 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - IL1
+{0000000001 00000001 top.l2cache info} create_Req_: IL1 request is sent to Pipeline_req_Q!
+{0000000001 00000001 top.l2cache info} create_Req_: Scheduled issue_req to pipeline on clock: 11
+{0000000001 00000001 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - LSU
+{0000000001 00000001 top.l2cache info} create_Req_: LSU request is sent to Pipeline_req_Q!
+{0000000001 00000001 top.l2cache info} create_Req_: Scheduled issue_req to pipeline on clock: 12
+{0000000001 00000001 top.il1 info} ReceiveAck_: Ack: '1' Received
+{0000000001 00000001 top.l2cache info} handle_L2Cache_IL1_Ack_: L2Cache Ack is sent to IL1!
+{0000000001 00000001 top.lsu info} ReceiveAck_: Ack: '1' Received
+{0000000001 00000001 top.l2cache info} handle_L2Cache_LSU_Ack_: L2Cache Ack is sent to LSU!
+{0000000011 00000011 top.l2cache info} issue_Req_: Request is sent to Pipeline!
+{0000000012 00000012 top.l2cache info} issue_Req_: Request is sent to Pipeline!
+{0000000013 00000013 top.l2cache info} handleCacheAccessRequest_: Pipeline stage 1! - uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000013 00000013 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
+{0000000014 00000014 top.l2cache info} handleCacheAccessRequest_: Pipeline stage 1! - uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000014 00000014 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
+{0000000014 00000014 top.l2cache info} handleCacheAccessResult_: Pipeline stage 2! uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000014 00000014 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
+{0000000014 00000014 top.l2cache info} appendBIUReqQueue_: Append L2Cache->BIU req queue : Remaining BIU credits = 3
+{0000000014 00000014 top.l2cache info} handle_L2Cache_BIU_Req_: L2Cache Request sent to BIU!
+{0000000015 00000015 top.biu info} sinkInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' sinked
+{0000000015 00000015 top.l2cache info} handleCacheAccessResult_: Pipeline stage 2! uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000015 00000015 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
+{0000000016 00000016 top.l2cache info} getAckFromBIU_: Ack received from BIU on the port : Current BIU credits = 4
+{0000000026 00000026 top.l2cache info} getRespFromBIU_: Response received from BIU on the port
+{0000000026 00000026 top.l2cache info} appendBIURespQueue_: Append BIU->L2Cache resp queue!
+{0000000026 00000026 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - BIU
+{0000000026 00000026 top.l2cache info} create_Req_: Request found in miss_pending_buffer_ with SrcUnit : IL1
+{0000000026 00000026 top.l2cache info} create_Req_: BIU cache reload request is sent to Pipeline_req_Q!
+{0000000026 00000026 top.l2cache info} create_Req_: Scheduled issue_req to pipeline on clock: 37
+{0000000026 00000026 top.l2cache info} create_Req_: Request found in miss_pending_buffer_ with SrcUnit : LSU
+{0000000026 00000026 top.l2cache info} create_Req_: Scheduled issue_req to pipeline on clock: 38
+{0000000037 00000037 top.l2cache info} issue_Req_: Request is sent to Pipeline!
+{0000000038 00000038 top.l2cache info} issue_Req_: Request is sent to Pipeline!
+{0000000039 00000039 top.l2cache info} handleCacheAccessRequest_: Pipeline stage 1! - uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000039 00000039 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
+{0000000039 00000039 top.l2cache info} reloadCache_: Cache reload complete!
+{0000000039 00000039 top.l2cache info} handleCacheAccessRequest_: Post-Reload State set to : Cache HIT: phyAddr=0xdeadbeef
+{0000000040 00000040 top.l2cache info} handleCacheAccessRequest_: Pipeline stage 1! - uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000040 00000040 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
+{0000000040 00000040 top.l2cache info} handleCacheAccessResult_: Pipeline stage 2! uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000040 00000040 top.l2cache info} appendIL1RespQueue_: Append L2Cache->IL1 resp queue!
+{0000000040 00000040 top.l2cache info} handle_L2Cache_IL1_Resp_: L2Cache Resp is sent to IL1!
+{0000000041 00000041 top.il1 info} ReceiveInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Received
+{0000000041 00000041 top.l2cache info} handleCacheAccessResult_: Pipeline stage 2! uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000041 00000041 top.l2cache info} appendLSURespQueue_: Append L2Cache->LSU resp queue!
+{0000000041 00000041 top.l2cache info} handle_L2Cache_LSU_Resp_: L2Cache Resp is sent to LSU!
+{0000000042 00000042 top.lsu info} ReceiveInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Received
+{0000000050 00000050 top.lsu info} req_inst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Requested
+{0000000050 00000050 top.il1 info} req_inst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Requested
+{0000000051 00000051 top.l2cache info} getReqFromLSU_: Request received from LSU on the port
+{0000000051 00000051 top.l2cache info} appendLSUReqQueue_: Append LSU->L2Cache request queue!
+{0000000051 00000051 top.l2cache info} getReqFromIL1_: Request received from IL1 on the port
+{0000000051 00000051 top.l2cache info} appendIL1ReqQueue_: Append IL1->L2Cache request queue!
+{0000000051 00000051 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - IL1
+{0000000051 00000051 top.l2cache info} create_Req_: IL1 request is sent to Pipeline_req_Q!
+{0000000051 00000051 top.l2cache info} create_Req_: Scheduled issue_req to pipeline on clock: 61
+{0000000051 00000051 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - LSU
+{0000000051 00000051 top.l2cache info} create_Req_: LSU request is sent to Pipeline_req_Q!
+{0000000051 00000051 top.l2cache info} create_Req_: Scheduled issue_req to pipeline on clock: 62
+{0000000051 00000051 top.il1 info} ReceiveAck_: Ack: '1' Received
+{0000000051 00000051 top.l2cache info} handle_L2Cache_IL1_Ack_: L2Cache Ack is sent to IL1!
+{0000000051 00000051 top.lsu info} ReceiveAck_: Ack: '1' Received
+{0000000051 00000051 top.l2cache info} handle_L2Cache_LSU_Ack_: L2Cache Ack is sent to LSU!
+{0000000061 00000061 top.l2cache info} issue_Req_: Request is sent to Pipeline!
+{0000000062 00000062 top.l2cache info} issue_Req_: Request is sent to Pipeline!
+{0000000063 00000063 top.l2cache info} handleCacheAccessRequest_: Pipeline stage 1! - uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000063 00000063 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
+{0000000064 00000064 top.l2cache info} handleCacheAccessRequest_: Pipeline stage 1! - uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000064 00000064 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
+{0000000064 00000064 top.l2cache info} handleCacheAccessResult_: Pipeline stage 2! uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000064 00000064 top.l2cache info} appendIL1RespQueue_: Append L2Cache->IL1 resp queue!
+{0000000064 00000064 top.l2cache info} handle_L2Cache_IL1_Resp_: L2Cache Resp is sent to IL1!
+{0000000065 00000065 top.il1 info} ReceiveInst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Received
+{0000000065 00000065 top.l2cache info} handleCacheAccessResult_: Pipeline stage 2! uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000065 00000065 top.l2cache info} appendLSURespQueue_: Append L2Cache->LSU resp queue!
+{0000000065 00000065 top.l2cache info} handle_L2Cache_LSU_Resp_: L2Cache Resp is sent to LSU!
+{0000000066 00000066 top.lsu info} ReceiveInst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Received

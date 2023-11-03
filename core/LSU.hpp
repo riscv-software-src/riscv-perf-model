@@ -400,6 +400,30 @@ namespace olympia
     };
 
     inline std::ostream & operator<<(std::ostream & os,
+        const olympia::MemoryAccessInfo::UnitName & unit) {
+        switch(unit) {
+            case olympia::MemoryAccessInfo::UnitName::IL1:
+                os << "IL1";
+                break;
+            case olympia::MemoryAccessInfo::UnitName::LSU:
+                os << "LSU";
+                break;
+            case olympia::MemoryAccessInfo::UnitName::DCACHE:
+                os << "DCACHE";
+                break;
+            case olympia::MemoryAccessInfo::UnitName::L2CACHE:
+                os << "L2CACHE";
+                break;
+            case olympia::MemoryAccessInfo::UnitName::BIU:
+                os << "BIU";
+                break;
+            default:
+                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
+        }
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os,
         const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
         switch(mmu_access_state){
             case olympia::MemoryAccessInfo::MMUState::NO_ACCESS:

@@ -11,8 +11,11 @@ namespace olympia {
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
 
-        in_biu_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromBIU_, InstPtr));
+        in_l2cache_ack_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromL2Cache_, bool));
+
+        in_l2cache_resp_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getRespFromL2Cache_, InstPtr));
 
         // DL1 cache config
         const uint32_t l1_line_size = p->l1_line_size;
@@ -78,17 +81,21 @@ namespace olympia {
             if(!busy_) {
                 busy_ = true;
                 cache_pending_inst_ = memory_access_info_ptr;
-                out_biu_req_.send(cache_pending_inst_->getInstPtr());
+                out_l2cache_req_.send(cache_pending_inst_->getInstPtr());
             }
         }
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
     }
 
-    void DCache::getAckFromBIU_(const InstPtr &inst_ptr) {
+    void DCache::getRespFromL2Cache_(const InstPtr &inst_ptr) {
         out_lsu_lookup_req_.send(cache_pending_inst_);
         reloadCache_(inst_ptr->getRAdr());
         cache_pending_inst_.reset();
         busy_ = false;
+    }
+
+    void DCache::getAckFromL2Cache_(const bool &ack) {
+        // Process ACK
     }
 
 }

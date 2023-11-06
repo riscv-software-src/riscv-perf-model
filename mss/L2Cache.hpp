@@ -195,6 +195,7 @@ namespace olympia_mss
 	    // Instead using std::shared_ptr. That works cleanly.
         using L2MemoryAccessInfoPtr = std::shared_ptr<olympia::MemoryAccessInfo>;
         using L2UnitName = olympia::MemoryAccessInfo::UnitName;
+        using L2CacheState = olympia::MemoryAccessInfo::CacheState;
         using L2CachePipeline = sparta::Pipeline<L2MemoryAccessInfoPtr>;
         
         PipelineStages stages_;
@@ -212,7 +213,6 @@ namespace olympia_mss
         
 
         // L2 Cache
-        using L2CacheState = olympia::MemoryAccessInfo::CacheState;
         using CacheHandle = olympia::SimpleDL1::Handle;
         uint32_t l2_lineSize_;
         uint8_t shiftBy_;

@@ -71,7 +71,7 @@ namespace olympia_mss
             {&unit_port_set_, "out_biu_ack"};
 
         sparta::DataOutPort<olympia::InstPtr> out_biu_resp_
-            {&unit_port_set_, "out_biu_ack"};
+            {&unit_port_set_, "out_biu_resp"};
 
         sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_
             {&unit_port_set_, "out_mss_req_sync", getClock()};

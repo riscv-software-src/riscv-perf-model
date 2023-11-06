@@ -447,6 +447,9 @@ namespace olympia
             case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
                 os << "no_access";
                 break;
+            case olympia::MemoryAccessInfo::CacheState::RELOAD:
+                os << "reload";
+                break;
             case olympia::MemoryAccessInfo::CacheState::MISS:
                 os << "miss";
                 break;

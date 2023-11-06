@@ -222,16 +222,16 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.l2cache.ports.out_l2cache_dcache_resp"
         },
         {
-            "cpu.core*.l2cache.ports.out_biu_req",
+            "cpu.core*.l2cache.ports.out_l2cache_biu_req",
             "cpu.core*.biu.ports.in_biu_req"
         },
         {
             "cpu.core*.biu.ports.out_biu_ack",
-            "cpu.core*.l2cache.ports.in_biu_ack"
+            "cpu.core*.l2cache.ports.in_biu_l2cache_ack"
         },
         {
             "cpu.core*.biu.ports.out_biu_resp",
-            "cpu.core*.l2cache.ports.in_biu_resp"
+            "cpu.core*.l2cache.ports.in_biu_l2cache_resp"
         },
         {
             "cpu.core*.lsu.ports.out_mmu_lookup_req",

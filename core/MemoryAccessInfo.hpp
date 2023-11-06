@@ -33,6 +33,7 @@ namespace olympia {
         enum class CacheState : std::uint64_t {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
+            RELOAD,
             MISS,
             HIT,
             NUM_STATES,

@@ -256,15 +256,17 @@ namespace olympia
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr);
 
-        // Remove inst from ready queue
-        ready_queue_.pop();
-        win_ptr->setInReadyQueue(false);
-
+        // We append to replay queue to prevent ref count of the shared pointer to drop before
+        // calling pop below
         if(allow_speculative_load_exec_)
         {
             ILOG("Appending to replay queue " << win_ptr);
             appendToReplayQueue_(win_ptr);
         }
+
+        // Remove inst from ready queue
+        ready_queue_.pop();
+        win_ptr->setInReadyQueue(false);
 
         // Update instruction issue info
         win_ptr->setState(LoadStoreInstInfo::IssueState::ISSUED);
@@ -395,6 +397,16 @@ namespace olympia
             {
                 updateInstReplayReady_(load_store_info_ptr);
             }
+            // There might not be a wake up because the cache cannot handle nay more instruction
+            // Change to nack wakeup when implemented
+            if(!load_store_info_ptr->isInReadyQueue())
+            {
+                appendToReadyQueue_(load_store_info_ptr);
+                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                if(isReadyToIssueInsts_()){
+                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                }
+            }
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             return;
         }
@@ -501,7 +513,16 @@ namespace olympia
             {
                 updateInstReplayReady_(load_store_info_ptr);
             }
-            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            // There might not be a wake up because the cache cannot handle nay more instruction
+             // Change to nack wakeup when implemented
+            if(!load_store_info_ptr->isInReadyQueue())
+            {
+                appendToReadyQueue_(load_store_info_ptr);
+                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                if(isReadyToIssueInsts_()){
+                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                }
+            }
             ldst_pipeline_.invalidateStage(cache_read_stage_);
             return;
         }
@@ -791,8 +812,8 @@ namespace olympia
 
         if (found && isReadyToIssueInsts_())
         {
-            ILOG("Ready dep inst ");
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+            ILOG("Ready dep inst issue ");
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
     }
 
@@ -905,7 +926,6 @@ namespace olympia
     }
 
     void LSU::appendToReplayQueue_(const LoadStoreInstInfoPtr &inst_info_ptr){
-//        return;
         sparta_assert(replay_buffer_.size() < replay_buffer_size_,
                       "Appending load queue causes overflows!");
 

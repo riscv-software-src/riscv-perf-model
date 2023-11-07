@@ -85,7 +85,7 @@ namespace olympia {
         }
 
         bool isCacheHit() const {
-            return (cache_access_state_ == MemoryAccessInfo::CacheState::HIT);
+            return cache_access_state_ == MemoryAccessInfo::CacheState::HIT;
         }
 
         bool isDataReady() const {

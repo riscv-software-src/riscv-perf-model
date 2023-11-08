@@ -58,6 +58,23 @@ public:
         EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
 
     }
+    void test_clearing_rename_structures_amoadd(olympia::Rename & rename){
+        // after all instructions have retired, we should have:
+        // num_rename_registers - 32 registers = freelist size
+        // because we initialize the first 32 registers
+        if (rename.reference_counter_[0].size() == 34){
+            EXPECT_TRUE(rename.freelist_[0].size() == 2);
+            // in the case of only two free PRFs, they should NOT be equal to each other
+            EXPECT_TRUE(rename.freelist_[0].front() != rename.freelist_[0].back());
+        }
+        else{
+            EXPECT_TRUE(rename.freelist_[0].size() == 96);
+        }
+        // we're only expecting one reference
+        EXPECT_TRUE(rename.reference_counter_[0][1] == 0);
+        EXPECT_TRUE(rename.reference_counter_[0][2] == 0);
+
+    }
     void test_one_instruction(olympia::Rename & rename){
         // process only one instruction, check that freelist and map_tables are allocated correctly
         if (rename.reference_counter_[0].size() == 34){
@@ -441,13 +458,25 @@ void runTest(int argc, char **argv)
         executepipe_tester.test_dependent_integer_first_instruction(*my_executepipe);
         lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     }
+    else if(input_file == "amoadd.json"){
+        sparta::Scheduler sched;
+        RenameSim rename_sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
+
+        cls.populateSimulation(&rename_sim);
+
+        sparta::RootTreeNode* root_node = rename_sim.getRoot();
+        olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
+        olympia::RenameTester rename_tester;
+        cls.runSimulator(&rename_sim);
+        rename_tester.test_clearing_rename_structures_amoadd(*my_rename);
+    }
     else{
         sparta::Scheduler sched;
         RenameSim rename_sim(&sched, "mavis_isa_files", "arch/isa_json", datafiles[0], input_file);
 
         cls.populateSimulation(&rename_sim);
 
-        sparta::RootTreeNode* root_node =  rename_sim.getRoot();
+        sparta::RootTreeNode* root_node = rename_sim.getRoot();
         olympia::Rename* my_rename = root_node->getChild("rename")->getResourceAs<olympia::Rename*>();
         olympia::RenameTester rename_tester;
         rename_tester.test_startup_rename_structures(*my_rename);

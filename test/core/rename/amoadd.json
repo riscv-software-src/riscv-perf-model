@@ -1,0 +1,26 @@
+[
+    {
+        "mnemonic": "amoadd.w",
+        "rs1": 1,
+        "rs2": 1,
+        "rd": 1
+    },
+    {
+        "mnemonic": "amoadd.w",
+        "rs1": 1,
+        "rs2": 1,
+        "rd": 1
+    },
+    {
+        "mnemonic": "amoadd.w",
+        "rs1": 2,
+        "rs2": 2,
+        "rd": 2
+    },
+    {
+        "mnemonic": "amoadd.w",
+        "rs1": 2,
+        "rs2": 2,
+        "rd": 2
+    }
+]

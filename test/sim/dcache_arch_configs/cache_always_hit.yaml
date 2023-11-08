@@ -1,0 +1,5 @@
+include: small_core.yaml
+
+top.cpu.core0:
+  dcache.params:
+    l1_always_hit: true

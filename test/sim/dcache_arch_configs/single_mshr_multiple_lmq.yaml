@@ -1,0 +1,7 @@
+include: small_core.yaml
+
+top.cpu.core0:
+  dcache.params:
+    mshr_entries: 1
+    load_miss_queue_size: 8
+

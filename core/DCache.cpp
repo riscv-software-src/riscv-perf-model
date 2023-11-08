@@ -4,7 +4,7 @@
 #include <sparta/events/SchedulingPhases.hpp>
 
 namespace olympia {
-    const char DCache::name[] = "cache";
+    const char DCache::name[] = "dcache";
 
     DCache::DCache(sparta::TreeNode *node, const CacheParameterSet *p) :
             sparta::Unit(node),

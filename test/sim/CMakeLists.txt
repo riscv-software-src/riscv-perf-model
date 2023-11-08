@@ -85,3 +85,24 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
           --arch-search-dir ${SIM_BASE}/test/sim/lsu_arch_configs/
           --arch ${ARCH_FULL_PATH})
 endforeach()
+
+
+file(GLOB DCACHE_TEST_YAML "${SIM_BASE}/test/sim/dcache_arch_configs/*.yaml")
+list(REMOVE_ITEM DCACHE_TEST_YAML "${SIM_BASE}/test/sim/dcache_arch_configs/small_core.yaml")
+foreach(ARCH_FULL_PATH ${DCACHE_TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  sparta_named_test(olympia_arch_${ARCH_NAME}_dhry_test olympia
+          -i200K --workload traces/dhry_riscv.zstf
+          --arch-search-dir ${SIM_BASE}/test/sim/dcache_arch_configs/
+          --arch ${ARCH_FULL_PATH})
+endforeach()
+
+foreach(ARCH_FULL_PATH ${DCACHE_TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  sparta_named_test(olympia_arch_${ARCH_NAME}_coremark_test olympia
+          -i200K --workload traces/core_riscv.zstf
+          --arch-search-dir ${SIM_BASE}/test/sim/dcache_arch_configs/
+          --arch ${ARCH_FULL_PATH})
+endforeach()

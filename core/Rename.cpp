@@ -358,10 +358,4 @@ namespace olympia
             ev_schedule_rename_.schedule(1);
         }
     }
-
-
-    void Rename::onStartingTeardown_(){
-        sparta_assert(current_stall_ == StallReason::NOT_STALLED, "Rename is stalled when entering teardown, possible lockup in Rename?")
-    }
-
 }

@@ -157,7 +157,6 @@ namespace olympia
         // Get Retired Instructions
         void getAckFromROB_(const InstPtr &);
         
-        void onStartingTeardown_() override final;
         // Friend class used in rename testing
         friend class RenameTester;
 

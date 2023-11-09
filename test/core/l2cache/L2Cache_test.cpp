@@ -84,7 +84,7 @@ private:
                                                                  &mavis_fact);
         tns_to_delete_.emplace_back(mavis);
 
-        // Create a Source Units that represents DCache and IL1
+        // Create a Source Units that represents DCache and ICache
         sparta::ResourceTreeNode * Test_DCache  = new sparta::ResourceTreeNode(rtn,
                                                                             "dcache",
                                                                             sparta::TreeNode::GROUP_NAME_NONE,
@@ -94,14 +94,14 @@ private:
         Test_DCache->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
         tns_to_delete_.emplace_back(Test_DCache);
         
-        sparta::ResourceTreeNode * Test_IL1 = new sparta::ResourceTreeNode(rtn,
-                                                                            "il1",
+        sparta::ResourceTreeNode * Test_ICache = new sparta::ResourceTreeNode(rtn,
+                                                                            "icache",
                                                                             sparta::TreeNode::GROUP_NAME_NONE,
                                                                             sparta::TreeNode::GROUP_IDX_NONE,
-                                                                            "il1",
-                                                                            &il1_fact);
-        Test_IL1->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
-        tns_to_delete_.emplace_back(Test_IL1);
+                                                                            "icache",
+                                                                            &icache_fact);
+        Test_ICache->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
+        tns_to_delete_.emplace_back(Test_ICache);
 
         // Create L2Cache
         sparta::ResourceTreeNode * L2CacheUnit = new sparta::ResourceTreeNode(rtn,
@@ -137,12 +137,12 @@ private:
         sparta::bind(root_node->getChildAs<sparta::Port>("dcache.ports.in_source_ack"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_dcache_ack"));
         
-        sparta::bind(root_node->getChildAs<sparta::Port>("il1.ports.out_source_req"),
-                     root_node->getChildAs<sparta::Port>("l2cache.ports.in_il1_l2cache_req"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("il1.ports.in_source_resp"),
-                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_il1_resp"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("il1.ports.in_source_ack"),
-                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_il1_ack"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.out_source_req"),
+                     root_node->getChildAs<sparta::Port>("l2cache.ports.in_icache_l2cache_req"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_resp"),
+                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_resp"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_ack"),
+                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_ack"));
         
         sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.in_biu_req"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_biu_req"));
@@ -155,7 +155,7 @@ private:
     std::unique_ptr<olympia::OlympiaAllocators> allocators_tn_;
 
     sparta::ResourceFactory<l2cache_test::L2SourceUnit, l2cache_test::L2SourceUnit::L2SourceUnitParameters> dcache_fact;
-    sparta::ResourceFactory<l2cache_test::L2SourceUnit, l2cache_test::L2SourceUnit::L2SourceUnitParameters> il1_fact;
+    sparta::ResourceFactory<l2cache_test::L2SourceUnit, l2cache_test::L2SourceUnit::L2SourceUnitParameters> icache_fact;
 
     sparta::ResourceFactory<olympia_mss::L2Cache, olympia_mss::L2Cache::L2CacheParameterSet> l2cache_fact;
 

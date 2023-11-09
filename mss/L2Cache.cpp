@@ -19,9 +19,9 @@ namespace olympia_mss
                      "num_reqs_from_dcache",
                      "The total number of instructions received by L2Cache from DCache",
                      sparta::Counter::COUNT_NORMAL),
-        num_reqs_from_il1_(&unit_stat_set_,
-                     "num_reqs_from_il1",
-                     "The total number of instructions received by L2Cache from IL1",
+        num_reqs_from_icache_(&unit_stat_set_,
+                     "num_reqs_from_icache",
+                     "The total number of instructions received by L2Cache from ICache",
                      sparta::Counter::COUNT_NORMAL),
         num_reqs_to_biu_(&unit_stat_set_,
                      "num_reqs_to_biu",
@@ -31,9 +31,9 @@ namespace olympia_mss
                      "num_acks_from_biu",
                      "The total number of instructions received from BIU into L2Cache",
                      sparta::Counter::COUNT_NORMAL),
-        num_acks_to_il1_(&unit_stat_set_,
-                     "num_acks_to_il1",
-                     "The total number of instructions forwarded from L2Cache to IL1",
+        num_acks_to_icache_(&unit_stat_set_,
+                     "num_acks_to_icache",
+                     "The total number of instructions forwarded from L2Cache to ICache",
                      sparta::Counter::COUNT_NORMAL),
         num_acks_to_dcache_(&unit_stat_set_,
                      "num_acks_to_dcache",
@@ -43,9 +43,9 @@ namespace olympia_mss
                      "num_resps_from_biu",
                      "The total number of instructions received from BIU into L2Cache",
                      sparta::Counter::COUNT_NORMAL),
-        num_resps_to_il1_(&unit_stat_set_,
-                     "num_resps_to_il1",
-                     "The total number of instructions forwarded from L2Cache to IL1",
+        num_resps_to_icache_(&unit_stat_set_,
+                     "num_resps_to_icache",
+                     "The total number of instructions forwarded from L2Cache to ICache",
                      sparta::Counter::COUNT_NORMAL),
         num_resps_to_dcache_(&unit_stat_set_,
                      "num_resps_to_dcache",
@@ -60,11 +60,11 @@ namespace olympia_mss
                      "The total number L2 Cache Misses",
                      sparta::Counter::COUNT_NORMAL),
         dcache_req_queue_size_(p->dcache_req_queue_size),
-        il1_req_queue_size_(p->il1_req_queue_size),
+        icache_req_queue_size_(p->icache_req_queue_size),
         biu_req_queue_size_(p->biu_req_queue_size),
         biu_resp_queue_size_(p->biu_resp_queue_size),
         dcache_resp_queue_size_(p->dcache_resp_queue_size),
-        il1_resp_queue_size_(p->il1_resp_queue_size),
+        icache_resp_queue_size_(p->icache_resp_queue_size),
         stages_(p->l2cache_latency),
         l2cache_pipeline_("L2CachePipeline", stages_.NUM_STAGES, getClock()),
         pipeline_req_queue_("Pipeline_Request_Queue",
@@ -86,8 +86,8 @@ namespace olympia_mss
         in_dcache_l2cache_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromDCache_, olympia::InstPtr));
 
-        in_il1_l2cache_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromIL1_, olympia::InstPtr));
+        in_icache_l2cache_req_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromICache_, olympia::InstPtr));
 
         in_biu_resp_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getRespFromBIU_, olympia::InstPtr));
@@ -139,28 +139,28 @@ namespace olympia_mss
         // Request queue is not empty
         if (dcache_req_queue_.size() < dcache_req_queue_size_) {
             ev_handle_dcache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
-            num_reqs_from_dcache_++;
+            ++num_reqs_from_dcache_;
         }
         else {
             ILOG("This request cannot be serviced right now, L2Cache input buffer from DCache is already full!");
         }
     }
 
-    // Receive new L2Cache request from IL1
-    void L2Cache::getReqFromIL1_(const olympia::InstPtr & inst_ptr) {
+    // Receive new L2Cache request from ICache
+    void L2Cache::getReqFromICache_(const olympia::InstPtr & inst_ptr) {
         
-        ILOG("Request received from IL1 on the port");
+        ILOG("Request received from ICache on the port");
 
-        appendIL1ReqQueue_(inst_ptr);
+        appendICacheReqQueue_(inst_ptr);
 
         // Schedule L2Cache request handling event only when:
         // (1)Request queue is not empty
-        if (il1_req_queue_.size() < il1_req_queue_size_) {
-            ev_handle_il1_l2cache_req_.schedule(sparta::Clock::Cycle(0));
-            num_reqs_from_il1_++;
+        if (icache_req_queue_.size() < icache_req_queue_size_) {
+            ev_handle_icache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
+            ++num_reqs_from_icache_;
         }
         else {
-            ILOG("This request cannot be serviced right now, L2Cache input buffer from IL1 is already full!");
+            ILOG("This request cannot be serviced right now, L2Cache input buffer from ICache is already full!");
         }
     }
 
@@ -175,7 +175,7 @@ namespace olympia_mss
         // Request queue is not empty
         if (biu_resp_queue_.size() < biu_resp_queue_size_) {
             ev_handle_biu_l2cache_resp_.schedule(sparta::Clock::Cycle(0));
-            num_resps_from_biu_++;
+            ++num_resps_from_biu_;
         }
         else {
             ILOG("This request cannot be serviced right now, L2Cache input buffer from DCache is already full!");
@@ -186,7 +186,7 @@ namespace olympia_mss
     void L2Cache::getAckFromBIU_(const bool & ack) {
 
         // Update the biu credits
-        l2cache_biu_credits_++;
+        ++l2cache_biu_credits_;
 
         // Kickstart the pipeline issueing 
         ev_issue_req_.schedule(sparta::Clock::Cycle(0));
@@ -201,9 +201,9 @@ namespace olympia_mss
         }
     }
 
-    // Handle L2Cache request from IL1
-    void L2Cache::handle_IL1_L2Cache_Req_() {
-        if (!il1_req_queue_.empty())  {
+    // Handle L2Cache request from ICache
+    void L2Cache::handle_ICache_L2Cache_Req_() {
+        if (!icache_req_queue_.empty())  {
             ev_create_req_.schedule(sparta::Clock::Cycle(0));
         }
     }
@@ -224,7 +224,7 @@ namespace olympia_mss
 
             biu_req_queue_.erase(biu_req_queue_.begin());
 
-            num_reqs_to_biu_++;
+            ++num_reqs_to_biu_;
 
             ILOG("L2Cache Request sent to BIU : Current BIU credits = " << l2cache_biu_credits_);   
         }
@@ -237,17 +237,17 @@ namespace olympia_mss
     // Returning ack to DCache
     void L2Cache::handle_L2Cache_DCache_Ack_() {
         out_l2cache_dcache_ack_.send(true);
-        num_acks_to_dcache_++;
+        ++num_acks_to_dcache_;
 
         ILOG("L2Cache Ack is sent to DCache!");
     }
 
-    // Returning resp to IL1
-    void L2Cache::handle_L2Cache_IL1_Ack_() {
-        out_l2cache_il1_ack_.send(true);
-        num_acks_to_il1_++;
+    // Returning resp to ICache
+    void L2Cache::handle_L2Cache_ICache_Ack_() {
+        out_l2cache_icache_ack_.send(true);
+        ++num_acks_to_icache_;
         
-        ILOG("L2Cache Ack is sent to IL1!");
+        ILOG("L2Cache Ack is sent to ICache!");
     }      
 
     // Returning resp to DCache
@@ -255,19 +255,19 @@ namespace olympia_mss
         out_l2cache_dcache_resp_.send(dcache_resp_queue_.front());
         dcache_resp_queue_.erase(dcache_resp_queue_.begin());
         
-        num_resps_to_dcache_++;
+        ++num_resps_to_dcache_;
 
         ILOG("L2Cache Resp is sent to DCache!");
     }
 
-    // Returning resp to IL1
-    void L2Cache::handle_L2Cache_IL1_Resp_() {
-        out_l2cache_il1_resp_.send(il1_resp_queue_.front());
-        il1_resp_queue_.erase(il1_resp_queue_.begin());
+    // Returning resp to ICache
+    void L2Cache::handle_L2Cache_ICache_Resp_() {
+        out_l2cache_icache_resp_.send(icache_resp_queue_.front());
+        icache_resp_queue_.erase(icache_resp_queue_.begin());
 
-        num_resps_to_il1_++;
+        ++num_resps_to_icache_;
 
-        ILOG("L2Cache Resp is sent to IL1!");
+        ILOG("L2Cache Resp is sent to ICache!");
     }
 
     // Handle arbitration and forward the req to pipeline_req_queue_
@@ -293,7 +293,7 @@ namespace olympia_mss
                 ILOG("Request found in miss_pending_buffer_ with SrcUnit : " << (*req)->getSrcUnit());
 
                 (*req)->setDestUnit((*req)->getSrcUnit());
-                (*req)->setSrcUnit(L2UnitName::BIU);
+                (*req)->setSrcUnit(L2ArchUnit::BIU);
                 (*req)->setCacheState(L2CacheState::RELOAD);
 
                 if (pipeline_req_queue_.numFree() > 0) {
@@ -304,7 +304,7 @@ namespace olympia_mss
                 }   
                 
                 // Check if this was the last occuring
-                auto iter = req; iter++;
+                auto iter = req; ++iter;
                 auto next_req = std::find_if(iter, miss_pending_buffer_.end(), is_addr_present);
                 
                 if (next_req == miss_pending_buffer_.end()) {
@@ -317,27 +317,27 @@ namespace olympia_mss
                 miss_pending_buffer_.erase(req);
             }
         }
-        else if (arbitration_winner == Channel::IL1) {
+        else if (arbitration_winner == Channel::ICACHE) {
             
-            const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(il1_req_queue_.front());
+            const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(icache_req_queue_.front());
             
-            reqPtr->setSrcUnit(L2UnitName::IL1);
-            reqPtr->setDestUnit(L2UnitName::IL1);
+            reqPtr->setSrcUnit(L2ArchUnit::ICACHE);
+            reqPtr->setDestUnit(L2ArchUnit::ICACHE);
 
             pipeline_req_queue_.push(reqPtr);
-            ILOG("IL1 request is sent to Pipeline_req_Q!");
+            ILOG("ICache request is sent to Pipeline_req_Q!");
 
-            il1_req_queue_.erase(il1_req_queue_.begin());
+            icache_req_queue_.erase(icache_req_queue_.begin());
             
-            // Send out the ack to IL1 for credit management
-            ev_handle_l2cache_il1_ack_.schedule(sparta::Clock::Cycle(0));
+            // Send out the ack to ICache for credit management
+            ev_handle_l2cache_icache_ack_.schedule(sparta::Clock::Cycle(0));
         }
         else if (arbitration_winner == Channel::DCACHE) {
             
             const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(dcache_req_queue_.front());
             
-            reqPtr->setSrcUnit(L2UnitName::DCACHE);
-            reqPtr->setDestUnit(L2UnitName::DCACHE);
+            reqPtr->setSrcUnit(L2ArchUnit::DCACHE);
+            reqPtr->setDestUnit(L2ArchUnit::DCACHE);
 
             pipeline_req_queue_.push(reqPtr);
             ILOG("DCache request is sent to Pipeline_req_Q!");
@@ -354,7 +354,7 @@ namespace olympia_mss
         // Schedule a ev_create_req_ event again to see if the the new request 
         // from any of the requestors can be put into pipeline_req_queue_
         if (   !biu_resp_queue_.empty()
-            || !il1_req_queue_.empty()
+            || !icache_req_queue_.empty()
             || !dcache_req_queue_.empty() )
             
             ev_create_req_.schedule(sparta::Clock::Cycle(1));
@@ -366,7 +366,7 @@ namespace olympia_mss
         // and l2cache_pipeline_ has credits available
         if (hasCreditsForPipelineIssue_() && !pipeline_req_queue_.empty()) {
             l2cache_pipeline_.append(pipeline_req_queue_.front());
-            inFlight_reqs_++;
+            ++inFlight_reqs_;
             ILOG("Request is sent to Pipeline! SrcUnit : " << pipeline_req_queue_.front()->getSrcUnit());
 
             pipeline_req_queue_.pop(); 
@@ -411,7 +411,7 @@ namespace olympia_mss
         
         inFlight_reqs_--;
         
-        // This request to access cache came from DCache or IL1 to do a cache lookup.
+        // This request to access cache came from DCache or ICache to do a cache lookup.
         // It was either a miss or hit based on cacheLookup_() in the previous stage of the pipeline
         if (req->getCacheState() == L2CacheState::HIT) {
             // If it was originally a miss in L2Cache, on return from BIU, it's SrcUnit is set to BIU
@@ -425,7 +425,7 @@ namespace olympia_mss
         else { // if (req->getCacheState() == L2CacheState::MISS)            
                 
             // Set Destination for this request to BIU
-            req->setDestUnit(L2UnitName::BIU);
+            req->setDestUnit(L2ArchUnit::BIU);
 
             // Handle the miss instruction by storing it aside while waiting 
             // for lower level memory to return
@@ -465,14 +465,14 @@ namespace olympia_mss
         ILOG("Append DCache->L2Cache request queue!");
     }
 
-    // Append L2Cache request queue for reqs from IL1
-    void L2Cache::appendIL1ReqQueue_(const olympia::InstPtr& inst_ptr) {
-        sparta_assert(il1_req_queue_.size() <= il1_req_queue_size_ ,"IL1 request queue overflows!");
+    // Append L2Cache request queue for reqs from ICache
+    void L2Cache::appendICacheReqQueue_(const olympia::InstPtr& inst_ptr) {
+        sparta_assert(icache_req_queue_.size() <= icache_req_queue_size_ ,"ICache request queue overflows!");
 
         // Push new requests from back
-        il1_req_queue_.emplace_back(inst_ptr);
+        icache_req_queue_.emplace_back(inst_ptr);
 
-        ILOG("Append IL1->L2Cache request queue!");
+        ILOG("Append ICache->L2Cache request queue!");
     }
 
     // Append BIU resp queue
@@ -496,15 +496,15 @@ namespace olympia_mss
         ILOG("Append L2Cache->DCache resp queue!");
     }
 
-    // Append IL1 resp queue
-    void L2Cache::appendIL1RespQueue_(const olympia::InstPtr& inst_ptr) {
-        sparta_assert(il1_resp_queue_.size() <= il1_resp_queue_size_ ,"IL1 resp queue overflows!");
+    // Append ICache resp queue
+    void L2Cache::appendICacheRespQueue_(const olympia::InstPtr& inst_ptr) {
+        sparta_assert(icache_resp_queue_.size() <= icache_resp_queue_size_ ,"ICache resp queue overflows!");
         
-        // Push new resp to the il1_resp_queue_
-        il1_resp_queue_.emplace_back(inst_ptr);
-        ev_handle_l2cache_il1_resp_.schedule(sparta::Clock::Cycle(0));
+        // Push new resp to the icache_resp_queue_
+        icache_resp_queue_.emplace_back(inst_ptr);
+        ev_handle_l2cache_icache_resp_.schedule(sparta::Clock::Cycle(0));
         
-        ILOG("Append L2Cache->IL1 resp queue!");
+        ILOG("Append L2Cache->ICache resp queue!");
     }
 
     // Append BIU req queue
@@ -525,14 +525,14 @@ namespace olympia_mss
     }
     
     // Return the resp to the master units
-    void L2Cache::sendOutResp_(const L2UnitName &unit, const olympia::InstPtr& instPtr) {
+    void L2Cache::sendOutResp_(const L2ArchUnit &unit, const olympia::InstPtr& instPtr) {
         // if (instPtr is originally from DCache)
-        if (unit == L2UnitName::DCACHE) {
+        if (unit == L2ArchUnit::DCACHE) {
             appendDCacheRespQueue_(instPtr);
         }
-        // if (instPtr is originally from IL1)
-        else if (unit == L2UnitName::IL1) {
-            appendIL1RespQueue_(instPtr);
+        // if (instPtr is originally from ICache)
+        else if (unit == L2ArchUnit::ICACHE) {
+            appendICacheRespQueue_(instPtr);
         }
         else {
             sparta_assert("Resp is being sent to a Unit that is not valid");
@@ -540,9 +540,9 @@ namespace olympia_mss
     }
 
     // Send the request to the slave units
-    void L2Cache::sendOutReq_(const L2UnitName &unit, const olympia::InstPtr& instPtr) {
+    void L2Cache::sendOutReq_(const L2ArchUnit &unit, const olympia::InstPtr& instPtr) {
         // if (instPtr is destined for BIU on L2Cache miss) 
-        if (unit == L2UnitName::BIU) {
+        if (unit == L2ArchUnit::BIU) {
             appendBIUReqQueue_(instPtr);
         }
         else {
@@ -556,7 +556,7 @@ namespace olympia_mss
     //       DCache - P1 - RoundRobin Candidate
     //       DL1 - P1 - RoundRobin Candidate
     L2Cache::Channel L2Cache::arbitrateL2CacheAccessReqs_() {
-        sparta_assert(il1_req_queue_.size() > 0 || dcache_req_queue_.size() > 0 || biu_resp_queue_.size() > 0,
+        sparta_assert(icache_req_queue_.size() > 0 || dcache_req_queue_.size() > 0 || biu_resp_queue_.size() > 0,
                                 "Arbitration failed: Reqest queues are empty!");
         
         Channel winner;
@@ -578,17 +578,17 @@ namespace olympia_mss
         // RoundRobin for P1 Priority
         while (true) {
             
-            if (channel_select_ == Channel::IL1) {
+            if (channel_select_ == Channel::ICACHE) {
                 channel_select_ = Channel::DCACHE;
-                if (!il1_req_queue_.empty()) {
-                    winner = Channel::IL1;
-                    ILOG("Arbitration winner - IL1");
+                if (!icache_req_queue_.empty()) {
+                    winner = Channel::ICACHE;
+                    ILOG("Arbitration winner - ICache");
                     
                     return winner;
                 }
             }
             else if (channel_select_ == Channel::DCACHE) {
-                channel_select_ = Channel::IL1;
+                channel_select_ = Channel::ICACHE;
                 if (!dcache_req_queue_.empty()) {
                     winner = Channel::DCACHE;
                     ILOG("Arbitration winner - DCache");
@@ -621,15 +621,15 @@ namespace olympia_mss
 
         if (l2_always_hit_) {
             ILOG("HIT all the time: phyAddr=0x" << std::hex << phyAddr);
-            l2_cache_hits_++;
+            ++l2_cache_hits_;
         }
         else if (cache_hit) {
             ILOG("Cache HIT: phyAddr=0x" << std::hex << phyAddr);
-            l2_cache_hits_++;
+            ++l2_cache_hits_;
         }
         else {
             ILOG("Cache MISS: phyAddr=0x" << std::hex << phyAddr);
-            l2_cache_misses_++;
+            ++l2_cache_misses_;
         }
 
         return (cache_hit ? 

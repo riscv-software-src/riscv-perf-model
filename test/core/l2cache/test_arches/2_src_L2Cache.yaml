@@ -1,5 +1,5 @@
 top:
-  il1:
+  icache:
     params:
       unit_enable: true 
       delay_btwn_insts: 50
@@ -11,8 +11,8 @@ top:
     params:
       dcache_req_queue_size: 8
       dcache_resp_queue_size: 4
-      il1_req_queue_size: 8
-      il1_resp_queue_size: 4
+      icache_req_queue_size: 8
+      icache_resp_queue_size: 4
       biu_req_queue_size: 8
       biu_resp_queue_size: 4
       miss_pending_buffer_size : 2

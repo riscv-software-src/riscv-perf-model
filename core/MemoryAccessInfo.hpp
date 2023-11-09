@@ -40,10 +40,10 @@ namespace olympia {
             __LAST = NUM_STATES
         };
 
-        enum class UnitName : std::uint32_t {
+        enum class ArchUnit : std::uint32_t {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
-            IL1,
+            ICACHE,
             LSU,
             DCACHE,
             L2CACHE,
@@ -62,8 +62,8 @@ namespace olympia {
 
             // Construct the State object here
             cache_access_state_(CacheState::NO_ACCESS),
-            src_(UnitName::NO_ACCESS),
-            dest_(UnitName::NO_ACCESS) {}
+            src_(ArchUnit::NO_ACCESS),
+            dest_(ArchUnit::NO_ACCESS) {}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -82,11 +82,11 @@ namespace olympia {
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
-        void setSrcUnit(const UnitName & src_unit) { src_ = src_unit; }
-        const UnitName & getSrcUnit() const { return src_; }
+        void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
+        const ArchUnit & getSrcUnit() const { return src_; }
 
-        void setDestUnit(const UnitName & dest_unit) { dest_ = dest_unit; }
-        const UnitName & getDestUnit() const { return dest_; }
+        void setDestUnit(const ArchUnit & dest_unit) { dest_ = dest_unit; }
+        const ArchUnit & getDestUnit() const { return dest_; }
 
         MMUState getMMUState() const {
             return mmu_access_state_;
@@ -122,8 +122,8 @@ namespace olympia {
         CacheState cache_access_state_;
 
         // Src and destination unit name for the packet
-        UnitName src_;
-        UnitName dest_;
+        ArchUnit src_;
+        ArchUnit dest_;
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;

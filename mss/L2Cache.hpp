@@ -43,8 +43,8 @@ namespace olympia_mss
 
             PARAMETER(uint32_t, dcache_req_queue_size, 8, "DCache request queue size")
             PARAMETER(uint32_t, dcache_resp_queue_size, 4, "DCache resp queue size")
-            PARAMETER(uint32_t, il1_req_queue_size, 8, "IL1 request queue size")
-            PARAMETER(uint32_t, il1_resp_queue_size, 4, "IL1 resp queue size")
+            PARAMETER(uint32_t, icache_req_queue_size, 8, "ICache request queue size")
+            PARAMETER(uint32_t, icache_resp_queue_size, 4, "ICache resp queue size")
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_resp_queue_size, 4, "BIU resp queue size")
             PARAMETER(uint32_t, pipeline_req_queue_size, 64, "Pipeline request buffer size")
@@ -81,14 +81,14 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
         // sparta::StatisticDef       cycles_per_instr_;          // A simple expression to calculate IPC
         sparta::Counter num_reqs_from_dcache_;        // Counter of number instructions received from DCache
-        sparta::Counter num_reqs_from_il1_;        // Counter of number instructions received from IL1
+        sparta::Counter num_reqs_from_icache_;        // Counter of number instructions received from ICache
         sparta::Counter num_reqs_to_biu_;          // Counter of number instructions forwarded to BIU -- Totals misses
         sparta::Counter num_acks_from_biu_;        // Counter of number acks received from BIU
-        sparta::Counter num_acks_to_il1_;          // Counter of number acks provided to IL1
+        sparta::Counter num_acks_to_icache_;          // Counter of number acks provided to ICache
         sparta::Counter num_acks_to_dcache_;          // Counter of number acks provided to DCache
 
         sparta::Counter num_resps_from_biu_;       // Counter of number responses received from BIU
-        sparta::Counter num_resps_to_il1_;         // Counter of number responses provided to IL1
+        sparta::Counter num_resps_to_icache_;         // Counter of number responses provided to ICache
         sparta::Counter num_resps_to_dcache_;         // Counter of number responses provided to DCache
 
         sparta::Counter l2_cache_hits_;            // Counter of number L2 Cache Hits
@@ -101,8 +101,8 @@ namespace olympia_mss
         sparta::DataInPort<olympia::InstPtr> in_dcache_l2cache_req_
             {&unit_port_set_, "in_dcache_l2cache_req", 1};
 
-        sparta::DataInPort<olympia::InstPtr> in_il1_l2cache_req_
-            {&unit_port_set_, "in_il1_l2cache_req", 1};
+        sparta::DataInPort<olympia::InstPtr> in_icache_l2cache_req_
+            {&unit_port_set_, "in_icache_l2cache_req", 1};
 
         sparta::DataInPort<olympia::InstPtr> in_biu_resp_
             {&unit_port_set_, "in_biu_l2cache_resp", 1};
@@ -118,14 +118,14 @@ namespace olympia_mss
         sparta::DataOutPort<olympia::InstPtr> out_biu_req_
             {&unit_port_set_, "out_l2cache_biu_req"};
 
-        sparta::DataOutPort<olympia::InstPtr> out_l2cache_il1_resp_
-            {&unit_port_set_, "out_l2cache_il1_resp"};
+        sparta::DataOutPort<olympia::InstPtr> out_l2cache_icache_resp_
+            {&unit_port_set_, "out_l2cache_icache_resp"};
 
         sparta::DataOutPort<olympia::InstPtr> out_l2cache_dcache_resp_
             {&unit_port_set_, "out_l2cache_dcache_resp"};
 
-        sparta::DataOutPort<bool> out_l2cache_il1_ack_
-            {&unit_port_set_, "out_l2cache_il1_ack"};
+        sparta::DataOutPort<bool> out_l2cache_icache_ack_
+            {&unit_port_set_, "out_l2cache_icache_ack"};
 
         sparta::DataOutPort<bool> out_l2cache_dcache_ack_
             {&unit_port_set_, "out_l2cache_dcache_ack"};
@@ -138,12 +138,12 @@ namespace olympia_mss
         
         using CacheRequestQueue = std::vector<olympia::InstPtr>;
 
-        // Buffers for the incoming requests from DCache and IL1
+        // Buffers for the incoming requests from DCache and ICache
         CacheRequestQueue dcache_req_queue_;
-        CacheRequestQueue il1_req_queue_;
+        CacheRequestQueue icache_req_queue_;
 
         const uint32_t dcache_req_queue_size_;
-        const uint32_t il1_req_queue_size_;
+        const uint32_t icache_req_queue_size_;
 
         // Buffers for the outgoing requests from L2Cache
         CacheRequestQueue biu_req_queue_;
@@ -155,12 +155,12 @@ namespace olympia_mss
 
         const uint32_t biu_resp_queue_size_;
 
-        // Buffers for the outgoing resps to DCache and IL1
+        // Buffers for the outgoing resps to DCache and ICache
         CacheRequestQueue dcache_resp_queue_;
-        CacheRequestQueue il1_resp_queue_;
+        CacheRequestQueue icache_resp_queue_;
 
         const uint32_t dcache_resp_queue_size_;
-        const uint32_t il1_resp_queue_size_;
+        const uint32_t icache_resp_queue_size_;
 
         // Channels enum
         enum class Channel : uint32_t
@@ -168,7 +168,7 @@ namespace olympia_mss
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
             BIU,
-            IL1,
+            ICACHE,
             DCACHE,
             NUM_CHANNELS,
             __LAST = NUM_CHANNELS
@@ -191,7 +191,7 @@ namespace olympia_mss
 	    // Skipping the use of SpartaSharedPointer due to allocator bug
 	    // Instead using std::shared_ptr. That works cleanly.
         using L2MemoryAccessInfoPtr = std::shared_ptr<olympia::MemoryAccessInfo>;
-        using L2UnitName = olympia::MemoryAccessInfo::UnitName;
+        using L2ArchUnit = olympia::MemoryAccessInfo::ArchUnit;
         using L2CacheState = olympia::MemoryAccessInfo::CacheState;
         using L2CachePipeline = sparta::Pipeline<L2MemoryAccessInfoPtr>;
         
@@ -216,7 +216,7 @@ namespace olympia_mss
 
         // Local state variables
         uint32_t l2cache_biu_credits_ = 0;
-        Channel channel_select_ = Channel::IL1;
+        Channel channel_select_ = Channel::ICACHE;
         const uint32_t l2cache_latency_;
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -227,13 +227,13 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_dcache_l2cache_req_
             {&unit_event_set_, "ev_handle_dcache_l2cache_req", CREATE_SPARTA_HANDLER(L2Cache, handle_DCache_L2Cache_Req_)};
 
-        // Event to handle L2Cache request from IL1
-        sparta::UniqueEvent<> ev_handle_il1_l2cache_req_
-            {&unit_event_set_, "ev_handle_il1_l2cache_req", CREATE_SPARTA_HANDLER(L2Cache, handle_IL1_L2Cache_Req_)};
+        // Event to handle L2Cache request from ICache
+        sparta::UniqueEvent<> ev_handle_icache_l2cache_req_
+            {&unit_event_set_, "ev_handle_icache_l2cache_req", CREATE_SPARTA_HANDLER(L2Cache, handle_ICache_L2Cache_Req_)};
 
-        // Event to handle L2Cache resp for IL1
-        sparta::UniqueEvent<> ev_handle_l2cache_il1_resp_
-            {&unit_event_set_, "ev_handle_l2cache_il1_resp", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_IL1_Resp_)};
+        // Event to handle L2Cache resp for ICache
+        sparta::UniqueEvent<> ev_handle_l2cache_icache_resp_
+            {&unit_event_set_, "ev_handle_l2cache_icache_resp", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_ICache_Resp_)};
 
         // Event to handle L2Cache resp for DCache
         sparta::UniqueEvent<> ev_handle_l2cache_dcache_resp_
@@ -247,9 +247,9 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_biu_l2cache_resp_
             {&unit_event_set_, "ev_handle_biu_l2cache_resp", CREATE_SPARTA_HANDLER(L2Cache, handle_BIU_L2Cache_Resp_)};
 
-        // Event to handle L2Cache ack for IL1
-        sparta::UniqueEvent<> ev_handle_l2cache_il1_ack_
-            {&unit_event_set_, "ev_handle_l2cache_il1_ack", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_IL1_Ack_)};
+        // Event to handle L2Cache ack for ICache
+        sparta::UniqueEvent<> ev_handle_l2cache_icache_ack_
+            {&unit_event_set_, "ev_handle_l2cache_icache_ack", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_ICache_Ack_)};
 
         // Event to handle L2Cache ack for DCache
         sparta::UniqueEvent<> ev_handle_l2cache_dcache_ack_
@@ -270,8 +270,8 @@ namespace olympia_mss
         // Receive new L2Cache request from DCache
         void getReqFromDCache_(const olympia::InstPtr &);
 
-        // Receive new L2Cache request from IL1
-        void getReqFromIL1_(const olympia::InstPtr &);
+        // Receive new L2Cache request from ICache
+        void getReqFromICache_(const olympia::InstPtr &);
 
         // Receive BIU access Response
         void getRespFromBIU_(const olympia::InstPtr &);
@@ -282,20 +282,20 @@ namespace olympia_mss
         // Handle L2Cache request from DCache
         void handle_DCache_L2Cache_Req_();
 
-        // Handle L2Cache request from IL1
-        void handle_IL1_L2Cache_Req_();
+        // Handle L2Cache request from ICache
+        void handle_ICache_L2Cache_Req_();
 
         // Handle L2Cache request to BIU
         void handle_L2Cache_BIU_Req_();
 
-        // Handle L2Cahe resp for IL1
-        void handle_L2Cache_IL1_Resp_();
+        // Handle L2Cahe resp for ICache
+        void handle_L2Cache_ICache_Resp_();
 
         // Handle L2Cahe resp for DCache
         void handle_L2Cache_DCache_Resp_();
 
-        // Handle L2Cahe ack for IL1
-        void handle_L2Cache_IL1_Ack_();
+        // Handle L2Cahe ack for ICache
+        void handle_L2Cache_ICache_Ack_();
 
         // Handle L2Cahe ack for DCache
         void handle_L2Cache_DCache_Ack_();
@@ -326,8 +326,8 @@ namespace olympia_mss
         // Append L2Cache request queue for reqs from DCache
         void appendDCacheReqQueue_(const olympia::InstPtr &);
 
-        // Append L2Cache request queue for reqs from IL1
-        void appendIL1ReqQueue_(const olympia::InstPtr &);
+        // Append L2Cache request queue for reqs from ICache
+        void appendICacheReqQueue_(const olympia::InstPtr &);
 
         // Append L2Cache request queue for reqs to BIU
         void appendBIUReqQueue_(const olympia::InstPtr &);
@@ -338,8 +338,8 @@ namespace olympia_mss
         // Append L2Cache resp queue for resps to DCache BIU
         void appendDCacheRespQueue_(const olympia::InstPtr &);
 
-        // Append L2Cache resp queue for resps to IL1
-        void appendIL1RespQueue_(const olympia::InstPtr &);
+        // Append L2Cache resp queue for resps to ICache
+        void appendICacheRespQueue_(const olympia::InstPtr &);
 
 
         
@@ -357,10 +357,10 @@ namespace olympia_mss
         void reloadCache_(uint64_t);
 
         // Return the resp to the master units
-        void sendOutResp_(const L2UnitName&, const olympia::InstPtr&);
+        void sendOutResp_(const L2ArchUnit&, const olympia::InstPtr&);
 
         // Send the request to the slave units
-        void sendOutReq_(const L2UnitName&, const olympia::InstPtr&);
+        void sendOutReq_(const L2ArchUnit&, const olympia::InstPtr&);
 
         // Check if there are enough credits for the request to be issued to the l2cache_pipeline_
         bool hasCreditsForPipelineIssue_();

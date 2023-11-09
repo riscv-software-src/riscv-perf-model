@@ -400,27 +400,27 @@ namespace olympia
     };
 
     inline std::ostream& operator<<(std::ostream & os,
-                                    const olympia::MemoryAccessInfo::UnitName & unit) {
+                                    const olympia::MemoryAccessInfo::ArchUnit & unit) {
         switch(unit) {
-            case olympia::MemoryAccessInfo::UnitName::NO_ACCESS:
+            case olympia::MemoryAccessInfo::ArchUnit::NO_ACCESS:
                 os << "NO_ACCESS";
                 break;
-            case olympia::MemoryAccessInfo::UnitName::IL1:
-                os << "IL1";
+            case olympia::MemoryAccessInfo::ArchUnit::ICACHE:
+                os << "ICACHE";
                 break;
-            case olympia::MemoryAccessInfo::UnitName::LSU:
+            case olympia::MemoryAccessInfo::ArchUnit::LSU:
                 os << "LSU";
                 break;
-            case olympia::MemoryAccessInfo::UnitName::DCACHE:
+            case olympia::MemoryAccessInfo::ArchUnit::DCACHE:
                 os << "DCACHE";
                 break;
-            case olympia::MemoryAccessInfo::UnitName::L2CACHE:
+            case olympia::MemoryAccessInfo::ArchUnit::L2CACHE:
                 os << "L2CACHE";
                 break;
-            case olympia::MemoryAccessInfo::UnitName::BIU:
+            case olympia::MemoryAccessInfo::ArchUnit::BIU:
                 os << "BIU";
                 break;
-            case olympia::MemoryAccessInfo::UnitName::NUM_UNITS:
+            case olympia::MemoryAccessInfo::ArchUnit::NUM_UNITS:
                 os << "NUM_UNITS";
                 break;
         }

@@ -122,8 +122,8 @@ namespace olympia {
         CacheState cache_access_state_;
 
         // Src and destination unit name for the packet
-        UnitName src_;
-        UnitName dest_;
+        UnitName src_ = UnitName::NO_ACCESS;
+        UnitName dest_ = UnitName::NO_ACCESS;
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;

@@ -93,9 +93,6 @@ namespace olympia_mss
         in_biu_ack_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getAckFromBIU_, bool));
 
-        // Default channel selected for arbitration
-        channel_select_ = channel::IL1;
-
         // Pipeline collection config
         l2cache_pipeline_.enableCollection(node);
         // Allow the pipeline to create events and schedule work
@@ -276,9 +273,9 @@ namespace olympia_mss
     // Handle arbitration and forward the req to pipeline_req_queue_
     void L2Cache::create_Req_() {
 
-        channel arbitration_winner = arbitrateL2CacheAccessReqs_();
+        Channel arbitration_winner = arbitrateL2CacheAccessReqs_();
 
-        if (arbitration_winner == channel::BIU) {
+        if (arbitration_winner == Channel::BIU) {
             
             const olympia::InstPtr &instPtr = biu_resp_queue_.front();
             
@@ -320,7 +317,7 @@ namespace olympia_mss
                 miss_pending_buffer_.erase(req);
             }
         }
-        else if (arbitration_winner == channel::IL1) {
+        else if (arbitration_winner == Channel::IL1) {
             
             const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(il1_req_queue_.front());
             
@@ -335,7 +332,7 @@ namespace olympia_mss
             // Send out the ack to IL1 for credit management
             ev_handle_l2cache_il1_ack_.schedule(sparta::Clock::Cycle(0));
         }
-        else if (arbitration_winner == channel::DCACHE) {
+        else if (arbitration_winner == Channel::DCACHE) {
             
             const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(dcache_req_queue_.front());
             
@@ -553,26 +550,26 @@ namespace olympia_mss
         }
     }
 
-    // Select the channel to pick the request from
+    // Select the Channel to pick the request from
     // Current options : 
     //       BIU - P0
     //       DCache - P1 - RoundRobin Candidate
     //       DL1 - P1 - RoundRobin Candidate
-    L2Cache::channel L2Cache::arbitrateL2CacheAccessReqs_() {
+    L2Cache::Channel L2Cache::arbitrateL2CacheAccessReqs_() {
         sparta_assert(il1_req_queue_.size() > 0 || dcache_req_queue_.size() > 0 || biu_resp_queue_.size() > 0,
                                 "Arbitration failed: Reqest queues are empty!");
         
-        channel winner;
+        Channel winner;
 
         if (pipeline_req_queue_.numFree() == 0) {
 
             // pipeline_req_queue_ is full
-            return channel::NO_ACCESS;
+            return Channel::NO_ACCESS;
         }
 
         // P0 priority to sevice the pending request in the buffer
         if (!biu_resp_queue_.empty()) {
-            winner = channel::BIU;
+            winner = Channel::BIU;
             ILOG("Arbitration winner - BIU");
 
             return winner;
@@ -581,19 +578,19 @@ namespace olympia_mss
         // RoundRobin for P1 Priority
         while (true) {
             
-            if (channel_select_ == channel::IL1) {
-                channel_select_ = channel::DCACHE;
+            if (channel_select_ == Channel::IL1) {
+                channel_select_ = Channel::DCACHE;
                 if (!il1_req_queue_.empty()) {
-                    winner = channel::IL1;
+                    winner = Channel::IL1;
                     ILOG("Arbitration winner - IL1");
                     
                     return winner;
                 }
             }
-            else if (channel_select_ == channel::DCACHE) {
-                channel_select_ = channel::IL1;
+            else if (channel_select_ == Channel::DCACHE) {
+                channel_select_ = Channel::IL1;
                 if (!dcache_req_queue_.empty()) {
-                    winner = channel::DCACHE;
+                    winner = Channel::DCACHE;
                     ILOG("Arbitration winner - DCache");
 
                     return winner;

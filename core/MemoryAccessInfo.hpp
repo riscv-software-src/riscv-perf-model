@@ -62,8 +62,8 @@ namespace olympia {
 
             // Construct the State object here
             cache_access_state_(CacheState::NO_ACCESS),
-            src_(UnitName::IL1),
-            dest_(UnitName::BIU) {}
+            src_(UnitName::NO_ACCESS),
+            dest_(UnitName::NO_ACCESS) {}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -82,10 +82,10 @@ namespace olympia {
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
-        void setSrcUnit(UnitName src_unit) { src_ = src_unit; }
+        void setSrcUnit(const UnitName & src_unit) { src_ = src_unit; }
         const UnitName & getSrcUnit() const { return src_; }
 
-        void setDestUnit(UnitName dest_unit) { dest_ = dest_unit; }
+        void setDestUnit(const UnitName & dest_unit) { dest_ = dest_unit; }
         const UnitName & getDestUnit() const { return dest_; }
 
         MMUState getMMUState() const {

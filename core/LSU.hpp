@@ -399,8 +399,8 @@ namespace olympia
 
     };
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::UnitName & unit) {
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::UnitName & unit) {
         switch(unit) {
             case olympia::MemoryAccessInfo::UnitName::IL1:
                 os << "IL1";
@@ -417,14 +417,12 @@ namespace olympia
             case olympia::MemoryAccessInfo::UnitName::BIU:
                 os << "BIU";
                 break;
-            default:
-                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
         }
         return os;
     }
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
         switch(mmu_access_state){
             case olympia::MemoryAccessInfo::MMUState::NO_ACCESS:
                 os << "no_access";
@@ -441,8 +439,8 @@ namespace olympia
         return os;
     }
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::CacheState & cache_access_state){
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::CacheState & cache_access_state){
         switch(cache_access_state){
             case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
                 os << "no_access";
@@ -463,7 +461,7 @@ namespace olympia
     }
 
     inline std::ostream& operator<<(std::ostream& os,
-        const olympia::LSU::LoadStoreInstInfo::IssuePriority& rank){
+                                    const olympia::LSU::LoadStoreInstInfo::IssuePriority& rank){
         switch(rank){
             case LSU::LoadStoreInstInfo::IssuePriority::HIGHEST:
                 os << "(highest)";
@@ -493,7 +491,7 @@ namespace olympia
     }
 
     inline std::ostream& operator<<(std::ostream& os,
-        const olympia::LSU::LoadStoreInstInfo::IssueState& state){
+                                    const olympia::LSU::LoadStoreInstInfo::IssueState& state){
         // Print instruction issue state
         switch(state){
             case LSU::LoadStoreInstInfo::IssueState::READY:

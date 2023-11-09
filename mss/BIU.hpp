@@ -108,7 +108,7 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Receive new BIU request from L2Cache
-        void getReqFromL2Cache_(const olympia::InstPtr &);
+        void receiveReqFromL2Cache_(const olympia::InstPtr &);
 
         // Handle BIU request
         void handle_BIU_Req_();

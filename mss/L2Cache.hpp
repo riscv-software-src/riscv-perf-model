@@ -163,7 +163,8 @@ namespace olympia_mss
         const uint32_t il1_resp_queue_size_;
 
         // Channels enum
-        enum class channel {
+        enum class Channel : uint32_t
+        {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
             BIU,
@@ -171,24 +172,20 @@ namespace olympia_mss
             DCACHE,
             NUM_CHANNELS,
             __LAST = NUM_CHANNELS
-        } channel_select_;
+        };
+        
 
         // Cache Pipeline
         class PipelineStages {
             public:
-                PipelineStages(uint32_t latency) {
-                    NUM_STAGES        = latency;
-                    __LAST            = NUM_STAGES;
-                    HIT_MISS_HANDLING = NUM_STAGES - 1;
-                    CACHE_LOOKUP      = HIT_MISS_HANDLING - 1;
-                }
+                PipelineStages(uint32_t latency) : NUM_STAGES(latency),
+                                                   HIT_MISS_HANDLING(NUM_STAGES - 1),
+                                                   CACHE_LOOKUP(HIT_MISS_HANDLING - 1) {}
 
-            uint32_t NO_ACCESS = 0;
-            uint32_t __FIRST = NO_ACCESS;
-            uint32_t CACHE_LOOKUP;
-            uint32_t HIT_MISS_HANDLING;
-            uint32_t NUM_STAGES;
-            uint32_t __LAST;
+            const uint32_t NO_ACCESS = 0;
+            const uint32_t CACHE_LOOKUP;
+            const uint32_t HIT_MISS_HANDLING;
+            const uint32_t NUM_STAGES;
         };
         
 	    // Skipping the use of SpartaSharedPointer due to allocator bug
@@ -204,9 +201,6 @@ namespace olympia_mss
         sparta::Queue<L2MemoryAccessInfoPtr> pipeline_req_queue_;
         const uint32_t pipeline_req_queue_size_;
         uint32_t inFlight_reqs_ = 0;
-
-        sparta::Clock::Cycle pipeline_req_issue_clock_ = 0;
-        sparta::Clock::Cycle pipeline_req_issue_delay_ = 0;
         
         sparta::Buffer<std::shared_ptr<olympia::MemoryAccessInfo>> miss_pending_buffer_;
         const uint32_t miss_pending_buffer_size_;
@@ -214,13 +208,14 @@ namespace olympia_mss
 
         // L2 Cache
         using CacheHandle = olympia::SimpleDL1::Handle;
-        uint32_t l2_lineSize_;
-        uint8_t shiftBy_;
+        const uint32_t l2_lineSize_;
+        const uint32_t shiftBy_;
         CacheHandle l2_cache_;
         const bool l2_always_hit_;
 
         // Local state variables
-        uint32_t l2cache_biu_credits_;
+        uint32_t l2cache_biu_credits_ = 0;
+        sparta::State<Channel> channel_select_ = Channel::IL1;
         const uint32_t l2cache_latency_;
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -352,7 +347,7 @@ namespace olympia_mss
         //       BIU - P0
         //       DCache - P1 - RoundRobin Candidate
         //       DL1 - P1 - RoundRobin Candidate
-        channel arbitrateL2CacheAccessReqs_();
+        Channel arbitrateL2CacheAccessReqs_();
         
 	    // Cache lookup for a HIT or MISS on a given request 
         L2CacheState cacheLookup_(std::shared_ptr<olympia::MemoryAccessInfo>);

@@ -19,7 +19,7 @@ namespace olympia_mss
         biu_latency_(p->biu_latency)
     {
         in_biu_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getReqFromL2Cache_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, receiveReqFromL2Cache_, olympia::InstPtr));
 
         in_mss_ack_sync_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
@@ -35,7 +35,7 @@ namespace olympia_mss
     ////////////////////////////////////////////////////////////////////////////////
 
     // Receive new BIU request from L2Cache
-    void BIU::getReqFromL2Cache_(const olympia::InstPtr & inst_ptr)
+    void BIU::receiveReqFromL2Cache_(const olympia::InstPtr & inst_ptr)
     {
         appendReqQueue_(inst_ptr);
 

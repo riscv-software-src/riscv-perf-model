@@ -139,6 +139,9 @@ namespace olympia
                 // Will be true if the user provides a -i option
                 if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_))) {
                     rob_stopped_simulation_ = true;
+                    if(reorder_buffer_.empty()) {
+                        rob_drained_notif_source_->postNotification(true);
+                    }
                     getScheduler()->stopRunning();
                     break;
                 }
@@ -204,9 +207,12 @@ namespace olympia
 
     void ROB::onStartingTeardown_() {
         if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
-            rob_drained_notif_source_->postNotification(true);
             std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
             dumpDebugContent_(std::cerr);
+        }
+
+        if(reorder_buffer_.empty()) {
+            rob_drained_notif_source_->postNotification(true);
         }
     }
 

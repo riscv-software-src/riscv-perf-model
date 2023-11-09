@@ -95,7 +95,9 @@ namespace olympia
              << ": "
              << memory_access_allocator_.getNumAllocated()
              << " MemoryAccessInfo objects allocated/created");
+    }
 
+    void LSU::onStartingTeardown_(){
         if(retire_done_and_is_drained_){
             sparta_assert(ldst_inst_queue_.empty(), "Issue queue has pending instructions");
         }

@@ -395,7 +395,7 @@ namespace olympia
 
         // When simulation is ending (error or not), this function
         // will be called
-        void onStartingTeardown_() override {}
+        void onStartingTeardown_() override;
 
         friend class LSUTester;
 

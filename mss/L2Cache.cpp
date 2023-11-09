@@ -76,6 +76,8 @@ namespace olympia_mss
                                 node->getClock(), 
                                 &unit_stat_set_),
         miss_pending_buffer_size_(p->miss_pending_buffer_size),
+        l2_lineSize_(p->l2_line_size),
+        shiftBy_(log2(l2_lineSize_)),
         l2_always_hit_(p->l2_always_hit),
         l2cache_biu_credits_(p->l2cache_biu_credits),
         l2cache_latency_(p->l2cache_latency) {
@@ -111,8 +113,6 @@ namespace olympia_mss
         l2cache_pipeline_.registerHandlerAtStage(stages_.HIT_MISS_HANDLING, CREATE_SPARTA_HANDLER(L2Cache, handleCacheAccessResult_));
 
         // L2 cache config
-        l2_lineSize_ = p->l2_line_size;
-        shiftBy_ = log2(l2_lineSize_);
         const uint32_t l2_size_kb = p->l2_size_kb;
         const uint32_t l2_associativity = p->l2_associativity;
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement

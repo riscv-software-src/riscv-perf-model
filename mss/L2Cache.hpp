@@ -182,10 +182,10 @@ namespace olympia_mss
                                                    HIT_MISS_HANDLING(NUM_STAGES - 1),
                                                    CACHE_LOOKUP(HIT_MISS_HANDLING - 1) {}
 
-            const uint32_t NO_ACCESS = 0;
-            const uint32_t CACHE_LOOKUP;
-            const uint32_t HIT_MISS_HANDLING;
             const uint32_t NUM_STAGES;
+            const uint32_t HIT_MISS_HANDLING;
+            const uint32_t CACHE_LOOKUP;
+            const uint32_t NO_ACCESS = 0;
         };
         
 	    // Skipping the use of SpartaSharedPointer due to allocator bug
@@ -208,14 +208,15 @@ namespace olympia_mss
 
         // L2 Cache
         using CacheHandle = olympia::SimpleDL1::Handle;
+        CacheHandle l2_cache_;
+        
         const uint32_t l2_lineSize_;
         const uint32_t shiftBy_;
-        CacheHandle l2_cache_;
         const bool l2_always_hit_;
 
         // Local state variables
         uint32_t l2cache_biu_credits_ = 0;
-        sparta::State<Channel> channel_select_ = Channel::IL1;
+        Channel channel_select_ = Channel::IL1;
         const uint32_t l2cache_latency_;
 
         ////////////////////////////////////////////////////////////////////////////////

@@ -402,6 +402,9 @@ namespace olympia
     inline std::ostream& operator<<(std::ostream & os,
                                     const olympia::MemoryAccessInfo::UnitName & unit) {
         switch(unit) {
+            case olympia::MemoryAccessInfo::UnitName::NO_ACCESS:
+                os << "NO_ACCESS";
+                break;
             case olympia::MemoryAccessInfo::UnitName::IL1:
                 os << "IL1";
                 break;
@@ -416,6 +419,9 @@ namespace olympia
                 break;
             case olympia::MemoryAccessInfo::UnitName::BIU:
                 os << "BIU";
+                break;
+            case olympia::MemoryAccessInfo::UnitName::NUM_UNITS:
+                os << "NUM_UNITS";
                 break;
         }
         return os;

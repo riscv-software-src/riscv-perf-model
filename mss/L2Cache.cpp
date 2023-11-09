@@ -117,7 +117,7 @@ namespace olympia_mss
         const uint32_t l2_associativity = p->l2_associativity;
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                          (l2_associativity));
-        l2_cache_.reset(new olympia::SimpleDL1( getContainer(), l2_size_kb, l2_lineSize_, *repl));
+        l2_cache_.reset(new olympia::CacheFuncModel( getContainer(), l2_size_kb, l2_lineSize_, *repl));
         
         ILOG("L2Cache construct: #" << node->getGroupIdx());
         ILOG("Starting BIU credits = " << l2cache_biu_credits_);

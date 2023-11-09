@@ -25,7 +25,7 @@
 #include "CoreTypes.hpp"
 #include "MemoryAccessInfo.hpp"
 
-#include "SimpleDL1.hpp"
+#include "CacheFuncModel.hpp"
 #include "LSU.hpp"
 
 namespace olympia_mss
@@ -207,7 +207,7 @@ namespace olympia_mss
         
 
         // L2 Cache
-        using CacheHandle = olympia::SimpleDL1::Handle;
+        using CacheHandle = olympia::CacheFuncModel::Handle;
         CacheHandle l2_cache_;
         
         const uint32_t l2_lineSize_;
@@ -346,8 +346,8 @@ namespace olympia_mss
     	// Select the channel to pick the request from
         // Current options : 
         //       BIU - P0
+        //       ICache - P1 - RoundRobin Candidate
         //       DCache - P1 - RoundRobin Candidate
-        //       DL1 - P1 - RoundRobin Candidate
         Channel arbitrateL2CacheAccessReqs_();
         
 	    // Cache lookup for a HIT or MISS on a given request 

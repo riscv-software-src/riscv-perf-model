@@ -24,7 +24,7 @@
 #include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
-#include "SimpleDL1.hpp"
+#include "CacheFuncModel.hpp"
 #include "MemoryAccessInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"

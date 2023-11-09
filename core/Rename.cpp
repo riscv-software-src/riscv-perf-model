@@ -132,18 +132,21 @@ namespace olympia
         }
 
         const auto & srcs = inst_ptr->getRenameData().getSourceList();
-        // decrement reference for store instruction to data register
-        if(inst_ptr->isStoreInst()) {
+        // decrement reference to data register
+        if(inst_ptr->isLoadStoreInst()){
             const auto & data_reg = inst_ptr->getRenameData().getDataReg();
-            --reference_counter_[data_reg.rf][data_reg.val];
+            if(data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2){
+                --reference_counter_[data_reg.rf][data_reg.val];
+                if(reference_counter_[data_reg.rf][data_reg.val] <= 0){
+                    // freeing data register value, because it's not in the source list, so won't get caught below
+                    freelist_[data_reg.rf].push(data_reg.val);
+                }
+            }
         }
-
         // freeing references to PRF
-        for(const auto & src: srcs)
-        {
+        for(const auto & src: srcs){
             --reference_counter_[src.rf][src.val];
-            if(reference_counter_[src.rf][src.val] <= 0)
-            {
+            if(reference_counter_[src.rf][src.val] <= 0){
                 // freeing a register in the case where it still has references and has already been retired
                 // we wait until the last reference is retired to then free the prf
                 // any "valid" PRF that is the true mapping of an ARF will have a reference_counter of at least 1,
@@ -279,7 +282,7 @@ namespace olympia
                             auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
                             const uint32_t prf = map_table_[rf][num];
                             reference_counter_[rf][prf]++;
-                            renaming_inst->getRenameData().setDataReg({prf, rf});
+                            renaming_inst->getRenameData().setDataReg({prf, rf, src.field_id});
                             bitmask.set(prf);
 
                             ILOG("\tsetup store data register bit mask "
@@ -293,7 +296,7 @@ namespace olympia
                             auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                             const uint32_t prf = map_table_[rf][num];
                             reference_counter_[rf][prf]++;
-                            renaming_inst->getRenameData().setSource({prf, rf});
+                            renaming_inst->getRenameData().setSource({prf, rf, src.field_id});
                             bitmask.set(prf);
 
                             ILOG("\tsetup source register bit mask "
@@ -307,7 +310,7 @@ namespace olympia
                         auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                         const uint32_t prf = map_table_[rf][num];
                         reference_counter_[rf][prf]++;
-                        renaming_inst->getRenameData().setSource({prf, rf});
+                        renaming_inst->getRenameData().setSource({prf, rf, src.field_id});
                         bitmask.set(prf);
 
                         ILOG("\tsetup source register bit mask "
@@ -323,7 +326,7 @@ namespace olympia
                     auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
                     const uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
-                    renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf});
+                    renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf, dest.field_id});
                     map_table_[rf][num] = prf;
                     // we increase reference_counter_ for destinations to mark them as "valid",
                     // so the PRF in the reference_counter_ should have a value of 1
@@ -355,5 +358,4 @@ namespace olympia
             ev_schedule_rename_.schedule(1);
         }
     }
-
 }

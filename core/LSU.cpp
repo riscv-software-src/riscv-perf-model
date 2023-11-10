@@ -75,7 +75,8 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage
             (static_cast<uint32_t>(PipelineStage::COMPLETE), CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
-        node->getRoot()->REGISTER_FOR_NOTIFICATION(onRobDrained_, bool, "rob_notif_channel");
+        node->getParent()->registerForNotification<bool, LSU, &LSU::onRobDrained_>
+            (this, "rob_notif_channel", false /* ROB maybe not be constructed yet */);
         // NOTE:
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle

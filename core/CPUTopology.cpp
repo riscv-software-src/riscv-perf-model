@@ -69,14 +69,6 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->execute_rf
         },
         {
-            "rob",
-            "cpu.core*",
-            "ROB Unit",
-            sparta::TreeNode::GROUP_NAME_NONE,
-            sparta::TreeNode::GROUP_IDX_NONE,
-            &factories->rob_rf
-        },
-        {
             "dcache",
             "cpu.core*",
             "Data Cache Unit",
@@ -124,6 +116,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
             &factories->mss_rf
+        },
+        {
+            "rob",
+            "cpu.core*",
+            "ROB Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->rob_rf
         },
         {
             "preloader",

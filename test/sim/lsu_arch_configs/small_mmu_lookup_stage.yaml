@@ -1,7 +1,0 @@
-include: small_core.yaml
-
-top:
-  cpu:
-    core0:
-      lsu.params:
-        mmu_lookup_stage_length: 3

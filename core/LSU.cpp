@@ -75,6 +75,7 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage
             (static_cast<uint32_t>(PipelineStage::COMPLETE), CREATE_SPARTA_HANDLER(LSU, completeInst_));
 
+        node->getRoot()->REGISTER_FOR_NOTIFICATION(onRobDrained_, bool, "rob_notif_channel");
         // NOTE:
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle
@@ -98,8 +99,9 @@ namespace olympia
     }
 
     void LSU::onStartingTeardown_(){
-        if(retire_done_and_is_drained_){
-            sparta_assert(ldst_inst_queue_.empty(), "Issue queue has pending instructions");
+        if(retire_done_and_is_drained_ && !ldst_inst_queue_.empty()){
+            dumpDebugContent_(std::cerr);
+            sparta_assert(false, "Issue queue has pending instructions");
         }
     }
 

@@ -57,6 +57,7 @@ namespace olympia {
     // Get Lookup Requests from LSU
     void MMU::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
         const bool hit = memLookup_(memory_access_info_ptr);
+        ILOG("MMU Lookup " << memory_access_info_ptr << " " << std::boolalpha << hit);
         if(hit){
             memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);
             memory_access_info_ptr->setPhyAddrStatus(true);

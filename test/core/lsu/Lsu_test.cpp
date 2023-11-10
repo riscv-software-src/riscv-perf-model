@@ -118,7 +118,7 @@ void runTest(int argc, char **argv)
     lsupipe_tester.test_pipeline_stages(*my_lsu);
     cls.runSimulator(&sim, 7);
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
-    cls.runSimulator(&sim, 30);
+    cls.runSimulator(&sim, 20);
     lsupipe_tester.test_replay_issue_abort(*my_lsu, 2); // Abort younger loads
     cls.runSimulator(&sim);
 }

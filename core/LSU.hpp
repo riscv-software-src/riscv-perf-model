@@ -27,6 +27,7 @@
 #include "FlushManager.hpp"
 #include "CacheFuncModel.hpp"
 #include "MemoryAccessInfo.hpp"
+#include "LoadStoreInstInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"
 

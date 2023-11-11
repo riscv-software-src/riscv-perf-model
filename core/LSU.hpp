@@ -26,7 +26,7 @@
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "SimpleDL1.hpp"
-#include "MemoryAccessInfo.hpp"
+#include "LoadStoreInstInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"
 

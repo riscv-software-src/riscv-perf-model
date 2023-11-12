@@ -76,7 +76,7 @@ index 0000000..47497a5
 +                              uint64_t last_pc,uint32_t insn);
 +extern bool stf_trace_trigger(RISCVCPUState*,uint64_t PC,uint32_t insn);
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 2d8e9cc..187db4d 100644
+index 2d8e9cc..eec6c39 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
 @@ -52,6 +52,9 @@
@@ -89,7 +89,7 @@ index 2d8e9cc..187db4d 100644
  static inline intx_t glue(div, XLEN)(intx_t a, intx_t b) {
      if (b == 0) {
          return -1;
-@@ -278,6 +281,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+@@ -278,15 +281,16 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
      }
  
      s->pending_exception = -1;
@@ -97,7 +97,9 @@ index 2d8e9cc..187db4d 100644
      n_cycles++;
      /* Note: we assume NULL is represented as a zero number */
      code_ptr          = NULL;
-@@ -287,6 +291,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+     code_end          = NULL;
+     code_to_pc_addend = s->pc;
+-
      /* we use a single execution loop to keep a simple control flow
         for emscripten */
      for (;;) {
@@ -105,7 +107,7 @@ index 2d8e9cc..187db4d 100644
          s->pc = GET_PC();
          if (unlikely(!--n_cycles))
              goto the_end;
-@@ -1807,6 +1812,14 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+@@ -1807,6 +1811,14 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
          }
          /* update PC for next instruction */
      jump_insn:;
@@ -346,7 +348,7 @@ index aeb1912..e0f66d2 100644
      // specified in the configuration file
 diff --git a/src/dromajo_stf.cpp b/src/dromajo_stf.cpp
 new file mode 100644
-index 0000000..2960225
+index 0000000..7fdb2b1
 --- /dev/null
 +++ b/src/dromajo_stf.cpp
 @@ -0,0 +1,63 @@

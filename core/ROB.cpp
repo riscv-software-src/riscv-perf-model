@@ -49,8 +49,9 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ROB, handleFlush_,
                                                                   FlushManager::FlushingCriteria));
 
-        // Ensures we make progress and throw exception if we dont
-        ev_ensure_forward_progress_.setContinuing(true);
+        // Do not allow this event to keep simulation alive
+        ev_ensure_forward_progress_.setContinuing(false);
+
         // Notify other components when ROB stops the simulation
         rob_drained_notif_source_.reset(new sparta::NotificationSource<bool>(
             this->getContainer(),
@@ -157,6 +158,14 @@ namespace olympia
                     break;
                 }
 
+                // Check to see if this is the last instruction of the
+                // trace
+                if(ex_inst.getLast()) {
+                    rob_stopped_simulation_ = true;
+                    rob_drained_notif_source_->postNotification(true);
+                    // No need to stop the scheduler -- let simulation
+                    // drain normally.  Also, don't need to check forward progress
+                }
             }
             else {
                 break;
@@ -194,8 +203,6 @@ namespace olympia
     {
         if(getClock()->currentCycle() - last_retirement_ >= retire_timeout_interval_)
         {
-            if(reorder_buffer_.empty())
-                return;
             sparta::SpartaException e;
             e << "Been a while since we've retired an instruction.  Is the pipe stalled indefinitely?";
             e << " currentCycle: "  << getClock()->currentCycle();

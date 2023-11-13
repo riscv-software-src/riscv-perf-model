@@ -92,7 +92,6 @@ namespace olympia
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
 
-
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
 

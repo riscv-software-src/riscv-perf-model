@@ -85,7 +85,7 @@ namespace olympia
     }
 
     void LSU::onRobDrained_(const bool &val){
-        retire_done_and_is_drained_ = val;
+        retire_done_ = val;
     }
 
     LSU::~LSU()  {
@@ -100,7 +100,7 @@ namespace olympia
     }
 
     void LSU::onStartingTeardown_(){
-        if(retire_done_and_is_drained_ && !ldst_inst_queue_.empty()){
+        if(retire_done_ && !ldst_inst_queue_.empty()){
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
         }

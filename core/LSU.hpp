@@ -69,7 +69,7 @@ namespace olympia
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
 
-        bool retire_done_and_is_drained_ = false;
+        bool retire_done_ = false;
         class LoadStoreInstInfo;
 
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;

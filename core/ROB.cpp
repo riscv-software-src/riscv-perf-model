@@ -194,6 +194,8 @@ namespace olympia
     {
         if(getClock()->currentCycle() - last_retirement_ >= retire_timeout_interval_)
         {
+            if(reorder_buffer_.empty())
+                return;
             sparta::SpartaException e;
             e << "Been a while since we've retired an instruction.  Is the pipe stalled indefinitely?";
             e << " currentCycle: "  << getClock()->currentCycle();

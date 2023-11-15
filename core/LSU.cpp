@@ -100,7 +100,9 @@ namespace olympia
     }
 
     void LSU::onStartingTeardown_(){
-        if(retire_done_ && !ldst_inst_queue_.empty()){
+        // If ROB has not stopped the simulation &
+        // the ldst has entries to process we should fail
+        if((false == retire_done_) && (false == ldst_inst_queue_.empty())){
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
         }

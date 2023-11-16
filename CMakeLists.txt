@@ -40,8 +40,11 @@ if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)
   include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
   setup_stf_linker(false)
+elseif(CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")
+  set (FULL_LTO false)
+  set (NO_STF_LTO true)
+  include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
 endif()
-
 
 
 # Use ccache if installed

@@ -449,7 +449,7 @@ namespace olympia
             "Number of LSU instructions issued", sparta::Counter::COUNT_NORMAL
         };
         sparta::Counter replay_insts_{
-            getStatisticSet(), "replay_insts_",
+            getStatisticSet(), "replay_insts",
             "Number of Replay instructions issued", sparta::Counter::COUNT_NORMAL
         };
         sparta::Counter lsu_insts_completed_{

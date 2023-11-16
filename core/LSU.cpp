@@ -17,7 +17,7 @@ namespace olympia
         sparta::Unit(node),
         ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
         ldst_inst_queue_size_(p->ldst_inst_queue_size),
-        replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
+        replay_buffer_("replay_buffer", p->replay_buffer_size, getClock(), getStatisticSet()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
         ready_queue_(),

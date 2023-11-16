@@ -102,6 +102,10 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_mss_ack_
             {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
 
+        // Event to handleBIU ack for L2Cache
+        sparta::UniqueEvent<> ev_handle_biu_l2cache_ack_
+            {&unit_event_set_, "ev_handle_biu_l2cache_ack", CREATE_SPARTA_HANDLER(BIU, handle_BIU_L2Cache_Ack_)};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -115,6 +119,9 @@ namespace olympia_mss
 
         // Handle MSS Ack
         void handle_MSS_Ack_();
+
+        // Handle ack backto L2Cache
+        void handle_BIU_L2Cache_Ack_();
 
         // Receive MSS access acknowledge
         // Q: Does the argument list has to be "const DataType &" ?

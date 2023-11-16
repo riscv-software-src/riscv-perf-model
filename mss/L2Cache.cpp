@@ -79,7 +79,7 @@ namespace olympia_mss
         l2_lineSize_(p->l2_line_size),
         shiftBy_(log2(l2_lineSize_)),
         l2_always_hit_(p->l2_always_hit),
-        l2cache_biu_credits_(p->l2cache_biu_credits),
+        l2cache_biu_credit_available_(p->l2cache_biu_credit_available),
         l2cache_latency_(p->l2cache_latency) {
 
     	// In Port Handler registration
@@ -118,9 +118,9 @@ namespace olympia_mss
         std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
                                                          (l2_associativity));
         l2_cache_.reset(new olympia::CacheFuncModel( getContainer(), l2_size_kb, l2_lineSize_, *repl));
-        
+            
         ILOG("L2Cache construct: #" << node->getGroupIdx());
-        ILOG("Starting BIU credits = " << l2cache_biu_credits_);
+        ILOG("Starting BIU credits = " << std::boolalpha << l2cache_biu_credit_available_);
     }
 
 
@@ -135,15 +135,8 @@ namespace olympia_mss
 
         appendDCacheReqQueue_(inst_ptr);
 
-        // Schedule L2Cache request handling event only when:
-        // Request queue is not empty
-        if (dcache_req_queue_.size() < dcache_req_queue_size_) {
-            ev_handle_dcache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
-            ++num_reqs_from_dcache_;
-        }
-        else {
-            ILOG("This request cannot be serviced right now, L2Cache input buffer from DCache is already full!");
-        }
+        ev_handle_dcache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
+        ++num_reqs_from_dcache_;        
     }
 
     // Receive new L2Cache request from ICache
@@ -153,15 +146,8 @@ namespace olympia_mss
 
         appendICacheReqQueue_(inst_ptr);
 
-        // Schedule L2Cache request handling event only when:
-        // (1)Request queue is not empty
-        if (icache_req_queue_.size() < icache_req_queue_size_) {
-            ev_handle_icache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
-            ++num_reqs_from_icache_;
-        }
-        else {
-            ILOG("This request cannot be serviced right now, L2Cache input buffer from ICache is already full!");
-        }
+        ev_handle_icache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
+        ++num_reqs_from_icache_;
     }
 
     // Handle BIU resp
@@ -186,12 +172,12 @@ namespace olympia_mss
     void L2Cache::getAckFromBIU_(const bool & ack) {
 
         // Update the biu credits
-        ++l2cache_biu_credits_;
+        l2cache_biu_credit_available_ = true;
 
         // Kickstart the pipeline issueing 
         ev_issue_req_.schedule(sparta::Clock::Cycle(0));
 
-        ILOG("Ack received from BIU on the port : Current BIU credits = " << l2cache_biu_credits_);
+        ILOG("Ack received from BIU on the port : Current BIU credit availability = " << std::boolalpha << l2cache_biu_credit_available_);
     }
 
     // Handle L2Cache request from DCache
@@ -218,15 +204,15 @@ namespace olympia_mss
     // Handle L2Cache request to BIU
     void L2Cache::handle_L2Cache_BIU_Req_() {
         
-        if (l2cache_biu_credits_ > 0 && !biu_req_queue_.empty()) {
+        if (l2cache_biu_credit_available_ && !biu_req_queue_.empty()) {
             out_biu_req_.send(biu_req_queue_.front());
-            l2cache_biu_credits_--;
+            l2cache_biu_credit_available_ = false;
 
             biu_req_queue_.erase(biu_req_queue_.begin());
 
             ++num_reqs_to_biu_;
 
-            ILOG("L2Cache Request sent to BIU : Current BIU credits = " << l2cache_biu_credits_);   
+            ILOG("L2Cache Request sent to BIU : Current BIU credit availability = " << std::boolalpha <<l2cache_biu_credit_available_);   
         }
         else {
             // Loop on biu_req_queue_ if the requests are present
@@ -239,7 +225,7 @@ namespace olympia_mss
         out_l2cache_dcache_ack_.send(true);
         ++num_acks_to_dcache_;
 
-        ILOG("L2Cache Ack is sent to DCache!");
+        ILOG("L2Cache->DCache :  Ack is sent.");
     }
 
     // Returning resp to ICache
@@ -247,7 +233,7 @@ namespace olympia_mss
         out_l2cache_icache_ack_.send(true);
         ++num_acks_to_icache_;
         
-        ILOG("L2Cache Ack is sent to ICache!");
+        ILOG("L2Cache->ICache :  Ack is sent.");
     }      
 
     // Returning resp to DCache
@@ -461,8 +447,7 @@ namespace olympia_mss
 
         // Push new requests from back
         dcache_req_queue_.emplace_back(inst_ptr);
-
-        ILOG("Append DCache->L2Cache request queue!");
+        ILOG("Append DCache->L2Cache request queue!");        
     }
 
     // Append L2Cache request queue for reqs from ICache
@@ -471,7 +456,6 @@ namespace olympia_mss
 
         // Push new requests from back
         icache_req_queue_.emplace_back(inst_ptr);
-
         ILOG("Append ICache->L2Cache request queue!");
     }
 

@@ -63,6 +63,11 @@ namespace olympia_mss
         biu_busy_ = true;
         out_mss_req_sync_.send(biu_req_queue_.front(), biu_latency_);
 
+        if (biu_req_queue_.size() < biu_req_queue_size_) {
+            // Send out the ack to L2Cache if there is space in biu_req_queue_
+            ev_handle_biu_l2cache_ack_.schedule(sparta::Clock::Cycle(0));
+        }
+
         ILOG("BIU request is sent to MSS!");
     }
 
@@ -70,9 +75,11 @@ namespace olympia_mss
     void BIU::handle_MSS_Ack_()
     {
         out_biu_resp_.send(biu_req_queue_.front(), biu_latency_);
-        out_biu_ack_.send(true);
         
         biu_req_queue_.pop_front();
+        
+        // Send out the ack to L2Cache through , we just created space in biu_req_queue_
+        ev_handle_biu_l2cache_ack_.schedule(sparta::Clock::Cycle(0));
         biu_busy_ = false;
 
         // Schedule BIU request handling event only when:
@@ -97,6 +104,13 @@ namespace olympia_mss
 
         // Right now we expect MSS ack is always true
         sparta_assert(false, "MSS is NOT done!");
+    }
+
+    // Handle ack backto L2Cache
+    void BIU::handle_BIU_L2Cache_Ack_() {
+        out_biu_ack_.send(true);
+
+        ILOG("BIU->L2Cache :  Ack is sent.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////

@@ -6,7 +6,8 @@ namespace olympia {
     DCache::DCache(sparta::TreeNode *n, const CacheParameterSet *p) :
             sparta::Unit(n),
             l1_always_hit_(p->l1_always_hit),
-            cache_latency_(p->cache_latency){
+            cache_latency_(p->cache_latency),
+            dcache_l2cache_credit_available_(p->l1_l2cache_credit_available){
 
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
@@ -78,10 +79,15 @@ namespace olympia {
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
         }else{
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+            // Poll on dcache_l2cache_credit_available_ == true which means
+            // that L2Cache can accept requests from DCache.
+            // Provide a corresponsing backpressure mechanism up the pipeline.
             if(!busy_) {
                 busy_ = true;
                 cache_pending_inst_ = memory_access_info_ptr;
                 out_l2cache_req_.send(cache_pending_inst_->getInstPtr());
+
+                // Set the dcache_l2cache_credit_available_ = false here.
             }
         }
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
@@ -95,7 +101,12 @@ namespace olympia {
     }
 
     void DCache::getAckFromL2Cache_(const bool &ack) {
-        // Process ACK
+        // When DCache sends the request to L2Cache for a miss,
+        // This bool will be set to false, and Dcache should wait for ack from 
+        // L2Cache notifying DCache that there is space in it's dcache request buffer
+        // 
+        // Set it to true so that the following misses from DCache can be sent out to L2Cache. 
+        dcache_l2cache_credit_available_ = ack;
     }
 
 }

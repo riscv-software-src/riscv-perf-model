@@ -56,7 +56,7 @@ namespace olympia_mss
             PARAMETER(uint32_t, l2_associativity, 16, "L2 associativity (power of 2)")
             PARAMETER(bool, l2_always_hit, false, "L2 will always hit")
 
-            PARAMETER(uint32_t, l2cache_biu_credits, 1, "Starting credits for BIU")
+            PARAMETER(bool, l2cache_biu_credit_available, true, "Starting credit availability for BIU")
             PARAMETER(uint32_t, l2cache_latency, 7, "Cache Lookup HIT latency")
         };
 
@@ -215,7 +215,7 @@ namespace olympia_mss
         const bool l2_always_hit_;
 
         // Local state variables
-        uint32_t l2cache_biu_credits_ = 0;
+        bool l2cache_biu_credit_available_ = true;
         Channel channel_select_ = Channel::ICACHE;
         const uint32_t l2cache_latency_;
 
@@ -254,7 +254,7 @@ namespace olympia_mss
         // Event to handle L2Cache ack for DCache
         sparta::UniqueEvent<> ev_handle_l2cache_dcache_ack_
             {&unit_event_set_, "ev_handle_l2cache_dcache_ack", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_DCache_Ack_)};
-
+        
         // Event to create request for pipeline and feed it to the pipeline_req_queue_
         sparta::UniqueEvent<> ev_create_req_
             {&unit_event_set_, "create_req", CREATE_SPARTA_HANDLER(L2Cache, create_Req_)};

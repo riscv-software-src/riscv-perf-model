@@ -3,10 +3,10 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu Nov  9 14:55:52 2023
-#Elapsed:  0.076123s
+#Start:    Thursday Thu Nov 16 04:52:05 2023
+#Elapsed:  0.085713s
 {0000000000 00000000 top.l2cache info} L2Cache: L2Cache construct: #4294967295
-{0000000000 00000000 top.l2cache info} L2Cache: Starting BIU credits = 4
+{0000000000 00000000 top.l2cache info} L2Cache: Starting BIU credits = true
 {0000000000 00000000 top.dcache info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Requested
 {0000000000 00000000 top.icache info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Requested
 {0000000001 00000001 top.l2cache info} getReqFromDCache_: Request received from DCache on the port
@@ -16,12 +16,12 @@
 {0000000001 00000001 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - ICache
 {0000000001 00000001 top.l2cache info} create_Req_: ICache request is sent to Pipeline_req_Q!
 {0000000001 00000001 top.icache info} ReceiveAck_: Ack: '1' Received
-{0000000001 00000001 top.l2cache info} handle_L2Cache_ICache_Ack_: L2Cache Ack is sent to ICache!
+{0000000001 00000001 top.l2cache info} handle_L2Cache_ICache_Ack_: L2Cache->ICache :  Ack is sent.
 {0000000001 00000001 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : ICACHE
 {0000000002 00000002 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - DCache
 {0000000002 00000002 top.l2cache info} create_Req_: DCache request is sent to Pipeline_req_Q!
 {0000000002 00000002 top.dcache info} ReceiveAck_: Ack: '1' Received
-{0000000002 00000002 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache Ack is sent to DCache!
+{0000000002 00000002 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache->DCache :  Ack is sent.
 {0000000002 00000002 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : DCACHE
 {0000000010 00000010 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : uid: 0    FETCHED 0 pid: 1 'sw	3' 
 {0000000010 00000010 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
@@ -30,11 +30,11 @@
 {0000000011 00000011 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : uid: 0    FETCHED 0 pid: 1 'sw	3' 
 {0000000011 00000011 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
 {0000000011 00000011 top.l2cache info} appendBIUReqQueue_: Append L2Cache->BIU req queue
-{0000000011 00000011 top.l2cache info} handle_L2Cache_BIU_Req_: L2Cache Request sent to BIU : Current BIU credits = 3
+{0000000011 00000011 top.l2cache info} handle_L2Cache_BIU_Req_: L2Cache Request sent to BIU : Current BIU credit availability = false
 {0000000012 00000012 top.biu info} sinkInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' sinked
 {0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : uid: 0    FETCHED 0 pid: 1 'sw	3' 
 {0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
-{0000000023 00000023 top.l2cache info} getAckFromBIU_: Ack received from BIU on the port : Current BIU credits = 4
+{0000000023 00000023 top.l2cache info} getAckFromBIU_: Ack received from BIU on the port : Current BIU credit availability = true
 {0000000033 00000033 top.l2cache info} getRespFromBIU_: Response received from BIU on the port
 {0000000033 00000033 top.l2cache info} appendBIURespQueue_: Append BIU->L2Cache resp queue!
 {0000000033 00000033 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - BIU
@@ -65,12 +65,12 @@
 {0000000051 00000051 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - ICache
 {0000000051 00000051 top.l2cache info} create_Req_: ICache request is sent to Pipeline_req_Q!
 {0000000051 00000051 top.icache info} ReceiveAck_: Ack: '1' Received
-{0000000051 00000051 top.l2cache info} handle_L2Cache_ICache_Ack_: L2Cache Ack is sent to ICache!
+{0000000051 00000051 top.l2cache info} handle_L2Cache_ICache_Ack_: L2Cache->ICache :  Ack is sent.
 {0000000051 00000051 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : ICACHE
 {0000000052 00000052 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - DCache
 {0000000052 00000052 top.l2cache info} create_Req_: DCache request is sent to Pipeline_req_Q!
 {0000000052 00000052 top.dcache info} ReceiveAck_: Ack: '1' Received
-{0000000052 00000052 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache Ack is sent to DCache!
+{0000000052 00000052 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache->DCache :  Ack is sent.
 {0000000052 00000052 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : DCACHE
 {0000000060 00000060 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
 {0000000060 00000060 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef

@@ -23,6 +23,7 @@ namespace olympia {
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
+            PARAMETER(bool, l1_l2cache_credit_available, true, "Aloowing L1 cache to send the first miss request to L2Cache")
         };
 
         static const char name[];
@@ -46,6 +47,9 @@ namespace olympia {
         uint32_t cache_latency_;
         // Keep track of the instruction that causes current outstanding cache miss
         MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
+
+        // Credit bool for sending miss request to L2Cache
+        bool dcache_l2cache_credit_available_ = true;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports

@@ -13,7 +13,6 @@
 #include "Inst.hpp"
 #include "LoadStoreInstInfo.hpp"
 #include "MemoryAccessInfo.hpp"
-#include "LSU.hpp"  // A little heavyweight to include for now...
 
 namespace olympia
 {

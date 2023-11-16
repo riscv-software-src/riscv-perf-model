@@ -433,6 +433,7 @@ namespace olympia
             return;
         }
 
+        // Loads dont perform a cache lookup if there are older stores present in the load store queue
         if(!inst_ptr->isStoreInst() && olderStoresExists_(inst_ptr) && allow_speculative_load_exec_){
             ILOG("Dropping speculative load " << inst_ptr);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
@@ -1014,23 +1015,48 @@ namespace olympia
             "Attempt to update issue priority for instruction not yet in the issue queue!");
     }
 
-    // Update issue priority after cache reload
+    // Update issue priority after tlb reload
     void LSU::updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr & mem_access_info_ptr,
                                                  const bool is_flushed_inst)
     {
-        const LoadStoreInstIterator &iter = mem_access_info_ptr->getIssueQueueIterator();
-        sparta_assert(iter.isValid(),
-                      "Attempt to rehandle MMU lookup for instruction not yet in the issue queue! " << mem_access_info_ptr);
-
-        const LoadStoreInstInfoPtr &inst_info_ptr = *(iter);
-
-        // Update issue priority for this outstanding TLB miss
-        if(inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+        const InstPtr &inst_ptr = mem_access_info_ptr->getInstPtr();
+        bool is_found = false;
+        for (auto & inst_info_ptr : ldst_inst_queue_)
         {
-            inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            const MemoryAccessInfoPtr & mem_info_ptr = inst_info_ptr->getMemoryAccessInfoPtr();
+            if (mem_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::MISS)
+            {
+                // Re-activate all TLB-miss-pending instructions in the issue queue
+                if (!allow_speculative_load_exec_) // Speculative misses are marked as not ready and replay event would set them back to ready
+                {
+                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                }
+                inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::MMU_PENDING);
+            }
+            // NOTE:
+            // We may not have to re-activate all of the pending MMU miss instruction here
+            // However, re-activation must be scheduled somewhere else
+
+            if (inst_info_ptr->getInstPtr() == inst_ptr)
+            {
+                // Update issue priority for this outstanding TLB miss
+                if (inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+                {
+                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                }
+                inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::MMU_RELOAD);
+                uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
+
+                // NOTE:
+                // The priority should be set in such a way that
+                // the outstanding miss is always re-issued earlier than other pending miss
+                // Here we have MMU_RELOAD > MMU_PENDING
+
+                is_found = true;
+            }
         }
-        inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::MMU_RELOAD);
-        uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
+
+        sparta_assert(is_flushed_inst || is_found, "Attempt to rehandle TLB lookup for instruction not yet in the issue queue! " << inst_ptr);
     }
 
     // Update issue priority after cache reload

@@ -6,27 +6,12 @@
 
 #include "sparta/simulation/Clock.hpp"
 #include "sparta/simulation/TreeNode.hpp"
-#include "sparta/trigger/ContextCounterTrigger.hpp"
 #include "sparta/utils/StringUtils.hpp"
 
-#include "Core.hpp"
-#include "CPUTopology.hpp"
 #include "CPUFactory.hpp"
-#include "Fetch.hpp"
-#include "Decode.hpp"
-#include "Rename.hpp"
-#include "Dispatch.hpp"
-#include "Execute.hpp"
-#include "LSU.hpp"
-#include "ROB.hpp"
-#include "FlushManager.hpp"
-#include "Preloader.hpp"
 #include "SimulationConfiguration.hpp"
 
 #include "OlympiaAllocators.hpp"
-
-#include "BIU.hpp"
-#include "MSS.hpp"
 
 OlympiaSim::OlympiaSim(const std::string& topology,
                        sparta::Scheduler & scheduler,

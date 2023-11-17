@@ -140,15 +140,18 @@ namespace olympia
             if (inst_ptr->isStoreInst()) {
                 const auto rf = inst_ptr->getRenameData().getDataReg().rf;
                 const auto &data_bits = inst_ptr->getDataRegisterBitMask(rf);
-
-                if (!scoreboard_views_[rf]->isSet(data_bits)) {
-                    all_ready = false;
-                    scoreboard_views_[rf]->registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
-                                                                [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                                                                {
-                                                                    this->getInstsFromDispatch_(inst_ptr);
-                                                                });
-                    ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
+                
+                // if x0 is a data operand, we don't need to check scoreboard
+                if (!inst_ptr->getRenameData().getDataReg().is_x0){
+                    if (!scoreboard_views_[rf]->isSet(data_bits)) {
+                        all_ready = false;
+                        scoreboard_views_[rf]->registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
+                                                                    [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                                                    {
+                                                                        this->getInstsFromDispatch_(inst_ptr);
+                                                                    });
+                        ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
+                    }
                 }
             }
         }

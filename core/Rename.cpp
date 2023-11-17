@@ -40,7 +40,7 @@ namespace olympia
                 (CREATE_SPARTA_HANDLER_WITH_DATA(Rename, getAckFromROB_, InstPtr));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, setupRename_));
         auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
-                        uint32_t num_regs = 32;  // default risc-v ARF count
+                        const uint32_t num_regs = 32;  // default risc-v ARF count
                         sparta_assert(num_regs < num_renames); // ensure we have more renames than 32 because first 32 renames are allocated at the beginning
                         // initialize the first 32 Float (31 for INT) regs, i.e x1 -> PRF1
 
@@ -101,9 +101,13 @@ namespace olympia
 
             // Initialize 32 scoreboard resources,
             // all ready.
+            uint32_t reg = 0;
+            if(rf == core_types::RegFile::RF_INTEGER){
+                reg = 1;
+            }
             constexpr uint32_t num_regs = 32;
             core_types::RegisterBitMask bits;
-            for(uint32_t reg = 0; reg < num_regs; ++reg) {
+            for(; reg < num_regs; ++reg) {
                 bits.set(reg);
             }
             scoreboards_[rf]->set(bits);
@@ -133,7 +137,8 @@ namespace olympia
             const auto dest = dests[0];
             const auto rf  = olympia::coreutils::determineRegisterFile(dest);
             const auto num = dest.field_value;
-            if (num != 0 || rf != core_types::RF_INTEGER)
+            const bool is_x0 = num != 0 || rf != core_types::RF_INTEGER;
+            if (is_x0)
             {
                 auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
                 --reference_counter_[original_dest.rf][original_dest.val];
@@ -149,7 +154,7 @@ namespace olympia
         // decrement reference to data register
         if(inst_ptr->isLoadStoreInst()){
             const auto & data_reg = inst_ptr->getRenameData().getDataReg();
-            if(data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2 && data_reg.x0 != true){
+            if(data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2 && data_reg.is_x0 != true){
                 --reference_counter_[data_reg.rf][data_reg.val];
                 if(reference_counter_[data_reg.rf][data_reg.val] <= 0){
                     // freeing data register value, because it's not in the source list, so won't get caught below
@@ -198,7 +203,12 @@ namespace olympia
             if(dests.size() > 0){
                 sparta_assert(dests.size() == 1); // we should only have one destination
                 const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);
-                current_counts.cumulative_reg_counts[rf]++;
+                const auto num = dests[0].field_value;
+                const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+                // if dest is x0, we don't need to count it towards cumulative register count
+                if(!is_x0){
+                    current_counts.cumulative_reg_counts[rf]++;
+                }
             }
             uop_queue_.push(i);
             uop_queue_regcount_data_.push_back(current_counts);

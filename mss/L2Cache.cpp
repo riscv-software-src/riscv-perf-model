@@ -79,8 +79,9 @@ namespace olympia_mss
         l2_lineSize_(p->l2_line_size),
         shiftBy_(log2(l2_lineSize_)),
         l2_always_hit_(p->l2_always_hit),
-        l2cache_biu_credit_available_(p->l2cache_biu_credit_available),
-        l2cache_latency_(p->l2cache_latency) {
+        l2cache_latency_(p->l2cache_latency),
+        is_icache_connected_(p->is_icache_connected),
+        is_dcache_connected_(p->is_dcache_connected) {
 
     	// In Port Handler registration
         in_dcache_l2cache_req_.registerConsumerHandler
@@ -93,7 +94,7 @@ namespace olympia_mss
             (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getRespFromBIU_, olympia::InstPtr));
 
         in_biu_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getAckFromBIU_, bool));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getAckFromBIU_, uint32_t));
 
         // Pipeline collection config
         l2cache_pipeline_.enableCollection(node);
@@ -119,14 +120,26 @@ namespace olympia_mss
                                                          (l2_associativity));
         l2_cache_.reset(new olympia::CacheFuncModel( getContainer(), l2_size_kb, l2_lineSize_, *repl));
             
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(L2Cache, sendInitialCredits_));
         ILOG("L2Cache construct: #" << node->getGroupIdx());
-        ILOG("Starting BIU credits = " << std::boolalpha << l2cache_biu_credit_available_);
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
     ////////////////////////////////////////////////////////////////////////////////
+    // Sending Initial credits to I/D-Cache
+    void L2Cache::sendInitialCredits_() {
+        if (is_icache_connected_) {
+            out_l2cache_icache_ack_.send(icache_req_queue_size_);
+            ILOG("Sending initial credits to ICache : " << icache_req_queue_size_);
+        }
+
+        if (is_dcache_connected_) {
+            out_l2cache_dcache_ack_.send(dcache_req_queue_size_);
+            ILOG("Sending initial credits to DCache : " << dcache_req_queue_size_);
+        }
+    }
 
     // Receive new L2Cache request from DCache
     void L2Cache::getReqFromDCache_(const olympia::InstPtr & inst_ptr) {
@@ -159,25 +172,25 @@ namespace olympia_mss
 
         // Schedule BIU resp handling event only when:
         // Request queue is not empty
-        if (biu_resp_queue_.size() < biu_resp_queue_size_) {
+        if (biu_resp_queue_.size() <= biu_resp_queue_size_) {
             ev_handle_biu_l2cache_resp_.schedule(sparta::Clock::Cycle(0));
             ++num_resps_from_biu_;
         }
         else {
-            ILOG("This request cannot be serviced right now, L2Cache input buffer from DCache is already full!");
+            sparta_assert(false, "This request cannot be serviced right now, L2Cache input buffer from DCache is already full!");
         }
     }
 
     // Handle BIU ack
-    void L2Cache::getAckFromBIU_(const bool & ack) {
+    void L2Cache::getAckFromBIU_(const uint32_t & ack) {
 
         // Update the biu credits
-        l2cache_biu_credit_available_ = true;
+        l2cache_biu_credits_ = ack;
 
         // Kickstart the pipeline issueing 
-        ev_issue_req_.schedule(sparta::Clock::Cycle(0));
+        ev_issue_req_.schedule(1);
 
-        ILOG("Ack received from BIU on the port : Current BIU credit availability = " << std::boolalpha << l2cache_biu_credit_available_);
+        ILOG("Ack received from BIU on the port : Current BIU credit available = " << l2cache_biu_credits_);
     }
 
     // Handle L2Cache request from DCache
@@ -204,15 +217,15 @@ namespace olympia_mss
     // Handle L2Cache request to BIU
     void L2Cache::handle_L2Cache_BIU_Req_() {
         
-        if (l2cache_biu_credit_available_ && !biu_req_queue_.empty()) {
+        if (l2cache_biu_credits_ > 0 && !biu_req_queue_.empty()) {
             out_biu_req_.send(biu_req_queue_.front());
-            l2cache_biu_credit_available_ = false;
+            --l2cache_biu_credits_;
 
             biu_req_queue_.erase(biu_req_queue_.begin());
 
             ++num_reqs_to_biu_;
 
-            ILOG("L2Cache Request sent to BIU : Current BIU credit availability = " << std::boolalpha <<l2cache_biu_credit_available_);   
+            ILOG("L2Cache Request sent to BIU : Current BIU credit available = " <<l2cache_biu_credits_);   
         }
         else {
             // Loop on biu_req_queue_ if the requests are present
@@ -222,7 +235,8 @@ namespace olympia_mss
 
     // Returning ack to DCache
     void L2Cache::handle_L2Cache_DCache_Ack_() {
-        out_l2cache_dcache_ack_.send(true);
+        uint32_t available_slots = dcache_req_queue_size_ - dcache_req_queue_.size();
+        out_l2cache_dcache_ack_.send(available_slots);
         ++num_acks_to_dcache_;
 
         ILOG("L2Cache->DCache :  Ack is sent.");
@@ -230,7 +244,8 @@ namespace olympia_mss
 
     // Returning resp to ICache
     void L2Cache::handle_L2Cache_ICache_Ack_() {
-        out_l2cache_icache_ack_.send(true);
+        uint32_t available_slots = icache_req_queue_size_ - icache_req_queue_.size();
+        out_l2cache_icache_ack_.send(available_slots);
         ++num_acks_to_icache_;
         
         ILOG("L2Cache->ICache :  Ack is sent.");
@@ -267,10 +282,12 @@ namespace olympia_mss
             
             // Function to check if the request to the given cacheline is present in the miss_pending_buffer_ 
             auto getCacheLine = [this] (auto inst_ptr) { return inst_ptr->getRAdr() >> shiftBy_; }; 
-            auto is_addr_present = [instPtr, getCacheLine] (auto reqPtr)
-                        { return getCacheLine(reqPtr->getInstPtr()) == getCacheLine(instPtr); };
+            auto const inst_cl = getCacheLine(instPtr);
 
-            auto req = std::find_if(miss_pending_buffer_.begin(), miss_pending_buffer_.end(), is_addr_present);
+            auto is_cl_present = [&instPtr, inst_cl, getCacheLine] (auto reqPtr)
+                        { return getCacheLine(reqPtr->getInstPtr()) == inst_cl; };
+
+            auto req = std::find_if(miss_pending_buffer_.begin(), miss_pending_buffer_.end(), is_cl_present);
 
             // Set the original SrcUnit as the DestUnit because the resp will 
             // now be forwarded from BIU to the original SrcUnit          
@@ -291,7 +308,7 @@ namespace olympia_mss
                 
                 // Check if this was the last occuring
                 auto iter = req; ++iter;
-                auto next_req = std::find_if(iter, miss_pending_buffer_.end(), is_addr_present);
+                auto next_req = std::find_if(iter, miss_pending_buffer_.end(), is_cl_present);
                 
                 if (next_req == miss_pending_buffer_.end()) {
                     
@@ -316,7 +333,7 @@ namespace olympia_mss
             icache_req_queue_.erase(icache_req_queue_.begin());
             
             // Send out the ack to ICache for credit management
-            ev_handle_l2cache_icache_ack_.schedule(sparta::Clock::Cycle(0));
+            ev_handle_l2cache_icache_ack_.schedule(sparta::Clock::Cycle(1));
         }
         else if (arbitration_winner == Channel::DCACHE) {
             
@@ -331,19 +348,27 @@ namespace olympia_mss
             dcache_req_queue_.erase(dcache_req_queue_.begin());
             
             // Send out the ack to DCache for credit management
-            ev_handle_l2cache_dcache_ack_.schedule(sparta::Clock::Cycle(0));
+            ev_handle_l2cache_dcache_ack_.schedule(sparta::Clock::Cycle(1));
+        }
+        else if (arbitration_winner == Channel::NO_ACCESS) {
+            // Schedule a ev_create_req_ event again to see if the the new request 
+            // from any of the requestors can be put into pipeline_req_queue_
+            ev_create_req_.schedule(sparta::Clock::Cycle(1));
+        }
+        else {
+            sparta_assert(false, "Invalid arbitration winner, What Channel is picked up?");
         }
 
         // Try to issue a request to l2cache_pipeline_
-        ev_issue_req_.schedule(sparta::Clock::Cycle(0));
+        ev_issue_req_.schedule(1);
 
         // Schedule a ev_create_req_ event again to see if the the new request 
         // from any of the requestors can be put into pipeline_req_queue_
         if (   !biu_resp_queue_.empty()
             || !icache_req_queue_.empty()
-            || !dcache_req_queue_.empty() )
-            
+            || !dcache_req_queue_.empty() ) {            
             ev_create_req_.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void L2Cache::issue_Req_() {
@@ -359,8 +384,9 @@ namespace olympia_mss
         }
 
         // Checking for the queue empty again before scheduling the event for the next clock cycle
-        if (!pipeline_req_queue_.empty())
-            ev_issue_req_.schedule(sparta::Clock::Cycle(1));
+        if (!pipeline_req_queue_.empty()) {
+            ev_issue_req_.schedule(1);
+        }
     }
 
     // Pipeline Stage CACHE_LOOKUP
@@ -395,7 +421,7 @@ namespace olympia_mss
         const auto req = l2cache_pipeline_[stages_.HIT_MISS_HANDLING];
         ILOG("Pipeline stage HIT_MISS_HANDLING : " << req->getInstPtr());
         
-        inFlight_reqs_--;
+        --inFlight_reqs_;
         
         // This request to access cache came from DCache or ICache to do a cache lookup.
         // It was either a miss or hit based on cacheLookup_() in the previous stage of the pipeline
@@ -421,19 +447,22 @@ namespace olympia_mss
                 miss_pending_buffer_.push_back(req);
             }
             else {
-                sparta_assert("No space in miss_pending_buffer_! Why did the frontend issue push the request onto l2cache_pipeline_?");
+                sparta_assert(false, "No space in miss_pending_buffer_! Why did the frontend issue push the request onto l2cache_pipeline_?");
             }
 
             // Function to check if the request to the given cacheline is present in the miss_pending_buffer_ 
             auto getCacheLine = [this] (auto reqPtr) { return reqPtr->getInstPtr()->getRAdr() >> shiftBy_; };
-            auto is_addr_present = [req, getCacheLine] (auto reqPtr)
-                            { return (req != reqPtr && getCacheLine(reqPtr) == getCacheLine(req));};
+            const auto req_cl = getCacheLine(req);
+
+            auto is_cl_present = [&req, req_cl, getCacheLine] (auto reqPtr)
+                            { return (req != reqPtr && getCacheLine(reqPtr) == req_cl);};
 
             // Send out the request to BIU for a cache MISS if it is not sent out already
-            auto reqIter = std::find_if(miss_pending_buffer_.begin(), miss_pending_buffer_.end(), is_addr_present);
+            auto reqIter = std::find_if(miss_pending_buffer_.begin(), miss_pending_buffer_.end(), is_cl_present);
                 
-            if (reqIter == miss_pending_buffer_.end())
+            if (reqIter == miss_pending_buffer_.end()) {
                 sendOutReq_(req->getDestUnit(), req->getInstPtr());
+            }
         }
     }
 
@@ -496,14 +525,8 @@ namespace olympia_mss
         sparta_assert(biu_req_queue_.size() <= biu_req_queue_size_ ,"BIU req queue overflows!");
         
         // Push new request to the biu_req_queue_ if biu credits are available with the L2Cache
-        if (biu_req_queue_.size() < biu_req_queue_size_) {
-            biu_req_queue_.emplace_back(inst_ptr);
-
-            ev_handle_l2cache_biu_req_.schedule(sparta::Clock::Cycle(0));
-        }
-        else {
-            sparta_assert("No space in biu_req_queue_! Why did the frontend issue push the request onto l2cache_pipeline_?");
-        }
+        biu_req_queue_.emplace_back(inst_ptr);
+        ev_handle_l2cache_biu_req_.schedule(sparta::Clock::Cycle(0));
         
         ILOG("Append L2Cache->BIU req queue");
     }
@@ -519,7 +542,7 @@ namespace olympia_mss
             appendICacheRespQueue_(instPtr);
         }
         else {
-            sparta_assert("Resp is being sent to a Unit that is not valid");
+            sparta_assert(false, "Resp is being sent to a Unit that is not valid");
         }
     }
 
@@ -530,7 +553,7 @@ namespace olympia_mss
             appendBIUReqQueue_(instPtr);
         }
         else {
-            sparta_assert("Request is being sent to a Unit that is not valid");
+            sparta_assert(false, "Request is being sent to a Unit that is not valid");
         }
     }
 
@@ -547,40 +570,44 @@ namespace olympia_mss
 
         if (pipeline_req_queue_.numFree() == 0) {
 
-            // pipeline_req_queue_ is full
-            return Channel::NO_ACCESS;
+            // pipeline_req_queue_ is full, try again next cycle
+            winner = Channel::NO_ACCESS;
         }
-
         // P0 priority to sevice the pending request in the buffer
-        if (!biu_resp_queue_.empty()) {
+        else if (!biu_resp_queue_.empty()) {
+            
             winner = Channel::BIU;
             ILOG("Arbitration winner - BIU");
-
-            return winner;
         }
-        
         // RoundRobin for P1 Priority
-        while (true) {
-            
-            if (channel_select_ == Channel::ICACHE) {
-                channel_select_ = Channel::DCACHE;
-                if (!icache_req_queue_.empty()) {
-                    winner = Channel::ICACHE;
-                    ILOG("Arbitration winner - ICache");
-                    
-                    return winner;
-                }
-            }
-            else if (channel_select_ == Channel::DCACHE) {
-                channel_select_ = Channel::ICACHE;
-                if (!dcache_req_queue_.empty()) {
-                    winner = Channel::DCACHE;
-                    ILOG("Arbitration winner - DCache");
+        else if (channel_select_ == Channel::ICACHE) {
+            // Set it up for the following arbitration request
+            channel_select_ = Channel::DCACHE;
+            winner = Channel::NO_ACCESS;
 
-                    return winner;
-                }
+            if (!icache_req_queue_.empty()) {
+                
+                winner = Channel::ICACHE;
+                ILOG("Arbitration winner - ICache");
             }
         }
+        else if (channel_select_ == Channel::DCACHE) {
+            
+            // Set it up for the following arbitration request
+            channel_select_ = Channel::ICACHE;
+            winner = Channel::NO_ACCESS;
+
+            if (!dcache_req_queue_.empty()) {
+                
+                winner = Channel::DCACHE;
+                ILOG("Arbitration winner - DCache");
+            }
+        }
+        else {
+            sparta_assert(false, "Illegal else : Why is channel_select_ incorrectly set?");    
+        }
+
+        return winner;
     }
 
     // Cache lookup for a HIT or MISS on a given request

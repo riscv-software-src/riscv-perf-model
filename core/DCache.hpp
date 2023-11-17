@@ -23,7 +23,6 @@ namespace olympia {
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
-            PARAMETER(bool, l1_l2cache_credit_available, true, "Aloowing L1 cache to send the first miss request to L2Cache")
         };
 
         static const char name[];
@@ -36,7 +35,7 @@ namespace olympia {
 
         void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
-        void getAckFromL2Cache_(const bool &ack);
+        void getAckFromL2Cache_(const uint32_t &ack);
 
         void getRespFromL2Cache_(const InstPtr &inst_ptr);
 
@@ -49,7 +48,7 @@ namespace olympia {
         MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 
         // Credit bool for sending miss request to L2Cache
-        bool dcache_l2cache_credit_available_ = true;
+        uint32_t dcache_l2cache_credits_ = 0;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
@@ -57,7 +56,7 @@ namespace olympia {
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
                 {&unit_port_set_, "in_lsu_lookup_req", 0};
 
-        sparta::DataInPort<bool> in_l2cache_ack_
+        sparta::DataInPort<uint32_t> in_l2cache_ack_
                 {&unit_port_set_, "in_l2cache_ack", 1};
 
         sparta::DataInPort<InstPtr> in_l2cache_resp_
@@ -76,7 +75,7 @@ namespace olympia {
                 {&unit_port_set_, "out_lsu_lookup_req", 1};
 
         sparta::DataOutPort<InstPtr> out_l2cache_req_
-                {&unit_port_set_, "out_l2cache_req"};
+                {&unit_port_set_, "out_l2cache_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Events

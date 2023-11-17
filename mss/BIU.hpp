@@ -67,7 +67,7 @@ namespace olympia_mss
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataOutPort<bool> out_biu_ack_
+        sparta::DataOutPort<uint32_t> out_biu_ack_
             {&unit_port_set_, "out_biu_ack"};
 
         sparta::DataOutPort<olympia::InstPtr> out_biu_resp_
@@ -127,6 +127,8 @@ namespace olympia_mss
         // Q: Does the argument list has to be "const DataType &" ?
         void getAckFromMSS_(const bool &);
 
+        // Sending initial credits to L2Cache
+        void sendInitialCredits_();
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
@@ -134,7 +136,5 @@ namespace olympia_mss
 
         // Append BIU request queue
         void appendReqQueue_(const olympia::InstPtr &);
-
-
     };
 }

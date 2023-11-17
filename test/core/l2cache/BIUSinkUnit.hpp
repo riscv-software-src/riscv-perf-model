@@ -35,19 +35,31 @@ namespace l2cache_test
 
                 in_biu_req_.registerConsumerHandler
                         (CREATE_SPARTA_HANDLER_WITH_DATA(BIUSinkUnit, sinkInst_, olympia::InstPtr));
+
+                sparta::StartupEvent(n, CREATE_SPARTA_HANDLER(BIUSinkUnit, sendInitialCredits_));
             }
         private:
+
+            // Sending Initial credits to L2Cache
+            void sendInitialCredits_() {
+                uint32_t biu_req_queue_size_ = 32;
+                out_biu_ack_.send(biu_req_queue_size_);
+                ILOG("Sending initial credits to L2Cache : " << biu_req_queue_size_);
+            }
+            
             void sinkInst_(const olympia::InstPtr & instPtr) {
                 ILOG("Instruction: '" << instPtr << "' sinked");
 
-                out_biu_ack_.send(true, sink_latency_);
+                uint32_t biu_req_queue_size_ = 32;
+
+                out_biu_ack_.send(biu_req_queue_size_, sink_latency_);
                 out_biu_resp_.send(instPtr, 2*sink_latency_);
             }
 
             sparta::DataInPort<olympia::InstPtr>      in_biu_req_     {&unit_port_set_, "in_biu_req",
                                                                                 sparta::SchedulingPhase::Tick, 1};
             sparta::DataOutPort<olympia::InstPtr>     out_biu_resp_ {&unit_port_set_, "out_biu_resp"};
-            sparta::DataOutPort<bool>                 out_biu_ack_ {&unit_port_set_, "out_biu_ack"};
+            sparta::DataOutPort<uint32_t>             out_biu_ack_ {&unit_port_set_, "out_biu_ack"};
 
             std::string purpose_;
             sparta::Clock::Cycle sink_latency_;

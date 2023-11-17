@@ -43,7 +43,7 @@ namespace l2cache_test
                 in_source_resp_.registerConsumerHandler
                         (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveInst_, olympia::InstPtr));
                 in_source_ack_.registerConsumerHandler
-                        (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveAck_, bool));
+                        (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveAck_, uint32_t));
 
                 if(params->input_file != "") {
                     inst_generator_ = olympia::InstGenerator::createGenerator(mavis_facade_, params->input_file, false);
@@ -94,18 +94,18 @@ namespace l2cache_test
                 ILOG("Instruction: '" << instPtr << "' Received");
             }
 
-            void ReceiveAck_(const bool & ack) {
+            void ReceiveAck_(const uint32_t & ack) {
                 pending_acks_--;
                 ILOG("Ack: '" << ack << "' Received");
             }
 
             sparta::DataInPort<olympia::InstPtr>      in_source_resp_     {&unit_port_set_, "in_source_resp",
                                                                                 sparta::SchedulingPhase::Tick, 1};
-            sparta::DataInPort<bool>                 in_source_ack_ {&unit_port_set_, "in_source_ack"};
+            sparta::DataInPort<uint32_t>              in_source_ack_ {&unit_port_set_, "in_source_ack"};
             
             sparta::DataOutPort<olympia::InstPtr>     out_source_req_ {&unit_port_set_, "out_source_req"};
 
-            uint32_t pending_acks_ = 0;
+            uint32_t pending_acks_ = 1;
             uint32_t pending_reqs_ = 0;
             
             uint32_t unique_id_ = 0;

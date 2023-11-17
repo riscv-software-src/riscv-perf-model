@@ -25,7 +25,7 @@ namespace olympia_mss
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
         in_mss_ack_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
-
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BIU, sendInitialCredits_));
         ILOG("BIU construct: #" << node->getGroupIdx());
     }
 
@@ -33,6 +33,12 @@ namespace olympia_mss
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
     ////////////////////////////////////////////////////////////////////////////////
+
+    // Sending Initial credits to L2Cache
+    void BIU::sendInitialCredits_() {
+        out_biu_ack_.send(biu_req_queue_size_);
+        ILOG("Sending initial credits to L2Cache : " << biu_req_queue_size_);
+    }
 
     // Receive new BIU request from L2Cache
     void BIU::receiveReqFromL2Cache_(const olympia::InstPtr & inst_ptr)
@@ -107,8 +113,10 @@ namespace olympia_mss
     }
 
     // Handle ack backto L2Cache
-    void BIU::handle_BIU_L2Cache_Ack_() {
-        out_biu_ack_.send(true);
+    void BIU::handle_BIU_L2Cache_Ack_() 
+    {
+        uint32_t available_slots = biu_req_queue_size_ - biu_req_queue_.size();
+        out_biu_ack_.send(available_slots);
 
         ILOG("BIU->L2Cache :  Ack is sent.");
     }

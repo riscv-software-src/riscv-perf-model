@@ -20,8 +20,9 @@ top:
       l2_size_kb : 512
       l2_associativity : 16
       l2_always_hit : false
-      l2cache_biu_credit_available : true      
       l2cache_latency : 10
+      is_icache_connected : true
+      is_dcache_connected : true
   biu:
     params:
       sink_latency: 10

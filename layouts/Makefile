@@ -2,8 +2,10 @@
 all: small_core.alf medium_core.alf big_core.alf
 
 %_core.alf:
-	m4 -DARCH_CORE_COMMON=$*_core_column.cmd core.cmd > $*_core.cmd
-	./gen_alf $*_core.cmd  > $*_core.alf
+	@echo "Generating pipeout for $@"
+	@(cd ../release; ./olympia -z ../layouts/pipeout -i1 traces/dhry_riscv.zstf > /dev/null)
+	@./gen_alf.py -d pipeoutlocation.dat -a $*_core.alf
+	@rm pipeout*
 
 clean:
-	rm small_core.cmd medium_core.cmd big_core.cmd *.alf
+	rm -f *.alf pipeout*

@@ -16,12 +16,91 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
+#include "cache/TreePLRUReplacement.hpp"
+#include "cache/BasicCacheItem.hpp"
+#include "cache/Cache.hpp"
+// #include "cache/ReplacementIF.hpp"
+
+
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 
 namespace olympia
 {
     class InstGenerator;
+
+
+    class BTBEntry : public sparta::cache::BasicCacheItem
+    {
+    public:
+        BTBEntry() :
+            valid_(false)
+        { };
+
+        BTBEntry(const BTBEntry &rhs) :
+            BasicCacheItem(rhs),
+            valid_(rhs.valid_),
+            target_(rhs.target_)
+        { };
+
+        BTBEntry &operator=(const BTBEntry &rhs)
+        {
+            if (&rhs != this) {
+                BasicCacheItem::operator=(rhs);
+                valid_ = rhs.valid_;
+                target_ = rhs.target_;
+            }
+            return *this;
+        }
+
+        void reset(uint64_t addr, uint64_t target)
+        {
+            setValid(true);
+            setAddr(addr);
+            setTarget(target);
+        }
+
+        void setValid(bool v) { valid_ = v; }
+        bool isValid() const { return valid_; }
+
+        void setTarget(uint64_t t) { target_ = t; }
+        uint64_t getTarget() const { return target_; }
+
+    private:
+        bool valid_ = false;
+        uint64_t target_;
+
+    };
+
+    class BTB : public sparta::cache::Cache<BTBEntry>
+    {
+    private:
+        class BTBAddrDecoder : public sparta::cache::AddrDecoderIF
+        {
+        public:
+            BTBAddrDecoder(uint16_t stride, uint16_t size) : stride_(stride), size_(size) {}
+            virtual uint64_t calcTag(uint64_t addr) const { return addr; }
+            virtual uint32_t calcIdx(uint64_t addr) const { return (addr >> 6) & 511; }
+            virtual uint64_t calcBlockAddr(uint64_t addr) const { return addr; }
+            virtual uint64_t calcBlockOffset(uint64_t addr) const { return 0;}
+        private:
+            const uint16_t stride_;
+            const uint16_t size_;
+
+            // If we've got 4096 entries, 64B stride and 8 ways
+            // sets = 4096/8 = 512 = 2**9
+            // Index = (address >> 6) & 2**9-1
+            // or      (address / 64) % 512
+            // or      address[15:6]
+            // Generically it'll be mask = sets-1, shift = log2(stride)
+        };
+    public:
+        BTB() :
+            sparta::cache::Cache<BTBEntry> (4096, 1, 512, BTBEntry(), sparta::cache::TreePLRUReplacement(8), false)
+        {
+            setAddrDecoder(new BTBAddrDecoder(4096, 64));
+        }
+    };
 
     /**
      * @file   Fetch.h
@@ -87,6 +166,9 @@ namespace olympia
         sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
+        // Retired Instruction
+        sparta::DataInPort<InstPtr> in_rob_retire_ack_ {&unit_port_set_, "in_rob_retire_ack", 1};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
         // Number of instructions to fetch
@@ -110,6 +192,9 @@ namespace olympia
         // instructions or a perfect IPC set
         std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
 
+        // BTB
+        std::unique_ptr<BTB> btb_;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
 
@@ -124,6 +209,10 @@ namespace olympia
 
         // Receive flush from retire
         void flushFetch_(const uint64_t & new_addr);
+
+        void getAckFromROB_(const InstPtr &);
+
+        bool predictInstruction_(InstPtr inst);
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

@@ -157,6 +157,9 @@ namespace olympia
         void     setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const                { return target_vaddr_; }
 
+        // Branch instruction was taken (always set for JAL/JALR)
+        void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
+
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
@@ -178,6 +181,13 @@ namespace olympia
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
         bool        isTransfer() const     { return is_transfer_; }
+        bool        isBranch() const       { return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH); }
+        bool        isCondBranch() const   { return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL); }
+        // Call is JAL/JALR with rd as x1/x5 and rs1 != rd
+        // Return is a JALR with rs1 as x1/x5 and rd != rs1
+        bool        isCall() const         { return false; } // TODO Implement
+        bool        isReturn() const       { return false; } // TODO Implement
+        bool        isTakenBranch() const  { return is_taken_branch_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
@@ -216,6 +226,7 @@ namespace olympia
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
         const bool             is_store_;
         const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
+        bool                   is_taken_branch_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 

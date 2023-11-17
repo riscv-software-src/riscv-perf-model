@@ -175,6 +175,11 @@ namespace olympia
                 //For misaligns, more than 1 address is provided
                 //inst->setVAddrVector(std::move(addrs));
             }
+            if (next_it_->isBranch())
+            {
+                inst->setTakenBranch(next_it_->isTakenBranch());
+                inst->setTargetVAddr(next_it_->branchTarget());
+            }
             ++next_it_;
             return inst;
         }

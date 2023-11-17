@@ -34,6 +34,10 @@ namespace olympia
 
         in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
 
+        in_rob_retire_ack_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, getAckFromROB_, InstPtr));
+
+        btb_.reset(new BTB());
+
     }
 
     Fetch::~Fetch() {}
@@ -51,6 +55,61 @@ namespace olympia
         fetch_inst_event_->schedule(1);
     }
 
+
+    bool Fetch::predictInstruction_(InstPtr inst)
+    {
+        if (btb_ == nullptr)
+        {
+            return false;
+        }
+
+        auto btb_entry = btb_->getItem(inst->getPC());
+        if (btb_entry == nullptr)
+        {
+            return false;
+        }
+
+        // BTB hit
+        // auto prediction = sparta::allocate_sparta_shared_pointer<PredictionInfo>(prediction_info_allocator);
+        // prediction->taken = true;
+        // prediction->target = btb_entry->getTarget();
+        // inst->setPrediction(prediction);
+        // return prediction->taken;
+        return false;
+    }
+
+    void Fetch::getAckFromROB_(const InstPtr & inst)
+    {
+        ILOG("Committed " << inst);
+        if (!inst->isBranch() || btb_ == nullptr)
+        {
+            return;
+        }
+        // This is all a bit messy...
+        auto btb_entry = btb_->peekItem(inst->getPC());
+        auto dec = btb_->getAddrDecoder();
+        ILOG("Searching BTB pc: " << inst->getPC() << " index: " << dec->calcIdx(inst->getPC()) << " tag: " << dec->calcTag(inst->getPC()));
+        if (nullptr == btb_entry)
+        {
+            // Insert
+            // SimpleCache2 has an allocateWithMRUUpdate, but we'd still need to get the item for replacement first..
+            auto set = &btb_->getCacheSet(inst->getPC());
+            auto rep = set->getReplacementIF();
+            auto entry = &set->getItemForReplacementWithInvalidCheck();
+            entry->reset(inst->getPC(), inst->getTargetVAddr());
+            rep->touchMRU(entry->getWay());
+            ILOG("MISS BTB for " << inst);
+            ILOG("INSERTED IN BTB at " << entry->getSetIndex() << " " << entry->getWay() << " tag: " << entry->getTag());
+        }
+        else {
+            // SimpleCache2 has a touchMRU function
+            sparta_assert(btb_entry->isValid(), "Hit BTB entry is not valid"); // Guess this could happen after an invalidate..
+            ILOG("HIT BTB for " << inst);
+            auto rep = btb_->getCacheSetAtIndex(btb_entry->getSetIndex()).getReplacementIF();
+            rep->touchMRU(btb_entry->getWay());
+        }
+    }
+
     void Fetch::fetchInstruction_()
     {
         const uint32_t upper = std::min(credits_inst_queue_, num_insts_to_fetch_);
@@ -62,16 +121,21 @@ namespace olympia
         for(uint32_t i = 0; i < upper; ++i)
         {
             InstPtr ex_inst = inst_generator_->getNextInst(my_clk_);
-            if(SPARTA_EXPECT_TRUE(nullptr != ex_inst))
+            if(SPARTA_EXPECT_FALSE(nullptr == ex_inst))
             {
-                ex_inst->setSpeculative(speculative_path_);
-                insts_to_send->emplace_back(ex_inst);
-
-                ILOG("Sending: " << ex_inst << " down the pipe");
-            }
-            else {
                 break;
             }
+
+            ex_inst->setSpeculative(speculative_path_);
+            insts_to_send->emplace_back(ex_inst);
+
+            ILOG("Sending: " << ex_inst << " down the pipe");
+
+            if (predictInstruction_(ex_inst))
+            {
+                break;
+            }
+
         }
 
         if(false == insts_to_send->empty())

@@ -5,6 +5,8 @@
 
 #include "L2Cache.hpp"
 
+#include "OlympiaAllocators.hpp"
+
 namespace olympia_mss
 {
     const char L2Cache::name[] = "l2cache";
@@ -81,7 +83,9 @@ namespace olympia_mss
         l2_always_hit_(p->l2_always_hit),
         l2cache_latency_(p->l2cache_latency),
         is_icache_connected_(p->is_icache_connected),
-        is_dcache_connected_(p->is_dcache_connected) {
+        is_dcache_connected_(p->is_dcache_connected),
+        memory_access_allocator_(sparta::notNull(olympia::OlympiaAllocators::getOlympiaAllocators(node))->
+                                 memory_access_allocator) {
 
     	// In Port Handler registration
         in_dcache_l2cache_req_.registerConsumerHandler
@@ -322,7 +326,8 @@ namespace olympia_mss
         }
         else if (arbitration_winner == Channel::ICACHE) {
             
-            const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(icache_req_queue_.front());
+            const auto &reqPtr = sparta::allocate_sparta_shared_pointer<olympia::MemoryAccessInfo>(memory_access_allocator_,
+                                                                         icache_req_queue_.front());
             
             reqPtr->setSrcUnit(L2ArchUnit::ICACHE);
             reqPtr->setDestUnit(L2ArchUnit::ICACHE);
@@ -337,7 +342,8 @@ namespace olympia_mss
         }
         else if (arbitration_winner == Channel::DCACHE) {
             
-            const auto &reqPtr = std::make_shared<olympia::MemoryAccessInfo>(dcache_req_queue_.front());
+            const auto &reqPtr = sparta::allocate_sparta_shared_pointer<olympia::MemoryAccessInfo>(memory_access_allocator_,
+                                                                         dcache_req_queue_.front());
             
             reqPtr->setSrcUnit(L2ArchUnit::DCACHE);
             reqPtr->setDestUnit(L2ArchUnit::DCACHE);

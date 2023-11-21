@@ -190,9 +190,7 @@ namespace olympia_mss
             const uint32_t NO_ACCESS = 0;
         };
         
-	    // Skipping the use of SpartaSharedPointer due to allocator bug
-	    // Instead using std::shared_ptr. That works cleanly.
-        using L2MemoryAccessInfoPtr = std::shared_ptr<olympia::MemoryAccessInfo>;
+        using L2MemoryAccessInfoPtr = sparta::SpartaSharedPointer<olympia::MemoryAccessInfo>;
         using L2ArchUnit = olympia::MemoryAccessInfo::ArchUnit;
         using L2CacheState = olympia::MemoryAccessInfo::CacheState;
         using L2CachePipeline = sparta::Pipeline<L2MemoryAccessInfoPtr>;
@@ -204,7 +202,7 @@ namespace olympia_mss
         const uint32_t pipeline_req_queue_size_;
         uint32_t inFlight_reqs_ = 0;
         
-        sparta::Buffer<std::shared_ptr<olympia::MemoryAccessInfo>> miss_pending_buffer_;
+        sparta::Buffer<L2MemoryAccessInfoPtr> miss_pending_buffer_;
         const uint32_t miss_pending_buffer_size_;
         
 
@@ -224,6 +222,8 @@ namespace olympia_mss
         const bool is_icache_connected_ = false;
         const bool is_dcache_connected_ = false;
 
+        // allocator for this object type
+        sparta::SpartaSharedPointerAllocator<olympia::MemoryAccessInfo> & memory_access_allocator_;
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +358,7 @@ namespace olympia_mss
         Channel arbitrateL2CacheAccessReqs_();
         
 	    // Cache lookup for a HIT or MISS on a given request 
-        L2CacheState cacheLookup_(std::shared_ptr<olympia::MemoryAccessInfo>);
+        L2CacheState cacheLookup_(sparta::SpartaSharedPointer<olympia::MemoryAccessInfo>);
         
 	    // Allocating the cacheline in the L2 bbased on return from BIU/L3
         void reloadCache_(uint64_t);

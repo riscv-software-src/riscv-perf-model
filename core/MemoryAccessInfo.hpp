@@ -13,6 +13,11 @@ namespace olympia {
 
     class MemoryAccessInfoPairDef;
 
+    class MemoryAccessInfo;
+
+    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+    
     class MemoryAccessInfo {
     public:
 
@@ -88,6 +93,9 @@ namespace olympia {
         void setDestUnit(const ArchUnit & dest_unit) { dest_ = dest_unit; }
         const ArchUnit & getDestUnit() const { return dest_; }
 
+        void setNextReq(const MemoryAccessInfoPtr & nextReq) { next_req_ = nextReq; }
+        const MemoryAccessInfoPtr & getNextReq() { return next_req_; }
+
         MMUState getMMUState() const {
             return mmu_access_state_;
         }
@@ -125,6 +133,11 @@ namespace olympia {
         ArchUnit src_ = ArchUnit::NO_ACCESS;
         ArchUnit dest_ = ArchUnit::NO_ACCESS;
 
+        // Pointer to next request for DEBUG/TRACK
+        // (Note : Currently used only to track request with same cacheline in L2Cache 
+        // Not for functional/performance purpose)
+        MemoryAccessInfoPtr next_req_ = nullptr;
+
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
         ScoreboardViews scoreboard_views_;
@@ -153,7 +166,4 @@ namespace olympia {
                               SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
                               SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr))
     };
-
-    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
-    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
 };

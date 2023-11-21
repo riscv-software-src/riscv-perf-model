@@ -190,19 +190,18 @@ namespace olympia_mss
             const uint32_t NO_ACCESS = 0;
         };
         
-        using L2MemoryAccessInfoPtr = sparta::SpartaSharedPointer<olympia::MemoryAccessInfo>;
         using L2ArchUnit = olympia::MemoryAccessInfo::ArchUnit;
         using L2CacheState = olympia::MemoryAccessInfo::CacheState;
-        using L2CachePipeline = sparta::Pipeline<L2MemoryAccessInfoPtr>;
+        using L2CachePipeline = sparta::Pipeline<olympia::MemoryAccessInfoPtr>;
         
         PipelineStages stages_;
         L2CachePipeline l2cache_pipeline_;
         
-        sparta::Queue<L2MemoryAccessInfoPtr> pipeline_req_queue_;
+        sparta::Queue<olympia::MemoryAccessInfoPtr> pipeline_req_queue_;
         const uint32_t pipeline_req_queue_size_;
         uint32_t inFlight_reqs_ = 0;
         
-        sparta::Buffer<L2MemoryAccessInfoPtr> miss_pending_buffer_;
+        sparta::Buffer<olympia::MemoryAccessInfoPtr> miss_pending_buffer_;
         const uint32_t miss_pending_buffer_size_;
         
 
@@ -223,7 +222,7 @@ namespace olympia_mss
         const bool is_dcache_connected_ = false;
 
         // allocator for this object type
-        sparta::SpartaSharedPointerAllocator<olympia::MemoryAccessInfo> & memory_access_allocator_;
+        olympia::MemoryAccessInfoAllocator & memory_access_allocator_;
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////

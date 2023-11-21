@@ -461,13 +461,18 @@ namespace olympia_mss
             const auto req_cl = getCacheLine(req);
 
             auto is_cl_present = [&req, req_cl, getCacheLine] (auto reqPtr)
-                            { return (req != reqPtr && getCacheLine(reqPtr) == req_cl);};
+                            { return (req != reqPtr && getCacheLine(reqPtr) == req_cl); };
 
             // Send out the request to BIU for a cache MISS if it is not sent out already
-            auto reqIter = std::find_if(miss_pending_buffer_.begin(), miss_pending_buffer_.end(), is_cl_present);
+            auto reqIter = std::find_if(miss_pending_buffer_.rbegin(), miss_pending_buffer_.rend(), is_cl_present);
                 
-            if (reqIter == miss_pending_buffer_.end()) {
+            if (reqIter == miss_pending_buffer_.rend()) {
                 sendOutReq_(req->getDestUnit(), req->getInstPtr());
+            }
+            else {
+                // Found a request to same cacheLine.
+                // Link the current request to the last pending request
+                (*reqIter)->setNextReq(req);
             }
         }
     }
@@ -617,7 +622,7 @@ namespace olympia_mss
     }
 
     // Cache lookup for a HIT or MISS on a given request
-    L2Cache::L2CacheState L2Cache::cacheLookup_(L2MemoryAccessInfoPtr mem_access_info_ptr) {
+    L2Cache::L2CacheState L2Cache::cacheLookup_(olympia::MemoryAccessInfoPtr mem_access_info_ptr) {
         const olympia::InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         uint64_t phyAddr = inst_ptr->getRAdr();
 

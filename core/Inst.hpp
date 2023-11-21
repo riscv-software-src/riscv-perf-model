@@ -11,6 +11,8 @@
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "mavis/OpcodeInfo.h"
 
+#include "stf-inc/stf_inst_reader.hpp"
+
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
 #include "MiscUtils.hpp"
@@ -136,6 +138,10 @@ namespace olympia
 
         bool isMarkedOldest() const { return is_oldest_; }
 
+        // Set the STF iterator to rewind trace when flushing
+        void setSTFIterator(stf::STFInstReader::iterator it) { stf_it_ = it; }
+        stf::STFInstReader::iterator getSTFIterator() const { return stf_it_; }
+
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
         // trace can have different unique IDs (due to flushing)
@@ -189,6 +195,9 @@ namespace olympia
         bool        isReturn() const       { return false; } // TODO Implement
         bool        isTakenBranch() const  { return is_taken_branch_; }
 
+        void        flushAtDecode(bool flush) { flush_decode_ = flush; }
+        bool        requiresDecodeFlush() const { return flush_decode_; }
+
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
             return src_reg_bit_masks_[rf];
@@ -229,6 +238,10 @@ namespace olympia
         bool                   is_taken_branch_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
+        bool                   flush_decode_ = false; // Requires a flush at decode
+
+        stf::STFInstReader::iterator stf_it_; // Saved iterator to rewind tracefile
+
 
         // Rename information
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;

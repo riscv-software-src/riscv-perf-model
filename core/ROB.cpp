@@ -122,6 +122,13 @@ namespace olympia
 
                 ILOG("retiring " << ex_inst);
 
+                sparta_assert(ex_inst.getProgramID() == expected_program_id_,
+                    "Unexpected program ID when retiring instruction"
+                    << "(suggests wrong program order)"
+                    << " expected: " << expected_program_id_
+                    << " received: " << ex_inst.getProgramID());
+                ++expected_program_id_;
+
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()
                               << " instructions in " << getClock()->currentCycle()
@@ -145,7 +152,7 @@ namespace olympia
                     out_retire_flush_.send(ex_inst.getUniqueID());
 
                     // Redirect fetch
-                    out_fetch_flush_redirect_.send(ex_inst.getTargetVAddr() + 4);
+                    out_fetch_flush_redirect_.send(ex_inst_ptr);
 
                     ++num_flushes_;
                     break;

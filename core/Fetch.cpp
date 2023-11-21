@@ -32,7 +32,7 @@ namespace olympia
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
 
-        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
+        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, InstPtr));
 
         in_rob_retire_ack_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, getAckFromROB_, InstPtr));
 
@@ -66,8 +66,37 @@ namespace olympia
         auto btb_entry = btb_->getItem(inst->getPC());
         if (btb_entry == nullptr)
         {
+            // BTB miss - flush on taken branch
+            inst->flushAtDecode(inst->isTakenBranch());
             return false;
         }
+        else
+        {
+            // Hit?
+            sparta_assert(btb_entry->isValid(), "Hit BTB entry is not valid"); // Guess this could happen after an invalidate..
+            ILOG("HIT BTB for " << inst);
+            auto rep = btb_->getCacheSetAtIndex(btb_entry->getSetIndex()).getReplacementIF();
+            rep->touchMRU(btb_entry->getWay());
+            if (inst->isTakenBranch())
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        // Let's make the prediction here, and set a flag in the instruction
+        // which indicates at what stage a misprediction needs to be flushed
+        // i.e. BTB miss/alias flush after decode, or direction/target
+        // misprediction will flush after execution
+        //
+        // We could potentially add some state to fetch to track when
+        // we're fetching freely, fetching the wrong path, or stalled
+        // waiting for a flush (i.e. no target prediction made or weak
+        // confidence). This allows us to track usefulness of fetch.
+
 
         // BTB hit
         // auto prediction = sparta::allocate_sparta_shared_pointer<PredictionInfo>(prediction_info_allocator);
@@ -85,29 +114,7 @@ namespace olympia
         {
             return;
         }
-        // This is all a bit messy...
-        auto btb_entry = btb_->peekItem(inst->getPC());
-        auto dec = btb_->getAddrDecoder();
-        ILOG("Searching BTB pc: " << inst->getPC() << " index: " << dec->calcIdx(inst->getPC()) << " tag: " << dec->calcTag(inst->getPC()));
-        if (nullptr == btb_entry)
-        {
-            // Insert
-            // SimpleCache2 has an allocateWithMRUUpdate, but we'd still need to get the item for replacement first..
-            auto set = &btb_->getCacheSet(inst->getPC());
-            auto rep = set->getReplacementIF();
-            auto entry = &set->getItemForReplacementWithInvalidCheck();
-            entry->reset(inst->getPC(), inst->getTargetVAddr());
-            rep->touchMRU(entry->getWay());
-            ILOG("MISS BTB for " << inst);
-            ILOG("INSERTED IN BTB at " << entry->getSetIndex() << " " << entry->getWay() << " tag: " << entry->getTag());
-        }
-        else {
-            // SimpleCache2 has a touchMRU function
-            sparta_assert(btb_entry->isValid(), "Hit BTB entry is not valid"); // Guess this could happen after an invalidate..
-            ILOG("HIT BTB for " << inst);
-            auto rep = btb_->getCacheSetAtIndex(btb_entry->getSetIndex()).getReplacementIF();
-            rep->touchMRU(btb_entry->getWay());
-        }
+
     }
 
     void Fetch::fetchInstruction_()
@@ -133,6 +140,7 @@ namespace olympia
 
             if (predictInstruction_(ex_inst))
             {
+                ILOG("Redirection predicted, ending fetch group")
                 break;
             }
 
@@ -170,15 +178,47 @@ namespace olympia
     }
 
     // Called from Retire via in_fetch_flush_redirect_ port
-    void Fetch::flushFetch_(const uint64_t & new_addr) {
-        ILOG("Fetch: receive flush on new_addr=0x"
-             << std::hex << new_addr << std::dec);
+    void Fetch::flushFetch_(const InstPtr & flush_inst)
+    {
+        ILOG("Fetch: receive flush " << flush_inst);
+
+        // Assume this was due to a BTB miss
+        // This is all a bit messy...
+        auto btb_entry = btb_->peekItem(flush_inst->getPC());
+        auto dec = btb_->getAddrDecoder();
+        ILOG("Searching BTB pc: " << flush_inst->getPC() << " index: " << dec->calcIdx(flush_inst->getPC()) << " tag: " << dec->calcTag(flush_inst->getPC()));
+        if (nullptr == btb_entry)
+        {
+            // Insert
+            // SimpleCache2 has an allocateWithMRUUpdate, but we'd still need to get the item for replacement first..
+            auto set = &btb_->getCacheSet(flush_inst->getPC());
+            auto rep = set->getReplacementIF();
+            auto entry = &set->getItemForReplacementWithInvalidCheck();
+            entry->reset(flush_inst->getPC(), flush_inst->getTargetVAddr());
+            rep->touchMRU(entry->getWay());
+            ILOG("MISS BTB for " << flush_inst);
+            ILOG("INSERTED IN BTB at " << entry->getSetIndex() << " " << entry->getWay() << " tag: " << entry->getTag());
+        }
+
+        // Cancel fetch this cycle
+        inst_generator_->reset(flush_inst, true); // Skip to next instruction
 
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();
 
+        return;
+
         // No longer speculative
         speculative_path_ = false;
+
+        // This could be from decode, execute, or the ROB
+        // Decode flush would be due to a BTB misfetch
+        // Execute flush is due to a misprediction
+        // ROB flush would be due to system instructions
+        // Probably need a flush type within the instruction
+        // if BTB prediction was made, then invalidate it
+        // if decode flush inst is a branch, then insert in BTB
+        // This should probably consume some time..
     }
 
 }

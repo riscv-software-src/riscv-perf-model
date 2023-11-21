@@ -163,7 +163,7 @@ namespace olympia
             {&unit_port_set_, "in_fetch_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // Incoming flush from Retire w/ redirect
-        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
+        sparta::DataInPort<InstPtr> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
         // Retired Instruction
@@ -208,7 +208,7 @@ namespace olympia
         void fetchInstruction_();
 
         // Receive flush from retire
-        void flushFetch_(const uint64_t & new_addr);
+        void flushFetch_(const InstPtr & flush_inst);
 
         void getAckFromROB_(const InstPtr &);
 

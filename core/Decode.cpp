@@ -27,6 +27,10 @@ namespace olympia
         in_reorder_flush_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFlush_, FlushManager::FlushingCriteria));
 
+        in_fetch_flush_redirect_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFetchFlush_, InstPtr));
+
+
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
     }
 
@@ -70,6 +74,13 @@ namespace olympia
         fetch_queue_.clear();
     }
 
+    void Decode::handleFetchFlush_(const InstPtr & flush_inst)
+    {
+        ILOG("Got a fetch flush call for " << flush_inst);
+        fetch_queue_credits_outp_.send(fetch_queue_.size());
+        fetch_queue_.clear();
+    }
+
     // Decode instructions
     void Decode::decodeInsts_()
     {
@@ -89,16 +100,23 @@ namespace olympia
                 ILOG("Decoded: " << inst);
 
                 fetch_queue_.pop();
+
+                if (inst->requiresDecodeFlush())
+                {
+                    out_decode_flush_.send(inst);
+                    ILOG("Decode flush required - requesting flush!");
+                    break;
+                }
             }
 
             // Send decoded instructions to rename
             uop_queue_outp_.send(insts);
 
             // Decrement internal Uop Queue credits
-            uop_queue_credits_ -= num_decode;
+            uop_queue_credits_ -= insts->size();
 
             // Send credits back to Fetch to get more instructions
-            fetch_queue_credits_outp_.send(num_decode);
+            fetch_queue_credits_outp_.send(insts->size());
         }
 
         // If we still have credits to send instructions as well as

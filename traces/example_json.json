@@ -1,27 +1,250 @@
 [
     {
-        "mnemonic": "add",
+        "mnemonic": "beq",
         "rs1": 1,
         "rs2": 2,
-        "rd": 3
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
     },
     {
-        "mnemonic": "mul",
-        "rs1": 3,
-        "rs2": 1,
-        "rd": 4
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
     },
     {
-        "mnemonic": "add",
-        "rs1": 4,
-        "rs2": 3,
-        "rd": 5
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
     },
     {
-        "mnemonic": "lw",
-        "rs1": 4,
-        "rs2": 3,
-        "rd":  5,
-        "vaddr" : "0xdeadbeef"
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
+    },
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 2,
+        "rd": 3,
+        "vaddr" : "0xdeadbeef",
+        "pc" : "0x0"
     }
 ]

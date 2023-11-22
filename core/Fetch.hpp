@@ -15,92 +15,17 @@
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
-
-#include "cache/TreePLRUReplacement.hpp"
-#include "cache/BasicCacheItem.hpp"
-#include "cache/Cache.hpp"
-// #include "cache/ReplacementIF.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
+#include "sparta/simulation/ResourceTreeNode.hpp"
 
 
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
+#include "BTB.hpp"
 
 namespace olympia
 {
     class InstGenerator;
-
-
-    class BTBEntry : public sparta::cache::BasicCacheItem
-    {
-    public:
-        BTBEntry() :
-            valid_(false)
-        { };
-
-        BTBEntry(const BTBEntry &rhs) :
-            BasicCacheItem(rhs),
-            valid_(rhs.valid_),
-            target_(rhs.target_)
-        { };
-
-        BTBEntry &operator=(const BTBEntry &rhs)
-        {
-            if (&rhs != this) {
-                BasicCacheItem::operator=(rhs);
-                valid_ = rhs.valid_;
-                target_ = rhs.target_;
-            }
-            return *this;
-        }
-
-        void reset(uint64_t addr, uint64_t target)
-        {
-            setValid(true);
-            setAddr(addr);
-            setTarget(target);
-        }
-
-        void setValid(bool v) { valid_ = v; }
-        bool isValid() const { return valid_; }
-
-        void setTarget(uint64_t t) { target_ = t; }
-        uint64_t getTarget() const { return target_; }
-
-    private:
-        bool valid_ = false;
-        uint64_t target_;
-
-    };
-
-    class BTB : public sparta::cache::Cache<BTBEntry>
-    {
-    private:
-        class BTBAddrDecoder : public sparta::cache::AddrDecoderIF
-        {
-        public:
-            BTBAddrDecoder(uint16_t stride, uint16_t size) : stride_(stride), size_(size) {}
-            virtual uint64_t calcTag(uint64_t addr) const { return addr; }
-            virtual uint32_t calcIdx(uint64_t addr) const { return (addr >> 6) & 511; }
-            virtual uint64_t calcBlockAddr(uint64_t addr) const { return addr; }
-            virtual uint64_t calcBlockOffset(uint64_t addr) const { return 0;}
-        private:
-            const uint16_t stride_;
-            const uint16_t size_;
-
-            // If we've got 4096 entries, 64B stride and 8 ways
-            // sets = 4096/8 = 512 = 2**9
-            // Index = (address >> 6) & 2**9-1
-            // or      (address / 64) % 512
-            // or      address[15:6]
-            // Generically it'll be mask = sets-1, shift = log2(stride)
-        };
-    public:
-        BTB() :
-            sparta::cache::Cache<BTBEntry> (4096, 1, 512, BTBEntry(), sparta::cache::TreePLRUReplacement(8), false)
-        {
-            setAddrDecoder(new BTBAddrDecoder(4096, 64));
-        }
-    };
 
     /**
      * @file   Fetch.h
@@ -174,7 +99,6 @@ namespace olympia
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
 
-
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
 
@@ -192,8 +116,20 @@ namespace olympia
         // instructions or a perfect IPC set
         std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
 
-        // BTB
-        std::unique_ptr<BTB> btb_;
+        // Branch Target Buffer component
+        BTB *btb_ = nullptr;
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Counters
+        sparta::Counter btb_hits_{
+                getStatisticSet(), "btb_hits",
+                "Number of BTB hits", sparta::Counter::COUNT_NORMAL
+        };
+
+        sparta::Counter btb_misses_{
+                getStatisticSet(), "btb_misses",
+                "Number of BTB misses", sparta::Counter::COUNT_NORMAL
+        };
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -216,6 +152,24 @@ namespace olympia
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
+    };
+
+
+    //! Fetch's factory class.  Don't create Fetch without it
+    class FetchFactory : public sparta::ResourceFactory<Fetch, Fetch::FetchParameterSet>
+    {
+    public:
+        void onConfiguring(sparta::ResourceTreeNode* node) override;
+        void deleteSubtree(sparta::ResourceTreeNode*) override;
+
+        ~FetchFactory() = default;
+    private:
+
+        // The order of these two members is VERY important: you
+        // must destroy the tree nodes _before_ the factory since
+        // the factory is used to destroy the nodes!
+        sparta::ResourceFactory<olympia::BTB, olympia::BTB::BTBParameterSet> btb_fact_;
+        std::unique_ptr<sparta::ResourceTreeNode> btb_tn_;
     };
 
 }

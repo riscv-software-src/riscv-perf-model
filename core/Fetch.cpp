@@ -36,8 +36,6 @@ namespace olympia
 
         in_rob_retire_ack_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, getAckFromROB_, InstPtr));
 
-        btb_.reset(new BTB());
-
     }
 
     Fetch::~Fetch() {}
@@ -52,6 +50,13 @@ namespace olympia
                                                          workload->getValueAsString(),
                                                          skip_nonuser_mode_);
 
+        // Setup BTB
+        auto btb_tn = getContainer()->getChild("btb", false);
+        if (btb_tn)
+        {
+            btb_ = btb_tn->getResourceAs<olympia::BTB>();
+        }
+
         fetch_inst_event_->schedule(1);
     }
 
@@ -63,28 +68,15 @@ namespace olympia
             return false;
         }
 
-        auto btb_entry = btb_->getItem(inst->getPC());
-        if (btb_entry == nullptr)
+        if (!btb_->isHit(inst->getPC()))
         {
-            // BTB miss - flush on taken branch
             inst->flushAtDecode(inst->isTakenBranch());
-            return false;
         }
         else
         {
-            // Hit?
-            sparta_assert(btb_entry->isValid(), "Hit BTB entry is not valid"); // Guess this could happen after an invalidate..
-            ILOG("HIT BTB for " << inst);
-            auto rep = btb_->getCacheSetAtIndex(btb_entry->getSetIndex()).getReplacementIF();
-            rep->touchMRU(btb_entry->getWay());
-            if (inst->isTakenBranch())
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            btb_hits_++;
+            btb_->touchMRU(*(btb_->getLine(inst->getPC())));
+            return inst->isTakenBranch();
         }
 
         // Let's make the prediction here, and set a flag in the instruction
@@ -181,26 +173,17 @@ namespace olympia
     void Fetch::flushFetch_(const InstPtr & flush_inst)
     {
         ILOG("Fetch: receive flush " << flush_inst);
-
-        // Assume this was due to a BTB miss
-        // This is all a bit messy...
-        auto btb_entry = btb_->peekItem(flush_inst->getPC());
-        auto dec = btb_->getAddrDecoder();
-        ILOG("Searching BTB pc: " << flush_inst->getPC() << " index: " << dec->calcIdx(flush_inst->getPC()) << " tag: " << dec->calcTag(flush_inst->getPC()));
-        if (nullptr == btb_entry)
+        auto pc = flush_inst->getPC();
+        if (!btb_->isHit(pc))
         {
-            // Insert
-            // SimpleCache2 has an allocateWithMRUUpdate, but we'd still need to get the item for replacement first..
-            auto set = &btb_->getCacheSet(flush_inst->getPC());
-            auto rep = set->getReplacementIF();
-            auto entry = &set->getItemForReplacementWithInvalidCheck();
-            entry->reset(flush_inst->getPC(), flush_inst->getTargetVAddr());
-            rep->touchMRU(entry->getWay());
-            ILOG("MISS BTB for " << flush_inst);
-            ILOG("INSERTED IN BTB at " << entry->getSetIndex() << " " << entry->getWay() << " tag: " << entry->getTag());
+            auto entry = &btb_->getLineForReplacementWithInvalidCheck(pc);
+            entry->reset(pc);
+            entry->setTarget(flush_inst->getTargetVAddr());
+            btb_->touchMRU(*entry);
+            btb_misses_++;
         }
 
-        // Cancel fetch this cycle
+        // Rewind the tracefile
         inst_generator_->reset(flush_inst, true); // Skip to next instruction
 
         // Cancel all previously sent instructions on the outport
@@ -219,6 +202,21 @@ namespace olympia
         // if BTB prediction was made, then invalidate it
         // if decode flush inst is a branch, then insert in BTB
         // This should probably consume some time..
+    }
+
+
+    void FetchFactory::onConfiguring(sparta::ResourceTreeNode* node)
+    {
+        btb_tn_.reset(new sparta::ResourceTreeNode(node,
+                                                   "btb",
+                                                   sparta::TreeNode::GROUP_NAME_NONE,
+                                                   sparta::TreeNode::GROUP_IDX_NONE,
+                                                   "Branch Target Buffer",
+                                                   &btb_fact_));
+    }
+
+    void FetchFactory::deleteSubtree(sparta::ResourceTreeNode*) {
+        btb_tn_.reset();
     }
 
 }

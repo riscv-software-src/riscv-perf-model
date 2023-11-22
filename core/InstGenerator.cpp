@@ -107,11 +107,24 @@ namespace olympia
             inst->setTargetVAddr(vaddr);
         }
 
-        ++curr_inst_index_;
+        if (jinst.find("pc") != jinst.end()) {
+            uint64_t pc = std::strtoull(jinst["pc"].get<std::string>().c_str(), nullptr, 0);
+            inst->setPC(pc);
+        }
+
+        if (jinst.find("taken") != jinst.end()) {
+            uint64_t taken = std::strtoull(jinst["taken"].get<std::string>().c_str(), nullptr, 0);
+            inst->setTakenBranch(taken);
+        }
+
         if (inst != nullptr) {
             inst->setUniqueID(++unique_id_);
             inst->setProgramID(unique_id_);
+            // inst->setJSONInstIndex(curr_inst_index_);
         }
+
+        ++curr_inst_index_;
+
         return inst;
 
     }

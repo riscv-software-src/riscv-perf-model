@@ -187,16 +187,24 @@ namespace olympia
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
         bool        isTransfer() const     { return is_transfer_; }
-        bool        isBranch() const       { return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH); }
-        bool        isCondBranch() const   { return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL); }
+
+        bool isBranch() const {
+            return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH);
+        }
+        bool isCondBranch() const {
+            return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL);
+        }
         // Call is JAL/JALR with rd as x1/x5 and rs1 != rd
         // Return is a JALR with rs1 as x1/x5 and rd != rs1
         bool        isCall() const         { return false; } // TODO Implement
         bool        isReturn() const       { return false; } // TODO Implement
         bool        isTakenBranch() const  { return is_taken_branch_; }
 
-        void        flushAtDecode(bool flush) { flush_decode_ = flush; }
-        bool        requiresDecodeFlush() const { return flush_decode_; }
+        void        setBTBHit(bool hit) { btb_hit_ = hit; }
+        bool        isBTBHit() const { return btb_hit_; }
+
+        void        setBranchMispredict(bool mispredict) { branch_mispredict_ = mispredict; }
+        bool        isBranchMispredict() const { return branch_mispredict_;  }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
@@ -238,7 +246,8 @@ namespace olympia
         bool                   is_taken_branch_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
-        bool                   flush_decode_ = false; // Requires a flush at decode
+        bool                   btb_hit_ = false;
+        bool                   branch_mispredict_ = false; // Branch is mispredicted by the frontend (direction or target)
 
         stf::STFInstReader::iterator stf_it_; // Saved iterator to rewind tracefile
 

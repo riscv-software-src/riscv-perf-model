@@ -64,7 +64,8 @@ namespace olympia
             in_retire_flush_(getPortSet(), "in_retire_flush", 0),
             out_fetch_flush_redirect_(getPortSet(), "out_fetch_flush_redirect", false),
             in_fetch_flush_redirect_(getPortSet(), "in_fetch_flush_redirect", 0),
-            in_decode_flush_(getPortSet(), "in_decode_flush", 0)
+            in_decode_flush_(getPortSet(), "in_decode_flush", 0),
+            out_decode_flush_(getPortSet(), "out_decode_flush", false)
         {
             (void)params;
             in_retire_flush_.
@@ -93,6 +94,7 @@ namespace olympia
 
         // Decode Flush Port
         sparta::DataInPort<InstPtr> in_decode_flush_;
+        sparta::DataOutPort<FlushingCriteria> out_decode_flush_;
 
         // Internal method used to forward the flush to the attached
         // listeners
@@ -107,6 +109,7 @@ namespace olympia
 
         void forwardDecodeFlush_(const InstPtr & flush_data) {
             out_fetch_flush_redirect_.send(flush_data);
+            out_decode_flush_.send(flush_data->getUniqueID());
         }
     };
 }

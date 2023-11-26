@@ -122,6 +122,7 @@ namespace olympia
 
                 ILOG("retiring " << ex_inst);
 
+                // Use the program ID to verify that the program order has been maintained.
                 sparta_assert(ex_inst.getProgramID() == expected_program_id_,
                     "Unexpected program ID when retiring instruction"
                     << "(suggests wrong program order)"
@@ -154,6 +155,19 @@ namespace olympia
                     // Redirect fetch
                     out_fetch_flush_redirect_.send(ex_inst_ptr);
 
+                    ++num_flushes_;
+                    break;
+                }
+
+                // Initiate full flush on misprediction
+                if (SPARTA_EXPECT_FALSE(ex_inst.isBranchMispredict()))
+                {
+                    ILOG("Mispredicted branch " << ex_inst <<
+                        " was actually " << (ex_inst.isTakenBranch() ? "taken" : "not-taken"));
+                    out_retire_flush_.send(ex_inst.getUniqueID());
+
+                    // Redirect Fetch
+                    out_fetch_flush_redirect_.send(ex_inst_ptr);
                     ++num_flushes_;
                     break;
                 }

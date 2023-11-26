@@ -11,19 +11,34 @@
 #include "cache/Cache.hpp"
 #include "cache/BasicCacheSet.hpp"
 
+#include "MiscUtils.hpp"
+
 
 namespace olympia
 {
     class BTBEntry : public sparta::cache::BasicCacheItem
     {
     public:
+        enum class BranchType : std::uint16_t {
+            CONDITIONAL,
+            __FIRST = CONDITIONAL,
+            DIRECT,
+            INDIRECT,
+            RETURN,
+            __LAST
+        };
+
         BTBEntry() :
             valid_(false)
         { };
 
         BTBEntry(const BTBEntry &rhs) :
             BasicCacheItem(rhs),
-            valid_(rhs.valid_)
+            valid_(rhs.valid_),
+            target_(rhs.target_),
+            is_call_(rhs.is_call_),
+            branchtype_(rhs.branchtype_),
+            lhist_counter_(rhs.lhist_counter_)
         { };
 
         BTBEntry &operator=(const BTBEntry &rhs)
@@ -32,6 +47,9 @@ namespace olympia
                 BasicCacheItem::operator=(rhs);
                 valid_ = rhs.valid_;
                 target_ = rhs.target_;
+                is_call_ = rhs.is_call_;
+                branchtype_ = rhs.branchtype_;
+                lhist_counter_ = rhs.lhist_counter_;
             }
             return *this;
         }
@@ -40,6 +58,7 @@ namespace olympia
         {
             setValid(true);
             setAddr(addr);
+            resetLHistCounter_();
         }
 
         void setValid(bool v) { valid_ = v; }
@@ -48,9 +67,51 @@ namespace olympia
         void setTarget(uint64_t t) { target_ = t; }
         uint64_t getTarget() const { return target_; }
 
+        void setBranchType(BranchType branchtype, bool is_call = false)
+        {
+            sparta_assert(!is_call ||
+                          miscutils::isOneOf(branchtype, BranchType::INDIRECT,
+                                                         BranchType::DIRECT,
+                                                         BranchType::RETURN),
+                          "Invalid branch and call combination");
+            branchtype_ = branchtype;
+            is_call_ = is_call;
+        }
+
+        BranchType getBranchType() const { return branchtype_; }
+        bool isCall() const { return is_call_; }
+
+        bool predictDirection() {
+            if (branchtype_ == BranchType::CONDITIONAL)
+            {
+                return lhist_counter_ >= 0;
+            }
+            return true;
+        }
+
+        void updateDirection(bool taken)
+        {
+            if (taken)
+            {
+                lhist_counter_ = std::min(lhist_count_max_, ++lhist_counter_);
+            }
+            else
+            {
+                lhist_counter_ = std::max(lhist_count_min_, --lhist_counter_);
+            }
+        }
+
+
     private:
         bool                 valid_ = false;
         uint64_t             target_;
+        bool                 is_call_ = false;
+        BranchType           branchtype_;
+        int32_t              lhist_counter_ = 0;
+        static constexpr int32_t lhist_count_max_ = 1; // 2 bit saturating counter.
+        static constexpr int32_t lhist_count_min_ = -2;
+
+        void resetLHistCounter_() { lhist_counter_ = 0; }
 
     };
 

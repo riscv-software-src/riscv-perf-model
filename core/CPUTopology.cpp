@@ -266,6 +266,10 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.decode.ports.in_reorder_flush"
         },
         {
+            "cpu.core*.flushmanager.ports.out_decode_flush",
+            "cpu.core*.decode.ports.in_reorder_flush"
+        },
+        {
             "cpu.core*.flushmanager.ports.out_retire_flush",
             "cpu.core*.rename.ports.in_reorder_flush"
         },
@@ -280,10 +284,6 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.flushmanager.ports.out_fetch_flush_redirect",
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_fetch_flush_redirect",
-            "cpu.core*.decode.ports.in_fetch_flush_redirect"
         }
     };
 }

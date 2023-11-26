@@ -92,7 +92,8 @@ namespace olympia
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
         // Retired Instruction
-        sparta::DataInPort<InstPtr> in_rob_retire_ack_ {&unit_port_set_, "in_rob_retire_ack", 1};
+        sparta::DataInPort<InstPtr> in_rob_retire_ack_
+            {&unit_port_set_, "in_rob_retire_ack", sparta::SchedulingPhase::Tick, 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch

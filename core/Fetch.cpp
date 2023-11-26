@@ -68,15 +68,24 @@ namespace olympia
             return false;
         }
 
-        if (!btb_->isHit(inst->getPC()))
-        {
-            inst->flushAtDecode(inst->isTakenBranch());
-        }
-        else
+        if (btb_->isHit(inst->getPC()))
         {
             btb_hits_++;
-            btb_->touchMRU(*(btb_->getLine(inst->getPC())));
-            return inst->isTakenBranch();
+
+            inst->setBTBHit(true);
+
+            auto btb_entry = btb_->getLine(inst->getPC());
+            btb_->touchMRU(*btb_entry);
+
+            auto predicted_taken = btb_entry->predictDirection();
+            inst->setBranchMispredict(predicted_taken != inst->isTakenBranch());
+
+            ILOG("BTB Hit on " << inst << " predicted " << (predicted_taken ? "taken" : "not-taken"));
+
+            // TODO Compare targets (RAS/Indirect mispredicitons)
+            // TODO Consider BTB hit aliasing..
+
+            return predicted_taken;
         }
 
         // Let's make the prediction here, and set a flag in the instruction
@@ -99,6 +108,18 @@ namespace olympia
         return false;
     }
 
+
+    // If we've mispredicted the branch, then the flush should have happened already
+    // so the branch should have been inserted in the BTB already. Just update the direction
+    // counter.
+    // TODO Target misprediction
+    //
+    // We can apply the same mechanism to a speculatively updated GHR. Flush clears the speculative
+    // history, including the update from the mispredicted branch. This function then updates the GHR
+    // correctly.
+    // NOTE All of which hangs on the assumption that flush+retirement of mispredictions happen in the
+    // same cycle.
+    // TODO This happens before the flush.. We need the BTB entry inserted first..
     void Fetch::getAckFromROB_(const InstPtr & inst)
     {
         ILOG("Committed " << inst);
@@ -106,7 +127,12 @@ namespace olympia
         {
             return;
         }
-
+        if (inst->isCondBranch() && btb_->isHit(inst->getPC()))
+        {
+            auto btb_entry = btb_->getLine(inst->getPC());
+            // Update history counter.
+            btb_entry->updateDirection(inst->isTakenBranch());
+        }
     }
 
     void Fetch::fetchInstruction_()
@@ -169,22 +195,41 @@ namespace olympia
         fetch_inst_event_->schedule(sparta::Clock::Cycle(0));
     }
 
-    // Called from Retire via in_fetch_flush_redirect_ port
+    // Could be a flush from decode, or retirement
+    // Decode flush -> BTB miss
+    // Retire flush -> Mispredicted branch (and potentially a BTB miss)
     void Fetch::flushFetch_(const InstPtr & flush_inst)
     {
         ILOG("Fetch: receive flush " << flush_inst);
         auto pc = flush_inst->getPC();
-        if (!btb_->isHit(pc))
+
+        // Insert BTB misses on flush
+        if (flush_inst->isBranch() && !btb_->isHit(pc))
         {
             auto entry = &btb_->getLineForReplacementWithInvalidCheck(pc);
             entry->reset(pc);
             entry->setTarget(flush_inst->getTargetVAddr());
+            if (flush_inst->isCondBranch())
+            {
+                entry->setBranchType(BTBEntry::BranchType::CONDITIONAL);
+            }
+            else
+            {
+                entry->setBranchType(BTBEntry::BranchType::DIRECT);
+            }
             btb_->touchMRU(*entry);
             btb_misses_++;
         }
 
         // Rewind the tracefile
-        inst_generator_->reset(flush_inst, true); // Skip to next instruction
+        if (flush_inst->getStatus() == Inst::Status::COMPLETED || flush_inst->getStatus() == Inst::Status::RETIRED)
+        {
+            inst_generator_->reset(flush_inst, true); // Skip to next instruction
+        }
+        else
+        {
+            inst_generator_->reset(flush_inst, false); // Replay this instruction
+        }
 
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();

@@ -72,10 +72,6 @@ namespace olympia
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
              {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
-        // Temporary port for handling decode flushes
-        sparta::DataInPort<InstPtr> in_fetch_flush_redirect_
-            {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
-
 
         // The decode instruction event
         sparta::UniqueEvent<> ev_decode_insts_event_  {&unit_event_set_, "decode_insts_event", CREATE_SPARTA_HANDLER(Decode, decodeInsts_)};

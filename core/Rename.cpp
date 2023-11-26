@@ -165,6 +165,53 @@ namespace olympia
     void Rename::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
         ILOG("Got a flush call for " << criteria);
+
+        // Bit of a hack, as we haven't got access to the num_renames parameter.
+        auto num_integer_renames = reference_counter_[core_types::RegFile::RF_INTEGER].size();
+        auto num_float_renames = reference_counter_[core_types::RegFile::RF_FLOAT].size();
+
+        // Set all the scoreboard ready bits, they'll be cleared when we allocate a PRF
+        // Again a bit of a hack, but we need instructions pending scoreboard updates (in callbacks)
+        // to get flushed through.
+        auto ready_scoreboard = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
+                                core_types::RegisterBitMask bits;
+                                for(uint32_t reg = 0; reg < num_renames; ++reg) {
+                                    bits.set(reg);
+                                }
+                                scoreboards_[reg_file]->set(bits);
+                            };
+
+        ready_scoreboard(core_types::RegFile::RF_INTEGER, num_integer_renames);
+        ready_scoreboard(core_types::RegFile::RF_FLOAT, num_float_renames);
+
+        // Reset the register map and freelist
+        auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
+                        uint32_t num_regs = 32;  // default risc-v ARF count
+                        // Clear the freelist and reference counters, before they're reset
+                        // freelist_[reg_file].clear();
+                        while (!freelist_[reg_file].empty())
+                        {
+                            freelist_[reg_file].pop();
+                        }
+                        reference_counter_[reg_file].clear();
+                        // initialize the first 32 regs, i.e x1 -> PRF1
+                        for(uint32_t i = 0; i < num_regs; i++){
+                            map_table_[reg_file][i] = i;
+                            // for the first 32 registers, we mark their reference_counters 1, as they are the
+                            // current "valid" PRF for that ARF
+                            reference_counter_[reg_file].push_back(1);
+                        }
+                        for(uint32_t i = num_regs; i < num_renames; ++i) {
+                            freelist_[reg_file].push(i);
+                            reference_counter_[reg_file].push_back(0);
+                        }
+                    };
+
+        setup_map(core_types::RegFile::RF_INTEGER, num_integer_renames);
+        setup_map(core_types::RegFile::RF_FLOAT,   num_float_renames);
+
+        current_stall_ = NO_DECODE_INSTS;
+
         out_uop_queue_credits_.send(uop_queue_.size());
         uop_queue_.clear();
     }
@@ -318,7 +365,7 @@ namespace olympia
                             << " for '" << rf << "' scoreboard");
                     }
                 }
-                
+
                 for(const auto & dest : dests)
                 {
                     const auto rf  = olympia::coreutils::determineRegisterFile(dest);
@@ -338,8 +385,8 @@ namespace olympia
                     // clear scoreboard for the PRF we are allocating
                     scoreboards_[rf]->clearBits(bitmask);
                     ILOG("\tsetup destination register bit mask "
-                         << sparta::printBitSet(bitmask)
-                         << " for '" << rf << "' scoreboard");
+                        << sparta::printBitSet(bitmask)
+                        << " for '" << rf << "' scoreboard");
                 }
                 // Remove it from uop queue
                 insts->emplace_back(uop_queue_.read(0));

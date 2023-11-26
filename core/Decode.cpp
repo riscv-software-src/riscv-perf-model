@@ -27,10 +27,6 @@ namespace olympia
         in_reorder_flush_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFlush_, FlushManager::FlushingCriteria));
 
-        in_fetch_flush_redirect_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFetchFlush_, InstPtr));
-
-
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
     }
 
@@ -74,13 +70,6 @@ namespace olympia
         fetch_queue_.clear();
     }
 
-    void Decode::handleFetchFlush_(const InstPtr & flush_inst)
-    {
-        ILOG("Got a fetch flush call for " << flush_inst);
-        fetch_queue_credits_outp_.send(fetch_queue_.size());
-        fetch_queue_.clear();
-    }
-
     // Decode instructions
     void Decode::decodeInsts_()
     {
@@ -94,19 +83,28 @@ namespace olympia
             // Send instructions on their way to rename
             for(uint32_t i = 0; i < num_decode; ++i) {
                 const auto & inst = fetch_queue_.read(0);
+                ILOG("Decoded: " << inst);
+
+                // Flush fetch on BTB misses - but assume conditional branches are not-taken
+                if (inst->isBranch() && !inst->isBTBHit())
+                {
+                    if (inst->isCondBranch())
+                    {
+                        ILOG("BTB miss on conditional branch, predicting 'not-taken'");
+                        inst->setBranchMispredict(inst->isTakenBranch());
+                    }
+                    else
+                    {
+                        ILOG("Decode flush required - requesting flush!");
+                        out_decode_flush_.send(inst);
+                        break;
+                    }
+                }
+
                 insts->emplace_back(inst);
                 inst->setStatus(Inst::Status::RENAMED);
 
-                ILOG("Decoded: " << inst);
-
                 fetch_queue_.pop();
-
-                if (inst->requiresDecodeFlush())
-                {
-                    out_decode_flush_.send(inst);
-                    ILOG("Decode flush required - requesting flush!");
-                    break;
-                }
             }
 
             // Send decoded instructions to rename

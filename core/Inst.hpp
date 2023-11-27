@@ -11,6 +11,8 @@
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "mavis/OpcodeInfo.h"
 
+#include "stf-inc/stf_inst_reader.hpp"
+
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
 #include "MiscUtils.hpp"
@@ -136,6 +138,10 @@ namespace olympia
 
         bool isMarkedOldest() const { return is_oldest_; }
 
+        // Set the STF iterator to rewind trace when flushing
+        void setSTFIterator(stf::STFInstReader::iterator it) { stf_it_ = it; }
+        stf::STFInstReader::iterator getSTFIterator() const { return stf_it_; }
+
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
         // trace can have different unique IDs (due to flushing)
@@ -156,6 +162,9 @@ namespace olympia
         // Set the instruction's target PC (branch target or load/store target)
         void     setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const                { return target_vaddr_; }
+
+        // Branch instruction was taken (always set for JAL/JALR)
+        void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
 
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
@@ -178,6 +187,24 @@ namespace olympia
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
         bool        isTransfer() const     { return is_transfer_; }
+
+        bool isBranch() const {
+            return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH);
+        }
+        bool isCondBranch() const {
+            return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL);
+        }
+        // Call is JAL/JALR with rd as x1/x5 and rs1 != rd
+        // Return is a JALR with rs1 as x1/x5 and rd != rs1
+        bool        isCall() const         { return false; } // TODO Implement
+        bool        isReturn() const       { return false; } // TODO Implement
+        bool        isTakenBranch() const  { return is_taken_branch_; }
+
+        void        setBTBHit(bool hit) { btb_hit_ = hit; }
+        bool        isBTBHit() const { return btb_hit_; }
+
+        void        setBranchMispredict(bool mispredict) { branch_mispredict_ = mispredict; }
+        bool        isBranchMispredict() const { return branch_mispredict_;  }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
@@ -216,8 +243,14 @@ namespace olympia
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
         const bool             is_store_;
         const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
+        bool                   is_taken_branch_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
+        bool                   btb_hit_ = false;
+        bool                   branch_mispredict_ = false; // Branch is mispredicted by the frontend (direction or target)
+
+        stf::STFInstReader::iterator stf_it_; // Saved iterator to rewind tracefile
+
 
         // Rename information
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;

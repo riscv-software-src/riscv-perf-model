@@ -15,9 +15,13 @@
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
+#include "sparta/simulation/ResourceTreeNode.hpp"
+
 
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
+#include "BTB.hpp"
 
 namespace olympia
 {
@@ -84,14 +88,17 @@ namespace olympia
             {&unit_port_set_, "in_fetch_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // Incoming flush from Retire w/ redirect
-        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
+        sparta::DataInPort<InstPtr> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
+
+        // Retired Instruction
+        sparta::DataInPort<InstPtr> in_rob_retire_ack_
+            {&unit_port_set_, "in_rob_retire_ack", sparta::SchedulingPhase::Tick, 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
-
 
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
@@ -110,6 +117,21 @@ namespace olympia
         // instructions or a perfect IPC set
         std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
 
+        // Branch Target Buffer component
+        BTB *btb_ = nullptr;
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Counters
+        sparta::Counter btb_hits_{
+                getStatisticSet(), "btb_hits",
+                "Number of BTB hits", sparta::Counter::COUNT_NORMAL
+        };
+
+        sparta::Counter btb_misses_{
+                getStatisticSet(), "btb_misses",
+                "Number of BTB misses", sparta::Counter::COUNT_NORMAL
+        };
+
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
 
@@ -123,10 +145,32 @@ namespace olympia
         void fetchInstruction_();
 
         // Receive flush from retire
-        void flushFetch_(const uint64_t & new_addr);
+        void flushFetch_(const InstPtr & flush_inst);
+
+        void getAckFromROB_(const InstPtr &);
+
+        bool predictInstruction_(InstPtr inst);
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
+    };
+
+
+    //! Fetch's factory class.  Don't create Fetch without it
+    class FetchFactory : public sparta::ResourceFactory<Fetch, Fetch::FetchParameterSet>
+    {
+    public:
+        void onConfiguring(sparta::ResourceTreeNode* node) override;
+        void deleteSubtree(sparta::ResourceTreeNode*) override;
+
+        ~FetchFactory() = default;
+    private:
+
+        // The order of these two members is VERY important: you
+        // must destroy the tree nodes _before_ the factory since
+        // the factory is used to destroy the nodes!
+        sparta::ResourceFactory<olympia::BTB, olympia::BTB::BTBParameterSet> btb_fact_;
+        std::unique_ptr<sparta::ResourceTreeNode> btb_tn_;
     };
 
 }

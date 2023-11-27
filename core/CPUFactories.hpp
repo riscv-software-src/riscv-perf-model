@@ -38,8 +38,7 @@ namespace olympia{
                                 olympia::Core::CoreParameterSet> core_rf;
 
         //! \brief Resouce Factory to build a Fetch Unit
-        sparta::ResourceFactory<olympia::Fetch,
-                                olympia::Fetch::FetchParameterSet> fetch_rf;
+        FetchFactory fetch_rf;
 
         //! \brief Resouce Factory to build a Decode Unit
         sparta::ResourceFactory<olympia::Decode,

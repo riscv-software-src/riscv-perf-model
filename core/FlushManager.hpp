@@ -14,6 +14,9 @@
 
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
+#include "sparta/utils/LogUtils.hpp"
+
+#include "Inst.hpp"
 
 namespace olympia
 {
@@ -60,7 +63,9 @@ namespace olympia
             out_retire_flush_(getPortSet(), "out_retire_flush", false),
             in_retire_flush_(getPortSet(), "in_retire_flush", 0),
             out_fetch_flush_redirect_(getPortSet(), "out_fetch_flush_redirect", false),
-            in_fetch_flush_redirect_(getPortSet(), "in_fetch_flush_redirect", 0)
+            in_fetch_flush_redirect_(getPortSet(), "in_fetch_flush_redirect", 0),
+            in_decode_flush_(getPortSet(), "in_decode_flush", 0),
+            out_decode_flush_(getPortSet(), "out_decode_flush", false)
         {
             (void)params;
             in_retire_flush_.
@@ -70,7 +75,11 @@ namespace olympia
             in_fetch_flush_redirect_.
                 registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
                                                                       forwardFetchRedirectFlush_,
-                                                                      uint64_t));
+                                                                      InstPtr));
+            in_decode_flush_.
+                registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
+                                                                        forwardDecodeFlush_,
+                                                                        InstPtr));
         }
 
     private:
@@ -80,8 +89,12 @@ namespace olympia
         sparta::DataInPort <FlushingCriteria> in_retire_flush_;
 
         // Flush redirect for Fetch
-        sparta::DataOutPort<uint64_t> out_fetch_flush_redirect_;
-        sparta::DataInPort <uint64_t> in_fetch_flush_redirect_;
+        sparta::DataOutPort<InstPtr> out_fetch_flush_redirect_;
+        sparta::DataInPort <InstPtr> in_fetch_flush_redirect_;
+
+        // Decode Flush Port
+        sparta::DataInPort<InstPtr> in_decode_flush_;
+        sparta::DataOutPort<FlushingCriteria> out_decode_flush_;
 
         // Internal method used to forward the flush to the attached
         // listeners
@@ -90,9 +103,13 @@ namespace olympia
         }
 
         // Internal method used to forward the fetch redirect
-        void forwardFetchRedirectFlush_(const uint64_t & flush_data) {
+        void forwardFetchRedirectFlush_(const InstPtr & flush_data) {
             out_fetch_flush_redirect_.send(flush_data);
+        }
+
+        void forwardDecodeFlush_(const InstPtr & flush_data) {
+            out_fetch_flush_redirect_.send(flush_data);
+            out_decode_flush_.send(flush_data->getUniqueID());
         }
     };
 }
-

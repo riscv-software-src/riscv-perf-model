@@ -65,9 +65,13 @@ namespace olympia
         sparta::DataOutPort<InstGroupPtr> uop_queue_outp_      {&unit_port_set_, "out_uop_queue_write"};
         sparta::DataInPort<uint32_t>      uop_queue_credits_in_{&unit_port_set_, "in_uop_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
+        // Flush required after decode
+        sparta::DataOutPort<InstPtr>      out_decode_flush_    {&unit_port_set_, "out_decode_flush"};
+
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
              {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+
 
         // The decode instruction event
         sparta::UniqueEvent<> ev_decode_insts_event_  {&unit_event_set_, "decode_insts_event", CREATE_SPARTA_HANDLER(Decode, decodeInsts_)};
@@ -79,6 +83,7 @@ namespace olympia
         void receiveUopQueueCredits_(const uint32_t &);
         void decodeInsts_();
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
+        void handleFetchFlush_(const InstPtr &);
 
         uint32_t uop_queue_credits_ = 0;
         const uint32_t num_to_decode_;

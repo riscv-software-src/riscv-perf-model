@@ -137,9 +137,8 @@ namespace olympia
             const auto dest = dests[0];
             const auto rf  = olympia::coreutils::determineRegisterFile(dest);
             const auto num = dest.field_value;
-            const bool is_x0 = num == 0 && rf == core_types::RF_INTEGER;
-            if (false == is_x0)
-            if (is_x0)
+            const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+            if (!is_x0)
             {
                 auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
                 --reference_counter_[original_dest.rf][original_dest.val];

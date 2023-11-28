@@ -212,6 +212,7 @@ namespace olympia
 
         current_stall_ = NO_DECODE_INSTS;
 
+        uop_queue_regcount_data_.clear();
         out_uop_queue_credits_.send(uop_queue_.size());
         uop_queue_.clear();
     }

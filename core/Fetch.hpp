@@ -145,11 +145,11 @@ namespace olympia
         void fetchInstruction_();
 
         // Receive flush from retire
-        void flushFetch_(const InstPtr & flush_inst);
+        void flushFetch_(const InstPtr &);
 
         void getAckFromROB_(const InstPtr &);
 
-        bool predictInstruction_(InstPtr inst);
+        bool predictInstruction_(const InstPtr &);
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

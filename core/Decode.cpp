@@ -90,7 +90,7 @@ namespace olympia
                 {
                     if (inst->isCondBranch())
                     {
-                        ILOG("BTB miss on conditional branch, predicting 'not-taken'");
+                        ILOG("BTB miss on conditional branch, predicting 'not-taken': " << inst);
                         inst->setBranchMispredict(inst->isTakenBranch());
                     }
                     else

@@ -44,38 +44,14 @@ namespace olympia
             __LAST
         };
 
-        BTBEntry() :
-            valid_(false)
-        { };
+        BTBEntry() = default;
+        BTBEntry(const BTBEntry &rhs) = default;
+        BTBEntry &operator=(const BTBEntry &rhs) = default;
 
-        BTBEntry(const BTBEntry &rhs) :
-            BasicCacheItem(rhs),
-            valid_(rhs.valid_),
-            target_(rhs.target_),
-            is_call_(rhs.is_call_),
-            branchtype_(rhs.branchtype_),
-            lhist_counter_(rhs.lhist_counter_)
-        { };
-
-        BTBEntry &operator=(const BTBEntry &rhs)
+        BTBEntry(uint64_t addr) : valid_(true), lhist_counter_(0)
         {
-            if (&rhs != this) {
-                BasicCacheItem::operator=(rhs);
-                valid_ = rhs.valid_;
-                target_ = rhs.target_;
-                is_call_ = rhs.is_call_;
-                branchtype_ = rhs.branchtype_;
-                lhist_counter_ = rhs.lhist_counter_;
-            }
-            return *this;
-        }
-
-        void reset(uint64_t addr)
-        {
-            setValid(true);
             setAddr(addr);
-            resetLHistCounter_();
-        }
+        };
 
         void setValid(bool v) { valid_ = v; }
         bool isValid() const { return valid_; }
@@ -126,27 +102,25 @@ namespace olympia
         int32_t              lhist_counter_ = 0;
         static constexpr int32_t lhist_count_max_ = 1; // 2 bit saturating counter.
         static constexpr int32_t lhist_count_min_ = -2;
-
-        void resetLHistCounter_() { lhist_counter_ = 0; }
-
     };
 
 
     class BTBAddrDecoder : public sparta::cache::AddrDecoderIF
     {
     public:
-        BTBAddrDecoder(uint32_t entries, uint32_t stride, uint32_t num_ways)
-        {
-            index_mask_ = (entries/num_ways)-1;
-            index_shift_ = sparta::utils::floor_log2(stride);
-        }
-        virtual uint64_t calcTag(uint64_t addr) const { return addr; }
-        virtual uint32_t calcIdx(uint64_t addr) const { return (addr >> index_shift_) & index_mask_; }
-        virtual uint64_t calcBlockAddr(uint64_t addr) const { return addr; }
-        virtual uint64_t calcBlockOffset(uint64_t addr) const { return 0;}
+        BTBAddrDecoder(uint32_t entries, uint32_t stride, uint32_t num_ways) :
+            index_mask_((entries/num_ways)-1),
+            index_shift_(sparta::utils::floor_log2(stride))
+
+        { }
+
+        uint64_t calcTag(uint64_t addr) const override { return addr; }
+        uint32_t calcIdx(uint64_t addr) const override { return (addr >> index_shift_) & index_mask_; }
+        uint64_t calcBlockAddr(uint64_t addr) const override { return addr; }
+        uint64_t calcBlockOffset(uint64_t addr) const override { return 0;}
     private:
-        uint32_t index_mask_;
-        uint32_t index_shift_;
+        const uint32_t index_mask_;
+        const uint32_t index_shift_;
     };
 
     class BTB : public sparta::Unit
@@ -190,15 +164,15 @@ namespace olympia
         }
 
         // Get a line for replacement
-        BTBEntry &getLineForReplacementWithInvalidCheck(uint64_t addr)
+        BTBEntry * getLineForReplacementWithInvalidCheck(uint64_t addr) const
         {
-            return cache_->getCacheSet(addr).getItemForReplacementWithInvalidCheck();
+            return &cache_->getCacheSet(addr).getItemForReplacementWithInvalidCheck();
         }
 
         /**
          *\return Pointer to line with addr.  nullptr is returned if not fould
         */
-        BTBEntry * getLine(uint64_t addr)
+        BTBEntry * getLine(uint64_t addr) const
         {
             return cache_->getItem(addr);
         }
@@ -223,22 +197,10 @@ namespace olympia
             rep->touchMRU( line.getWay() );
         }
 
-        // Allocate 'line' as having the new 'addr'
-        // 'line' doesn't know anything about NT
-        void allocateWithMRUUpdate(BTBEntry &line,
-                                    uint64_t   addr)
+        void invalidateLineWithLRUUpdate(BTBEntry * const line)
         {
-            line.reset( addr );
-            touchMRU( line );
-        }
-
-
-        void invalidateLineWithLRUUpdate(BTBEntry &line)
-        {
-            static const uint64_t addr=0;
-            line.reset( addr );
-            line.setValid( false );
-            touchLRU( line );
+            line->setValid( false );
+            touchLRU( *line );
         }
 
         void invalidateAll()
@@ -257,7 +219,7 @@ namespace olympia
         /**
          * determine if there are any open ways in the set.
          */
-        bool hasOpenWay(const uint64_t addr)
+        bool hasOpenWay(const uint64_t addr) const
         {
             return cache_->getCacheSet(addr).hasOpenWay();
         }

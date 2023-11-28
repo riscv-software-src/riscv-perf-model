@@ -57,11 +57,11 @@ namespace olympia
     }
 
 
-    bool Fetch::predictInstruction_(InstPtr inst)
+    bool Fetch::predictInstruction_(const InstPtr & inst)
     {
         if (btb_->isHit(inst->getPC()))
         {
-            btb_hits_++;
+            ++btb_hits_;
 
             inst->setBTBHit(true);
 
@@ -164,8 +164,13 @@ namespace olympia
         auto pc = flush_inst->getPC();
         if (flush_inst->isBranch() && !btb_->isHit(pc))
         {
-            auto entry = &btb_->getLineForReplacementWithInvalidCheck(pc);
-            entry->reset(pc);
+            ++btb_misses_;
+
+            ILOG("Allocating miss into BTB: " << flush_inst);
+
+            auto entry = btb_->getLineForReplacementWithInvalidCheck(pc);
+            entry->setValid(true);
+            entry->setAddr(pc);
             entry->setTarget(flush_inst->getTargetVAddr());
             if (flush_inst->isCondBranch())
             {
@@ -176,7 +181,6 @@ namespace olympia
                 entry->setBranchType(BTBEntry::BranchType::DIRECT);
             }
             btb_->touchMRU(*entry);
-            btb_misses_++;
         }
 
         // Rewind the tracefile

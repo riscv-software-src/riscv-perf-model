@@ -1,8 +1,18 @@
 #!/bin/env python3
 
-import sys
+import sys, os
 
-sys.path.append('../../map/helios/pipeViewer/scripts/')
+# Change this variable if map is clioned (not installed) elsewhere
+pv_script_location='../../map/helios/pipeViewer/scripts/'
+
+# This assumes that map is cloned in a directory relative to this
+# script
+if not os.path.exists(pv_script_location):
+    print("ERROR: Need path to map/helios/pipeViewer/scripts defined.  "
+          "Please open/modify gen_alf.py and change pv_script_location")
+    exit(1)
+
+sys.path.append(pv_script_location)
 
 from alf_gen.ALFLayout import ALFLayout
 import argparse
@@ -82,8 +92,8 @@ for block in ['alu','fpu','br']:
         num += 1
 
 #-------------------------------------------------- LSU
-sl_grp.addScheduleLine('.*lsu.lsu_inst_queue.lsu_inst_queue', ["LSU IQ[\1]"], mini_split=[80,20])
-sl_grp.addScheduleLine('.*lsu.replay_buffer.replay_buffer([0-9]+)', ["LSU Replay[\1]"], mini_split=[80,20])
+sl_grp.addScheduleLine('.*lsu.lsu_inst_queue.lsu_inst_queue([0-9]+)', [r"LSU IQ[\1]"], mini_split=[80,20])
+#sl_grp.addScheduleLine('.*lsu.replay_buffer.replay_buffer([0-9]+)', ["LSU Replay[\1]"], mini_split=[80,20])
 
 sl_grp.addScheduleLine('.*lsu.LoadStorePipeline.LoadStorePipeline', ["LSU Pipe"], space=True, reverse=False)
 sl_grp.addScheduleLine('.*lsu.dcache_busy', ["DL1 busy"], nomunge=True)

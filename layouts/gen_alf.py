@@ -2,11 +2,8 @@
 
 import sys, os
 
-# Change this variable if map is clioned (not installed) elsewhere
+# Change this variable if map is cloned (not installed) elsewhere
 pv_script_location='../../map/helios/pipeViewer/scripts/'
-
-# This assumes that map is cloned in a directory relative to this
-# script
 if not os.path.exists(pv_script_location):
     print("ERROR: Need path to map/helios/pipeViewer/scripts defined.  "
           "Please open/modify gen_alf.py and change pv_script_location")

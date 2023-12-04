@@ -72,7 +72,6 @@ namespace olympia_mss
         pipeline_req_queue_("Pipeline_Request_Queue",
                             p->pipeline_req_queue_size,
                             node->getClock()),
-        pipeline_req_queue_size_(p->pipeline_req_queue_size),
         miss_pending_buffer_("Miss_Pending_Buffer", 
                                 p->miss_pending_buffer_size, 
                                 node->getClock(), 

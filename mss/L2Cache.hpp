@@ -198,7 +198,6 @@ namespace olympia_mss
         L2CachePipeline l2cache_pipeline_;
         
         sparta::Queue<olympia::MemoryAccessInfoPtr> pipeline_req_queue_;
-        const uint32_t pipeline_req_queue_size_;
         uint32_t inFlight_reqs_ = 0;
         
         sparta::Buffer<olympia::MemoryAccessInfoPtr> miss_pending_buffer_;

@@ -1,0 +1,7 @@
+[
+    {
+        "mnemonic": "sw",
+        "rs2": 3,
+        "vaddr" : "0xdeadbeef"
+    }
+]

@@ -35,7 +35,9 @@ namespace olympia {
 
         void getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr);
 
-        void getAckFromBIU_(const InstPtr &inst_ptr);
+        void getAckFromL2Cache_(const uint32_t &ack);
+
+        void getRespFromL2Cache_(const InstPtr &inst_ptr);
 
         using L1Handle = CacheFuncModel::Handle;
         L1Handle l1_cache_;
@@ -45,14 +47,20 @@ namespace olympia {
         // Keep track of the instruction that causes current outstanding cache miss
         MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 
+        // Credit bool for sending miss request to L2Cache
+        uint32_t dcache_l2cache_credits_ = 0;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_
                 {&unit_port_set_, "in_lsu_lookup_req", 0};
 
-        sparta::DataInPort<InstPtr> in_biu_ack_
-                {&unit_port_set_, "in_biu_ack", 1};
+        sparta::DataInPort<uint32_t> in_l2cache_ack_
+                {&unit_port_set_, "in_l2cache_ack", 1};
+
+        sparta::DataInPort<InstPtr> in_l2cache_resp_
+                {&unit_port_set_, "in_l2cache_resp", 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -66,8 +74,8 @@ namespace olympia {
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_
                 {&unit_port_set_, "out_lsu_lookup_req", 1};
 
-        sparta::DataOutPort<InstPtr> out_biu_req_
-                {&unit_port_set_, "out_biu_req"};
+        sparta::DataOutPort<InstPtr> out_l2cache_req_
+                {&unit_port_set_, "out_l2cache_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Events

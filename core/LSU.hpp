@@ -399,8 +399,36 @@ namespace olympia
 
     };
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::ArchUnit & unit) {
+        switch(unit) {
+            case olympia::MemoryAccessInfo::ArchUnit::NO_ACCESS:
+                os << "NO_ACCESS";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::ICACHE:
+                os << "ICACHE";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::LSU:
+                os << "LSU";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::DCACHE:
+                os << "DCACHE";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::L2CACHE:
+                os << "L2CACHE";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::BIU:
+                os << "BIU";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::NUM_UNITS:
+                os << "NUM_UNITS";
+                break;
+        }
+        return os;
+    }
+
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::MMUState & mmu_access_state){
         switch(mmu_access_state){
             case olympia::MemoryAccessInfo::MMUState::NO_ACCESS:
                 os << "no_access";
@@ -417,11 +445,14 @@ namespace olympia
         return os;
     }
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::MemoryAccessInfo::CacheState & cache_access_state){
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::CacheState & cache_access_state){
         switch(cache_access_state){
             case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
                 os << "no_access";
+                break;
+            case olympia::MemoryAccessInfo::CacheState::RELOAD:
+                os << "reload";
                 break;
             case olympia::MemoryAccessInfo::CacheState::MISS:
                 os << "miss";
@@ -436,7 +467,7 @@ namespace olympia
     }
 
     inline std::ostream& operator<<(std::ostream& os,
-        const olympia::LSU::LoadStoreInstInfo::IssuePriority& rank){
+                                    const olympia::LSU::LoadStoreInstInfo::IssuePriority& rank){
         switch(rank){
             case LSU::LoadStoreInstInfo::IssuePriority::HIGHEST:
                 os << "(highest)";
@@ -466,7 +497,7 @@ namespace olympia
     }
 
     inline std::ostream& operator<<(std::ostream& os,
-        const olympia::LSU::LoadStoreInstInfo::IssueState& state){
+                                    const olympia::LSU::LoadStoreInstInfo::IssueState& state){
         // Print instruction issue state
         switch(state){
             case LSU::LoadStoreInstInfo::IssueState::READY:

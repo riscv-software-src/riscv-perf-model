@@ -14,6 +14,7 @@
 #include "MMU.hpp"
 #include "SimpleTLB.hpp"
 #include "BIU.hpp"
+#include "L2Cache.hpp"
 #include "MSS.hpp"
 #include "ROB.hpp"
 #include "FlushManager.hpp"
@@ -71,6 +72,9 @@ namespace olympia{
         sparta::ResourceFactory<olympia::LSU,
                                 olympia::LSU::LSUParameterSet> lsu_rf;
 
+        //! \brief Resouce Factory to build a L2Cache Unit
+        sparta::ResourceFactory<olympia_mss::L2Cache,
+                                olympia_mss::L2Cache::L2CacheParameterSet> l2cache_rf;
 
         //! \brief Resouce Factory to build a BIU Unit
         sparta::ResourceFactory<olympia_mss::BIU,

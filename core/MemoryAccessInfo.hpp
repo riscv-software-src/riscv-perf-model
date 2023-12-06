@@ -13,6 +13,11 @@ namespace olympia {
 
     class MemoryAccessInfoPairDef;
 
+    class MemoryAccessInfo;
+
+    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+    
     class MemoryAccessInfo {
     public:
 
@@ -33,10 +38,23 @@ namespace olympia {
         enum class CacheState : std::uint64_t {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
+            RELOAD,
             MISS,
             HIT,
             NUM_STATES,
             __LAST = NUM_STATES
+        };
+
+        enum class ArchUnit : std::uint32_t {
+            NO_ACCESS = 0,
+            __FIRST = NO_ACCESS,
+            ICACHE,
+            LSU,
+            DCACHE,
+            L2CACHE,
+            BIU,
+            NUM_UNITS,
+            __LAST = NUM_UNITS
         };
 
         MemoryAccessInfo() = delete;
@@ -48,7 +66,9 @@ namespace olympia {
             mmu_access_state_(MMUState::NO_ACCESS),
 
             // Construct the State object here
-            cache_access_state_(CacheState::NO_ACCESS) {}
+            cache_access_state_(CacheState::NO_ACCESS),
+            src_(ArchUnit::NO_ACCESS),
+            dest_(ArchUnit::NO_ACCESS) {}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -66,6 +86,15 @@ namespace olympia {
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
+
+        void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
+        const ArchUnit & getSrcUnit() const { return src_; }
+
+        void setDestUnit(const ArchUnit & dest_unit) { dest_ = dest_unit; }
+        const ArchUnit & getDestUnit() const { return dest_; }
+
+        void setNextReq(const MemoryAccessInfoPtr & nextReq) { next_req_ = nextReq; }
+        const MemoryAccessInfoPtr & getNextReq() { return next_req_; }
 
         MMUState getMMUState() const {
             return mmu_access_state_;
@@ -100,6 +129,15 @@ namespace olympia {
         // DCache access status
         CacheState cache_access_state_;
 
+        // Src and destination unit name for the packet
+        ArchUnit src_ = ArchUnit::NO_ACCESS;
+        ArchUnit dest_ = ArchUnit::NO_ACCESS;
+
+        // Pointer to next request for DEBUG/TRACK
+        // (Note : Currently used only to track request with same cacheline in L2Cache 
+        // Not for functional/performance purpose)
+        MemoryAccessInfoPtr next_req_ = nullptr;
+
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
         ScoreboardViews scoreboard_views_;
@@ -128,7 +166,4 @@ namespace olympia {
                               SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
                               SPARTA_FLATTEN(&MemoryAccessInfo::getInstPtr))
     };
-
-    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
-    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
 };

@@ -1,0 +1,28 @@
+top:
+  icache:
+    params:
+      unit_enable: true 
+      delay_btwn_insts: 50
+  dcache:
+    params:
+      unit_enable: true
+      delay_btwn_insts: 50
+  l2cache:
+    params:
+      dcache_req_queue_size: 8
+      dcache_resp_queue_size: 4
+      icache_req_queue_size: 8
+      icache_resp_queue_size: 4
+      biu_req_queue_size: 8
+      biu_resp_queue_size: 4
+      miss_pending_buffer_size : 2
+      l2_line_size : 64
+      l2_size_kb : 512
+      l2_associativity : 16
+      l2_always_hit : false
+      l2cache_latency : 10
+      is_icache_connected : true
+      is_dcache_connected : true
+  biu:
+    params:
+      sink_latency: 10

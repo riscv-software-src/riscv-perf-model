@@ -36,15 +36,6 @@ TEST_INIT
 class olympia::LSUTester
 {
   public:
-    void test_dependent_lsu_instruction(olympia::LSU & lsu){
-        // testing RAW dependency for LSU
-        // we have an ADD instruction before we destination register 3
-        // and then a subsequent STORE instruction to register 3
-        // we can't STORE until the add instruction runs, so we test
-        // while the ADD instruction is running, the STORE instruction should NOT issue
-        EXPECT_TRUE(lsu.lsu_insts_issued_ == 0);
-    }
-
     void test_inst_issue(olympia::LSU &lsu, int count){
         EXPECT_EQUAL(lsu.lsu_insts_issued_, count);
     }
@@ -118,8 +109,8 @@ void runTest(int argc, char **argv)
     lsupipe_tester.test_pipeline_stages(*my_lsu);
     cls.runSimulator(&sim, 7);
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
-    cls.runSimulator(&sim, 20);
-    lsupipe_tester.test_replay_issue_abort(*my_lsu, 2); // Abort younger loads
+    cls.runSimulator(&sim, 52);
+    lsupipe_tester.test_replay_issue_abort(*my_lsu, 2); // Loads operand dependency meet
     cls.runSimulator(&sim);
 }
 

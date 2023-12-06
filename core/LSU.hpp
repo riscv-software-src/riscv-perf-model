@@ -348,5 +348,6 @@ namespace olympia
         friend class LSUTester;
 
     };
+
     class LSUTester;
 } // namespace olympia

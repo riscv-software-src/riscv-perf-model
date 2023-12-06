@@ -102,6 +102,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->lsu_rf
         },
         {
+            "l2cache",
+            "cpu.core*",
+            "L2Cache Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->l2cache_rf
+        },
+        {
             "biu",
             "cpu.core*",
             "Bus Interface Unit",
@@ -202,12 +210,28 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_cache_free_req"
         },
         {
-            "cpu.core*.dcache.ports.out_biu_req",
+            "cpu.core*.dcache.ports.out_l2cache_req",
+            "cpu.core*.l2cache.ports.in_dcache_l2cache_req"
+        },
+        {
+            "cpu.core*.dcache.ports.in_l2cache_ack",
+            "cpu.core*.l2cache.ports.out_l2cache_dcache_ack"
+        },
+        {
+            "cpu.core*.dcache.ports.in_l2cache_resp",
+            "cpu.core*.l2cache.ports.out_l2cache_dcache_resp"
+        },
+        {
+            "cpu.core*.l2cache.ports.out_l2cache_biu_req",
             "cpu.core*.biu.ports.in_biu_req"
         },
         {
             "cpu.core*.biu.ports.out_biu_ack",
-            "cpu.core*.dcache.ports.in_biu_ack"
+            "cpu.core*.l2cache.ports.in_biu_l2cache_ack"
+        },
+        {
+            "cpu.core*.biu.ports.out_biu_resp",
+            "cpu.core*.l2cache.ports.in_biu_l2cache_resp"
         },
         {
             "cpu.core*.lsu.ports.out_mmu_lookup_req",

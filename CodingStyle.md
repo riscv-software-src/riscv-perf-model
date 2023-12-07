@@ -49,6 +49,7 @@ If code is found to violate these rules -- please fix it!
    1. NO TABS.  Ever.  Never ever.
    1. Spaces are 4
    1. Delete all trailing whitespace
+   2. Delete all empty line whitespace
    1. Do not use single letter variable names.  Not only are these NOT
       descriptive, searching for their use in a function/class is difficult.
    1. Do not use Raw POD types (int, char).  Instead use [fixed

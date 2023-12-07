@@ -93,7 +93,7 @@ private:
                                                                             &dcache_fact);
         Test_DCache->getParameterSet()->getParameter("input_file")->setValueFromString(input_file_);
         tns_to_delete_.emplace_back(Test_DCache);
-        
+
         sparta::ResourceTreeNode * Test_ICache = new sparta::ResourceTreeNode(rtn,
                                                                             "icache",
                                                                             sparta::TreeNode::GROUP_NAME_NONE,
@@ -136,14 +136,14 @@ private:
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_dcache_resp"));
         sparta::bind(root_node->getChildAs<sparta::Port>("dcache.ports.in_source_ack"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_dcache_ack"));
-        
+
         sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.out_source_req"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.in_icache_l2cache_req"));
         sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_resp"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_resp"));
         sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_ack"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_ack"));
-        
+
         sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.in_biu_req"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_biu_req"));
         sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.out_biu_resp"),
@@ -163,7 +163,7 @@ private:
 
     olympia::MavisFactoy            mavis_fact;
     std::vector<std::unique_ptr<sparta::TreeNode>> tns_to_delete_;
-                                                                        
+
     const std::string input_file_;
     sparta::log::Tap test_tap_;
 };

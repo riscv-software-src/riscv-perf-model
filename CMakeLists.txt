@@ -67,6 +67,7 @@ include_directories (SYSTEM stf_lib)
 add_subdirectory (mavis)
 add_subdirectory (core)
 add_subdirectory (mss)
+add_subdirectory (tools)
 
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})

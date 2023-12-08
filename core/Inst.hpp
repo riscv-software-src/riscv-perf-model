@@ -92,14 +92,12 @@ namespace olympia
          * \brief Construct an Instruction
          * \param opcode_info    Mavis Opcode information
          * \param inst_arch_info Pointer to the static data of instruction
-         * \param clk            Core clock
          *
          * Called by Mavis when an opcode is decoded to a particular
          * instruction.
         */
         Inst(const mavis::OpcodeInfo::PtrType& opcode_info,
-             const InstArchInfo::PtrType     & inst_arch_info,
-             const sparta::Clock             * clk);
+             const InstArchInfo::PtrType     & inst_arch_info);
 
         // This is needed by Mavis as an optimization.  Try NOT to
         // implement it and let the compiler do it for us for speed.

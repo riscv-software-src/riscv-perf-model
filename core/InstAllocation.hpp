@@ -28,11 +28,11 @@ namespace olympia
     public:
         ~InstPtrAllocator() {
             // For debug
+#ifndef NDEBUG
             std::cout << "Inst Allocator: "
                       << inst_allocator_.getNumAllocated()
-                      << " Inst objects allocated/created"
-                      << std::endl;
-
+                      << " Inst objects allocated/created" << std::endl;
+#endif
         }
 
         explicit InstPtrAllocator(InstAllocatorT & inst_allocator) :

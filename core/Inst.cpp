@@ -15,8 +15,7 @@ namespace olympia
      * instruction.
      */
     Inst::Inst(const mavis::OpcodeInfo::PtrType& opcode_info,
-               const InstArchInfo::PtrType     & inst_arch_info,
-               const sparta::Clock             * clk) :
+               const InstArchInfo::PtrType     & inst_arch_info) :
         opcode_info_    (opcode_info),
         inst_arch_info_ (inst_arch_info),
         is_store_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::STORE)),

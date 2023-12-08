@@ -91,11 +91,11 @@ namespace olympia
         if(jinst.find("imm") != jinst.end()) {
             const uint64_t imm = jinst["imm"].get<uint64_t>();
             mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
-            inst = mavis_facade_->makeInstDirectly(ex_info, clk);
+            inst = mavis_facade_->makeInstDirectly(ex_info);
         }
         else {
             mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
-            inst = mavis_facade_->makeInstDirectly(ex_info, clk);
+            inst = mavis_facade_->makeInstDirectly(ex_info);
         }
 
         if (jinst.find("vaddr") != jinst.end()) {
@@ -158,7 +158,7 @@ namespace olympia
         mavis::Opcode opcode = next_it_->opcode();
 
         try {
-            InstPtr inst = mavis_facade_->makeInst(opcode, clk);
+            InstPtr inst = mavis_facade_->makeInst(opcode);
             inst->setPC(next_it_->pc());
             inst->setUniqueID(++unique_id_);
             inst->setProgramID(unique_id_);

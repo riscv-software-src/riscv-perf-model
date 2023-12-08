@@ -45,7 +45,6 @@ dependencies:
   - liblapack>=3.9.0=16_linux64_openblas
   - libllvm13=13.0.1=hf817b99_2
   - libllvm14=14.0.6=hdb19cb5_3
-  - libllvm16=16.0.1=hadd5161_0
   - libnghttp2>=1.51.0=hdcd2b5c_0
   - libnsl>=2.0.0=h7f98852_0
   - libopenblas>=0.3.21=pthreads_h78a6416_3

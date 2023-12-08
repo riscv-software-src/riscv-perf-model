@@ -11,9 +11,6 @@ dependencies:
   - bzip2>=1.0.8=h7f98852_4
   - c-ares>=1.18.1=h7f98852_0
   - ca-certificates>=2022.12.7=ha878542_0
-  - clang=13.0.1=ha770c72_0
-  - clang-13=13.0.1=default_hc23dcda_0
-  - clangxx=13.0.1=default_ha53f305_0
   - cmake>=3.19.7
   - cppcheck>=2.7.5=py310h94ea96f_1
   - curl>=7.87.0=h6312ad2_0
@@ -31,7 +28,6 @@ dependencies:
   - ld_impl_linux-64>=2.39=hcc3a1bd_1
   - libblas>=3.9.0=16_linux64_openblas
   - libcblas>=3.9.0=16_linux64_openblas
-  - libclang-cpp13=13.0.1=default_hc23dcda_0
   - libcurl>=7.87.0=h6312ad2_0
   - libedit>=3.1.20191231=he28a2e2_2
   - libev>=4.33=h516909a_1
@@ -43,8 +39,6 @@ dependencies:
   - libgomp>=12.2.0=h65d4601_19
   - libiconv>=1.17=h166bdaf_0
   - liblapack>=3.9.0=16_linux64_openblas
-  - libllvm13=13.0.1=hf817b99_2
-  - libllvm14=14.0.6=hdb19cb5_3
   - libnghttp2>=1.51.0=hdcd2b5c_0
   - libnsl>=2.0.0=h7f98852_0
   - libopenblas>=0.3.21=pthreads_h78a6416_3
@@ -56,8 +50,6 @@ dependencies:
   - libuuid>=2.32.1=h7f98852_1000
   - libuv>=1.44.2=h166bdaf_0
   - libzlib>=1.2.13=h166bdaf_4
-  - lld=16.0.1=he755ae7_0
-  - llvm-tools=13.0.1=hf817b99_2
   - ncurses>=6.3=h27087fc_1
   - numpy>=1.24.1=py310h08bbf29_0
   - openssl>=1.1.1s=h0b41bf4_1

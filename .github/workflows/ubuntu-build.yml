@@ -73,6 +73,14 @@ jobs:
       - name: Build & Regress
         run: ./.github/actions/build/entrypoint.sh
 
+      # Save error logs, etc
+      - name: Save artifacts
+        if: failure()
+        uses: actions/upload-artifacts@master
+        with:
+          name: ErrorLogs
+          path: ${{env.BUILD_TYPE}}/test/Testing/Temporary
+
       #- name: CTest
       #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long
       #  if: ${{ env.DABBLE_BUILD_TYPE == 'release' }} && ${{ env.VALGRIND == 'false' }}

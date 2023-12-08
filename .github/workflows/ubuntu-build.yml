@@ -14,6 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         BUILD_TYPE: [Debug,Release]
+        COMPILER: [gcc, clang]
 
     name: Ubuntu-${{ matrix.BUILD_TYPE }}
     runs-on: ${{ matrix.os }}
@@ -21,6 +22,7 @@ jobs:
     # Set up a global environment variable for build scripts
     env:
       OLYMPIA_BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
+      COMPILER:           ${{ matrix.COMPILER }}
 
     steps:
 
@@ -48,17 +50,17 @@ jobs:
       - name: Cache conda deps
         uses: actions/cache@v3
         with:
-          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-conda-${{ hashFiles('conda/environment.yml') }}
+          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-conda-${{ hashFiles('conda/environment.yml') }}
           path: /usr/share/miniconda/envs/riscv_perf_model # Default path for conda
 
       # Setup CCache to cache builds
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-ccache-${{ github.ref_name }}
+          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache-${{ github.ref_name }}
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-ccache-master
-            ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-ccache
+            ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache-master
+            ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache
 
       - name: Setup Conda Environment
         run: |

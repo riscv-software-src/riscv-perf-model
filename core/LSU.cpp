@@ -122,6 +122,25 @@ namespace olympia
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr &inst_ptr)
     {
+        // Create load/store memory access info
+        MemoryAccessInfoPtr mem_info_ptr =
+            sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator_,
+                                                                     inst_ptr);
+
+        // Create load/store instruction issue info
+        LoadStoreInstInfoPtr inst_info_ptr =
+            sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,
+                                                                      mem_info_ptr);
+
+        // Append to instruction issue queue
+        appendIssueQueue_(inst_info_ptr);
+
+        // Try and schedule it
+        scheduleInst_(inst_ptr);
+    }
+
+    void LSU::scheduleInst_(const InstPtr &inst_ptr)
+    {
         bool all_ready = true; // assume all ready
         // address operand check
         if (!scoreboard_views_[core_types::RF_INTEGER]->isSet(inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER))) {
@@ -130,7 +149,7 @@ namespace olympia
             scoreboard_views_[core_types::RF_INTEGER]->registerReadyCallback(src_bits, inst_ptr->getUniqueID(),
                                                                              [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
                                                                              {
-                                                                                 this->getInstsFromDispatch_(inst_ptr);
+                                                                                 this->scheduleInst_(inst_ptr);
                                                                              });
             ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(src_bits));
         }
@@ -146,7 +165,7 @@ namespace olympia
                     scoreboard_views_[rf]->registerReadyCallback(data_bits, inst_ptr->getUniqueID(),
                                                                 [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
                                                                 {
-                                                                    this->getInstsFromDispatch_(inst_ptr);
+                                                                    this->scheduleInst_(inst_ptr);
                                                                 });
                     ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:" << sparta::printBitSet(data_bits));
                 }
@@ -154,21 +173,11 @@ namespace olympia
         }
 
         if (all_ready) {
-            // Create load/store memory access info
-            MemoryAccessInfoPtr mem_info_ptr =
-                sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator_,
-                                                                         inst_ptr);
 
-            // Create load/store instruction issue info
-            LoadStoreInstInfoPtr inst_info_ptr =
-                sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,
-                                                                          mem_info_ptr);
-            lsu_insts_dispatched_++;
-
-            // Append to instruction issue queue
-            appendIssueQueue_(inst_info_ptr);
+            ++lsu_insts_dispatched_;
 
             // Update issue priority & Schedule an instruction issue event
+            ILOG("Scheduling instruction " << inst_ptr);
             updateIssuePriorityAfterNewDispatch_(inst_ptr);
             uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
 
@@ -418,15 +427,10 @@ namespace olympia
     {
         ILOG("Start Flushing!");
 
-        // Flush criteria setup
-        auto flush = [criteria] (const uint64_t & id) -> bool {
-            return id >= static_cast<uint64_t>(criteria);
-        };
-
         lsu_flushes_++;
 
         // Flush load/store pipeline entry
-        flushLSPipeline_(flush);
+        flushLSPipeline_(criteria);
 
         // Mark flushed flag for unfinished speculative MMU access
         if (mmu_busy_) {
@@ -439,7 +443,7 @@ namespace olympia
         }
 
         // Flush instruction issue queue
-        flushIssueQueue_(flush);
+        flushIssueQueue_(criteria);
 
         // Cancel issue event already scheduled if no ready-to-issue inst left after flush
         if (!isReadyToIssueInsts_()) {
@@ -697,26 +701,32 @@ namespace olympia
     }
 
     // Flush instruction issue queue
-    template<typename Comp>
-    void LSU::flushIssueQueue_(const Comp & flush)
+    void LSU::flushIssueQueue_(const FlushCriteria & criteria)
     {
         uint32_t credits_to_send = 0;
 
         auto iter = ldst_inst_queue_.begin();
         while (iter != ldst_inst_queue_.end()) {
-            auto inst_id = (*iter)->getInstPtr()->getUniqueID();
+            auto inst_ptr = (*iter)->getInstPtr();
 
             auto delete_iter = iter++;
 
-            if (flush(inst_id)) {
+            if (criteria.flush(inst_ptr)) {
                 ldst_inst_queue_.erase(delete_iter);
+
+                // Clear any scoreboard callback
+                std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+                for(const auto rf : reg_files)
+                {
+                    scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
+                }
 
                 // NOTE:
                 // We cannot increment iter after erase because it's already invalidated by then
 
                 ++credits_to_send;
 
-                ILOG("Flush Instruction ID: " << inst_id);
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
 
@@ -728,22 +738,21 @@ namespace olympia
     }
 
     // Flush load/store pipe
-    template<typename Comp>
-    void LSU::flushLSPipeline_(const Comp & flush)
+    void LSU::flushLSPipeline_(const FlushCriteria & criteria)
     {
         uint32_t stage_id = 0;
         for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++) {
-            // If the pipe stage is already invalid, no need to flush
+            // If the pipe stage is already invalid, no need to criteria
             if (!iter.isValid()) {
                 continue;
             }
 
-            auto inst_id = (*iter)->getInstPtr()->getUniqueID();
-            if (flush(inst_id)) {
+            auto inst_ptr = (*iter)->getInstPtr();
+            if (criteria.flush(inst_ptr)) {
                 ldst_pipeline_.flushStage(iter);
 
                 ILOG("Flush Pipeline Stage[" << stage_id
-                     << "], Instruction ID: " << inst_id);
+                     << "], Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
     }

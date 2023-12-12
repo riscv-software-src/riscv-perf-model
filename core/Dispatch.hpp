@@ -82,8 +82,6 @@ namespace olympia
 
         sparta::DataInPort<uint32_t>               in_lsu_credits_    {&unit_port_set_, "in_lsu_credits",  sparta::SchedulingPhase::Tick, 0};
         sparta::DataOutPort<InstQueue::value_type> out_lsu_write_     {&unit_port_set_, "out_lsu_write", false};
-        sparta::DataInPort<uint32_t>               in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
-        sparta::DataOutPort<InstGroupPtr>          out_reorder_write_ {&unit_port_set_, "out_reorder_buffer_write"};
 
         std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
         InstArchInfo::TargetUnit blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
@@ -97,13 +95,9 @@ namespace olympia
                                                             CREATE_SPARTA_HANDLER(Dispatch, dispatchInstructions_)};
 
         const uint32_t num_to_dispatch_;
-        uint32_t credits_rob_ = 0;
 
         // Send rename initial credits
         void sendInitialCredits_();
-
-        // Tick callbacks assigned to Ports -- zero cycle
-        void robCredits_(const uint32_t&);
 
         // Dispatch instructions
         void dispatchQueueAppended_(const InstGroupPtr &);
@@ -119,7 +113,6 @@ namespace olympia
             FPU_BUSY = InstArchInfo::TargetUnit::FPU, // Could not send any or all instructions -- FPU busy
             BR_BUSY  = InstArchInfo::TargetUnit::BR,  // Could not send any or all instructions -- BR busy
             LSU_BUSY = InstArchInfo::TargetUnit::LSU,
-            NO_ROB_CREDITS = InstArchInfo::TargetUnit::ROB,  // No credits from the ROB
             NOT_STALLED,     // Made forward progress (dipatched all instructions or no instructions)
             N_STALL_REASONS
         };
@@ -141,9 +134,6 @@ namespace olympia
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_lsu_busy",
                                      "LSU busy",
-                                     sparta::Counter::COUNT_NORMAL, getClock()),
-                sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
-                                     "No credits from ROB",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
                                      "Dispatch not stalled, all instructions dispatched",
@@ -221,9 +211,6 @@ namespace olympia
         {
             case Dispatch::StallReason::NOT_STALLED:
                 os << "NOT_STALLED";
-                break;
-            case Dispatch::StallReason::NO_ROB_CREDITS:
-                os << "NO_ROB_CREDITS";
                 break;
             case Dispatch::StallReason::ALU_BUSY:
                 os << "ALU_BUSY";

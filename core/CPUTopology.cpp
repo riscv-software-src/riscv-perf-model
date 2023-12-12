@@ -182,11 +182,11 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.out_lsu_credits"
         },
         {
-            "cpu.core*.dispatch.ports.out_reorder_buffer_write",
+            "cpu.core*.rename.ports.out_reorder_buffer_write",
             "cpu.core*.rob.ports.in_reorder_buffer_write"
         },
         {
-            "cpu.core*.dispatch.ports.in_reorder_buffer_credits",
+            "cpu.core*.rename.ports.in_reorder_buffer_credits",
             "cpu.core*.rob.ports.out_reorder_buffer_credits"
         },
         {
@@ -242,10 +242,6 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.flushmanager.ports.in_retire_flush"
         },
         {
-            "cpu.core*.rob.ports.out_fetch_flush_redirect",
-            "cpu.core*.flushmanager.ports.in_fetch_flush_redirect"
-        },
-        {
             "cpu.core*.rob.ports.out_rob_retire_ack",
             "cpu.core*.lsu.ports.in_rob_retire_ack"
         },
@@ -282,7 +278,11 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_fetch_flush_redirect",
+            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.fetch.ports.in_fetch_flush_redirect"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_decode_flush",
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
         }
     };

@@ -96,7 +96,8 @@ namespace olympia
                     else
                     {
                         ILOG("Decode flush required - requesting flush!");
-                        out_decode_flush_.send(inst);
+                        FlushManager::FlushingCriteria criteria(FlushManager::FlushEvent::MISFETCH, inst);
+                        out_decode_flush_.send(criteria);
                         break;
                     }
                 }

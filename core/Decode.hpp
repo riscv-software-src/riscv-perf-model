@@ -66,7 +66,7 @@ namespace olympia
         sparta::DataInPort<uint32_t>      uop_queue_credits_in_{&unit_port_set_, "in_uop_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // Flush required after decode
-        sparta::DataOutPort<InstPtr>      out_decode_flush_    {&unit_port_set_, "out_decode_flush"};
+        sparta::DataOutPort<FlushManager::FlushingCriteria>  out_decode_flush_    {&unit_port_set_, "out_decode_flush"};
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_

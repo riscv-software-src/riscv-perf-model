@@ -78,18 +78,31 @@ namespace olympia
     // directly, albeit inefficient and superfluous here...
     void ROB::robAppended_(const InstGroup &) {
         for(auto & i : *in_reorder_buffer_write_.pullData()) {
-            reorder_buffer_.push(i);
+            reorder_buffer_.push_back(i);
             ILOG("retire appended: " << i);
         }
 
-        ev_retire_.schedule(sparta::Clock::Cycle(0));
+        ev_retire_.schedule(sparta::Clock::Cycle(1));
     }
 
-    void ROB::handleFlush_(const FlushManager::FlushingCriteria &)
+    void ROB::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
+        uint32_t credits_to_send = 0;
+
         // Clean up internals and send new credit count
-        out_reorder_buffer_credits_.send(reorder_buffer_.size());
-        reorder_buffer_.clear();
+        auto iter = reorder_buffer_.end();
+        while (iter > reorder_buffer_.begin())
+        {
+            auto inst = *(--iter);
+            if (criteria.flush(inst))
+            {
+                inst->setStatus(Inst::Status::FLUSHED);
+                out_rob_retire_ack_rename_.send(inst);
+                reorder_buffer_.erase(iter);
+                ++credits_to_send;
+            }
+        }
+        out_reorder_buffer_credits_.send(credits_to_send);
     }
 
     void ROB::retireInstructions_()
@@ -118,7 +131,7 @@ namespace olympia
 
                 ++num_retired_;
                 ++retired_this_cycle;
-                reorder_buffer_.pop();
+                reorder_buffer_.erase(reorder_buffer_.begin());
 
                 ILOG("retiring " << ex_inst);
 
@@ -149,11 +162,10 @@ namespace olympia
                 if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
                 {
                     ILOG("Instigating flush... " << ex_inst);
-                    // Signal flush to the system
-                    out_retire_flush_.send(ex_inst.getUniqueID());
 
-                    // Redirect fetch
-                    out_fetch_flush_redirect_.send(ex_inst_ptr);
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushEvent::POST_SYNC, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+
 
                     ++num_flushes_;
                     break;
@@ -164,10 +176,10 @@ namespace olympia
                 {
                     ILOG("Mispredicted branch " << ex_inst <<
                         " was actually " << (ex_inst.isTakenBranch() ? "taken" : "not-taken"));
-                    out_retire_flush_.send(ex_inst.getUniqueID());
 
-                    // Redirect Fetch
-                    out_fetch_flush_redirect_.send(ex_inst_ptr);
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushEvent::MISPREDICTION, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+
                     ++num_flushes_;
                     break;
                 }
@@ -179,7 +191,7 @@ namespace olympia
         }
 
         if(false == reorder_buffer_.empty()) {
-            const auto & oldest_inst = reorder_buffer_.front();
+            const auto & oldest_inst = reorder_buffer_.access(reorder_buffer_.begin());
             if(oldest_inst->getStatus() == Inst::Status::COMPLETED) {
                 ILOG("oldest is marked completed: " << oldest_inst);
                 ev_retire_.schedule();

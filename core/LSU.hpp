@@ -306,6 +306,9 @@ namespace olympia
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
 
+        // Schedule instructions for issue
+        void scheduleInst_(const InstPtr &);
+
         // Issue/Re-issue ready instructions in the issue queue
         void issueInst_();
 
@@ -356,12 +359,10 @@ namespace olympia
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
 
         // Flush instruction issue queue
-        template<typename Comp>
-        void flushIssueQueue_(const Comp &);
+        void flushIssueQueue_(const FlushCriteria &);
 
         // Flush load/store pipeline
-        template<typename Comp>
-        void flushLSPipeline_(const Comp &);
+        void flushLSPipeline_(const FlushCriteria &);
 
         // Counters
         sparta::Counter lsu_insts_dispatched_{

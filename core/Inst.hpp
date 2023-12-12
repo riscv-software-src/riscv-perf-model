@@ -48,6 +48,9 @@ namespace olympia
             void setOriginalDestination(const Reg & destination){
                 original_dest_ = destination;
             }
+            void setDestination(const Reg & destination){
+                dest_ = destination;
+            }
             void setDataReg(const Reg & data_reg){
                 data_reg_ = data_reg;
             }
@@ -60,11 +63,15 @@ namespace olympia
             const Reg & getOriginalDestination() const {
                 return original_dest_;
             }
+            const Reg & getDestination() const {
+                return dest_;
+            }
             const Reg & getDataReg() const {
                 return data_reg_;
             }
         private:
             Reg original_dest_;
+            Reg dest_;
             RegList src_;
             Reg data_reg_;
         };
@@ -86,6 +93,7 @@ namespace olympia
             SCHEDULED,
             COMPLETED,
             RETIRED,
+            FLUSHED,
             __LAST
         };
 
@@ -112,6 +120,10 @@ namespace olympia
 
         bool getCompletedStatus() const {
             return getStatus() == olympia::Inst::Status::COMPLETED;
+        }
+
+        bool getFlushedStatus() const {
+            return getStatus() == olympia::Inst::Status::FLUSHED;
         }
 
         void setStatus(Status status) {
@@ -285,6 +297,9 @@ namespace olympia
                 break;
             case Inst::Status::RETIRED:
                 os << "RETIRED";
+                break;
+            case Inst::Status::FLUSHED:
+                os << "FLUSHED";
                 break;
             case Inst::Status::__LAST:
                 throw sparta::SpartaException("__LAST cannot be a valid enum state.");

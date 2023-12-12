@@ -73,12 +73,9 @@ namespace olympia
                                                                                 &out_lsu_write_));
         in_lsu_credits_.enableCollection(node);
 
-        in_reorder_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, robCredits_, uint32_t));
-        in_reorder_credits_.enableCollection(node);
-
         in_reorder_flush_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch, handleFlush_,
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Dispatch,
+                                                                    handleFlush_,
                                                                     FlushManager::FlushingCriteria));
         in_reorder_flush_.enableCollection(node);
 
@@ -88,7 +85,7 @@ namespace olympia
 
     void Dispatch::scheduleDispatchSession()
     {
-        if(credits_rob_ > 0 && (dispatch_queue_.size() > 0))
+        if(dispatch_queue_.size() > 0)
         {
             // See if the one of the original blocking dispatcher
             // types is still blocking.
@@ -112,20 +109,13 @@ namespace olympia
             }
         }
         else {
-            ILOG("no rob credits or no instructions to process");
+            ILOG("no instructions to process");
         }
     }
 
     void Dispatch::sendInitialCredits_()
     {
         out_dispatch_queue_credits_.send(dispatch_queue_.capacity());
-    }
-
-    void Dispatch::robCredits_(const uint32_t&) {
-        uint32_t nc = in_reorder_credits_.pullData();
-        credits_rob_ += nc;
-        scheduleDispatchSession();
-        ILOG("ROB got " << nc << " credits, total: " << credits_rob_);
     }
 
     void Dispatch::dispatchQueueAppended_(const InstGroupPtr &inst_grp) {
@@ -139,7 +129,6 @@ namespace olympia
     void Dispatch::dispatchInstructions_()
     {
         uint32_t num_dispatch = std::min(dispatch_queue_.size(), num_to_dispatch_);
-        num_dispatch = std::min(credits_rob_, num_dispatch);
 
         ILOG("Num to dispatch: " << num_dispatch);
 
@@ -207,7 +196,6 @@ namespace olympia
             if(dispatched) {
                 insts_dispatched->emplace_back(ex_inst_ptr);
                 dispatch_queue_.pop();
-                --credits_rob_;
             } else {
                 ILOG("Could not dispatch: "
                      << ex_inst_ptr << " stall: " << current_stall_);
@@ -222,10 +210,9 @@ namespace olympia
 
         if(!insts_dispatched->empty()) {
             out_dispatch_queue_credits_.send(static_cast<uint32_t>(insts_dispatched->size()));
-            out_reorder_write_.send(insts_dispatched);
         }
 
-        if ((credits_rob_ > 0) && (dispatch_queue_.size() > 0) && (current_stall_ == NOT_STALLED)) {
+        if ((dispatch_queue_.size() > 0) && (current_stall_ == NOT_STALLED)) {
             ev_dispatch_insts_.schedule(1);
         }
 
@@ -237,6 +224,5 @@ namespace olympia
         ILOG("Got a flush call for " << criteria);
         out_dispatch_queue_credits_.send(dispatch_queue_.size());
         dispatch_queue_.clear();
-        out_reorder_write_.cancel();
     }
 }

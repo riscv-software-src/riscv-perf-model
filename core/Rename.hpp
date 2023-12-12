@@ -66,10 +66,13 @@ namespace olympia
         InstQueue                         uop_queue_;
         sparta::DataInPort<InstGroupPtr>  in_uop_queue_append_       {&unit_port_set_, "in_uop_queue_append", 1};
         sparta::DataOutPort<uint32_t>     out_uop_queue_credits_     {&unit_port_set_, "out_uop_queue_credits"};
+        sparta::DataInPort<uint32_t>      in_reorder_buffer_credits_ {&unit_port_set_, "in_reorder_buffer_credits",
+                                                                      sparta::SchedulingPhase::Tick, 0};
         sparta::DataOutPort<InstGroupPtr> out_dispatch_queue_write_  {&unit_port_set_, "out_dispatch_queue_write"};
         sparta::DataInPort<uint32_t>      in_dispatch_queue_credits_ {&unit_port_set_, "in_dispatch_queue_credits",
                                                                       sparta::SchedulingPhase::Tick, 0};
-        sparta::DataInPort<InstPtr>       in_rename_retire_ack_         {&unit_port_set_, "in_rename_retire_ack", 1};
+        sparta::DataOutPort<InstGroupPtr> out_reorder_buffer_write_  {&unit_port_set_, "out_reorder_buffer_write"};
+        sparta::DataInPort<InstPtr>       in_rename_retire_ack_      {&unit_port_set_, "in_rename_retire_ack", 1};
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
@@ -83,6 +86,7 @@ namespace olympia
         const uint32_t num_to_rename_per_cycle_;
         uint32_t num_to_rename_ = 0;
         uint32_t credits_dispatch_ = 0;
+        uint32_t credits_rob_ = 0;
 
         // Scoreboards
         using Scoreboards = std::array<sparta::Scoreboard*, core_types::N_REGFILES>;
@@ -108,6 +112,7 @@ namespace olympia
         // Stall counters
         enum StallReason {
             NO_DECODE_INSTS,     // No insts from Decode
+            NO_ROB_CREDITS,      // No credits from ROB
             NO_DISPATCH_CREDITS, // No credits from Dispatch
             NO_RENAMES,          // Out of renames
             NOT_STALLED,         // Made forward progress (dipatched
@@ -124,6 +129,9 @@ namespace olympia
         std::array<sparta::CycleCounter, N_STALL_REASONS> stall_counters_{{
                 sparta::CycleCounter(getStatisticSet(), "stall_no_decode_insts",
                                      "No Decode Insts",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits",
+                                     "No ROB Credits",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_no_dispatch_credits",
                                      "No Dispatch Credits",
@@ -142,6 +150,9 @@ namespace olympia
         //! Free entries from Dispatch
         void creditsDispatchQueue_(const uint32_t &);
 
+        //! Free entries from the Reorder Buffer
+        void creditsROB_(const uint32_t &);
+
         //! Process new instructions coming in from decode
         void decodedInstructions_(const InstGroupPtr &);
 
@@ -154,9 +165,9 @@ namespace olympia
         //! Flush instructions.
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
 
-        // Get Retired Instructions
+        //! Get instructions popped from the ROB
         void getAckFromROB_(const InstPtr &);
-        
+
         // Friend class used in rename testing
         friend class RenameTester;
 
@@ -168,6 +179,9 @@ namespace olympia
         {
             case Rename::StallReason::NO_DECODE_INSTS:
                 os << "NO_DECODE_INSTS";
+                break;
+            case Rename::StallReason::NO_ROB_CREDITS:
+                os << "NO_ROB_CREDITS";
                 break;
             case Rename::StallReason::NO_DISPATCH_CREDITS:
                 os << "NO_DISPATCH_CREDITS";

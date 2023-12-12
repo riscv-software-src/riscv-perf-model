@@ -34,6 +34,8 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, decodedInstructions_, InstGroupPtr));
         in_dispatch_queue_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, creditsDispatchQueue_, uint32_t));
+        in_reorder_buffer_credits_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, creditsROB_, uint32_t));
         in_reorder_flush_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Rename, handleFlush_, FlushManager::FlushingCriteria));
         in_rename_retire_ack_.registerConsumerHandler
@@ -114,20 +116,47 @@ namespace olympia
             ev_schedule_rename_.schedule();
         }
     }
+
+    void Rename::creditsROB_(const uint32_t & credits)
+    {
+        credits_rob_ += credits;
+        if (uop_queue_.size() > 0 ) {
+            ev_schedule_rename_.schedule();
+        }
+    }
+
     void Rename::getAckFromROB_(const InstPtr & inst_ptr)
     {
-        sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
-                        "Get ROB Ack, but the inst hasn't retired yet!");
+        sparta_assert(miscutils::isOneOf(inst_ptr->getStatus(),
+                                         Inst::Status::FLUSHED,
+                                         Inst::Status::RETIRED),
+                      "Get ROB Ack, but the inst isn't flushed or retired yet!");
         auto const & dests = inst_ptr->getDestOpInfoList();
         if(dests.size() > 0)
         {
             sparta_assert(dests.size() == 1); // we should only have one destination
-            auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
-            --reference_counter_[original_dest.rf][original_dest.val];
-            // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
-            // so we know it's free to be pushed to freelist if it has no other src references
-            if(reference_counter_[original_dest.rf][original_dest.val] <= 0){
-                freelist_[original_dest.rf].push(original_dest.val);
+            if (inst_ptr->getFlushedStatus()){
+                // restore rename table following a flush
+                auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+                const auto rf  = olympia::coreutils::determineRegisterFile(dests[0]);
+                const auto num = dests[0].field_value;
+                map_table_[rf][num] = original_dest.val;
+
+                // free previous PRF mapping when reference counter reaches zero
+                auto const & dest = inst_ptr->getRenameData().getDestination();
+                --reference_counter_[dest.rf][dest.val];
+                if(reference_counter_[dest.rf][dest.val] <= 0){
+                    freelist_[dest.rf].push(dest.val);
+                }
+            }
+            else{
+                auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+                --reference_counter_[original_dest.rf][original_dest.val];
+                // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
+                // so we know it's free to be pushed to freelist if it has no other src references
+                if(reference_counter_[original_dest.rf][original_dest.val] <= 0){
+                    freelist_[original_dest.rf].push(original_dest.val);
+                }
             }
         }
 
@@ -154,10 +183,15 @@ namespace olympia
                 freelist_[src.rf].push(src.val);
             }
         }
-        if(credits_dispatch_ > 0 && (uop_queue_.size() > 0)){
+        if(credits_dispatch_ > 0 && credits_rob_ > 0 && (uop_queue_.size() > 0)){
             ev_schedule_rename_.schedule();
         }
-        ILOG("Retired instruction: " << inst_ptr);
+        if (inst_ptr->getFlushedStatus()){
+            ILOG("Flushed instruction: " << inst_ptr);
+        }
+        else{
+            ILOG("Retired instruction: " << inst_ptr);
+        }
     }
 
 
@@ -166,55 +200,18 @@ namespace olympia
     {
         ILOG("Got a flush call for " << criteria);
 
-        // Bit of a hack, as we haven't got access to the num_renames parameter.
-        auto num_integer_renames = reference_counter_[core_types::RegFile::RF_INTEGER].size();
-        auto num_float_renames = reference_counter_[core_types::RegFile::RF_FLOAT].size();
-
-        // Set all the scoreboard ready bits, they'll be cleared when we allocate a PRF
-        // Again a bit of a hack, but we need instructions pending scoreboard updates (in callbacks)
-        // to get flushed through.
-        auto ready_scoreboard = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
-                                core_types::RegisterBitMask bits;
-                                for(uint32_t reg = 0; reg < num_renames; ++reg) {
-                                    bits.set(reg);
-                                }
-                                scoreboards_[reg_file]->set(bits);
-                            };
-
-        ready_scoreboard(core_types::RegFile::RF_INTEGER, num_integer_renames);
-        ready_scoreboard(core_types::RegFile::RF_FLOAT, num_float_renames);
-
-        // Reset the register map and freelist
-        auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
-                        uint32_t num_regs = 32;  // default risc-v ARF count
-                        // Clear the freelist and reference counters, before they're reset
-                        // freelist_[reg_file].clear();
-                        while (!freelist_[reg_file].empty())
-                        {
-                            freelist_[reg_file].pop();
-                        }
-                        reference_counter_[reg_file].clear();
-                        // initialize the first 32 regs, i.e x1 -> PRF1
-                        for(uint32_t i = 0; i < num_regs; i++){
-                            map_table_[reg_file][i] = i;
-                            // for the first 32 registers, we mark their reference_counters 1, as they are the
-                            // current "valid" PRF for that ARF
-                            reference_counter_[reg_file].push_back(1);
-                        }
-                        for(uint32_t i = num_regs; i < num_renames; ++i) {
-                            freelist_[reg_file].push(i);
-                            reference_counter_[reg_file].push_back(0);
-                        }
-                    };
-
-        setup_map(core_types::RegFile::RF_INTEGER, num_integer_renames);
-        setup_map(core_types::RegFile::RF_FLOAT,   num_float_renames);
-
         current_stall_ = NO_DECODE_INSTS;
 
         uop_queue_regcount_data_.clear();
         out_uop_queue_credits_.send(uop_queue_.size());
         uop_queue_.clear();
+
+        ev_schedule_rename_.cancel();
+
+        // We won't recover the rename map if any instructions were renamed but didn't make it into the ROB
+        // for the incoming flush.
+        sparta_assert(out_reorder_buffer_write_.isDriven() == false,
+            "instructions may have been renamed here but didn't make it into the ROB for flushing");
     }
 
     void Rename::decodedInstructions_(const InstGroupPtr & insts)
@@ -249,6 +246,7 @@ namespace olympia
         // If we have credits from dispatch, schedule a rename session this cycle
         uint32_t num_rename = std::min(uop_queue_.size(), num_to_rename_per_cycle_);
         num_rename = std::min(credits_dispatch_, num_rename);
+        num_rename = std::min(credits_rob_, num_rename);
         if(credits_dispatch_ > 0)
         {
             RegCountData count_subtract;
@@ -294,7 +292,12 @@ namespace olympia
             }
         }
         else{
-            current_stall_ = StallReason::NO_DISPATCH_CREDITS;
+            if (credits_rob_ == 0){
+                current_stall_ = StallReason::NO_ROB_CREDITS;
+            }
+            else{
+                current_stall_ = StallReason::NO_DISPATCH_CREDITS;
+            }
             num_to_rename_ = 0;
         }
         ILOG("current stall: " << current_stall_);
@@ -375,6 +378,7 @@ namespace olympia
                     const uint32_t prf = freelist_[rf].front();
                     freelist_[rf].pop();
                     renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf, dest.field_id});
+                    renaming_inst->getRenameData().setDestination({prf, rf, dest.field_id});
                     map_table_[rf][num] = prf;
                     // we increase reference_counter_ for destinations to mark them as "valid",
                     // so the PRF in the reference_counter_ should have a value of 1
@@ -397,6 +401,10 @@ namespace olympia
             // Send insts to dispatch
             out_dispatch_queue_write_.send(insts);
             credits_dispatch_ -= num_to_rename_;
+
+            // Send insts to ROB
+            out_reorder_buffer_write_.send(insts);
+            credits_rob_ -= num_to_rename_;
 
             // Replenish credits in the Decode unit
             out_uop_queue_credits_.send(num_to_rename_);

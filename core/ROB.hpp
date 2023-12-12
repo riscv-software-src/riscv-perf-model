@@ -10,6 +10,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/log/MessageSource.hpp"
+#include "sparta/resources/Buffer.hpp"
 
 #include "sparta/statistics/Counter.hpp"
 #include "sparta/statistics/StatisticDef.hpp"
@@ -84,7 +85,7 @@ namespace olympia
         const uint32_t num_insts_to_retire_; // parameter from ilimit
         const uint64_t retire_heartbeat_;    // Retire heartbeat interval
 
-        InstQueue      reorder_buffer_;
+        sparta::Buffer<InstPtr> reorder_buffer_;
 
         // Bool that indicates if the ROB stopped simulation.  If
         // false and there are still instructions in the reorder
@@ -96,15 +97,20 @@ namespace olympia
         uint64_t expected_program_id_ = 1;
 
         // Ports used by the ROB
-        sparta::DataInPort<InstGroupPtr> in_reorder_buffer_write_{&unit_port_set_, "in_reorder_buffer_write", 1};
         sparta::DataOutPort<uint32_t> out_reorder_buffer_credits_{&unit_port_set_, "out_reorder_buffer_credits"};
         sparta::DataInPort<bool>      in_oldest_completed_       {&unit_port_set_, "in_reorder_oldest_completed"};
         sparta::DataOutPort<FlushManager::FlushingCriteria> out_retire_flush_ {&unit_port_set_, "out_retire_flush"};
-        sparta::DataOutPort<InstPtr>  out_fetch_flush_redirect_  {&unit_port_set_, "out_fetch_flush_redirect"};
+
+        // We must insert the renamed instructions into the ROB before any flush event on the subsequent cycle
+        // otherwise when we recover the rename map, the ROB walk won't contain the instructions that triggered
+        // the rename updates
+        // TODO think of a better way? i.e. use SharedData to delay rename updates?
+        sparta::DataInPort<InstGroupPtr> in_reorder_buffer_write_
+            {&unit_port_set_, "in_reorder_buffer_write", sparta::SchedulingPhase::PortUpdate, 1};
 
         // UPDATE:
-        sparta::DataOutPort<InstPtr> out_rob_retire_ack_ {&unit_port_set_, "out_rob_retire_ack"};
-        sparta::DataOutPort<InstPtr> out_rob_retire_ack_rename_ {&unit_port_set_, "out_rob_retire_ack_rename"};
+        sparta::DataOutPort<InstPtr> out_rob_retire_ack_         {&unit_port_set_, "out_rob_retire_ack"};
+        sparta::DataOutPort<InstPtr> out_rob_retire_ack_rename_  {&unit_port_set_, "out_rob_retire_ack_rename"};
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_

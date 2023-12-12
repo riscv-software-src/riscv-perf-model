@@ -32,7 +32,8 @@ namespace olympia
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
 
-        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, InstPtr));
+        in_fetch_flush_redirect_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, FlushManager::FlushingCriteria));
 
         in_rob_retire_ack_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, getAckFromROB_, InstPtr));
 
@@ -156,9 +157,11 @@ namespace olympia
     // Could be a flush from decode, or retirement
     // Decode flush -> BTB miss
     // Retire flush -> Mispredicted branch (and potentially a BTB miss)
-    void Fetch::flushFetch_(const InstPtr & flush_inst)
+    void Fetch::flushFetch_(const FlushManager::FlushingCriteria &criteria)
     {
-        ILOG("Fetch: receive flush " << flush_inst);
+        ILOG("Fetch: received flush " << criteria);
+
+        auto flush_inst = criteria.getInstPtr();
 
         // Insert BTB misses on flush
         auto pc = flush_inst->getPC();
@@ -184,13 +187,13 @@ namespace olympia
         }
 
         // Rewind the tracefile
-        if (flush_inst->getStatus() == Inst::Status::COMPLETED || flush_inst->getStatus() == Inst::Status::RETIRED)
+        if (criteria.isInclusiveFlush())
         {
-            inst_generator_->reset(flush_inst, true); // Skip to next instruction
+            inst_generator_->reset(flush_inst, false); // Replay this instruction
         }
         else
         {
-            inst_generator_->reset(flush_inst, false); // Replay this instruction
+            inst_generator_->reset(flush_inst, true); // Skip to next instruction
         }
 
         // Cancel all previously sent instructions on the outport

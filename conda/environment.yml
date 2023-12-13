@@ -56,6 +56,7 @@ dependencies:
   - libuuid>=2.32.1=h7f98852_1000
   - libuv>=1.44.2=h166bdaf_0
   - libzlib>=1.2.13=h166bdaf_4
+  - llvm-tools>=14.0.6=hcd5def8_4
   - ncurses>=6.3=h27087fc_1
   - numpy>=1.24.1=py310h08bbf29_0
   - openssl>=1.1.1w=hd590300_0

@@ -79,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: ErrorLogs
-          path: ${{matrix.BUILD_TYPE}}/test/Testing/Temporary
+          path: ${{matrix.BUILD_TYPE}}/test/
 
       #- name: CTest
       #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long

@@ -12,6 +12,9 @@ echo "GITHUB_EVENT_PATH:" $GITHUB_EVENT_PATH
 echo "CONDA_PREFIX:" $CONDA_PREFIX
 echo "PWD:" `pwd`
 
+echo "Force clean of ccache"
+ccache -C
+
 #
 # Compile Sparta Infra (always build with release)
 #   Have other build types point to release

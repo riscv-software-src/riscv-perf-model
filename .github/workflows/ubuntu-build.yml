@@ -76,7 +76,7 @@ jobs:
       # Save error logs, etc
       - name: Save artifacts
         if: failure()
-        uses: actions/upload-artifacts@main
+        uses: actions/upload-artifact@main
         with:
           name: ErrorLogs
           path: ${{env.BUILD_TYPE}}/test/Testing/Temporary

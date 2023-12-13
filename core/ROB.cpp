@@ -171,19 +171,6 @@ namespace olympia
                     break;
                 }
 
-                // Initiate full flush on misprediction
-                if (SPARTA_EXPECT_FALSE(ex_inst.isBranchMispredict()))
-                {
-                    ILOG("Mispredicted branch " << ex_inst <<
-                        " was actually " << (ex_inst.isTakenBranch() ? "taken" : "not-taken"));
-
-                    FlushManager::FlushingCriteria criteria(FlushManager::FlushEvent::MISPREDICTION, ex_inst_ptr);
-                    out_retire_flush_.send(criteria);
-
-                    ++num_flushes_;
-                    break;
-                }
-
             }
             else {
                 break;

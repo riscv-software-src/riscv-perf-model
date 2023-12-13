@@ -71,6 +71,8 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_scheduler_credits_{&unit_port_set_, "out_scheduler_credits"};
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataOutPort<FlushManager::FlushingCriteria> out_execute_flush_
+            {&unit_port_set_, "out_execute_flush"};
 
         // Ready queue
         typedef std::list<InstPtr> ReadyQueue;

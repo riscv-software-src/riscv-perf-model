@@ -15,6 +15,7 @@
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/utils/ValidValue.hpp"
 
 #include "Inst.hpp"
 
@@ -82,6 +83,11 @@ namespace olympia
                 return true;
             }
 
+            bool isLowerPipeFlush() const
+            {
+                return cause_ == FlushEvent::MISFETCH;
+            }
+
             bool flush(const InstPtr& other) const
             {
                 return isInclusiveFlush() ?
@@ -113,60 +119,66 @@ namespace olympia
          */
         FlushManager(sparta::TreeNode *rc, const FlushManagerParameters * params) :
             Unit(rc, name),
-            out_retire_flush_(getPortSet(), "out_retire_flush", false),
-            in_retire_flush_(getPortSet(), "in_retire_flush", 0),
-            in_decode_flush_(getPortSet(), "in_decode_flush", 0),
-            out_decode_flush_(getPortSet(), "out_decode_flush", false)
+            in_flush_request_(getPortSet(), "in_flush_request", 0),
+            out_flush_lower_(getPortSet(), "out_flush_lower", false),
+            out_flush_upper_(getPortSet(), "out_flush_upper", false)
         {
             (void)params;
-            in_retire_flush_.
+
+            in_flush_request_.
                 registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
                                                                       receiveFlush_,
                                                                       FlushingCriteria));
-            in_decode_flush_.
-                registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
-                                                                        receiveFlush_,
-                                                                        FlushingCriteria));
 
-            in_retire_flush_.registerConsumerEvent(ev_flush_);
-            in_decode_flush_.registerConsumerEvent(ev_flush_);
+            in_flush_request_.registerConsumerEvent(ev_flush_);
         }
 
     private:
 
         // Flushing criteria
-        sparta::DataOutPort<FlushingCriteria> out_retire_flush_;
-        sparta::DataInPort <FlushingCriteria> in_retire_flush_;
-
-        // Decode Flush Port
-        sparta::DataInPort<FlushingCriteria> in_decode_flush_;
-        sparta::DataOutPort<FlushingCriteria> out_decode_flush_;
+        sparta::DataInPort <FlushingCriteria> in_flush_request_;
+        sparta::DataOutPort<FlushingCriteria> out_flush_lower_;
+        sparta::DataOutPort<FlushingCriteria> out_flush_upper_;
 
         sparta::UniqueEvent<> ev_flush_ {&unit_event_set_,
                                         "flush_event",
                                          CREATE_SPARTA_HANDLER(FlushManager, forwardFlush_)};
 
+        // Hold oldest incoming flush request for forwarding
+        sparta::utils::ValidValue<FlushingCriteria> pending_flush_;
+
         // Arbitrates and forwards the flush request from the input flush ports, to the output ports
         void forwardFlush_()
         {
-            if (in_retire_flush_.dataReceivedThisCycle())
+            sparta_assert(pending_flush_.isValid(), "no flush to forward onwards?");
+            auto flush_data = pending_flush_.getValue();
+            if (flush_data.isLowerPipeFlush())
             {
-                auto flush_data = in_retire_flush_.pullData();
-                out_retire_flush_.send(flush_data);
-                ILOG("forwarding retirement flush request: " << flush_data);
+                ILOG("instigating lower pipeline flush for: " << flush_data);
+                out_flush_lower_.send(flush_data);
             }
             else
             {
-                sparta_assert(in_decode_flush_.dataReceivedThisCycle(), "flush event scheduled for no reason?");
-                auto flush_data = in_decode_flush_.pullData();
-                out_decode_flush_.send(flush_data);
-                ILOG("forwarding decode flush request: " << flush_data);
+                ILOG("instigating upper pipeline flush for: " << flush_data);
+                out_flush_upper_.send(flush_data);
             }
+            pending_flush_.clearValid();
         }
 
-        void receiveFlush_(const FlushingCriteria &)
+        void receiveFlush_(const FlushingCriteria & flush_data)
         {
             ev_flush_.schedule();
+
+            // Capture the oldest flush request only
+            if (pending_flush_.isValid())
+            {
+                auto pending = pending_flush_.getValue();
+                if (pending.flush(flush_data.getInstPtr()))
+                {
+                    return;
+                }
+            }
+            pending_flush_ = flush_data;
         }
 
     };

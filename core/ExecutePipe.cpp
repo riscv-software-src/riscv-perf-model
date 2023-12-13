@@ -178,6 +178,15 @@ namespace olympia
             scoreboard_views_[reg_file_]->setReady(dest_bits);
         }
 
+        // Deal with mispredicted branches
+        if (ex_inst->isBranch() && ex_inst->isBranchMispredict())
+        {
+            ILOG("mispredicted branch " << ex_inst <<
+                  " was actually " << (ex_inst->isTakenBranch() ? "taken" : "not-taken"));
+            FlushManager::FlushingCriteria criteria(FlushManager::FlushEvent::MISPREDICTION, ex_inst);
+            out_execute_flush_.send(criteria);
+        }
+
         // We're not busy anymore
         unit_busy_ = false;
 

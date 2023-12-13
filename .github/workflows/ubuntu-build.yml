@@ -78,7 +78,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@main
         with:
-          name: ErrorLogs
+          name: ErrorLogs-${{matrix.BUILD_TYPE}}-${{matrix.COMPILER}}
           path: ${{matrix.BUILD_TYPE}}/test/
 
       #- name: CTest

@@ -78,7 +78,7 @@ namespace olympia
     // directly, albeit inefficient and superfluous here...
     void ROB::robAppended_(const InstGroup &) {
         for(auto & i : *in_reorder_buffer_write_.pullData()) {
-            reorder_buffer_.push_back(i);
+            reorder_buffer_.push(i);
             ILOG("retire appended: " << i);
         }
 
@@ -90,16 +90,19 @@ namespace olympia
         uint32_t credits_to_send = 0;
 
         // Clean up internals and send new credit count
-        auto iter = reorder_buffer_.end();
-        while (iter > reorder_buffer_.begin())
+        while (reorder_buffer_.size())
         {
-            auto inst = *(--iter);
-            if (criteria.flush(inst))
+            auto youngest_inst = reorder_buffer_.back();
+            if (criteria.flush(youngest_inst))
             {
-                inst->setStatus(Inst::Status::FLUSHED);
-                out_rob_retire_ack_rename_.send(inst);
-                reorder_buffer_.erase(iter);
+                youngest_inst->setStatus(Inst::Status::FLUSHED);
+                out_rob_retire_ack_rename_.send(youngest_inst);
+                reorder_buffer_.pop_back();
                 ++credits_to_send;
+            }
+            else
+            {
+                break;
             }
         }
         out_reorder_buffer_credits_.send(credits_to_send);
@@ -131,7 +134,7 @@ namespace olympia
 
                 ++num_retired_;
                 ++retired_this_cycle;
-                reorder_buffer_.erase(reorder_buffer_.begin());
+                reorder_buffer_.pop();
 
                 ILOG("retiring " << ex_inst);
 
@@ -178,7 +181,7 @@ namespace olympia
         }
 
         if(false == reorder_buffer_.empty()) {
-            const auto & oldest_inst = reorder_buffer_.access(reorder_buffer_.begin());
+            const auto & oldest_inst = reorder_buffer_.front();
             if(oldest_inst->getStatus() == Inst::Status::COMPLETED) {
                 ILOG("oldest is marked completed: " << oldest_inst);
                 ev_retire_.schedule();

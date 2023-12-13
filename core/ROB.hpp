@@ -10,7 +10,6 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/log/MessageSource.hpp"
-#include "sparta/resources/Buffer.hpp"
 
 #include "sparta/statistics/Counter.hpp"
 #include "sparta/statistics/StatisticDef.hpp"
@@ -85,7 +84,7 @@ namespace olympia
         const uint32_t num_insts_to_retire_; // parameter from ilimit
         const uint64_t retire_heartbeat_;    // Retire heartbeat interval
 
-        sparta::Buffer<InstPtr> reorder_buffer_;
+        InstQueue      reorder_buffer_;
 
         // Bool that indicates if the ROB stopped simulation.  If
         // false and there are still instructions in the reorder

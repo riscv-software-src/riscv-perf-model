@@ -3,13 +3,23 @@
 #pragma once
 
 #include "sparta/resources/Scoreboard.hpp"
+#include "sparta/resources/Buffer.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
-
 #include "Inst.hpp"
 
 namespace olympia {
+    class LoadStoreInstInfo;
+    using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
+    using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
+
+    class MemoryAccessInfoPairDef;
+
+    class MemoryAccessInfo;
+
+    using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
 
     class MemoryAccessInfo {
     public:
@@ -26,10 +36,23 @@ namespace olympia {
         enum class CacheState : std::uint64_t {
             NO_ACCESS = 0,
             __FIRST = NO_ACCESS,
+            RELOAD,
             MISS,
             HIT,
             NUM_STATES,
             __LAST = NUM_STATES
+        };
+
+        enum class ArchUnit : std::uint32_t {
+            NO_ACCESS = 0,
+            __FIRST = NO_ACCESS,
+            ICACHE,
+            LSU,
+            DCACHE,
+            L2CACHE,
+            BIU,
+            NUM_UNITS,
+            __LAST = NUM_UNITS
         };
 
         MemoryAccessInfo() = delete;
@@ -42,7 +65,9 @@ namespace olympia {
 
             // Construct the State object here
             cache_access_state_(CacheState::NO_ACCESS),
-            cache_data_ready_(false){}
+            cache_data_ready_(false),
+            src_(ArchUnit::NO_ACCESS),
+            dest_(ArchUnit::NO_ACCESS) {}
 
         virtual ~MemoryAccessInfo() {}
 
@@ -60,6 +85,15 @@ namespace olympia {
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
+
+        void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
+        const ArchUnit & getSrcUnit() const { return src_; }
+
+        void setDestUnit(const ArchUnit & dest_unit) { dest_ = dest_unit; }
+        const ArchUnit & getDestUnit() const { return dest_; }
+
+        void setNextReq(const MemoryAccessInfoPtr & nextReq) { next_req_ = nextReq; }
+        const MemoryAccessInfoPtr & getNextReq() { return next_req_; }
 
         MMUState getMMUState() const {
             return mmu_access_state_;
@@ -88,6 +122,24 @@ namespace olympia {
         void setDataReady(bool is_ready) {
             cache_data_ready_ = is_ready;
         }
+        const LoadStoreInstIterator getIssueQueueIterator() const
+        {
+            return issue_queue_iterator_;
+        }
+
+        void setIssueQueueIterator(const LoadStoreInstIterator &iter){
+            issue_queue_iterator_ = iter;
+        }
+
+        const LoadStoreInstIterator & getReplayQueueIterator() const
+        {
+            return replay_queue_iterator_;
+        }
+
+        void setReplayQueueIterator(const LoadStoreInstIterator & iter)
+        {
+            replay_queue_iterator_ = iter;
+        }
     private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -102,11 +154,54 @@ namespace olympia {
         CacheState cache_access_state_;
 
         bool cache_data_ready_;
+        // Src and destination unit name for the packet
+        ArchUnit src_ = ArchUnit::NO_ACCESS;
+        ArchUnit dest_ = ArchUnit::NO_ACCESS;
 
+        // Pointer to next request for DEBUG/TRACK
+        // (Note : Currently used only to track request with same cacheline in L2Cache 
+        // Not for functional/performance purpose)
+        MemoryAccessInfoPtr next_req_ = nullptr;
+
+        // Scoreboards
+        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+        ScoreboardViews scoreboard_views_;
+
+        LoadStoreInstIterator issue_queue_iterator_;
+        LoadStoreInstIterator replay_queue_iterator_;
 
     };
+
     using MemoryAccessInfoPtr       = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+
+    inline std::ostream& operator<<(std::ostream & os,
+                                    const olympia::MemoryAccessInfo::ArchUnit & unit) {
+        switch(unit) {
+            case olympia::MemoryAccessInfo::ArchUnit::NO_ACCESS:
+                os << "NO_ACCESS";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::ICACHE:
+                os << "ICACHE";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::LSU:
+                os << "LSU";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::DCACHE:
+                os << "DCACHE";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::L2CACHE:
+                os << "L2CACHE";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::BIU:
+                os << "BIU";
+                break;
+            case olympia::MemoryAccessInfo::ArchUnit::NUM_UNITS:
+                os << "NUM_UNITS";
+                break;
+        }
+        return os;
+    }
 
     inline std::ostream & operator<<(std::ostream & os,
                                      const olympia::MemoryAccessInfo::CacheState & cache_access_state){
@@ -114,6 +209,9 @@ namespace olympia {
         case olympia::MemoryAccessInfo::CacheState::NO_ACCESS:
             os << "no_access";
             break;
+        case olympia::MemoryAccessInfo::CacheState::RELOAD:
+             os << "reload";
+             break;
         case olympia::MemoryAccessInfo::CacheState::MISS:
             os << "miss";
             break;
@@ -157,5 +255,4 @@ namespace olympia {
         os << *mem_ptr;
         return os;
     }
-
 };

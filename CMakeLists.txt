@@ -40,12 +40,7 @@ if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)
   include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
   setup_stf_linker(false)
-elseif(CMAKE_BUILD_TYPE MATCHES "^[Pp]rofile")
-  set (FULL_LTO false)
-  set (NO_STF_LTO true)
-  include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
 endif()
-
 
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)
@@ -97,3 +92,30 @@ file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/re
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
+
+if(NOT CLANGFORMAT_EXECUTABLE)
+  set(CLANGFORMAT_EXECUTABLE clang-format)
+endif()
+
+# CPUTopology is pretty clean as it is.  There's an option to NOT
+# collapse the array of structures in clang-format v16, but we're not
+# there yet
+add_custom_target(clangformat
+  find core mss -name "*.[hc]pp" | grep -v CPUTopology > clang-format-files.out
+  COMMAND
+     ${CLANGFORMAT_EXECUTABLE} -i --files=clang-format-files.out
+  WORKING_DIRECTORY
+     ${CMAKE_SOURCE_DIR}
+  COMMENT
+     "Formatting ${prefix} with ${CLANGFORMAT_EXECUTABLE} ..."
+  )
+
+add_custom_target(clangformat-check
+  find core mss -name "*.[hc]pp" | grep -v CPUTopology > clang-format-files.out
+  COMMAND
+     ${CLANGFORMAT_EXECUTABLE} --Werror -n --files=clang-format-files.out
+  WORKING_DIRECTORY
+     ${CMAKE_SOURCE_DIR}
+  COMMENT
+     "Formatting ${prefix} with ${CLANGFORMAT_EXECUTABLE} ..."
+  )

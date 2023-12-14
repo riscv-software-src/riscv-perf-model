@@ -67,8 +67,11 @@ namespace olympia_mss
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataOutPort<olympia::InstPtr> out_biu_ack_
+        sparta::DataOutPort<uint32_t> out_biu_ack_
             {&unit_port_set_, "out_biu_ack"};
+
+        sparta::DataOutPort<olympia::InstPtr> out_biu_resp_
+            {&unit_port_set_, "out_biu_resp"};
 
         sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_
             {&unit_port_set_, "out_mss_req_sync", getClock()};
@@ -91,7 +94,7 @@ namespace olympia_mss
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
 
-        // Event to handle BIU request from LSU
+        // Event to handle BIU request from L2Cache
         sparta::UniqueEvent<> ev_handle_biu_req_
             {&unit_event_set_, "handle_biu_req", CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
 
@@ -99,13 +102,17 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_mss_ack_
             {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
 
+        // Event to handleBIU ack for L2Cache
+        sparta::UniqueEvent<> ev_handle_biu_l2cache_ack_
+            {&unit_event_set_, "ev_handle_biu_l2cache_ack", CREATE_SPARTA_HANDLER(BIU, handle_BIU_L2Cache_Ack_)};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
 
-        // Receive new BIU request from LSU
-        void getReqFromLSU_(const olympia::InstPtr &);
+        // Receive new BIU request from L2Cache
+        void receiveReqFromL2Cache_(const olympia::InstPtr &);
 
         // Handle BIU request
         void handle_BIU_Req_();
@@ -113,10 +120,15 @@ namespace olympia_mss
         // Handle MSS Ack
         void handle_MSS_Ack_();
 
+        // Handle ack backto L2Cache
+        void handle_BIU_L2Cache_Ack_();
+
         // Receive MSS access acknowledge
         // Q: Does the argument list has to be "const DataType &" ?
         void getAckFromMSS_(const bool &);
 
+        // Sending initial credits to L2Cache
+        void sendInitialCredits_();
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
@@ -124,7 +136,5 @@ namespace olympia_mss
 
         // Append BIU request queue
         void appendReqQueue_(const olympia::InstPtr &);
-
-
     };
 }

@@ -55,6 +55,7 @@ If code is found to violate these rules -- please fix it!
    1. Curly braces _must be included_ around each `if`, `for`, `while`, etc
       statement.  This specifically pertains to single line statements:
       `if(condition) { statement; }`
+    1. Limit column width to 100 characters
 
 ### Coding style for using Sparta components
 

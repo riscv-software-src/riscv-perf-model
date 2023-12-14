@@ -39,6 +39,8 @@ namespace olympia
             struct Reg {
                 uint32_t val = 0;
                 core_types::RegFile rf = core_types::RegFile::RF_INVALID;
+                mavis::InstMetaData::OperandFieldID field_id = mavis::InstMetaData::OperandFieldID::NONE;
+                bool is_x0 = false;
             };
             using RegList = std::vector<Reg>;
 

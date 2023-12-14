@@ -9,6 +9,9 @@ If code is found to violate these rules -- please fix it!
 
 ### General rules
 
+   * To prevent a mishmash of disparate programming languages, only C++ and Python will be accepted
+     * Standard C++-17 is preferred, but c++-20 can be considered (make sure to update the CMakeList `CMAKE_CXX_STANDARD`)
+     * Python 3.x at minimum
    * Branch naming must include your username and a very brief description
      of the issue at hand. For example, fix for issue 1234 which might
      be a seg fault in LSU: git branch knutel/issue_1234_lsu_seg_fault
@@ -46,6 +49,7 @@ If code is found to violate these rules -- please fix it!
    1. NO TABS.  Ever.  Never ever.
    1. Spaces are 4
    1. Delete all trailing whitespace
+   2. Delete all empty line whitespace
    1. Do not use single letter variable names.  Not only are these NOT
       descriptive, searching for their use in a function/class is difficult.
    1. Do not use Raw POD types (int, char).  Instead use [fixed

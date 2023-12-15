@@ -248,13 +248,13 @@ namespace olympia
     void LSU::issueInst_()
     {
         // Instruction issue arbitration
-        const LoadStoreInstInfoPtr & win_ptr = arbitrateInstIssue_();
+        const LoadStoreInstInfoPtr win_ptr = arbitrateInstIssue_();
         // NOTE:
         // win_ptr should always point to an instruction ready to be issued
         // Otherwise assertion error should already be fired in arbitrateInstIssue_()
         ILOG("Arbitrated inst " << win_ptr << " " << win_ptr->getInstPtr());
 
-        lsu_insts_issued_++;
+        ++lsu_insts_issued_;
 
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr);

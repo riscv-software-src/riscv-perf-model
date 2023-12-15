@@ -268,7 +268,6 @@ namespace olympia
         }
 
         // Remove inst from ready queue
-        ready_queue_.pop();
         win_ptr->setInReadyQueue(false);
 
         // Update instruction issue info
@@ -970,11 +969,14 @@ namespace olympia
     }
 
     // Arbitrate instruction issue from ldst_inst_queue
-    const LSU::LoadStoreInstInfoPtr & LSU::arbitrateInstIssue_()
+    const LSU::LoadStoreInstInfoPtr LSU::arbitrateInstIssue_()
     {
         sparta_assert(ready_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
-        return ready_queue_.top();
+        LoadStoreInstInfoPtr ready_inst_ = ready_queue_.top();
+        ready_queue_.pop();
+
+        return ready_inst_;
     }
 
     // Check for ready to issue instructions

@@ -280,7 +280,7 @@ namespace olympia
         void popIssueQueue_(const LoadStoreInstInfoPtr &);
 
         // Arbitrate instruction issue from ldst_inst_queue
-        const LoadStoreInstInfoPtr & arbitrateInstIssue_();
+        const LoadStoreInstInfoPtr arbitrateInstIssue_();
 
         // Check for ready to issue instructions
         bool isReadyToIssueInsts_() const;

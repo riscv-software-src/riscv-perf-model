@@ -969,7 +969,7 @@ namespace olympia
     }
 
     // Arbitrate instruction issue from ldst_inst_queue
-    const LSU::LoadStoreInstInfoPtr LSU::arbitrateInstIssue_()
+    LSU::LoadStoreInstInfoPtr LSU::arbitrateInstIssue_()
     {
         sparta_assert(ready_queue_.size() > 0, "Arbitration fails: issue is empty!");
 

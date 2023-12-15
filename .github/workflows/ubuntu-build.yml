@@ -16,7 +16,7 @@ jobs:
         BUILD_TYPE: [Debug,Release]
         COMPILER: [gcc,clang]
 
-    name: Ubuntu-${{ matrix.BUILD_TYPE }}
+    name: Ubuntu-${{ matrix.BUILD_TYPE }}-${{matrix.COMPILER}}
     runs-on: ${{ matrix.os }}
 
     # Set up a global environment variable for build scripts

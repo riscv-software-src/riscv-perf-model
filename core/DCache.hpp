@@ -42,8 +42,8 @@ namespace olympia {
         using L1Handle = CacheFuncModel::Handle;
         L1Handle l1_cache_;
         const bool l1_always_hit_;
-        bool busy_;
-        uint32_t cache_latency_;
+        bool busy_ = false;
+        uint32_t cache_latency_ = 0;
         // Keep track of the instruction that causes current outstanding cache miss
         MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 

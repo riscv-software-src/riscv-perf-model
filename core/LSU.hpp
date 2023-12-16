@@ -35,26 +35,25 @@ namespace olympia
 {
     class LSU : public sparta::Unit
     {
-    public:
+      public:
         /*!
          * \class LSUParameterSet
          * \brief Parameters for LSU model
          */
         class LSUParameterSet : public sparta::ParameterSet
         {
-        public:
+          public:
             //! Constructor for LSUParameterSet
-            LSUParameterSet(sparta::TreeNode* n):
-                sparta::ParameterSet(n)
-            {
-            }
+            LSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // LSU microarchitecture parameters
-            PARAMETER(bool, allow_speculative_load_exec, true, "Allow loads to proceed speculatively before all older store addresses are known")
+            PARAMETER(
+                bool, allow_speculative_load_exec, true,
+                "Allow loads to proceed speculatively before all older store addresses are known")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
@@ -74,8 +73,6 @@ namespace olympia
         //! name of this resource.
         static const char name[];
 
-
-
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
@@ -84,52 +81,47 @@ namespace olympia
         using FlushCriteria = FlushManager::FlushingCriteria;
 
         using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
-    private:
 
-        using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+      private:
+        using ScoreboardViews =
+            std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
         ScoreboardViews scoreboard_views_;
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_
-            {&unit_port_set_, "in_lsu_insts", 1};
+        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
 
-        sparta::DataInPort<InstPtr> in_rob_retire_ack_
-            {&unit_port_set_, "in_rob_retire_ack", 1};
+        sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
 
-        sparta::DataInPort<FlushCriteria> in_reorder_flush_
-            {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataInPort<FlushCriteria> in_reorder_flush_{&unit_port_set_, "in_reorder_flush",
+                                                            sparta::SchedulingPhase::Flush, 1};
 
+        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_req_{&unit_port_set_,
+                                                                   "in_mmu_lookup_req", 1};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_req_
-                {&unit_port_set_, "in_mmu_lookup_req", 1};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_{&unit_port_set_,
+                                                                   "in_mmu_lookup_ack", 0};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_
-                {&unit_port_set_, "in_mmu_lookup_ack", 0};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_{&unit_port_set_,
+                                                                     "in_cache_lookup_req", 1};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_
-                {&unit_port_set_, "in_cache_lookup_req", 1};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_{&unit_port_set_,
+                                                                     "in_cache_lookup_ack", 0};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_
-                {&unit_port_set_, "in_cache_lookup_ack", 0};
+        sparta::SignalInPort in_cache_free_req_{&unit_port_set_, "in_cache_free_req", 0};
 
-        sparta::SignalInPort in_cache_free_req_
-                {&unit_port_set_, "in_cache_free_req", 0};
-
-        sparta::SignalInPort in_mmu_free_req_
-                {&unit_port_set_, "in_mmu_free_req", 0};
+        sparta::SignalInPort in_mmu_free_req_{&unit_port_set_, "in_mmu_free_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataOutPort<uint32_t> out_lsu_credits_
-            {&unit_port_set_, "out_lsu_credits"};
+        sparta::DataOutPort<uint32_t> out_lsu_credits_{&unit_port_set_, "out_lsu_credits"};
 
-        sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_
-            {&unit_port_set_, "out_mmu_lookup_req", 0};
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_{&unit_port_set_,
+                                                                     "out_mmu_lookup_req", 0};
 
-        sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_
-                {&unit_port_set_, "out_cache_lookup_req", 0};
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_{&unit_port_set_,
+                                                                       "out_cache_lookup_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -149,13 +141,12 @@ namespace olympia
         bool mmu_busy_ = false;
         bool mmu_pending_inst_flushed = false;
 
-
         // L1 Data Cache
         bool cache_busy_ = false;
         bool cache_pending_inst_flushed_ = false;
 
-        sparta::collection::Collectable<bool> cache_busy_collectable_{
-            getContainer(), "dcache_busy", &cache_busy_};
+        sparta::collection::Collectable<bool> cache_busy_collectable_{getContainer(), "dcache_busy",
+                                                                      &cache_busy_};
 
         // LSInstInfo allocator
         LoadStoreInstInfoAllocator & load_store_info_allocator_;
@@ -173,7 +164,6 @@ namespace olympia
         const int cache_read_stage_;
         const int complete_stage_;
 
-
         // Load/Store Pipeline
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
         LoadStorePipeline ldst_pipeline_;
@@ -187,13 +177,15 @@ namespace olympia
 
         // Event to issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
-                CREATE_SPARTA_HANDLER(LSU, issueInst_)};
+                                              CREATE_SPARTA_HANDLER(LSU, issueInst_)};
 
-        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{&unit_event_set_, "replay_ready",
-                CREATE_SPARTA_HANDLER_WITH_DATA(LSU, replayReady_, LoadStoreInstInfoPtr)};
+        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{
+            &unit_event_set_, "replay_ready",
+            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, replayReady_, LoadStoreInstInfoPtr)};
 
-        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_append_ready_{&unit_event_set_, "append_ready",
-                CREATE_SPARTA_HANDLER_WITH_DATA(LSU, appendReady_, LoadStoreInstInfoPtr)};
+        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_append_ready_{
+            &unit_event_set_, "append_ready",
+            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, appendReady_, LoadStoreInstInfoPtr)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -221,13 +213,13 @@ namespace olympia
         void handleAddressCalculation_();
         // Handle MMU access request
         void handleMMULookupReq_();
-        void handleMMUReadyReq_(const MemoryAccessInfoPtr &memory_access_info_ptr);
-        void getAckFromMMU_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
+        void handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void getAckFromMMU_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
 
         // Handle cache access request
         void handleCacheLookupReq_();
-        void handleCacheReadyReq_(const MemoryAccessInfoPtr &memory_access_info_ptr);
-        void getAckFromCache_(const MemoryAccessInfoPtr &updated_memory_access_info_ptr);
+        void handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void getAckFromCache_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
 
         // Perform cache read
         void handleCacheRead_();
@@ -250,11 +242,11 @@ namespace olympia
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
 
-        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr &inst_ptr);
+        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
 
-        void allocateInstToIssueQueue_(const InstPtr &inst_ptr);
+        void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
 
-        bool allOlderStoresIssued_(const InstPtr &inst_ptr);
+        bool allOlderStoresIssued_(const InstPtr & inst_ptr);
 
         void readyDependentLoads_(const LoadStoreInstInfoPtr &);
 
@@ -289,55 +281,41 @@ namespace olympia
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);
 
         // Update issue priority after TLB reload
-        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &,
-                                                const bool = false);
+        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &, const bool = false);
 
         // Update issue priority after cache reload
-        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &,
-                                                  const bool = false);
+        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &, const bool = false);
 
         // Update issue priority after store instruction retires
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
 
-            // Flush instruction issue queue
-        template<typename Comp>
-        void flushIssueQueue_(const Comp &);
+        // Flush instruction issue queue
+        template <typename Comp> void flushIssueQueue_(const Comp &);
 
         // Flush load/store pipeline
-        template<typename Comp>
-        void flushLSPipeline_(const Comp &);
+        template <typename Comp> void flushLSPipeline_(const Comp &);
 
         // Counters
-        sparta::Counter lsu_insts_dispatched_{
-            getStatisticSet(), "lsu_insts_dispatched",
-            "Number of LSU instructions dispatched", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter stores_retired_{
-            getStatisticSet(), "stores_retired",
-            "Number of stores retired", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter lsu_insts_issued_{
-            getStatisticSet(), "lsu_insts_issued",
-            "Number of LSU instructions issued", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter replay_insts_{
-            getStatisticSet(), "replay_insts_",
-            "Number of Replay instructions issued", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter lsu_insts_completed_{
-            getStatisticSet(), "lsu_insts_completed",
-            "Number of LSU instructions completed", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter lsu_flushes_{
-            getStatisticSet(), "lsu_flushes",
-            "Number of instruction flushes at LSU", sparta::Counter::COUNT_NORMAL
-        };
+        sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",
+                                              "Number of LSU instructions dispatched",
+                                              sparta::Counter::COUNT_NORMAL};
+        sparta::Counter stores_retired_{getStatisticSet(), "stores_retired",
+                                        "Number of stores retired", sparta::Counter::COUNT_NORMAL};
+        sparta::Counter lsu_insts_issued_{getStatisticSet(), "lsu_insts_issued",
+                                          "Number of LSU instructions issued",
+                                          sparta::Counter::COUNT_NORMAL};
+        sparta::Counter replay_insts_{getStatisticSet(), "replay_insts_",
+                                      "Number of Replay instructions issued",
+                                      sparta::Counter::COUNT_NORMAL};
+        sparta::Counter lsu_insts_completed_{getStatisticSet(), "lsu_insts_completed",
+                                             "Number of LSU instructions completed",
+                                             sparta::Counter::COUNT_NORMAL};
+        sparta::Counter lsu_flushes_{getStatisticSet(), "lsu_flushes",
+                                     "Number of instruction flushes at LSU",
+                                     sparta::Counter::COUNT_NORMAL};
 
-        sparta::Counter biu_reqs_{
-            getStatisticSet(), "biu_reqs",
-            "Number of BIU reqs", sparta::Counter::COUNT_NORMAL
-        };
-
+        sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
+                                  sparta::Counter::COUNT_NORMAL};
 
         // When simulation is ending (error or not), this function
         // will be called
@@ -346,7 +324,6 @@ namespace olympia
         bool olderStoresExists_(const InstPtr & inst_ptr);
 
         friend class LSUTester;
-
     };
 
     class LSUTester;

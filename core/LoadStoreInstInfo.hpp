@@ -2,7 +2,8 @@
 
 #include "MemoryAccessInfo.hpp"
 
-namespace olympia {
+namespace olympia
+{
     class LoadStoreInstInfo
     {
       public:
@@ -10,11 +11,11 @@ namespace olympia {
         {
             HIGHEST = 0,
             __FIRST = HIGHEST,
-            CACHE_RELOAD,   // Receive mss ack, waiting for cache re-access
-            CACHE_PENDING,  // Wait for another outstanding miss finish
-            MMU_RELOAD,     // Receive for mss ack, waiting for mmu re-access
-            MMU_PENDING,    // Wait for another outstanding miss finish
-            NEW_DISP,       // Wait for new issue
+            CACHE_RELOAD,  // Receive mss ack, waiting for cache re-access
+            CACHE_PENDING, // Wait for another outstanding miss finish
+            MMU_RELOAD,    // Receive for mss ack, waiting for mmu re-access
+            MMU_PENDING,   // Wait for another outstanding miss finish
+            NEW_DISP,      // Wait for new issue
             LOWEST,
             NUM_OF_PRIORITIES,
             __LAST = NUM_OF_PRIORITIES
@@ -22,54 +23,46 @@ namespace olympia {
 
         enum class IssueState : std::uint32_t
         {
-            READY = 0,          // Ready to be issued
+            READY = 0, // Ready to be issued
             __FIRST = READY,
-            ISSUED,         // On the flight somewhere inside Load/Store Pipe
-            NOT_READY,      // Not ready to be issued
+            ISSUED,    // On the flight somewhere inside Load/Store Pipe
+            NOT_READY, // Not ready to be issued
             NUM_STATES,
             __LAST = NUM_STATES
         };
 
         LoadStoreInstInfo() = delete;
+
         LoadStoreInstInfo(const MemoryAccessInfoPtr & info_ptr) :
-                                                                  mem_access_info_ptr_(info_ptr),
-                                                                  rank_(IssuePriority::LOWEST),
-                                                                  state_(IssueState::NOT_READY){}
+            mem_access_info_ptr_(info_ptr),
+            rank_(IssuePriority::LOWEST),
+            state_(IssueState::NOT_READY)
+        {
+        }
 
         // This Inst pointer will act as one of the two portals to the Inst class
         // and we will use this pointer to query values from functions of Inst class
-        const InstPtr & getInstPtr() const {
-            return mem_access_info_ptr_->getInstPtr();
-        }
+        const InstPtr & getInstPtr() const { return mem_access_info_ptr_->getInstPtr(); }
 
-        // This MemoryAccessInfo pointer will act as one of the two portals to the MemoryAccesInfo class
-        // and we will use this pointer to query values from functions of MemoryAccessInfo class
-        const MemoryAccessInfoPtr & getMemoryAccessInfoPtr() const {
-            return mem_access_info_ptr_;
-        }
+        // This MemoryAccessInfo pointer will act as one of the two portals to the MemoryAccesInfo
+        // class and we will use this pointer to query values from functions of MemoryAccessInfo
+        // class
+        const MemoryAccessInfoPtr & getMemoryAccessInfoPtr() const { return mem_access_info_ptr_; }
 
         // This is a function which will be added in the SPARTA_ADDPAIRs API.
-        uint64_t getInstUniqueID() const {
-            const MemoryAccessInfoPtr &mem_access_info_ptr = getMemoryAccessInfoPtr();
+        uint64_t getInstUniqueID() const
+        {
+            const MemoryAccessInfoPtr & mem_access_info_ptr = getMemoryAccessInfoPtr();
             return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUniqueID();
         }
 
-        void setPriority(const IssuePriority & rank) {
-            rank_.setValue(rank);
-        }
+        void setPriority(const IssuePriority & rank) { rank_.setValue(rank); }
 
-        const IssuePriority & getPriority() const {
-            return rank_.getEnumValue();
-        }
+        const IssuePriority & getPriority() const { return rank_.getEnumValue(); }
 
-        void setState(const IssueState & state) {
-            state_.setValue(state);
-        }
+        void setState(const IssueState & state) { state_.setValue(state); }
 
-        const IssueState & getState() const {
-            return state_.getEnumValue();
-        }
-
+        const IssueState & getState() const { return state_.getEnumValue(); }
 
         bool isReady() const { return (getState() == IssueState::READY); }
 
@@ -77,7 +70,8 @@ namespace olympia {
 
         bool winArb(const LoadStoreInstInfoPtr & that) const
         {
-            if (that == nullptr) {
+            if (that == nullptr)
+            {
                 return true;
             }
 
@@ -90,7 +84,8 @@ namespace olympia {
             return mem_access_info_ptr_->getIssueQueueIterator();
         }
 
-        void setIssueQueueIterator(const LoadStoreInstIterator &iter){
+        void setIssueQueueIterator(const LoadStoreInstIterator & iter)
+        {
             mem_access_info_ptr_->setIssueQueueIterator(iter);
         }
 
@@ -104,31 +99,29 @@ namespace olympia {
             mem_access_info_ptr_->setReplayQueueIterator(iter);
         }
 
-        bool isInReadyQueue() const
-        {
-            return in_ready_queue_;
-        }
+        bool isInReadyQueue() const { return in_ready_queue_; }
 
-        void setInReadyQueue(bool inReadyQueue)
-        {
-            in_ready_queue_ = inReadyQueue;
-        }
+        void setInReadyQueue(bool inReadyQueue) { in_ready_queue_ = inReadyQueue; }
 
-        friend bool operator < (const LoadStoreInstInfoPtr &lhs, const LoadStoreInstInfoPtr &rhs) {
+        friend bool operator<(const LoadStoreInstInfoPtr & lhs, const LoadStoreInstInfoPtr & rhs)
+        {
             return lhs->getInstUniqueID() < rhs->getInstUniqueID();
         }
+
       private:
         MemoryAccessInfoPtr mem_access_info_ptr_;
         sparta::State<IssuePriority> rank_;
         sparta::State<IssueState> state_;
         bool in_ready_queue_;
-    };  // class LoadStoreInstInfo
+    }; // class LoadStoreInstInfo
 
     using LoadStoreInstInfoAllocator = sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo>;
 
-    inline std::ostream& operator<<(std::ostream& os,
-                                     const olympia::LoadStoreInstInfo::IssuePriority& rank){
-        switch(rank){
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LoadStoreInstInfo::IssuePriority & rank)
+    {
+        switch (rank)
+        {
         case LoadStoreInstInfo::IssuePriority::HIGHEST:
             os << "(highest)";
             break;
@@ -156,10 +149,12 @@ namespace olympia {
         return os;
     }
 
-    inline std::ostream& operator<<(std::ostream& os,
-                                     const olympia::LoadStoreInstInfo::IssueState& state){
+    inline std::ostream & operator<<(std::ostream & os,
+                                     const olympia::LoadStoreInstInfo::IssueState & state)
+    {
         // Print instruction issue state
-        switch(state){
+        switch (state)
+        {
         case LoadStoreInstInfo::IssueState::READY:
             os << "(ready)";
             break;
@@ -175,12 +170,10 @@ namespace olympia {
         return os;
     }
 
-    inline std::ostream & operator<<(std::ostream & os,
-                                     const olympia::LoadStoreInstInfo & ls_info)
+    inline std::ostream & operator<<(std::ostream & os, const olympia::LoadStoreInstInfo & ls_info)
     {
         os << "lsinfo: "
-           << "uid: "    << ls_info.getInstUniqueID()
-           << " pri:"    << ls_info.getPriority()
+           << "uid: " << ls_info.getInstUniqueID() << " pri:" << ls_info.getPriority()
            << " state: " << ls_info.getState();
         return os;
     }
@@ -191,4 +184,4 @@ namespace olympia {
         os << *ls_info;
         return os;
     }
-}
+} // namespace olympia

@@ -54,7 +54,7 @@ sparta_named_test(olympia_json_test_missing_opcodes olympia
 sparta_named_test(olympia_json_test_fp_transfers olympia
   --workload json_tests/fp_transfers.json)
 
-# Test the arches
+## Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")
 foreach(ARCH_FULL_PATH ${TEST_YAML})
   get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
@@ -62,4 +62,36 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   sparta_named_test(olympia_arch_${ARCH_NAME}_test olympia
     -i500K --workload traces/dhry_riscv.zstf
     --arch ${ARCH_NAME})
+endforeach()
+
+
+set(test_params_list)
+list(APPEND test_params_list "top.cpu.core0.lsu.params.mmu_lookup_stage_length 3")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.cache_lookup_stage_length 3")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.cache_read_stage_length 3")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.allow_speculative_load_exec false")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.allow_speculative_load_exec true")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.replay_issue_delay 5")
+
+# Used to set a custom name for each test
+set(index 1)
+foreach(ARCH_FULL_PATH ${TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  foreach(param ${test_params_list})
+    # Split string to get the parameter and the value for it
+    string(REPLACE " " ";" kv_pair ${param})
+    list(GET kv_pair 0 parameter)
+    list(GET kv_pair 1 value)
+
+    sparta_named_test(olympia_arch_${ARCH_NAME}_${index}_custom_dhry_test olympia
+            -i500K --workload traces/dhry_riscv.zstf -p ${parameter} ${value}
+            --arch ${ARCH_NAME})
+
+    sparta_named_test(olympia_arch_${ARCH_NAME}_${index}_custom_core olympia
+            -i500K --workload traces/core_riscv.zstf -p ${parameter} ${value}
+            --arch ${ARCH_NAME})
+
+    math(EXPR index "${index} + 1")
+  endforeach ()
 endforeach()

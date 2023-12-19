@@ -1,0 +1,38 @@
+[
+    {
+        "mnemonic": "lw",
+        "rs1": 5,
+        "rs2": 6,
+        "vaddr": "0xdeeebeef"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 5,
+        "rs2": 6,
+        "vaddr": "0xdeeebeef"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 5,
+        "rs2": 6,
+        "vaddr": "0xdeeebeef"
+    },
+    {
+        "mnemonic": "sw",
+        "rs1": 2,
+        "rs2": 5,
+        "vaddr" : "0xdeadbeef"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 4,
+        "rd":  1,
+        "vaddr" : "0xdeadbeef"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 3,
+        "rd":  4,
+        "vaddr" : "0xdeadbeef"
+    }
+]

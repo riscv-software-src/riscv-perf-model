@@ -25,42 +25,64 @@
  * */
 #include <map>
 
-class Prediction; // Prediction output
-class Update;     // Update input
-class Input;      // Prediction input
-
-
 template <class PredictionT, class UpdateT, class InputT>
-class BranchPredictor
+class BranchPredictorIF
 {
 public:
-    BrandPredictor() = default;
-    PredictionT & getPrediction(const InputT &);
-    void updatePredictor(UpdateT &);
-private:
-    // a map of branch PC to 2 bit staurating counter tracking branch history
-    std::map <uint64_t, uint8_t> branch_history_table_; // BHT
-    // a map of branch PC to target of the branch
-    std::map <uint64_t, uint8_t> branch_target_buffer_; // BTB
+    virtual PredictionT & getPrediction(const InputT &) = 0;
+    virtual void updatePredictor(UpdateT &) = 0;
 };
 
 // following class definitions are example inputs & outputs for a very simple branch
 // predictor
-class Prediction
+class DefaultPrediction
 {
 public:
+    // index of branch instruction in the fetch packet
+    // branch_idx can vary from 0 to (FETCH_WIDTH - 1)
+    uint32_t branch_idx;
+    // predicted target PC 
     uint64_t predictedPC;
 };
 
-class Update
-{
-public:
-    uint64_t predictedPC;
-    uint64_t correctedPC;
-};
-
-class Input
+class DefaultUpdate
 {
 public:
     uint64_t FetchPC;
+    uint32_t branch_idx;
+    uint64_t correctedPC;
+    bool actuallyTaken;
+};
+
+class DefaultInput
+{
+public:
+    // PC of first instruction of fetch packet
+    uint64_t FetchPC;
+};
+
+class BTBEntry 
+{
+public:
+    BTBEntry(uint32_t bidx, uint64_t predPC) :
+        branch_idx(bidx),
+        predictedPC(predPC)
+    {} 
+    uint32_t branch_idx;
+    uint64_t predictedPC; 
+};
+
+class SimpleBranchPredictor : public BranchPredictorIF<DefaultPrediction, DefaultUpdate, DefaultInput> 
+{
+    SimpleBranchPredictor(uint32_t max_fetch_insts) :
+        max_fetch_insts_(max_fetch_insts)
+    {}
+private:
+    // maximum number of instructions in a FetchPacket
+    uint32_t max_fetch_insts_; 
+    // a map of branch PC to 2 bit staurating counter tracking branch history
+    std::map <uint64_t, uint8_t> branch_history_table_; // BHT
+    // a map of branch PC to target of the branch
+    std::map <uint64_t, BTBEntry> branch_target_buffer_; // BTB
+    // 
 };

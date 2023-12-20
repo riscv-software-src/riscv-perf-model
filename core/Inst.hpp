@@ -39,6 +39,8 @@ namespace olympia
             struct Reg {
                 uint32_t val = 0;
                 core_types::RegFile rf = core_types::RegFile::RF_INVALID;
+                mavis::InstMetaData::OperandFieldID field_id = mavis::InstMetaData::OperandFieldID::NONE;
+                bool is_x0 = false;
             };
             using RegList = std::vector<Reg>;
 
@@ -112,6 +114,12 @@ namespace olympia
         }
 
         void setStatus(Status status) {
+            sparta_assert(status_state_ != status,
+                          "Status being set twice to the same value: "
+                          << status << " " << *this);
+            sparta_assert(status > status_state_,
+                          "Cannot go backwards in status.  Current: "
+                          << status_state_ << " New: " << status << *this);
             status_state_ = status;
             if(getStatus() == Status::COMPLETED) {
                 if(ev_retire_ != 0) {

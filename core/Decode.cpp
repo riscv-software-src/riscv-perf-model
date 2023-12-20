@@ -84,7 +84,7 @@ namespace olympia
             for(uint32_t i = 0; i < num_decode; ++i) {
                 const auto & inst = fetch_queue_.read(0);
                 insts->emplace_back(inst);
-                inst->setStatus(Inst::Status::RENAMED);
+                inst->setStatus(Inst::Status::DECODED);
 
                 ILOG("Decoded: " << inst);
 

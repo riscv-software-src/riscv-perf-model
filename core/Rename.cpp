@@ -40,17 +40,25 @@ namespace olympia
                 (CREATE_SPARTA_HANDLER_WITH_DATA(Rename, getAckFromROB_, InstPtr));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rename, setupRename_));
         auto setup_map = [this] (core_types::RegFile reg_file, const uint32_t num_renames) {
-                        uint32_t num_regs = 32;  // default risc-v ARF count
+                        const uint32_t num_regs = 32;  // default risc-v ARF count
                         sparta_assert(num_regs < num_renames); // ensure we have more renames than 32 because first 32 renames are allocated at the beginning
-                        // initialize the first 32 regs, i.e x1 -> PRF1
-                        for(uint32_t i = 0; i < num_regs; i++){
+                        // initialize the first 32 Float (31 for INT) regs, i.e x1 -> PRF1
+
+                        // for x0 for RF_INTEGER, we don't want to set a PRF for it because x0 is hardwired to 0
+                        uint32_t i = 0;
+                        if (reg_file == core_types::RegFile::RF_INTEGER){
+                            reference_counter_[reg_file].push_back(0);
+                            freelist_[reg_file].push(0);
+                            i = 1;
+                        }
+                        for(; i < num_regs; i++){
                             map_table_[reg_file][i] = i;
-                            // for the first 32 registers, we mark their reference_counters 1, as they are the
+                            // for the first 32 Float (31 INT) registers, we mark their reference_counters 1, as they are the
                             // current "valid" PRF for that ARF
                             reference_counter_[reg_file].push_back(1);
                         }
-                        for(uint32_t i = num_regs; i < num_renames; ++i) {
-                            freelist_[reg_file].push(i);
+                        for(uint32_t j = num_regs; j < num_renames; ++j) {
+                            freelist_[reg_file].push(j);
                             reference_counter_[reg_file].push_back(0);
                         }
                     };
@@ -93,9 +101,13 @@ namespace olympia
 
             // Initialize 32 scoreboard resources,
             // all ready.
+            uint32_t reg = 0;
+            if(rf == core_types::RegFile::RF_INTEGER){
+                reg = 1;
+            }
             constexpr uint32_t num_regs = 32;
             core_types::RegisterBitMask bits;
-            for(uint32_t reg = 0; reg < num_regs; ++reg) {
+            for(; reg < num_regs; ++reg) {
                 bits.set(reg);
             }
             scoreboards_[rf]->set(bits);
@@ -122,28 +134,38 @@ namespace olympia
         if(dests.size() > 0)
         {
             sparta_assert(dests.size() == 1); // we should only have one destination
-            auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
-            --reference_counter_[original_dest.rf][original_dest.val];
-            // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
-            // so we know it's free to be pushed to freelist if it has no other src references
-            if(reference_counter_[original_dest.rf][original_dest.val] <= 0){
-                freelist_[original_dest.rf].push(original_dest.val);
+            const auto dest = dests[0];
+            const auto rf  = olympia::coreutils::determineRegisterFile(dest);
+            const auto num = dest.field_value;
+            const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+            if (!is_x0)
+            {
+                auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+                --reference_counter_[original_dest.rf][original_dest.val];
+                // free previous PRF mapping if no references from srcs, there should be a new dest mapping for the ARF -> PRF
+                // so we know it's free to be pushed to freelist if it has no other src references
+                if(reference_counter_[original_dest.rf][original_dest.val] <= 0){
+                    freelist_[original_dest.rf].push(original_dest.val);
+                }
             }
         }
 
         const auto & srcs = inst_ptr->getRenameData().getSourceList();
-        // decrement reference for store instruction to data register
-        if(inst_ptr->isStoreInst()) {
+        // decrement reference to data register
+        if(inst_ptr->isLoadStoreInst()){
             const auto & data_reg = inst_ptr->getRenameData().getDataReg();
-            --reference_counter_[data_reg.rf][data_reg.val];
+            if(data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2 && data_reg.is_x0 != true){
+                --reference_counter_[data_reg.rf][data_reg.val];
+                if(reference_counter_[data_reg.rf][data_reg.val] <= 0){
+                    // freeing data register value, because it's not in the source list, so won't get caught below
+                    freelist_[data_reg.rf].push(data_reg.val);
+                }
+            }
         }
-
         // freeing references to PRF
-        for(const auto & src: srcs)
-        {
+        for(const auto & src: srcs){
             --reference_counter_[src.rf][src.val];
-            if(reference_counter_[src.rf][src.val] <= 0)
-            {
+            if(reference_counter_[src.rf][src.val] <= 0){
                 // freeing a register in the case where it still has references and has already been retired
                 // we wait until the last reference is retired to then free the prf
                 // any "valid" PRF that is the true mapping of an ARF will have a reference_counter of at least 1,
@@ -181,7 +203,12 @@ namespace olympia
             if(dests.size() > 0){
                 sparta_assert(dests.size() == 1); // we should only have one destination
                 const auto rf = olympia::coreutils::determineRegisterFile(dests[0]);
-                current_counts.cumulative_reg_counts[rf]++;
+                const auto num = dests[0].field_value;
+                const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+                // if dest is x0, we don't need to count it towards cumulative register count
+                if(!is_x0){
+                    current_counts.cumulative_reg_counts[rf]++;
+                }
             }
             uop_queue_.push(i);
             uop_queue_regcount_data_.push_back(current_counts);
@@ -268,18 +295,28 @@ namespace olympia
                 const auto & dests = renaming_inst->getDestOpInfoList();
                 for(const auto & src : srcs)
                 {
+                    const auto rf  = olympia::coreutils::determineRegisterFile(src);
+                    const auto num = src.field_value;
+                    // we check if src is RF_INTEGER x0, if so, we skip rename
+                    const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+                    if (is_x0) {
+                        // if x0 is a data operand for LSU op, we need to set it in DataReg when we check in LSU
+                        // so we can still check the scoreboard, which will always return back ready for x0
+                        if(src.field_id == mavis::InstMetaData::OperandFieldID::RS2){
+                            renaming_inst->getRenameData().setDataReg({num, rf, src.field_id, is_x0});
+                        }
+                        continue;
+                    }
                     // we check for load/store separately because address operand
                     // is always integer
-                    if(renaming_inst->isLoadStoreInst()) {
+                    else if(renaming_inst->isLoadStoreInst()) {
                         // check for data operand existing based on RS2 existence
                         // store data register info separately
                         if(src.field_id == mavis::InstMetaData::OperandFieldID::RS2) {
-                            const auto rf  = olympia::coreutils::determineRegisterFile(src);
-                            const auto num = src.field_value;
                             auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
                             const uint32_t prf = map_table_[rf][num];
                             reference_counter_[rf][prf]++;
-                            renaming_inst->getRenameData().setDataReg({prf, rf});
+                            renaming_inst->getRenameData().setDataReg({prf, rf, src.field_id, is_x0});
                             bitmask.set(prf);
 
                             ILOG("\tsetup store data register bit mask "
@@ -288,26 +325,23 @@ namespace olympia
                         }
                         else {
                             // address is always INTEGER
-                            const auto rf  = core_types::RF_INTEGER;
-                            const auto num = src.field_value;
-                            auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
-                            const uint32_t prf = map_table_[rf][num];
-                            reference_counter_[rf][prf]++;
-                            renaming_inst->getRenameData().setSource({prf, rf});
+                            const auto addr_rf  = core_types::RF_INTEGER;
+                            auto & bitmask = renaming_inst->getSrcRegisterBitMask(addr_rf);
+                            const uint32_t prf = map_table_[addr_rf][num];
+                            reference_counter_[addr_rf][prf]++;
+                            renaming_inst->getRenameData().setSource({prf, addr_rf, src.field_id});
                             bitmask.set(prf);
 
                             ILOG("\tsetup source register bit mask "
                                 << sparta::printBitSet(bitmask)
-                                << " for '" << rf << "' scoreboard");
+                                << " for '" << addr_rf << "' scoreboard");
                         }
                     }
                     else {
-                        const auto rf  = olympia::coreutils::determineRegisterFile(src);
-                        const auto num = src.field_value;
                         auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                         const uint32_t prf = map_table_[rf][num];
                         reference_counter_[rf][prf]++;
-                        renaming_inst->getRenameData().setSource({prf, rf});
+                        renaming_inst->getRenameData().setSource({prf, rf, src.field_id});
                         bitmask.set(prf);
 
                         ILOG("\tsetup source register bit mask "
@@ -320,23 +354,28 @@ namespace olympia
                 {
                     const auto rf  = olympia::coreutils::determineRegisterFile(dest);
                     const auto num = dest.field_value;
-                    auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
-                    const uint32_t prf = freelist_[rf].front();
-                    freelist_[rf].pop();
-                    renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf});
-                    map_table_[rf][num] = prf;
-                    // we increase reference_counter_ for destinations to mark them as "valid",
-                    // so the PRF in the reference_counter_ should have a value of 1
-                    // once a PRF reference_counter goes to 0, we know that the PRF isn't the "valid"
-                    // PRF for that ARF anymore and there are no sources referring to it
-                    // so we can push it to freelist
-                    reference_counter_[rf][prf]++;
-                    bitmask.set(prf);
-                    // clear scoreboard for the PRF we are allocating
-                    scoreboards_[rf]->clearBits(bitmask);
-                    ILOG("\tsetup destination register bit mask "
-                         << sparta::printBitSet(bitmask)
-                         << " for '" << rf << "' scoreboard");
+                    if (num == 0 && rf == core_types::RF_INTEGER) { 
+                        continue; 
+                    }
+                    else{
+                        auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
+                        const uint32_t prf = freelist_[rf].front();
+                        freelist_[rf].pop();
+                        renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf, dest.field_id});
+                        map_table_[rf][num] = prf;
+                        // we increase reference_counter_ for destinations to mark them as "valid",
+                        // so the PRF in the reference_counter_ should have a value of 1
+                        // once a PRF reference_counter goes to 0, we know that the PRF isn't the "valid"
+                        // PRF for that ARF anymore and there are no sources referring to it
+                        // so we can push it to freelist
+                        reference_counter_[rf][prf]++;
+                        bitmask.set(prf);
+                        // clear scoreboard for the PRF we are allocating
+                        scoreboards_[rf]->clearBits(bitmask);
+                        ILOG("\tsetup destination register bit mask "
+                            << sparta::printBitSet(bitmask)
+                            << " for '" << rf << "' scoreboard");
+                    }
                 }
                 // Remove it from uop queue
                 insts->emplace_back(uop_queue_.read(0));
@@ -355,5 +394,4 @@ namespace olympia
             ev_schedule_rename_.schedule(1);
         }
     }
-
 }

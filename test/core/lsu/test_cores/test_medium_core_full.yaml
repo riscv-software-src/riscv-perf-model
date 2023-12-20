@@ -1,0 +1,46 @@
+#
+# Set up the pipeline for a 3-wide machine
+#
+
+# Build on top of a small core
+
+top.cpu.core0:
+  fetch.params.num_to_fetch:   3
+  decode.params.num_to_decode: 3
+  rename.params.num_to_rename: 3
+  dispatch.params.num_to_dispatch: 3
+  rob.params.num_to_retire:    3
+  dcache.params:
+    l1_size_kb: 32
+
+top.cpu.core0.extension.core_extensions:
+  execution_topology:
+  [["alu", "3"],
+   ["fpu", "2"],
+   ["br",  "1"]]
+
+top.cpu.core0.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+    [["",     "alu0", "alu1", "alu2", "fpu0", "fpu1", "br0", "lsu"], 
+    ["alu0",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["alu1",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["alu2",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["fpu0",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["fpu1",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["br0",     "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["lsu",     "1",    "1",    "1",    "1",    "1",   "1",  "1"]]
+
+
+  float.params.latency_matrix: |
+    [["",     "alu0", "alu1", "alu2", "fpu0", "fpu1", "br0", "lsu"], 
+    ["alu0",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["alu1",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["alu2",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["fpu0",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["fpu1",    "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["br0",     "1",    "1",    "1",    "1",    "1",   "1",  "1"], 
+    ["lsu",     "1",    "1",    "1",    "1",    "1",   "1",  "1"]]
+

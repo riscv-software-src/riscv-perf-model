@@ -24,7 +24,7 @@ namespace core_test
         else if(test_type_ == "single")
         {
             mavis::ExtractorDirectInfo ex_info("add", {1, 2}, {3});
-            dinst = mavis_facade_->makeInstDirectly(ex_info, getClock());
+            dinst = mavis_facade_->makeInstDirectly(ex_info);
             dinst->setUniqueID(unique_id_++);
             inst_groups->emplace_back(dinst);
             --dut_credits_;
@@ -41,7 +41,7 @@ namespace core_test
             while(dut_credits_ > 0)
             {
                 mavis::ExtractorDirectInfo ex_info{"add", {inc_reg_num(inst_cnt_), inc_reg_num(inst_cnt_)}, {inst_cnt_}};
-                dinst = mavis_facade_->makeInstDirectly(ex_info, getClock());
+                dinst = mavis_facade_->makeInstDirectly(ex_info);
                 dinst->setUniqueID(unique_id_++);
                 inst_groups->emplace_back(dinst);
                 --dut_credits_;

@@ -171,6 +171,7 @@ namespace olympia
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
         // Opcode information
+        const auto &getOpcodeInfo() const { return opcode_info_; }
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
         std::string getDisasm()   const { return opcode_info_->dasmString(); }
         uint32_t    getOpCode()   const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }

@@ -91,6 +91,9 @@ int main(int argc, char **argv)
                 std::cerr << "ERROR: " << HEX8(opc1) << " or " << HEX8(opc2) << " is not decodable" << std::endl;
             }
 
+            std::cout << "Inst1: " << inst1 << std::endl;
+            std::cout << "Inst2: " << inst2 << std::endl;
+
             const auto & opcode_info_inst1 = inst1->getOpcodeInfo();
             const auto & opcode_info_inst2 = inst1->getOpcodeInfo();
             const auto & dest_op_mask      = opcode_info_inst1->getDestRegs();

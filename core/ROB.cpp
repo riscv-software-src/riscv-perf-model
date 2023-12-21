@@ -49,10 +49,16 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ROB, handleFlush_,
                                                                   FlushManager::FlushingCriteria));
 
-        // This event is ALWAYS scheduled, but it should not keep
-        // simulation continuing on.
+        // Do not allow this event to keep simulation alive
         ev_ensure_forward_progress_.setContinuing(false);
 
+        // Notify other components when ROB stops the simulation
+        rob_drained_notif_source_.reset(new sparta::NotificationSource<bool>(
+            this->getContainer(),
+            "rob_notif_channel",
+            "Notification channel for rob",
+            "rob_notif_channel"
+        ));
         // Send initial credits to anyone that cares.  Probably Dispatch.
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ROB, sendInitialCredits_));
     }
@@ -133,6 +139,7 @@ namespace olympia
                 // Will be true if the user provides a -i option
                 if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_))) {
                     rob_stopped_simulation_ = true;
+                    rob_drained_notif_source_->postNotification(true);
                     getScheduler()->stopRunning();
                     break;
                 }
@@ -151,6 +158,14 @@ namespace olympia
                     break;
                 }
 
+                // Check to see if this is the last instruction of the
+                // trace
+                if(ex_inst.getLast()) {
+                    rob_stopped_simulation_ = true;
+                    rob_drained_notif_source_->postNotification(true);
+                    // No need to stop the scheduler -- let simulation
+                    // drain normally.  Also, don't need to check forward progress
+                }
             }
             else {
                 break;

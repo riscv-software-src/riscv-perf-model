@@ -94,6 +94,9 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
+        node->getParent()->registerForNotification<bool, LSU, &LSU::onRobDrained_>(
+            this, "rob_notif_channel", false /* ROB maybe not be constructed yet */);
+
         ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
 
@@ -108,12 +111,25 @@ namespace olympia
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
 
+    void LSU::onRobDrained_(const bool & val) { retire_done_ = val; }
+
     LSU::~LSU()
     {
         DLOG(getContainer()->getLocation() << ": " << load_store_info_allocator_.getNumAllocated()
                                            << " LoadStoreInstInfo objects allocated/created");
         DLOG(getContainer()->getLocation() << ": " << memory_access_allocator_.getNumAllocated()
                                            << " MemoryAccessInfo objects allocated/created");
+    }
+
+    void LSU::onStartingTeardown_()
+    {
+        // If ROB has not stopped the simulation &
+        // the ldst has entries to process we should fail
+        if ((false == retire_done_) && (false == ldst_inst_queue_.empty()))
+        {
+            dumpDebugContent_(std::cerr);
+            sparta_assert(false, "Issue queue has pending instructions");
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -759,6 +775,15 @@ namespace olympia
         // This also guarantees that whenever an instruction issue event happens,
         // instruction issue arbitration should always succeed, even when flush happens.
         // Otherwise, assertion error is fired inside arbitrateInstIssue_()
+    }
+
+    void LSU::dumpDebugContent_(std::ostream & output) const
+    {
+        output << "LSU Contents" << std::endl;
+        for (const auto & entry : ldst_inst_queue_)
+        {
+            output << '\t' << entry << std::endl;
+        }
     }
 
     void LSU::replayReady_(const LoadStoreInstInfoPtr & replay_inst_ptr)

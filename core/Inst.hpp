@@ -136,12 +136,17 @@ namespace olympia
             return inst_arch_info_->getTargetPipe();
         }
 
+        // ROB handling -- mark this instruction as the oldest in the machine
         void setOldest(bool oldest, sparta::Scheduleable * rob_retire_event) {
             ev_retire_ = rob_retire_event;
             is_oldest_ = oldest;
         }
-
         bool isMarkedOldest() const { return is_oldest_; }
+
+        // Instruction trace/JSON generation -- mark instruction as
+        // last in trace/JSON file.
+        void setLast() { is_last_ = true; }
+        bool getLast() const { return is_last_; }
 
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
@@ -217,7 +222,8 @@ namespace olympia
 
         sparta::memory::addr_t inst_pc_       = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_  = 0; // Instruction's Target PC (for branches, loads/stores)
-        bool                   is_oldest_       = false;
+        bool                   is_oldest_     = false;
+        bool                   is_last_       = false;  // Is last intruction of trace
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?

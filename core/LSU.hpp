@@ -77,14 +77,18 @@ namespace olympia
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
 
+        bool retire_done_ = false;
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
+        using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
+
         using FlushCriteria = FlushManager::FlushingCriteria;
 
-        using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
+        void onRobDrained_(const bool & val);
 
       private:
         using ScoreboardViews =
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+
         ScoreboardViews scoreboard_views_;
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
@@ -190,7 +194,6 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
-
         // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
         void sendInitialCredits_();
 
@@ -229,6 +232,7 @@ namespace olympia
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
 
+        void dumpDebugContent_(std::ostream & output) const override final;
         // Instructions in the replay ready to issue
         void replayReady_(const LoadStoreInstInfoPtr &);
 
@@ -319,7 +323,7 @@ namespace olympia
 
         // When simulation is ending (error or not), this function
         // will be called
-        void onStartingTeardown_() override {}
+        void onStartingTeardown_() override;
 
         bool olderStoresExists_(const InstPtr & inst_ptr);
 

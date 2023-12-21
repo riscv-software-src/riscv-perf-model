@@ -90,11 +90,28 @@ int main(int argc, char **argv)
             if(nullptr == inst1 || nullptr == inst2) {
                 std::cerr << "ERROR: " << HEX8(opc1) << " or " << HEX8(opc2) << " is not decodable" << std::endl;
             }
-            const auto dest_op_list = inst1->getOpcodeInfo()->getIntDestRegs();
-            const auto src_op_list  = inst2->getOpcodeInfo()->getIntSourceRegs();
-            const auto overlaps = (dest_op_list | src_op_list);
-            if(overlaps.any()) {
-                std::cout << "They overlap: " << overlaps._Find_first() << std::endl;
+
+            const auto & opcode_info_inst1 = inst1->getOpcodeInfo();
+            const auto & opcode_info_inst2 = inst1->getOpcodeInfo();
+            const auto & dest_op_mask      = opcode_info_inst1->getDestRegs();
+            const auto & src_op_mask       = opcode_info_inst2->getSourceRegs();
+            const auto overlaps = (dest_op_mask | src_op_mask);
+            if(overlaps.any())
+            {
+                const auto overlap_val = overlaps._Find_first();
+                std::cout << "They **might** overlap on register: " << overlap_val << std::endl;
+
+                // const auto & dest_op_list = inst1->getDestOpInfoList();
+                // const auto & src_op_list  = inst2->getSourceOpInfoList();
+
+                if(opcode_info_inst1->numIntDestRegs()   != 0 &&
+                   opcode_info_inst2->numIntSourceRegs() != 0)
+                {
+                    std::cout << "Strong match on integer dest -> integer source" << std::endl;
+                }
+                else {
+                    std::cout << "Doubtful match" << std::endl;
+                }
             }
         }
 

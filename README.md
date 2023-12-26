@@ -90,7 +90,7 @@ the work isn't being done!
 
 When developing on Olympia, please adhere to the documented [Coding
 Style
-Guidelines](https://github.com/riscv-software-src/riscv-perf-model/blob/knutel/coding_style_guidelines/CodingStyle.md).
+Guidelines](./CodingStyle.md).
 
 ## Example Usage
 

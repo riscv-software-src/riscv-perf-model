@@ -89,8 +89,7 @@ section for areas of needed contributions.  If there is no Assignee,
 the work isn't being done!
 
 When developing on Olympia, please adhere to the documented [Coding
-Style
-Guidelines](./CodingStyle.md).
+Style Guidelines](./CodingStyle.md).
 
 ## Example Usage
 

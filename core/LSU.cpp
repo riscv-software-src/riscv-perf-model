@@ -740,14 +740,10 @@ namespace olympia
     {
         ILOG("Start Flushing!");
 
-        // Flush criteria setup
-        auto flush = [criteria](const uint64_t & id) -> bool
-        { return id >= static_cast<uint64_t>(criteria); };
-
         lsu_flushes_++;
 
         // Flush load/store pipeline entry
-        flushLSPipeline_(flush);
+        flushLSPipeline_(criteria);
 
         // Mark flushed flag for unfinished speculative MMU access
         if (mmu_busy_)
@@ -762,7 +758,16 @@ namespace olympia
         }
 
         // Flush instruction issue queue
-        flushIssueQueue_(flush);
+        flushIssueQueue_(criteria);
+        flushReplayBuffer_(criteria);
+        flushReadyQueue_(criteria);
+
+        // Cancel replay events
+        auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool {
+            return criteria.flush(ldst_info_ptr->getInstPtr());
+        };
+        uev_append_ready_.cancelIf(flush);
+        uev_replay_ready_.cancelIf(flush);
 
         // Cancel issue event already scheduled if no ready-to-issue inst left after flush
         if (!isReadyToIssueInsts_())
@@ -1236,27 +1241,32 @@ namespace olympia
     }
 
     // Flush instruction issue queue
-    template <typename Comp> void LSU::flushIssueQueue_(const Comp & flush)
+    void LSU::flushIssueQueue_(const FlushCriteria & criteria)
     {
         uint32_t credits_to_send = 0;
 
         auto iter = ldst_inst_queue_.begin();
-        while (iter != ldst_inst_queue_.end())
-        {
-            auto inst_id = (*iter)->getInstPtr()->getUniqueID();
+        while (iter != ldst_inst_queue_.end()) {
+            auto inst_ptr = (*iter)->getInstPtr();
 
             auto delete_iter = iter++;
 
-            if (flush(inst_id))
-            {
+            if (criteria.flush(inst_ptr)) {
                 ldst_inst_queue_.erase(delete_iter);
+
+                // Clear any scoreboard callback
+                std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+                for(const auto rf : reg_files)
+                {
+                    scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
+                }
 
                 // NOTE:
                 // We cannot increment iter after erase because it's already invalidated by then
 
                 ++credits_to_send;
 
-                ILOG("Flush Instruction ID: " << inst_id);
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
 
@@ -1269,23 +1279,51 @@ namespace olympia
     }
 
     // Flush load/store pipe
-    template <typename Comp> void LSU::flushLSPipeline_(const Comp & flush)
+    void LSU::flushLSPipeline_(const FlushCriteria & criteria)
     {
         uint32_t stage_id = 0;
-        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++)
-        {
-            // If the pipe stage is already invalid, no need to flush
-            if (!iter.isValid())
-            {
+        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++) {
+            // If the pipe stage is already invalid, no need to criteria
+            if (!iter.isValid()) {
                 continue;
             }
 
-            auto inst_id = (*iter)->getInstPtr()->getUniqueID();
-            if (flush(inst_id))
-            {
+            auto inst_ptr = (*iter)->getInstPtr();
+            if (criteria.flush(inst_ptr)) {
                 ldst_pipeline_.flushStage(iter);
 
-                ILOG("Flush Pipeline Stage[" << stage_id << "], Instruction ID: " << inst_id);
+                ILOG("Flush Pipeline Stage[" << stage_id
+                     << "], Instruction ID: " << inst_ptr->getUniqueID());
+            }
+        }
+    }
+
+    void LSU::flushReadyQueue_(const FlushCriteria & criteria)
+    {
+        auto iter = ready_queue_.begin();
+        while (iter != ready_queue_.end()) {
+            auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
+            if (criteria.flush(inst_ptr)) {
+                ready_queue_.erase(delete_iter);
+                ILOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+            }
+        }
+    }
+
+    void LSU::flushReplayBuffer_(const FlushCriteria & criteria)
+    {
+        auto iter = replay_buffer_.begin();
+        while (iter != replay_buffer_.end()) {
+            auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
+            if (criteria.flush(inst_ptr)) {
+                replay_buffer_.erase(delete_iter);
+                ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
     }

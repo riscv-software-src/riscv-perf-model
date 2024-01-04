@@ -259,11 +259,7 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         },
         {
             "cpu.core*.rob.ports.out_retire_flush",
-            "cpu.core*.flushmanager.ports.in_retire_flush"
-        },
-        {
-            "cpu.core*.rob.ports.out_fetch_flush_redirect",
-            "cpu.core*.flushmanager.ports.in_fetch_flush_redirect"
+            "cpu.core*.flushmanager.ports.in_flush_request"
         },
         {
             "cpu.core*.rob.ports.out_rob_retire_ack",
@@ -274,27 +270,35 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.rename.ports.in_rename_retire_ack"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.dispatch.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.decode.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_lower",
+            "cpu.core*.decode.ports.in_reorder_flush"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.rename.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.rob.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.lsu.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_fetch_flush_redirect",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
+            "cpu.core*.fetch.ports.in_fetch_flush_redirect"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_lower",
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
         }
     };
@@ -344,8 +348,14 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                 // Bind flushing
                 const std::string exe_flush_in =
                     core_node + ".execute." +  unit_name + ".ports.in_reorder_flush";;
-                const std::string flush_manager = flushmanager_ports + ".out_retire_flush";
+                const std::string flush_manager = flushmanager_ports + ".out_flush_upper";
                 bind_ports(exe_flush_in, flush_manager);
+
+                // Bind flush requests
+                const std::string exe_flush_out =
+                    core_node + ".execute." +  unit_name + ".ports.out_execute_flush";;
+                const std::string flush_manager_in = flushmanager_ports + ".in_flush_request";
+                bind_ports(exe_flush_out, flush_manager_in);
             }
         }
     }

@@ -68,6 +68,14 @@ namespace olympia
     // Callbacks
     void ExecutePipe::getInstsFromDispatch_(const InstPtr & ex_inst)
     {
+        sparta_assert(ex_inst->getStatus() == Inst::Status::DISPATCHED, "Bad instruction status: " << ex_inst);
+        appendIssueQueue_(ex_inst);
+        handleOperandIssueCheck_(ex_inst);
+    }
+
+        // Callback from Scoreboard to inform Operand Readiness
+    void ExecutePipe::handleOperandIssueCheck_(const InstPtr & ex_inst)
+    {
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
         if(scoreboard_views_[reg_file_]->isSet(src_bits))
@@ -106,7 +114,7 @@ namespace olympia
                 registerReadyCallback(src_bits, ex_inst->getUniqueID(),
                                       [this, ex_inst](const sparta::Scoreboard::RegisterBitMask&)
                                       {
-                                          this->getInstsFromDispatch_(ex_inst);
+                                          this->handleOperandIssueCheck_(ex_inst);
                                       });
             ILOG("Instruction NOT ready: " << ex_inst << " Bits needed:" << sparta::printBitSet(src_bits));
         }
@@ -133,7 +141,8 @@ namespace olympia
         complete_inst_.preparePayload(ex_inst_ptr)->schedule(exe_time);
         // Mark the alu as busy
         unit_busy_ = true;
-        // Pop the insturction from the scheduler and send a credit back to dispatch
+        // Pop the insturction from the ready queue and send a credit back to dispatch
+        popIssueQueue_(ex_inst_ptr);
         ready_queue_.pop_front();
         out_scheduler_credits_.send(1, 0);
     }
@@ -186,37 +195,84 @@ namespace olympia
     {
         ILOG("Got flush for criteria: " << criteria);
 
-        // Flush instructions in the ready queue
-        ReadyQueue::iterator it = ready_queue_.begin();
+        // Flush instructions in the issue queue
         uint32_t credits_to_send = 0;
-        while(it != ready_queue_.end()) {
-            if((*it)->getUniqueID() >= uint64_t(criteria)) {
-                ready_queue_.erase(it++);
+
+        auto iter = issue_queue_.begin();
+        while (iter != issue_queue_.end())
+        {
+            auto delete_iter = iter++;
+
+            auto inst_ptr = *delete_iter;
+
+            // Remove flushed instruction from issue queue and clear scoreboard callbacks
+            if (criteria.flush(inst_ptr))
+            {
+                issue_queue_.erase(delete_iter);
+
+                scoreboard_views_[reg_file_]->clearCallbacks(inst_ptr->getUniqueID());
+
                 ++credits_to_send;
-            }
-            else {
-                ++it;
+
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
+
         if(credits_to_send) {
             out_scheduler_credits_.send(credits_to_send, 0);
+
+            ILOG("Flush " << credits_to_send << " instructions in issue queue!");
         }
+
+        // Flush instructions in the ready queue
+        auto flush = [criteria](const InstPtr & inst) -> bool {
+            return criteria.flush(inst);
+        };
+        ready_queue_.erase(std::remove_if(ready_queue_.begin(),
+                                          ready_queue_.end(),
+                                          flush),
+                           ready_queue_.end());
 
         // Cancel outstanding instructions awaiting completion and
         // instructions on their way to issue
-        auto cancel_critera = [criteria](const InstPtr & inst) -> bool {
-            if(inst->getUniqueID() >= uint64_t(criteria)) {
-                return true;
-            }
-            return false;
-        };
-        complete_inst_.cancelIf(cancel_critera);
-        issue_inst_.cancel();
-
+        complete_inst_.cancelIf(flush);
         if(complete_inst_.getNumOutstandingEvents() == 0) {
             unit_busy_ = false;
             collected_inst_.closeRecord();
         }
+
+        if (ready_queue_.empty())
+        {
+            issue_inst_.cancel();
+        }
+
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Regular Function/Subroutine Call
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // Append instruction into issue queue
+    void ExecutePipe::appendIssueQueue_(const InstPtr & inst_ptr)
+    {
+        sparta_assert(issue_queue_.size() < scheduler_size_,
+                        "Appending issue queue causes overflows!");
+
+        issue_queue_.emplace_back(inst_ptr);
+    }
+
+    // Pop completed instruction out of issue queue
+    void ExecutePipe::popIssueQueue_(const InstPtr & inst_ptr)
+    {
+        // Look for the instruction to be completed, and remove it from issue queue
+        for (auto iter = issue_queue_.begin(); iter != issue_queue_.end(); iter++) {
+            if (*iter == inst_ptr) {
+                issue_queue_.erase(iter);
+                return;
+            }
+        }
+        sparta_assert(false, "Attempt to complete instruction no longer exiting in issue queue!");
+    }
+
 
 }

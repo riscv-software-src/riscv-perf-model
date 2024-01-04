@@ -294,10 +294,16 @@ namespace olympia
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
 
         // Flush instruction issue queue
-        template <typename Comp> void flushIssueQueue_(const Comp &);
+        void flushIssueQueue_(const FlushCriteria &);
 
         // Flush load/store pipeline
-        template <typename Comp> void flushLSPipeline_(const Comp &);
+        void flushLSPipeline_(const FlushCriteria &);
+
+        // Flush Ready Queue
+        void flushReadyQueue_(const FlushCriteria &);
+
+        // Flush Replay Buffer
+        void flushReplayBuffer_(const FlushCriteria &);
 
         // Counters
         sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",

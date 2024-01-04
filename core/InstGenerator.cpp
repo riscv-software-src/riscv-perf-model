@@ -52,6 +52,10 @@ namespace olympia
         return (curr_inst_index_ == n_insts_);
     }
 
+    void JSONInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
+    {
+    }
+
     InstPtr JSONInstGenerator::getNextInst(const sparta::Clock * clk)
     {
         if(SPARTA_EXPECT_FALSE(isDone())) {
@@ -150,6 +154,18 @@ namespace olympia
     bool TraceInstGenerator::isDone() const {
         return next_it_ == reader_->end();
     }
+
+    void TraceInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
+    {
+        next_it_ = inst_ptr->getSTFIterator();
+        program_id_ = inst_ptr->getProgramID();
+        if (skip)
+        {
+            ++next_it_;
+            ++program_id_;
+        }
+    }
+
     InstPtr TraceInstGenerator::getNextInst(const sparta::Clock * clk)
     {
         if(SPARTA_EXPECT_FALSE(isDone())) {
@@ -162,7 +178,8 @@ namespace olympia
             InstPtr inst = mavis_facade_->makeInst(opcode, clk);
             inst->setPC(next_it_->pc());
             inst->setUniqueID(++unique_id_);
-            inst->setProgramID(unique_id_);
+            inst->setProgramID(program_id_++);
+            inst->setSTFIterator(next_it_);
             if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
             {
                 using VectorAddrType = std::vector<sparta::memory::addr_t>;
@@ -175,6 +192,11 @@ namespace olympia
                 inst->setTargetVAddr(addrs.front());
                 //For misaligns, more than 1 address is provided
                 //inst->setVAddrVector(std::move(addrs));
+            }
+            if (next_it_->isBranch())
+            {
+                inst->setTakenBranch(next_it_->isTakenBranch());
+                inst->setTargetVAddr(next_it_->branchTarget());
             }
             ++next_it_;
             if(isDone()) {

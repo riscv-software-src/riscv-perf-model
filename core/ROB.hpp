@@ -91,16 +91,18 @@ namespace olympia
         // buffer, the machine probably has a lock up
         bool rob_stopped_simulation_{false};
 
+        // Track a program ID to ensure the trace stream matches
+        // at retirement.
+        uint64_t expected_program_id_ = 1;
+
         // Ports used by the ROB
         sparta::DataInPort<InstGroupPtr> in_reorder_buffer_write_{&unit_port_set_, "in_reorder_buffer_write", 1};
         sparta::DataOutPort<uint32_t> out_reorder_buffer_credits_{&unit_port_set_, "out_reorder_buffer_credits"};
         sparta::DataInPort<bool>      in_oldest_completed_       {&unit_port_set_, "in_reorder_oldest_completed"};
         sparta::DataOutPort<FlushManager::FlushingCriteria> out_retire_flush_ {&unit_port_set_, "out_retire_flush"};
-        sparta::DataOutPort<uint64_t> out_fetch_flush_redirect_  {&unit_port_set_, "out_fetch_flush_redirect"};
-
         // UPDATE:
-        sparta::DataOutPort<InstPtr> out_rob_retire_ack_ {&unit_port_set_, "out_rob_retire_ack"};
-        sparta::DataOutPort<InstPtr> out_rob_retire_ack_rename_ {&unit_port_set_, "out_rob_retire_ack_rename"};
+        sparta::DataOutPort<InstPtr> out_rob_retire_ack_         {&unit_port_set_, "out_rob_retire_ack"};
+        sparta::DataOutPort<InstPtr> out_rob_retire_ack_rename_  {&unit_port_set_, "out_rob_retire_ack_rename"};
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_

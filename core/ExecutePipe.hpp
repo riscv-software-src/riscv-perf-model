@@ -71,10 +71,13 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_scheduler_credits_{&unit_port_set_, "out_scheduler_credits"};
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataOutPort<FlushManager::FlushingCriteria> out_execute_flush_
+            {&unit_port_set_, "out_execute_flush"};
 
         // Ready queue
         typedef std::list<InstPtr> ReadyQueue;
         ReadyQueue  ready_queue_;
+        ReadyQueue  issue_queue_;
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
@@ -119,11 +122,23 @@ namespace olympia
         void issueInst_();
         void getInstsFromDispatch_(const InstPtr&);
 
+        // Callback from Scoreboard to inform Operand Readiness
+        void handleOperandIssueCheck_(const InstPtr &);
+
         // Used to complete the inst in the FPU
         void completeInst_(const InstPtr&);
 
         // Used to flush the ALU
-        void flushInst_(const FlushManager::FlushingCriteria & criteria);
+        void flushInst_(const FlushManager::FlushingCriteria &);
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Regular Function/Subroutine Call
+
+        // Append new instruction into issue queue
+        void appendIssueQueue_(const InstPtr &);
+
+        // Pop completed instruction out of issue queue
+        void popIssueQueue_(const InstPtr &);
 
         // Friend class used in rename testing
         friend class ExecutePipeTester;

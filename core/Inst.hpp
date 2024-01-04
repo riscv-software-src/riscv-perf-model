@@ -211,6 +211,7 @@ namespace olympia
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
         bool        isTransfer() const     { return is_transfer_; }
+        bool        isTakenBranch() const  { return is_taken_branch_; }
 
         bool isBranch() const {
             return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH);
@@ -218,11 +219,27 @@ namespace olympia
         bool isCondBranch() const {
             return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL);
         }
-        // Call is JAL/JALR with rd as x1/x5 and rs1 != rd
-        // Return is a JALR with rs1 as x1/x5 and rd != rs1
-        bool        isCall() const         { return false; } // TODO Implement
-        bool        isReturn() const       { return false; } // TODO Implement
-        bool        isTakenBranch() const  { return is_taken_branch_; }
+
+        bool isCall() const {
+            if (opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::JAL) ||
+                opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::JALR)) {
+                const int dest = opcode_info_->getDestOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RD);
+                return miscutils::isOneOf(dest, 1, 5);
+            }
+            return false;
+        }
+
+        bool isReturn() const {
+            if (opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::JALR)) {
+                const int dest = opcode_info_->getDestOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RD);
+                const int src = opcode_info_->getSourceOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RS1);
+                if (dest != src) {
+                    return miscutils::isOneOf(src, 1, 5);
+                }
+            }
+            return false;
+        }
+
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {

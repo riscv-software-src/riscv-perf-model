@@ -43,20 +43,21 @@ namespace olympia
     {
     public:
 
-        enum class FlushEvent : std::uint16_t {
+        enum class FlushCause : std::uint16_t {
             TRAP = 0,
             __FIRST = TRAP,
             MISPREDICTION,
             TARGET_MISPREDICTION,
             MISFETCH,
             POST_SYNC,
+            UKNOWN,
             __LAST
         };
 
         class FlushingCriteria
         {
         public:
-            FlushingCriteria(FlushEvent cause, InstPtr inst_ptr) :
+            FlushingCriteria(FlushCause cause, InstPtr inst_ptr) :
                 cause_(cause),
                 inst_ptr_(inst_ptr) {}
 
@@ -64,17 +65,17 @@ namespace olympia
             FlushingCriteria(const FlushingCriteria &rhs) = default;
             FlushingCriteria &operator=(const FlushingCriteria &rhs) = default;
 
-            FlushEvent getCause() const        { return cause_; } // TODO FlushEvent -> FlushCause
+            FlushCause getCause() const        { return cause_; }
             const InstPtr & getInstPtr() const { return inst_ptr_; }
 
             bool isInclusiveFlush() const
             {
-                static const std::map<FlushEvent, bool> inclusive_flush_map = {
-                    {FlushEvent::TRAP,                 true},
-                    {FlushEvent::MISFETCH,             true},
-                    {FlushEvent::MISPREDICTION,        false},
-                    {FlushEvent::TARGET_MISPREDICTION, false},
-                    {FlushEvent::POST_SYNC,            false}
+                static const std::map<FlushCause, bool> inclusive_flush_map = {
+                    {FlushCause::TRAP,                 true},
+                    {FlushCause::MISFETCH,             true},
+                    {FlushCause::MISPREDICTION,        false},
+                    {FlushCause::TARGET_MISPREDICTION, false},
+                    {FlushCause::POST_SYNC,            false}
                 };
                 if(auto match = inclusive_flush_map.find(cause_); match != inclusive_flush_map.end()) {
                     return match->second;
@@ -85,7 +86,7 @@ namespace olympia
 
             bool isLowerPipeFlush() const
             {
-                return cause_ == FlushEvent::MISFETCH;
+                return cause_ == FlushCause::MISFETCH;
             }
 
             bool flush(const InstPtr& other) const
@@ -96,7 +97,7 @@ namespace olympia
             }
 
         private:
-            FlushEvent cause_;
+            FlushCause cause_ = FlushCause::UKNOWN;
             InstPtr inst_ptr_;
         };
 
@@ -184,25 +185,28 @@ namespace olympia
     };
 
 
-    inline std::ostream & operator<<(std::ostream & os, const FlushManager::FlushEvent & event) {
-        switch(event) {
-            case FlushManager::FlushEvent::TRAP:
+    inline std::ostream & operator<<(std::ostream & os, const FlushManager::FlushCause & cause) {
+        switch(cause) {
+            case FlushManager::FlushCause::TRAP:
                 os << "TRAP";
                 break;
-            case FlushManager::FlushEvent::MISPREDICTION:
+            case FlushManager::FlushCause::MISPREDICTION:
                 os << "MISPREDICTION";
                 break;
-            case FlushManager::FlushEvent::TARGET_MISPREDICTION:
+            case FlushManager::FlushCause::TARGET_MISPREDICTION:
                 os << "TARGET_MISPREDICTION";
                 break;
-            case FlushManager::FlushEvent::MISFETCH:
+            case FlushManager::FlushCause::MISFETCH:
                 os << "MISFETCH";
                 break;
-            case FlushManager::FlushEvent::POST_SYNC:
+            case FlushManager::FlushCause::POST_SYNC:
                 os << "POST_SYNC";
                 break;
-            case FlushManager::FlushEvent::__LAST:
-                throw sparta::SpartaException("__LAST cannot be a valid enum event state.");
+            case FlushManager::FlushCause::UKNOWN:
+                os << "UKNOWN";
+                break;
+            case FlushManager::FlushCause::__LAST:
+                throw sparta::SpartaException("__LAST cannot be a valid enum state.");
         }
         return os;
     }

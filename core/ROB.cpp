@@ -173,7 +173,7 @@ namespace olympia
                 {
                     ILOG("Instigating flush... " << ex_inst);
 
-                    FlushManager::FlushingCriteria criteria(FlushManager::FlushEvent::POST_SYNC, ex_inst_ptr);
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst_ptr);
                     out_retire_flush_.send(criteria);
 
 

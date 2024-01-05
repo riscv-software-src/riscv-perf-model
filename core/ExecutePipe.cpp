@@ -43,7 +43,7 @@ namespace olympia
         // Complete should come before issue because it schedules issue with a 0 cycle delay
         // issue should always schedule complete with a non-zero delay (which corresponds to the
         // insturction latency)
-        complete_inst_ >> issue_inst_;
+        execute_inst_ >> issue_inst_;
 
         ILOG("ExecutePipe construct: #" << node->getGroupIdx());
 
@@ -138,7 +138,7 @@ namespace olympia
 
         ++total_insts_issued_;
         // Mark the instruction complete later...
-        complete_inst_.preparePayload(ex_inst_ptr)->schedule(exe_time);
+        execute_inst_.preparePayload(ex_inst_ptr)->schedule(exe_time);
         // Mark the alu as busy
         unit_busy_ = true;
         // Pop the insturction from the ready queue and send a credit back to dispatch
@@ -148,10 +148,9 @@ namespace olympia
     }
 
     // Called by the scheduler, scheduled by complete_inst_.
-    void ExecutePipe::completeInst_(const InstPtr & ex_inst)
+    void ExecutePipe::executeInst_(const InstPtr & ex_inst)
     {
-        ex_inst->setStatus(Inst::Status::COMPLETED);
-        ILOG("Completing inst: " << ex_inst);
+        ILOG("Executed inst: " << ex_inst);
 
         // set scoreboard
         if(SPARTA_EXPECT_FALSE(ex_inst->isTransfer()))
@@ -189,6 +188,17 @@ namespace olympia
         if (ready_queue_.size() > 0) {
             issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
+
+        // Schedule completion
+        complete_inst_.preparePayload(ex_inst)->schedule(1);
+
+    }
+
+    // Called by the scheduler, scheduled by complete_inst_.
+    void ExecutePipe::completeInst_(const InstPtr & ex_inst)
+    {
+        ex_inst->setStatus(Inst::Status::COMPLETED);
+        ILOG("Completing inst: " << ex_inst);
     }
 
     void ExecutePipe::flushInst_(const FlushManager::FlushingCriteria & criteria)
@@ -198,10 +208,10 @@ namespace olympia
         // Flush instructions in the issue queue
         uint32_t credits_to_send = 0;
 
-        auto iter = issue_queue_.begin();
-        while (iter != issue_queue_.end())
+        auto issue_queue_iter = issue_queue_.begin();
+        while (issue_queue_iter != issue_queue_.end())
         {
-            auto delete_iter = iter++;
+            auto delete_iter = issue_queue_iter++;
 
             auto inst_ptr = *delete_iter;
 
@@ -214,7 +224,7 @@ namespace olympia
 
                 ++credits_to_send;
 
-                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID() << " from issue queue");
             }
         }
 
@@ -225,27 +235,34 @@ namespace olympia
         }
 
         // Flush instructions in the ready queue
-        auto flush = [criteria](const InstPtr & inst) -> bool {
-            return criteria.flush(inst);
-        };
-        ready_queue_.erase(std::remove_if(ready_queue_.begin(),
-                                          ready_queue_.end(),
-                                          flush),
-                           ready_queue_.end());
+        auto ready_queue_iter = ready_queue_.begin();
+        while (ready_queue_iter != ready_queue_.end())
+        {
+            auto delete_iter = ready_queue_iter++;
+            auto inst_ptr = *delete_iter;
+            if (criteria.flush(inst_ptr))
+            {
+                ready_queue_.erase(delete_iter);
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID() << " from ready queue");
+            }
+        }
 
         // Cancel outstanding instructions awaiting completion and
         // instructions on their way to issue
+        auto flush = [criteria](const InstPtr & inst) -> bool {
+            return criteria.flush(inst);
+        };
+        issue_inst_.cancel();
         complete_inst_.cancelIf(flush);
-        if(complete_inst_.getNumOutstandingEvents() == 0) {
+        execute_inst_.cancelIf(flush);
+        if(execute_inst_.getNumOutstandingEvents() == 0) {
             unit_busy_ = false;
             collected_inst_.closeRecord();
+            if (!ready_queue_.empty()) {
+                // issue non-flushed instructions
+                issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
-
-        if (ready_queue_.empty())
-        {
-            issue_inst_.cancel();
         }
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////

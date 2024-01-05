@@ -95,9 +95,12 @@ namespace olympia
         ready_queue_collector_ {getContainer(), "scheduler_queue",
                 &ready_queue_, scheduler_size_};
 
-        // Events used to issue and complete the instruction
+        // Events used to issue, execute and complete the instruction
         sparta::UniqueEvent<> issue_inst_{&unit_event_set_, getName() + "_issue_inst",
                 CREATE_SPARTA_HANDLER(ExecutePipe, issueInst_)};
+        sparta::PayloadEvent<InstPtr> execute_inst_{
+            &unit_event_set_, getName() + "_execute_inst",
+            CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, executeInst_, InstPtr)};
         sparta::PayloadEvent<InstPtr> complete_inst_{
             &unit_event_set_, getName() + "_complete_inst",
             CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, completeInst_, InstPtr)};
@@ -124,6 +127,9 @@ namespace olympia
 
         // Callback from Scoreboard to inform Operand Readiness
         void handleOperandIssueCheck_(const InstPtr &);
+
+        // Write result to registers
+        void executeInst_(const InstPtr&);
 
         // Used to complete the inst in the FPU
         void completeInst_(const InstPtr&);

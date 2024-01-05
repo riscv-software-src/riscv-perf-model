@@ -385,11 +385,12 @@ namespace olympia
     {
         ILOG("MMU rehandling event is scheduled! " << memory_access_info_ptr);
         const auto & inst_ptr = memory_access_info_ptr->getInstPtr();
-        if (mmu_pending_inst_flushed)
+
+        // Update issue priority & Schedule an instruction (re-)issue event
+        updateIssuePriorityAfterTLBReload_(memory_access_info_ptr);
+
+        if (inst_ptr->getFlushedStatus())
         {
-            mmu_pending_inst_flushed = false;
-            // Update issue priority & Schedule an instruction (re-)issue event
-            updateIssuePriorityAfterTLBReload_(memory_access_info_ptr, true);
             if (isReadyToIssueInsts_())
             {
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -397,7 +398,6 @@ namespace olympia
             return;
         }
 
-        updateIssuePriorityAfterTLBReload_(memory_access_info_ptr);
         removeInstFromReplayQueue_(inst_ptr);
 
         if (isReadyToIssueInsts_())
@@ -514,15 +514,13 @@ namespace olympia
     void LSU::handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         auto inst_ptr = memory_access_info_ptr->getInstPtr();
-        if (cache_pending_inst_flushed_)
+        if (inst_ptr->getFlushedStatus())
         {
-            cache_pending_inst_flushed_ = false;
             ILOG("BIU Ack for a flushed cache miss is received!");
 
             // Schedule an instruction (re-)issue event
             // Note: some younger load/store instruction(s) might have been blocked by
             // this outstanding miss
-            updateIssuePriorityAfterCacheReload_(memory_access_info_ptr, true);
             if (isReadyToIssueInsts_())
             {
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -744,18 +742,6 @@ namespace olympia
 
         // Flush load/store pipeline entry
         flushLSPipeline_(criteria);
-
-        // Mark flushed flag for unfinished speculative MMU access
-        if (mmu_busy_)
-        {
-            mmu_pending_inst_flushed = true;
-        }
-
-        // Mark flushed flag for unfinished speculative cache access
-        if (cache_busy_)
-        {
-            cache_pending_inst_flushed_ = true;
-        }
 
         // Flush instruction issue queue
         flushIssueQueue_(criteria);
@@ -1133,8 +1119,7 @@ namespace olympia
     }
 
     // Update issue priority after tlb reload
-    void LSU::updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr & mem_access_info_ptr,
-                                                 const bool is_flushed_inst)
+    void LSU::updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool is_found = false;
@@ -1174,15 +1159,20 @@ namespace olympia
             }
         }
 
-        sparta_assert(is_flushed_inst || is_found,
+        sparta_assert(inst_ptr->getFlushedStatus() || is_found,
                       "Attempt to rehandle TLB lookup for instruction not yet in the issue queue! "
                           << inst_ptr);
     }
 
     // Update issue priority after cache reload
-    void LSU::updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr & mem_access_info_ptr,
-                                                   const bool is_flushed_inst)
+    void LSU::updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
+        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+
+        sparta_assert(
+            inst_ptr->getFlushedStatus() == false,
+            "Attempt to rehandle cache lookup for flushed instruction!");
+
         const LoadStoreInstIterator & iter = mem_access_info_ptr->getIssueQueueIterator();
         sparta_assert(
             iter.isValid(),

@@ -143,11 +143,9 @@ namespace olympia
         sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
         // MMU unit
         bool mmu_busy_ = false;
-        bool mmu_pending_inst_flushed = false;
 
         // L1 Data Cache
         bool cache_busy_ = false;
-        bool cache_pending_inst_flushed_ = false;
 
         sparta::collection::Collectable<bool> cache_busy_collectable_{getContainer(), "dcache_busy",
                                                                       &cache_busy_};
@@ -285,10 +283,10 @@ namespace olympia
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);
 
         // Update issue priority after TLB reload
-        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &, const bool = false);
+        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after cache reload
-        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &, const bool = false);
+        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after store instruction retires
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);

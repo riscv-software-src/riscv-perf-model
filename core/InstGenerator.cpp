@@ -49,11 +49,18 @@ namespace olympia
     }
 
     bool JSONInstGenerator::isDone() const {
-        return (curr_inst_index_ == n_insts_);
+        return (curr_inst_index_ >= n_insts_);
     }
 
     void JSONInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
+        curr_inst_index_ = inst_ptr->getJSONIterator();
+        program_id_ = inst_ptr->getProgramID();
+        if (skip)
+        {
+            ++curr_inst_index_;
+            ++program_id_;
+        }
     }
 
     InstPtr JSONInstGenerator::getNextInst(const sparta::Clock * clk)
@@ -107,9 +114,15 @@ namespace olympia
             inst->setTargetVAddr(vaddr);
         }
 
-        ++curr_inst_index_;
+        if (jinst.find("taken") != jinst.end()) {
+            const bool taken = jinst["taken"].get<bool>();
+            inst->setTakenBranch(taken);
+        }
+
+        inst->setJSONIterator(curr_inst_index_);
         inst->setUniqueID(++unique_id_);
-        inst->setProgramID(unique_id_);
+        inst->setProgramID(program_id_++);
+        ++curr_inst_index_;
         if(isDone()) {
             inst->setLast();
         }

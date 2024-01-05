@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <ostream>
 #include <map>
+#include <variant>
 
 namespace olympia
 {
@@ -163,8 +164,11 @@ namespace olympia
         bool getLast() const { return is_last_; }
 
         // Set the STF iterator to rewind trace when flushing
-        void setSTFIterator(stf::STFInstReader::iterator it) { stf_it_ = it; }
-        stf::STFInstReader::iterator getSTFIterator() const { return stf_it_; }
+        void setSTFIterator(stf::STFInstReader::iterator it) { trace_it_ = it; }
+        stf::STFInstReader::iterator getSTFIterator() const { return std::get<stf::STFInstReader::iterator>(trace_it_); }
+
+        void setJSONIterator(uint64_t it) { trace_it_ = it; }
+        uint64_t getJSONIterator() const { return std::get<uint64_t>(trace_it_); }
 
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
@@ -283,7 +287,8 @@ namespace olympia
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 
-        stf::STFInstReader::iterator stf_it_; // Saved iterator to rewind tracefile
+        using TraceIterator = std::variant<stf::STFInstReader::iterator, uint64_t>;
+        TraceIterator trace_it_; // Saved iterator to rewind tracefile
 
         // Rename information
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;

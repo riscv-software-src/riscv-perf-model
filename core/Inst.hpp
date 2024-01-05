@@ -216,34 +216,10 @@ namespace olympia
         bool        isSpeculative() const  { return is_speculative_; }
         bool        isTransfer() const     { return is_transfer_; }
         bool        isTakenBranch() const  { return is_taken_branch_; }
-
-        bool isBranch() const {
-            return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH);
-        }
-        bool isCondBranch() const {
-            return opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL);
-        }
-
-        bool isCall() const {
-            if (opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::JAL) ||
-                opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::JALR)) {
-                const int dest = opcode_info_->getDestOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RD);
-                return miscutils::isOneOf(dest, 1, 5);
-            }
-            return false;
-        }
-
-        bool isReturn() const {
-            if (opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::JALR)) {
-                const int dest = opcode_info_->getDestOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RD);
-                const int src = opcode_info_->getSourceOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RS1);
-                if (dest != src) {
-                    return miscutils::isOneOf(src, 1, 5);
-                }
-            }
-            return false;
-        }
-
+        bool        isBranch() const       { return is_branch_; }
+        bool        isCondBranch() const   { return is_condbranch_; }
+        bool        isCall() const         { return is_call_; }
+        bool        isReturn() const       { return is_return_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
@@ -283,6 +259,10 @@ namespace olympia
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
         const bool             is_store_;
         const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
+        const bool             is_branch_;
+        const bool             is_condbranch_;
+        const bool             is_call_;
+        const bool             is_return_;
         bool                   is_taken_branch_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;

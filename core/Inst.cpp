@@ -5,6 +5,27 @@
 namespace olympia
 {
 
+    bool isCallInstruction(const mavis::OpcodeInfo::PtrType& opcode_info)
+    {
+        if (opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::JAL) ||
+            opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::JALR)) {
+            const int dest = opcode_info->getDestOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RD);
+            return miscutils::isOneOf(dest, 1, 5);
+        }
+        return false;
+    }
+
+    bool isReturnInstruction(const mavis::OpcodeInfo::PtrType& opcode_info)
+    {
+        if (opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::JALR)) {
+            const int dest = opcode_info->getDestOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RD);
+            const int src = opcode_info->getSourceOpInfo().getFieldValue(mavis::InstMetaData::OperandFieldID::RS1);
+            if (dest != src) {
+                return miscutils::isOneOf(src, 1, 5);
+            }
+        }
+        return false;
+    }
     /*!
      * \brief Construct an Instruction
      * \param opcode_info    Mavis Opcode information
@@ -23,7 +44,10 @@ namespace olympia
         is_transfer_(miscutils::isOneOf(inst_arch_info_->getTargetPipe(),
                                         InstArchInfo::TargetPipe::I2F,
                                         InstArchInfo::TargetPipe::F2I)),
-
+        is_branch_(opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::BRANCH)),
+        is_condbranch_(opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL)),
+        is_call_(isCallInstruction(opcode_info)),
+        is_return_(isReturnInstruction(opcode_info)),
         status_state_(Status::FETCHED)
     {
         sparta_assert(inst_arch_info_ != nullptr,

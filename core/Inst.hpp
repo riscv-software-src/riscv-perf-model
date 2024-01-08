@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <ostream>
 #include <map>
-#include <variant>
+#include <tuple>
 
 namespace olympia
 {
@@ -163,12 +163,12 @@ namespace olympia
         void setLast() { is_last_ = true; }
         bool getLast() const { return is_last_; }
 
-        // Set the STF iterator to rewind trace when flushing
-        void setSTFIterator(stf::STFInstReader::iterator it) { trace_it_ = it; }
-        stf::STFInstReader::iterator getSTFIterator() const { return std::get<stf::STFInstReader::iterator>(trace_it_); }
 
-        void setJSONIterator(uint64_t it) { trace_it_ = it; }
-        uint64_t getJSONIterator() const { return std::get<uint64_t>(trace_it_); }
+        // Rewind iterator used for going back in program simulation after flushes
+        template<typename T>
+        void setRewindIterator(T iter) { std::get<T>(rewind_iter_) = iter; }
+        template<typename T>
+        T getRewindIterator() const { return std::get<T>(rewind_iter_); }
 
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
@@ -267,8 +267,9 @@ namespace olympia
         sparta::Scheduleable * ev_retire_    = nullptr;
         Status                 status_state_;
 
-        using TraceIterator = std::variant<stf::STFInstReader::iterator, uint64_t>;
-        TraceIterator trace_it_; // Saved iterator to rewind tracefile
+        using JSONIterator = uint64_t;
+        using RewindIterator = std::tuple<stf::STFInstReader::iterator, JSONIterator>;
+        RewindIterator rewind_iter_;
 
         // Rename information
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;

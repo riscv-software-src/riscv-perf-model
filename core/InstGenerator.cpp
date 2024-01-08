@@ -54,7 +54,7 @@ namespace olympia
 
     void JSONInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
-        curr_inst_index_ = inst_ptr->getJSONIterator();
+        curr_inst_index_ = inst_ptr->getRewindIterator<uint64_t>();
         program_id_ = inst_ptr->getProgramID();
         if (skip)
         {
@@ -119,7 +119,7 @@ namespace olympia
             inst->setTakenBranch(taken);
         }
 
-        inst->setJSONIterator(curr_inst_index_);
+        inst->setRewindIterator<uint64_t>(curr_inst_index_);
         inst->setUniqueID(++unique_id_);
         inst->setProgramID(program_id_++);
         ++curr_inst_index_;
@@ -170,7 +170,7 @@ namespace olympia
 
     void TraceInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
-        next_it_ = inst_ptr->getSTFIterator();
+        next_it_ = inst_ptr->getRewindIterator<stf::STFInstReader::iterator>();
         program_id_ = inst_ptr->getProgramID();
         if (skip)
         {
@@ -192,7 +192,7 @@ namespace olympia
             inst->setPC(next_it_->pc());
             inst->setUniqueID(++unique_id_);
             inst->setProgramID(program_id_++);
-            inst->setSTFIterator(next_it_);
+            inst->setRewindIterator<stf::STFInstReader::iterator>(next_it_);
             if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
             {
                 using VectorAddrType = std::vector<sparta::memory::addr_t>;

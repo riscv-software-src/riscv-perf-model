@@ -77,13 +77,10 @@ namespace olympia
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
 
-        bool retire_done_ = false;
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
         using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
 
         using FlushCriteria = FlushManager::FlushingCriteria;
-
-        void onRobDrained_(const bool & val);
 
       private:
         using ScoreboardViews =
@@ -175,6 +172,9 @@ namespace olympia
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
 
+        // ROB stopped simulation early, transactions could still be inflight.
+        bool rob_stopped_simulation_ = false;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
@@ -232,7 +232,6 @@ namespace olympia
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
 
-        void dumpDebugContent_(std::ostream & output) const override final;
         // Instructions in the replay ready to issue
         void replayReady_(const LoadStoreInstInfoPtr &);
 
@@ -242,6 +241,17 @@ namespace olympia
         // Instructions in the replay ready to issue
         void appendReady_(const LoadStoreInstInfoPtr &);
 
+        // Called when ROB terminates the simulation
+        void onROBTerminate_(const bool & val);
+
+        // When simulation is ending (error or not), this function
+        // will be called
+        void onStartingTeardown_() override;
+
+        // Typically called when the simulator is shutting down due to an exception
+        // writes out text to aid debug
+        void dumpDebugContent_(std::ostream & output) const override final;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
@@ -249,6 +259,8 @@ namespace olympia
         LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
 
         void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+
+        bool olderStoresExists_(const InstPtr & inst_ptr);
 
         bool allOlderStoresIssued_(const InstPtr & inst_ptr);
 
@@ -320,12 +332,6 @@ namespace olympia
 
         sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
                                   sparta::Counter::COUNT_NORMAL};
-
-        // When simulation is ending (error or not), this function
-        // will be called
-        void onStartingTeardown_() override;
-
-        bool olderStoresExists_(const InstPtr & inst_ptr);
 
         friend class LSUTester;
     };

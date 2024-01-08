@@ -143,11 +143,6 @@ namespace olympia
         }
         bool isMarkedOldest() const { return is_oldest_; }
 
-        // Instruction trace/JSON generation -- mark instruction as
-        // last in trace/JSON file.
-        void setLast() { is_last_ = true; }
-        bool getLast() const { return is_last_; }
-
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
         // trace can have different unique IDs (due to flushing)
@@ -223,7 +218,6 @@ namespace olympia
         sparta::memory::addr_t inst_pc_       = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_  = 0; // Instruction's Target PC (for branches, loads/stores)
         bool                   is_oldest_     = false;
-        bool                   is_last_       = false;  // Is last intruction of trace
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?

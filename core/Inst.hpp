@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <ostream>
 #include <map>
-#include <tuple>
+#include <variant>
 
 namespace olympia
 {
@@ -166,7 +166,7 @@ namespace olympia
 
         // Rewind iterator used for going back in program simulation after flushes
         template<typename T>
-        void setRewindIterator(T iter) { std::get<T>(rewind_iter_) = iter; }
+        void setRewindIterator(T iter) { rewind_iter_ = iter; }
         template<typename T>
         T getRewindIterator() const { return std::get<T>(rewind_iter_); }
 
@@ -268,7 +268,7 @@ namespace olympia
         Status                 status_state_;
 
         using JSONIterator = uint64_t;
-        using RewindIterator = std::tuple<stf::STFInstReader::iterator, JSONIterator>;
+        using RewindIterator = std::variant<stf::STFInstReader::iterator, JSONIterator>;
         RewindIterator rewind_iter_;
 
         // Rename information

@@ -50,6 +50,8 @@ namespace olympia
             PARAMETER(uint32_t, execute_time, 1, "Time for execution")
             PARAMETER(uint32_t, scheduler_size, 8, "Scheduler queue size")
             PARAMETER(bool, in_order_issue, true, "Force in order issue")
+            HIDDEN_PARAMETER(bool, enable_random_misprediction, false,
+                             "test mode to inject random branch mispredictions")
         };
 
         /**
@@ -90,6 +92,7 @@ namespace olympia
         const uint32_t execute_time_;
         const uint32_t scheduler_size_;
         const bool in_order_issue_;
+        const bool enable_random_misprediction_;
         const core_types::RegFile reg_file_;
         sparta::collection::IterableCollector<std::list<InstPtr>>
         ready_queue_collector_ {getContainer(), "scheduler_queue",

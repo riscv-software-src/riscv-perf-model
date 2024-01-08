@@ -27,6 +27,7 @@ namespace olympia
         execute_time_(p->execute_time),
         scheduler_size_(p->scheduler_size),
         in_order_issue_(p->in_order_issue),
+        enable_random_misprediction_(p->enable_random_misprediction),
         reg_file_(determineRegisterFile(node->getGroup())),
         collected_inst_(node, node->getName())
     {
@@ -44,6 +45,12 @@ namespace olympia
         // issue should always schedule complete with a non-zero delay (which corresponds to the
         // insturction latency)
         execute_inst_ >> issue_inst_;
+
+        if (enable_random_misprediction_)
+        {
+            sparta_assert(node->getGroup() == "br",
+                          "random branch misprediction can only be enabled on a branch unit");
+        }
 
         ILOG("ExecutePipe construct: #" << node->getGroupIdx());
 
@@ -178,6 +185,17 @@ namespace olympia
             scoreboard_views_[reg_file_]->setReady(dest_bits);
         }
 
+        // Testing mode to inject random branch misprediction to stress flushing mechanism
+        if (enable_random_misprediction_)
+        {
+            if (ex_inst->isBranch() && (std::rand() % 20) == 0)
+            {
+                ILOG("Randomly injecting a mispredicted branch: " << ex_inst);
+                FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::MISPREDICTION, ex_inst);
+                out_execute_flush_.send(criteria);
+            }
+        }
+
         // We're not busy anymore
         unit_busy_ = false;
 
@@ -261,7 +279,7 @@ namespace olympia
             if (!ready_queue_.empty()) {
                 // issue non-flushed instructions
                 issue_inst_.schedule(sparta::Clock::Cycle(1));
-        }
+            }
         }
     }
 

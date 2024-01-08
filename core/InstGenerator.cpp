@@ -123,9 +123,6 @@ namespace olympia
         inst->setUniqueID(++unique_id_);
         inst->setProgramID(program_id_++);
         ++curr_inst_index_;
-        if(isDone()) {
-            inst->setLast();
-        }
         return inst;
 
     }
@@ -212,9 +209,6 @@ namespace olympia
                 inst->setTargetVAddr(next_it_->branchTarget());
             }
             ++next_it_;
-            if(isDone()) {
-                inst->setLast();
-            }
             return inst;
         }
         catch(std::exception & excpt) {

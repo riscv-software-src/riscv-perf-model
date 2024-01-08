@@ -94,8 +94,8 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
-        node->getParent()->registerForNotification<bool, LSU, &LSU::onRobDrained_>(
-            this, "rob_notif_channel", false /* ROB maybe not be constructed yet */);
+        node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
+            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
 
         ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
@@ -111,8 +111,6 @@ namespace olympia
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
 
-    void LSU::onRobDrained_(const bool & val) { retire_done_ = val; }
-
     LSU::~LSU()
     {
         DLOG(getContainer()->getLocation() << ": " << load_store_info_allocator_.getNumAllocated()
@@ -121,11 +119,13 @@ namespace olympia
                                            << " MemoryAccessInfo objects allocated/created");
     }
 
+    void LSU::onROBTerminate_(const bool & val) { rob_stopped_simulation_ = val; }
+
     void LSU::onStartingTeardown_()
     {
         // If ROB has not stopped the simulation &
         // the ldst has entries to process we should fail
-        if ((false == retire_done_) && (false == ldst_inst_queue_.empty()))
+        if ((false == rob_stopped_simulation_) && (false == ldst_inst_queue_.empty()))
         {
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
@@ -983,7 +983,6 @@ namespace olympia
 
     void LSU::removeInstFromReplayQueue_(const InstPtr & inst_to_remove)
     {
-        //        return;
         ILOG("Removing Inst from replay queue " << inst_to_remove);
         for (const auto & ldst_inst : ldst_inst_queue_)
         {

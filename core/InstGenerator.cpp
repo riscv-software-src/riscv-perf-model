@@ -106,9 +106,6 @@ namespace olympia
         ++curr_inst_index_;
         inst->setUniqueID(++unique_id_);
         inst->setProgramID(unique_id_);
-        if(isDone()) {
-            inst->setLast();
-        }
         return inst;
 
     }
@@ -177,9 +174,6 @@ namespace olympia
                 //inst->setVAddrVector(std::move(addrs));
             }
             ++next_it_;
-            if(isDone()) {
-                inst->setLast();
-            }
             return inst;
         }
         catch(std::exception & excpt) {

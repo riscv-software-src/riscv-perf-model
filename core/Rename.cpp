@@ -224,10 +224,6 @@ namespace olympia
                             freelist_[renamed_dest.rf].push(renamed_dest.val);
                         }
                     }
-                    else
-                    {
-
-                    }
                 }
 
                 const auto & srcs = inst_ptr->getRenameData().getSourceList();

@@ -43,10 +43,10 @@ namespace olympia
                       "Cache read stage should atleast be one cycle");
         sparta_assert(p->cache_lookup_stage_length > 0,
                       "Cache lookup stage should atleast be one cycle");
+
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
-
         replay_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
@@ -94,14 +94,15 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
-        node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
-            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
-
         ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
 
         ldst_pipeline_.registerHandlerAtStage(complete_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, completeInst_));
+
+        // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
+        node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
+            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
 
         uev_append_ready_ >> uev_issue_inst_;
         // NOTE:

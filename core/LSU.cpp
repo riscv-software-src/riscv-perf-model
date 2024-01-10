@@ -750,7 +750,7 @@ namespace olympia
 
         // Cancel replay events
         auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool {
-            return criteria.flush(ldst_info_ptr->getInstPtr());
+            return criteria.includedInFlush(ldst_info_ptr->getInstPtr());
         };
         uev_append_ready_.cancelIf(flush);
         uev_replay_ready_.cancelIf(flush);
@@ -1240,7 +1240,7 @@ namespace olympia
 
             auto delete_iter = iter++;
 
-            if (criteria.flush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr)) {
                 ldst_inst_queue_.erase(delete_iter);
 
                 // Clear any scoreboard callback
@@ -1278,7 +1278,7 @@ namespace olympia
             }
 
             auto inst_ptr = (*iter)->getInstPtr();
-            if (criteria.flush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr)) {
                 ldst_pipeline_.flushStage(iter);
 
                 ILOG("Flush Pipeline Stage[" << stage_id
@@ -1295,7 +1295,7 @@ namespace olympia
 
             auto delete_iter = iter++;
 
-            if (criteria.flush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr)) {
                 ready_queue_.erase(delete_iter);
                 ILOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
             }
@@ -1310,7 +1310,7 @@ namespace olympia
 
             auto delete_iter = iter++;
 
-            if (criteria.flush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr)) {
                 replay_buffer_.erase(delete_iter);
                 ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
             }

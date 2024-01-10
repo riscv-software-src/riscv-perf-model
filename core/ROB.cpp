@@ -100,7 +100,7 @@ namespace olympia
         while (reorder_buffer_.size())
         {
             auto youngest_inst = reorder_buffer_.back();
-            if (criteria.flush(youngest_inst))
+            if (criteria.includedInFlush(youngest_inst))
             {
                 ILOG("flushing " << youngest_inst);
                 youngest_inst->setStatus(Inst::Status::FLUSHED);

@@ -234,7 +234,7 @@ namespace olympia
             auto inst_ptr = *delete_iter;
 
             // Remove flushed instruction from issue queue and clear scoreboard callbacks
-            if (criteria.flush(inst_ptr))
+            if (criteria.includedInFlush(inst_ptr))
             {
                 issue_queue_.erase(delete_iter);
 
@@ -258,7 +258,7 @@ namespace olympia
         {
             auto delete_iter = ready_queue_iter++;
             auto inst_ptr = *delete_iter;
-            if (criteria.flush(inst_ptr))
+            if (criteria.includedInFlush(inst_ptr))
             {
                 ready_queue_.erase(delete_iter);
                 ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID() << " from ready queue");
@@ -268,7 +268,7 @@ namespace olympia
         // Cancel outstanding instructions awaiting completion and
         // instructions on their way to issue
         auto flush = [criteria](const InstPtr & inst) -> bool {
-            return criteria.flush(inst);
+            return criteria.includedInFlush(inst);
         };
         issue_inst_.cancel();
         complete_inst_.cancelIf(flush);

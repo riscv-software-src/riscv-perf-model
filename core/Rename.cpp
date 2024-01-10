@@ -199,7 +199,7 @@ namespace olympia
         while (inst_queue_.size())
         {
             const auto & inst_ptr = inst_queue_.back();
-            if (!criteria.flush(inst_ptr))
+            if (!criteria.includedInFlush(inst_ptr))
             {
                 break;
             }

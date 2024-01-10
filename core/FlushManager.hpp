@@ -89,7 +89,7 @@ namespace olympia
                 return cause_ == FlushCause::MISFETCH;
             }
 
-            bool flush(const InstPtr& other) const
+            bool includedInFlush(const InstPtr& other) const
             {
                 return isInclusiveFlush() ?
                     inst_ptr_->getUniqueID() <= other->getUniqueID() :
@@ -174,7 +174,7 @@ namespace olympia
             if (pending_flush_.isValid())
             {
                 auto pending = pending_flush_.getValue();
-                if (pending.flush(flush_data.getInstPtr()))
+                if (pending.includedInFlush(flush_data.getInstPtr()))
                 {
                     return;
                 }

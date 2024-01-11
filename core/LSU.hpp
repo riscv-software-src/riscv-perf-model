@@ -77,13 +77,10 @@ namespace olympia
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
 
-        bool retire_done_ = false;
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
         using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
 
         using FlushCriteria = FlushManager::FlushingCriteria;
-
-        void onRobDrained_(const bool & val);
 
       private:
         using ScoreboardViews =
@@ -143,11 +140,9 @@ namespace olympia
         sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
         // MMU unit
         bool mmu_busy_ = false;
-        bool mmu_pending_inst_flushed = false;
 
         // L1 Data Cache
         bool cache_busy_ = false;
-        bool cache_pending_inst_flushed_ = false;
 
         sparta::collection::Collectable<bool> cache_busy_collectable_{getContainer(), "dcache_busy",
                                                                       &cache_busy_};
@@ -174,6 +169,9 @@ namespace olympia
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
+
+        // ROB stopped simulation early, transactions could still be inflight.
+        bool rob_stopped_simulation_ = false;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
@@ -232,7 +230,6 @@ namespace olympia
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
 
-        void dumpDebugContent_(std::ostream & output) const override final;
         // Instructions in the replay ready to issue
         void replayReady_(const LoadStoreInstInfoPtr &);
 
@@ -242,6 +239,17 @@ namespace olympia
         // Instructions in the replay ready to issue
         void appendReady_(const LoadStoreInstInfoPtr &);
 
+        // Called when ROB terminates the simulation
+        void onROBTerminate_(const bool & val);
+
+        // When simulation is ending (error or not), this function
+        // will be called
+        void onStartingTeardown_() override;
+
+        // Typically called when the simulator is shutting down due to an exception
+        // writes out text to aid debug
+        void dumpDebugContent_(std::ostream & output) const override final;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
@@ -249,6 +257,8 @@ namespace olympia
         LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
 
         void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+
+        bool olderStoresExists_(const InstPtr & inst_ptr);
 
         bool allOlderStoresIssued_(const InstPtr & inst_ptr);
 
@@ -285,19 +295,25 @@ namespace olympia
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);
 
         // Update issue priority after TLB reload
-        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &, const bool = false);
+        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after cache reload
-        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &, const bool = false);
+        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after store instruction retires
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
 
         // Flush instruction issue queue
-        template <typename Comp> void flushIssueQueue_(const Comp &);
+        void flushIssueQueue_(const FlushCriteria &);
 
         // Flush load/store pipeline
-        template <typename Comp> void flushLSPipeline_(const Comp &);
+        void flushLSPipeline_(const FlushCriteria &);
+
+        // Flush Ready Queue
+        void flushReadyQueue_(const FlushCriteria &);
+
+        // Flush Replay Buffer
+        void flushReplayBuffer_(const FlushCriteria &);
 
         // Counters
         sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",
@@ -320,12 +336,6 @@ namespace olympia
 
         sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
                                   sparta::Counter::COUNT_NORMAL};
-
-        // When simulation is ending (error or not), this function
-        // will be called
-        void onStartingTeardown_() override;
-
-        bool olderStoresExists_(const InstPtr & inst_ptr);
 
         friend class LSUTester;
     };

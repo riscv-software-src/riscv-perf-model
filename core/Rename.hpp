@@ -103,6 +103,10 @@ namespace olympia
         };
         std::deque<RegCountData> uop_queue_regcount_data_;
 
+        // Used to track inflight instructions for the purpose of recovering
+        // the rename data structures
+        std::deque<InstPtr> inst_queue_;
+
 
         ///////////////////////////////////////////////////////////////////////
         // Stall counters
@@ -156,7 +160,7 @@ namespace olympia
 
         // Get Retired Instructions
         void getAckFromROB_(const InstPtr &);
-        
+
         // Friend class used in rename testing
         friend class RenameTester;
 

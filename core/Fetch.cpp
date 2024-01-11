@@ -27,12 +27,13 @@ namespace olympia
         in_fetch_queue_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
 
+        in_fetch_flush_redirect_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, FlushManager::FlushingCriteria));
+
         fetch_inst_event_.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_random",
                                                                      CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
-
-        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
 
     }
 
@@ -105,16 +106,28 @@ namespace olympia
         fetch_inst_event_->schedule(sparta::Clock::Cycle(0));
     }
 
-    // Called from Retire via in_fetch_flush_redirect_ port
-    void Fetch::flushFetch_(const uint64_t & new_addr) {
-        ILOG("Fetch: receive flush on new_addr=0x"
-             << std::hex << new_addr << std::dec);
+    // Called from FlushManager via in_fetch_flush_redirect_port
+    void Fetch::flushFetch_(const FlushManager::FlushingCriteria &criteria)
+    {
+        ILOG("Fetch: received flush " << criteria);
+
+        auto flush_inst = criteria.getInstPtr();
+
+        // Rewind the tracefile
+        if (criteria.isInclusiveFlush())
+        {
+            inst_generator_->reset(flush_inst, false); // Replay this instruction
+        }
+        else
+        {
+            inst_generator_->reset(flush_inst, true); // Skip to next instruction
+        }
 
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();
 
         // No longer speculative
-        speculative_path_ = false;
+        // speculative_path_ = false;
     }
 
 }

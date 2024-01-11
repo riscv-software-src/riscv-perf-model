@@ -43,10 +43,10 @@ namespace olympia
                       "Cache read stage should atleast be one cycle");
         sparta_assert(p->cache_lookup_stage_length > 0,
                       "Cache lookup stage should atleast be one cycle");
+
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
-
         replay_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
@@ -94,14 +94,15 @@ namespace olympia
         ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
-        node->getParent()->registerForNotification<bool, LSU, &LSU::onRobDrained_>(
-            this, "rob_notif_channel", false /* ROB maybe not be constructed yet */);
-
         ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
 
         ldst_pipeline_.registerHandlerAtStage(complete_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, completeInst_));
+
+        // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
+        node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
+            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
 
         uev_append_ready_ >> uev_issue_inst_;
         // NOTE:
@@ -111,8 +112,6 @@ namespace olympia
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
 
-    void LSU::onRobDrained_(const bool & val) { retire_done_ = val; }
-
     LSU::~LSU()
     {
         DLOG(getContainer()->getLocation() << ": " << load_store_info_allocator_.getNumAllocated()
@@ -121,11 +120,13 @@ namespace olympia
                                            << " MemoryAccessInfo objects allocated/created");
     }
 
+    void LSU::onROBTerminate_(const bool & val) { rob_stopped_simulation_ = val; }
+
     void LSU::onStartingTeardown_()
     {
         // If ROB has not stopped the simulation &
         // the ldst has entries to process we should fail
-        if ((false == retire_done_) && (false == ldst_inst_queue_.empty()))
+        if ((false == rob_stopped_simulation_) && (false == ldst_inst_queue_.empty()))
         {
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
@@ -385,11 +386,12 @@ namespace olympia
     {
         ILOG("MMU rehandling event is scheduled! " << memory_access_info_ptr);
         const auto & inst_ptr = memory_access_info_ptr->getInstPtr();
-        if (mmu_pending_inst_flushed)
+
+        // Update issue priority & Schedule an instruction (re-)issue event
+        updateIssuePriorityAfterTLBReload_(memory_access_info_ptr);
+
+        if (inst_ptr->getFlushedStatus())
         {
-            mmu_pending_inst_flushed = false;
-            // Update issue priority & Schedule an instruction (re-)issue event
-            updateIssuePriorityAfterTLBReload_(memory_access_info_ptr, true);
             if (isReadyToIssueInsts_())
             {
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -397,7 +399,6 @@ namespace olympia
             return;
         }
 
-        updateIssuePriorityAfterTLBReload_(memory_access_info_ptr);
         removeInstFromReplayQueue_(inst_ptr);
 
         if (isReadyToIssueInsts_())
@@ -514,15 +515,13 @@ namespace olympia
     void LSU::handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         auto inst_ptr = memory_access_info_ptr->getInstPtr();
-        if (cache_pending_inst_flushed_)
+        if (inst_ptr->getFlushedStatus())
         {
-            cache_pending_inst_flushed_ = false;
             ILOG("BIU Ack for a flushed cache miss is received!");
 
             // Schedule an instruction (re-)issue event
             // Note: some younger load/store instruction(s) might have been blocked by
             // this outstanding miss
-            updateIssuePriorityAfterCacheReload_(memory_access_info_ptr, true);
             if (isReadyToIssueInsts_())
             {
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -740,29 +739,22 @@ namespace olympia
     {
         ILOG("Start Flushing!");
 
-        // Flush criteria setup
-        auto flush = [criteria](const uint64_t & id) -> bool
-        { return id >= static_cast<uint64_t>(criteria); };
-
         lsu_flushes_++;
 
         // Flush load/store pipeline entry
-        flushLSPipeline_(flush);
-
-        // Mark flushed flag for unfinished speculative MMU access
-        if (mmu_busy_)
-        {
-            mmu_pending_inst_flushed = true;
-        }
-
-        // Mark flushed flag for unfinished speculative cache access
-        if (cache_busy_)
-        {
-            cache_pending_inst_flushed_ = true;
-        }
+        flushLSPipeline_(criteria);
 
         // Flush instruction issue queue
-        flushIssueQueue_(flush);
+        flushIssueQueue_(criteria);
+        flushReplayBuffer_(criteria);
+        flushReadyQueue_(criteria);
+
+        // Cancel replay events
+        auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool {
+            return criteria.includedInFlush(ldst_info_ptr->getInstPtr());
+        };
+        uev_append_ready_.cancelIf(flush);
+        uev_replay_ready_.cancelIf(flush);
 
         // Cancel issue event already scheduled if no ready-to-issue inst left after flush
         if (!isReadyToIssueInsts_())
@@ -992,7 +984,6 @@ namespace olympia
 
     void LSU::removeInstFromReplayQueue_(const InstPtr & inst_to_remove)
     {
-        //        return;
         ILOG("Removing Inst from replay queue " << inst_to_remove);
         for (const auto & ldst_inst : ldst_inst_queue_)
         {
@@ -1128,8 +1119,7 @@ namespace olympia
     }
 
     // Update issue priority after tlb reload
-    void LSU::updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr & mem_access_info_ptr,
-                                                 const bool is_flushed_inst)
+    void LSU::updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool is_found = false;
@@ -1169,15 +1159,20 @@ namespace olympia
             }
         }
 
-        sparta_assert(is_flushed_inst || is_found,
+        sparta_assert(inst_ptr->getFlushedStatus() || is_found,
                       "Attempt to rehandle TLB lookup for instruction not yet in the issue queue! "
                           << inst_ptr);
     }
 
     // Update issue priority after cache reload
-    void LSU::updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr & mem_access_info_ptr,
-                                                   const bool is_flushed_inst)
+    void LSU::updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
+        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+
+        sparta_assert(
+            inst_ptr->getFlushedStatus() == false,
+            "Attempt to rehandle cache lookup for flushed instruction!");
+
         const LoadStoreInstIterator & iter = mem_access_info_ptr->getIssueQueueIterator();
         sparta_assert(
             iter.isValid(),
@@ -1236,27 +1231,32 @@ namespace olympia
     }
 
     // Flush instruction issue queue
-    template <typename Comp> void LSU::flushIssueQueue_(const Comp & flush)
+    void LSU::flushIssueQueue_(const FlushCriteria & criteria)
     {
         uint32_t credits_to_send = 0;
 
         auto iter = ldst_inst_queue_.begin();
-        while (iter != ldst_inst_queue_.end())
-        {
-            auto inst_id = (*iter)->getInstPtr()->getUniqueID();
+        while (iter != ldst_inst_queue_.end()) {
+            auto inst_ptr = (*iter)->getInstPtr();
 
             auto delete_iter = iter++;
 
-            if (flush(inst_id))
-            {
+            if (criteria.includedInFlush(inst_ptr)) {
                 ldst_inst_queue_.erase(delete_iter);
+
+                // Clear any scoreboard callback
+                std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+                for(const auto rf : reg_files)
+                {
+                    scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
+                }
 
                 // NOTE:
                 // We cannot increment iter after erase because it's already invalidated by then
 
                 ++credits_to_send;
 
-                ILOG("Flush Instruction ID: " << inst_id);
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
 
@@ -1269,23 +1269,51 @@ namespace olympia
     }
 
     // Flush load/store pipe
-    template <typename Comp> void LSU::flushLSPipeline_(const Comp & flush)
+    void LSU::flushLSPipeline_(const FlushCriteria & criteria)
     {
         uint32_t stage_id = 0;
-        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++)
-        {
-            // If the pipe stage is already invalid, no need to flush
-            if (!iter.isValid())
-            {
+        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++) {
+            // If the pipe stage is already invalid, no need to criteria
+            if (!iter.isValid()) {
                 continue;
             }
 
-            auto inst_id = (*iter)->getInstPtr()->getUniqueID();
-            if (flush(inst_id))
-            {
+            auto inst_ptr = (*iter)->getInstPtr();
+            if (criteria.includedInFlush(inst_ptr)) {
                 ldst_pipeline_.flushStage(iter);
 
-                ILOG("Flush Pipeline Stage[" << stage_id << "], Instruction ID: " << inst_id);
+                ILOG("Flush Pipeline Stage[" << stage_id
+                     << "], Instruction ID: " << inst_ptr->getUniqueID());
+            }
+        }
+    }
+
+    void LSU::flushReadyQueue_(const FlushCriteria & criteria)
+    {
+        auto iter = ready_queue_.begin();
+        while (iter != ready_queue_.end()) {
+            auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
+            if (criteria.includedInFlush(inst_ptr)) {
+                ready_queue_.erase(delete_iter);
+                ILOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+            }
+        }
+    }
+
+    void LSU::flushReplayBuffer_(const FlushCriteria & criteria)
+    {
+        auto iter = replay_buffer_.begin();
+        while (iter != replay_buffer_.end()) {
+            auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
+            if (criteria.includedInFlush(inst_ptr)) {
+                replay_buffer_.erase(delete_iter);
+                ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
     }

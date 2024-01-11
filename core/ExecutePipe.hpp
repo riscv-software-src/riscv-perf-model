@@ -50,6 +50,8 @@ namespace olympia
             PARAMETER(uint32_t, execute_time, 1, "Time for execution")
             PARAMETER(uint32_t, scheduler_size, 8, "Scheduler queue size")
             PARAMETER(bool, in_order_issue, true, "Force in order issue")
+            HIDDEN_PARAMETER(bool, enable_random_misprediction, false,
+                             "test mode to inject random branch mispredictions")
         };
 
         /**
@@ -71,10 +73,13 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_scheduler_credits_{&unit_port_set_, "out_scheduler_credits"};
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataOutPort<FlushManager::FlushingCriteria> out_execute_flush_
+            {&unit_port_set_, "out_execute_flush"};
 
         // Ready queue
         typedef std::list<InstPtr> ReadyQueue;
         ReadyQueue  ready_queue_;
+        ReadyQueue  issue_queue_;
 
         // Scoreboards
         using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
@@ -87,14 +92,18 @@ namespace olympia
         const uint32_t execute_time_;
         const uint32_t scheduler_size_;
         const bool in_order_issue_;
+        const bool enable_random_misprediction_;
         const core_types::RegFile reg_file_;
         sparta::collection::IterableCollector<std::list<InstPtr>>
         ready_queue_collector_ {getContainer(), "scheduler_queue",
                 &ready_queue_, scheduler_size_};
 
-        // Events used to issue and complete the instruction
+        // Events used to issue, execute and complete the instruction
         sparta::UniqueEvent<> issue_inst_{&unit_event_set_, getName() + "_issue_inst",
                 CREATE_SPARTA_HANDLER(ExecutePipe, issueInst_)};
+        sparta::PayloadEvent<InstPtr> execute_inst_{
+            &unit_event_set_, getName() + "_execute_inst",
+            CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, executeInst_, InstPtr)};
         sparta::PayloadEvent<InstPtr> complete_inst_{
             &unit_event_set_, getName() + "_complete_inst",
             CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, completeInst_, InstPtr)};
@@ -119,11 +128,26 @@ namespace olympia
         void issueInst_();
         void getInstsFromDispatch_(const InstPtr&);
 
+        // Callback from Scoreboard to inform Operand Readiness
+        void handleOperandIssueCheck_(const InstPtr &);
+
+        // Write result to registers
+        void executeInst_(const InstPtr&);
+
         // Used to complete the inst in the FPU
         void completeInst_(const InstPtr&);
 
         // Used to flush the ALU
-        void flushInst_(const FlushManager::FlushingCriteria & criteria);
+        void flushInst_(const FlushManager::FlushingCriteria &);
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Regular Function/Subroutine Call
+
+        // Append new instruction into issue queue
+        void appendIssueQueue_(const InstPtr &);
+
+        // Pop completed instruction out of issue queue
+        void popIssueQueue_(const InstPtr &);
 
         // Friend class used in rename testing
         friend class ExecutePipeTester;

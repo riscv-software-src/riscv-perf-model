@@ -27,6 +27,7 @@ namespace olympia
         execute_time_(p->execute_time),
         scheduler_size_(p->scheduler_size),
         in_order_issue_(p->in_order_issue),
+        enable_random_misprediction_(p->enable_random_misprediction),
         reg_file_(determineRegisterFile(node->getGroup())),
         collected_inst_(node, node->getName())
     {
@@ -43,7 +44,13 @@ namespace olympia
         // Complete should come before issue because it schedules issue with a 0 cycle delay
         // issue should always schedule complete with a non-zero delay (which corresponds to the
         // insturction latency)
-        complete_inst_ >> issue_inst_;
+        execute_inst_ >> issue_inst_;
+
+        if (enable_random_misprediction_)
+        {
+            sparta_assert(node->getGroup() == "br",
+                          "random branch misprediction can only be enabled on a branch unit");
+        }
 
         ILOG("ExecutePipe construct: #" << node->getGroupIdx());
 
@@ -67,6 +74,14 @@ namespace olympia
     ////////////////////////////////////////////////////////////////////////////////
     // Callbacks
     void ExecutePipe::getInstsFromDispatch_(const InstPtr & ex_inst)
+    {
+        sparta_assert(ex_inst->getStatus() == Inst::Status::DISPATCHED, "Bad instruction status: " << ex_inst);
+        appendIssueQueue_(ex_inst);
+        handleOperandIssueCheck_(ex_inst);
+    }
+
+        // Callback from Scoreboard to inform Operand Readiness
+    void ExecutePipe::handleOperandIssueCheck_(const InstPtr & ex_inst)
     {
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
@@ -106,7 +121,7 @@ namespace olympia
                 registerReadyCallback(src_bits, ex_inst->getUniqueID(),
                                       [this, ex_inst](const sparta::Scoreboard::RegisterBitMask&)
                                       {
-                                          this->getInstsFromDispatch_(ex_inst);
+                                          this->handleOperandIssueCheck_(ex_inst);
                                       });
             ILOG("Instruction NOT ready: " << ex_inst << " Bits needed:" << sparta::printBitSet(src_bits));
         }
@@ -130,19 +145,19 @@ namespace olympia
 
         ++total_insts_issued_;
         // Mark the instruction complete later...
-        complete_inst_.preparePayload(ex_inst_ptr)->schedule(exe_time);
+        execute_inst_.preparePayload(ex_inst_ptr)->schedule(exe_time);
         // Mark the alu as busy
         unit_busy_ = true;
-        // Pop the insturction from the scheduler and send a credit back to dispatch
+        // Pop the insturction from the ready queue and send a credit back to dispatch
+        popIssueQueue_(ex_inst_ptr);
         ready_queue_.pop_front();
         out_scheduler_credits_.send(1, 0);
     }
 
     // Called by the scheduler, scheduled by complete_inst_.
-    void ExecutePipe::completeInst_(const InstPtr & ex_inst)
+    void ExecutePipe::executeInst_(const InstPtr & ex_inst)
     {
-        ex_inst->setStatus(Inst::Status::COMPLETED);
-        ILOG("Completing inst: " << ex_inst);
+        ILOG("Executed inst: " << ex_inst);
 
         // set scoreboard
         if(SPARTA_EXPECT_FALSE(ex_inst->isTransfer()))
@@ -170,6 +185,17 @@ namespace olympia
             scoreboard_views_[reg_file_]->setReady(dest_bits);
         }
 
+        // Testing mode to inject random branch misprediction to stress flushing mechanism
+        if (enable_random_misprediction_)
+        {
+            if (ex_inst->isBranch() && (std::rand() % 20) == 0)
+            {
+                ILOG("Randomly injecting a mispredicted branch: " << ex_inst);
+                FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::MISPREDICTION, ex_inst);
+                out_execute_flush_.send(criteria);
+            }
+        }
+
         // We're not busy anymore
         unit_busy_ = false;
 
@@ -180,43 +206,108 @@ namespace olympia
         if (ready_queue_.size() > 0) {
             issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
+
+        // Schedule completion
+        complete_inst_.preparePayload(ex_inst)->schedule(1);
+
+    }
+
+    // Called by the scheduler, scheduled by complete_inst_.
+    void ExecutePipe::completeInst_(const InstPtr & ex_inst)
+    {
+        ex_inst->setStatus(Inst::Status::COMPLETED);
+        ILOG("Completing inst: " << ex_inst);
     }
 
     void ExecutePipe::flushInst_(const FlushManager::FlushingCriteria & criteria)
     {
         ILOG("Got flush for criteria: " << criteria);
 
-        // Flush instructions in the ready queue
-        ReadyQueue::iterator it = ready_queue_.begin();
+        // Flush instructions in the issue queue
         uint32_t credits_to_send = 0;
-        while(it != ready_queue_.end()) {
-            if((*it)->getUniqueID() >= uint64_t(criteria)) {
-                ready_queue_.erase(it++);
+
+        auto issue_queue_iter = issue_queue_.begin();
+        while (issue_queue_iter != issue_queue_.end())
+        {
+            auto delete_iter = issue_queue_iter++;
+
+            auto inst_ptr = *delete_iter;
+
+            // Remove flushed instruction from issue queue and clear scoreboard callbacks
+            if (criteria.includedInFlush(inst_ptr))
+            {
+                issue_queue_.erase(delete_iter);
+
+                scoreboard_views_[reg_file_]->clearCallbacks(inst_ptr->getUniqueID());
+
                 ++credits_to_send;
-            }
-            else {
-                ++it;
+
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID() << " from issue queue");
             }
         }
+
         if(credits_to_send) {
             out_scheduler_credits_.send(credits_to_send, 0);
+
+            ILOG("Flush " << credits_to_send << " instructions in issue queue!");
+        }
+
+        // Flush instructions in the ready queue
+        auto ready_queue_iter = ready_queue_.begin();
+        while (ready_queue_iter != ready_queue_.end())
+        {
+            auto delete_iter = ready_queue_iter++;
+            auto inst_ptr = *delete_iter;
+            if (criteria.includedInFlush(inst_ptr))
+            {
+                ready_queue_.erase(delete_iter);
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID() << " from ready queue");
+            }
         }
 
         // Cancel outstanding instructions awaiting completion and
         // instructions on their way to issue
-        auto cancel_critera = [criteria](const InstPtr & inst) -> bool {
-            if(inst->getUniqueID() >= uint64_t(criteria)) {
-                return true;
-            }
-            return false;
+        auto flush = [criteria](const InstPtr & inst) -> bool {
+            return criteria.includedInFlush(inst);
         };
-        complete_inst_.cancelIf(cancel_critera);
         issue_inst_.cancel();
-
-        if(complete_inst_.getNumOutstandingEvents() == 0) {
+        complete_inst_.cancelIf(flush);
+        execute_inst_.cancelIf(flush);
+        if(execute_inst_.getNumOutstandingEvents() == 0) {
             unit_busy_ = false;
             collected_inst_.closeRecord();
+            if (!ready_queue_.empty()) {
+                // issue non-flushed instructions
+                issue_inst_.schedule(sparta::Clock::Cycle(1));
+            }
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Regular Function/Subroutine Call
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // Append instruction into issue queue
+    void ExecutePipe::appendIssueQueue_(const InstPtr & inst_ptr)
+    {
+        sparta_assert(issue_queue_.size() < scheduler_size_,
+                        "Appending issue queue causes overflows!");
+
+        issue_queue_.emplace_back(inst_ptr);
+    }
+
+    // Pop completed instruction out of issue queue
+    void ExecutePipe::popIssueQueue_(const InstPtr & inst_ptr)
+    {
+        // Look for the instruction to be completed, and remove it from issue queue
+        for (auto iter = issue_queue_.begin(); iter != issue_queue_.end(); iter++) {
+            if (*iter == inst_ptr) {
+                issue_queue_.erase(iter);
+                return;
+            }
+        }
+        sparta_assert(false, "Attempt to complete instruction no longer exiting in issue queue!");
+    }
+
 
 }

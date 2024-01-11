@@ -63,15 +63,17 @@ namespace olympia
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static const char name[];
+        bool canAccept() {return !unit_busy_;}
+        void execute(const InstPtr&);
 
     private:
         // Ports and the set -- remove the ", 1" to experience a DAG issue!
         sparta::DataInPort<InstQueue::value_type> in_execute_inst_ {
             &unit_port_set_, "in_execute_write", 1};
         sparta::DataOutPort<uint32_t> out_scheduler_credits_{&unit_port_set_, "out_scheduler_credits"};
+        sparta::DataOutPort<uint32_t> out_execute_pipe_{&unit_port_set_, "out_execute_pipe"};
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
             {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
-
         // Ready queue
         typedef std::list<InstPtr> ReadyQueue;
         ReadyQueue  ready_queue_;
@@ -124,6 +126,8 @@ namespace olympia
 
         // Used to flush the ALU
         void flushInst_(const FlushManager::FlushingCriteria & criteria);
+
+        void flushInstIQ_(const FlushManager::FlushingCriteria & criteria);
 
         // Friend class used in rename testing
         friend class ExecutePipeTester;

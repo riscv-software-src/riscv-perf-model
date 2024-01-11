@@ -148,6 +148,12 @@ namespace olympia{
         using ExecutionTopology      = std::vector<std::vector<std::string>>;
         using ExecutionTopologyParam = sparta::Parameter<ExecutionTopology>;
 
+        using PipeTopology      = std::vector<std::vector<std::string>>;
+        using PipeTopologyParam = sparta::Parameter<PipeTopology>;
+
+        using IssueQueueTopology      = std::vector<std::vector<std::string>>;
+        using IssueQueueTopologyParam = sparta::Parameter<IssueQueueTopology>;
+
         CoreExtensions() : sparta::ExtensionsParamsOnly() {}
         virtual ~CoreExtensions() {}
 
@@ -164,9 +170,29 @@ namespace olympia{
                 reset(new ExecutionTopologyParam("execution_topology", ExecutionTopology(),
                                                  "Topology Post Dispatch -- the execution pipes. "
                                                  "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
+            alu_pipe_topology_.
+                reset(new PipeTopologyParam("pipe_topology_alu_pipes", PipeTopology(),
+                                                 "Topology Post Dispatch -- the execution pipes. "
+                                                 "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
+            br_pipe_topology_.
+                reset(new PipeTopologyParam("pipe_topology_br_pipes", PipeTopology(),
+                                                 "Topology Post Dispatch -- the execution pipes. "
+                                                 "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
+            float_pipe_topology_.
+                reset(new PipeTopologyParam("pipe_topology_fpu_pipes", PipeTopology(),
+                                                 "Topology Post Dispatch -- the execution pipes. "
+                                                 "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
+            issue_queue_topology_.
+                reset(new IssueQueueTopologyParam("issue_queue_topology", IssueQueueTopology(),
+                                                 "Topology Post Dispatch -- the execution pipes. "
+                                                 "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
         }
     private:
         std::unique_ptr<ExecutionTopologyParam> execution_topology_;
+        std::unique_ptr<PipeTopologyParam> alu_pipe_topology_;
+        std::unique_ptr<PipeTopologyParam> br_pipe_topology_;
+        std::unique_ptr<PipeTopologyParam> float_pipe_topology_;
+        std::unique_ptr<IssueQueueTopologyParam> issue_queue_topology_;
 
     };
 

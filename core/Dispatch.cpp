@@ -31,39 +31,133 @@ namespace olympia
 
         auto execution_topology = coreutils::getExecutionTopology(node->getParent());
 
+
+        // currently is:
+        // alu 6, br 2, fpu 2
+        // alu_dispatch -> 6 alus
+        // br_dispatch -> 2 brs
+        // fpu_dispatch -> 2 fpus
         // Create Disptchers for ALU, FPU, BR -- one to many of them
         // depending on the execution_topology extension
-        for (auto exe_unit_pair : execution_topology)
+
+        /*
+        dispatcher["alu"]
+        */
+        // for (auto exe_unit_pair : execution_topology)
+        // {
+        //     const auto tgt_name   = exe_unit_pair[0];
+        //     const auto unit_count = exe_unit_pair[1];
+
+        //     const auto exe_idx = (unsigned int) std::stoul(unit_count);
+        //     sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
+        //     for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
+        //     {
+        //         const std::string unit_name = tgt_name + std::to_string(unit_num);
+
+        //         // Create an InPort and an OutPort for credits and
+        //         // instruction send
+        //         auto & in_credit_port = in_credit_ports_.emplace_back
+        //             (new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_"+unit_name+"_credits"));
+        //         in_credit_port->enableCollection(node);
+
+        //         auto & out_inst_port = out_inst_ports_.emplace_back
+        //             (new sparta::DataOutPort<InstQueue::value_type>(&unit_port_set_, "out_"+unit_name+"_write"));
+
+        //         // Create a Dispatcher for this target type
+        //         const auto target_itr = InstArchInfo::dispatch_target_map.find(tgt_name);
+        //         sparta_assert(target_itr != InstArchInfo::dispatch_target_map.end(),
+        //                       "Unknown target unit: " << tgt_name << " when parsing the execution_topology extension");
+        //         dispatchers_[target_itr->second].emplace_back(new Dispatcher(unit_name,
+        //                                                                      this,
+        //                                                                      info_logger_,
+        //                                                                      in_credit_port.get(),
+        //                                                                      out_inst_port.get()));
+        //     }
+        // }
+        
+
+        auto issue_queue_pipe_topology = olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_topology");
+
+        /*
+            pipe_map_ = {"int": ["issue_queue"]}
+        */
+        // auto setup_pipe_map = [this, issue_queue_pipe_topology, node](std::string exe_unit){
+        //     auto alu_pipe_topology = olympia::coreutils::getPipeTopology(node->getParent(), "pipe_topology_" + exe_unit + "_pipes");
+        //     for(size_t i = 0; i < alu_pipe_topology.size(); ++i){
+        //         std::string unit_name = exe_unit + std::to_string(i);
+        //         for(size_t j = 0; j < issue_queue_pipe_topology.size(); ++j){
+        //             for(size_t k = 0; k < issue_queue_pipe_topology[j].size(); ++k){
+        //                 if(unit_name == issue_queue_pipe_topology[j][k]){
+        //                     for(size_t l = 0; l < alu_pipe_topology[i].size(); ++l){
+        //                         const auto tgt_pipe = InstArchInfo::execution_pipe_map.find(alu_pipe_topology[i][l]);
+        //                         pipe_map_[tgt_pipe->second].insert("issue_queue" + std::to_string(j));
+        //                     }
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // };
+        // setup_pipe_map("alu");
+        // setup_pipe_map("fpu");
+        // setup_pipe_map("br");
+        for (size_t i = 0; i < issue_queue_pipe_topology.size(); i++)
         {
-            const auto tgt_name   = exe_unit_pair[0];
-            const auto unit_count = exe_unit_pair[1];
+            auto exe_units = issue_queue_pipe_topology[i];
+            auto exe_unit_first = exe_units[0];
+            std::string opts[3] = {"alu", "fpu", "br"};
 
-            const auto exe_idx = (unsigned int) std::stoul(unit_count);
-            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
-            for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
-            {
-                const std::string unit_name = tgt_name + std::to_string(unit_num);
+            for(auto opt: opts){
+                size_t found = exe_unit_first.find(opt);
+                if (found != std::string::npos)
+                {
+                    std::string iq_name = "iq" + std::to_string(i);
+                    const auto target_itr = InstArchInfo::dispatch_target_map.find(opt);
+                    auto & in_credit_port = in_credit_ports_.emplace_back
+                        (new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_"+iq_name+"_credits"));
+                    in_credit_port->enableCollection(node);
 
-                // Create an InPort and an OutPort for credits and
-                // instruction send
-                auto & in_credit_port = in_credit_ports_.emplace_back
-                    (new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_"+unit_name+"_credits"));
-                in_credit_port->enableCollection(node);
-
-                auto & out_inst_port = out_inst_ports_.emplace_back
-                    (new sparta::DataOutPort<InstQueue::value_type>(&unit_port_set_, "out_"+unit_name+"_write"));
-
-                // Create a Dispatcher for this target type
-                const auto target_itr = InstArchInfo::dispatch_target_map.find(tgt_name);
-                sparta_assert(target_itr != InstArchInfo::dispatch_target_map.end(),
-                              "Unknown target unit: " << tgt_name << " when parsing the execution_topology extension");
-                dispatchers_[target_itr->second].emplace_back(new Dispatcher(unit_name,
+                    auto & out_inst_port = out_inst_ports_.emplace_back
+                        (new sparta::DataOutPort<InstQueue::value_type>(&unit_port_set_, "out_"+iq_name+"_write"));
+                    dispatchers_[target_itr->second].emplace_back(new Dispatcher(iq_name,
                                                                              this,
                                                                              info_logger_,
                                                                              in_credit_port.get(),
                                                                              out_inst_port.get()));
+                }
             }
         }
+
+        /*
+            pipe_map_ = {"int": ["issue_queue"]}
+        */
+        auto setup_pipe_map = [this, issue_queue_pipe_topology, node](std::string exe_unit){
+            auto alu_pipe_topology = olympia::coreutils::getPipeTopology(node->getParent(), "pipe_topology_" + exe_unit + "_pipes");
+            for(size_t i = 0; i < alu_pipe_topology.size(); ++i){
+                std::string unit_name = exe_unit + std::to_string(i);
+                for(size_t j = 0; j < issue_queue_pipe_topology.size(); ++j){
+                    for(size_t k = 0; k < issue_queue_pipe_topology[j].size(); ++k){
+                        if(unit_name == issue_queue_pipe_topology[j][k]){
+                            for(size_t l = 0; l < alu_pipe_topology[i].size(); ++l){
+                                const auto tgt_pipe = InstArchInfo::execution_pipe_map.find(alu_pipe_topology[i][l]);
+                                std::string tgt_unit_name = issue_queue_pipe_topology[j][k];
+                                const auto target_itr = InstArchInfo::dispatch_target_map.find(tgt_unit_name.substr(0, tgt_unit_name.size() - 1));
+                                auto & dispatchers = dispatchers_[target_itr->second];
+                                for(auto & dispatcher: dispatchers){
+                                    if(dispatcher->getName() == "iq" + std::to_string(j)){
+                                        pipe_map_[tgt_pipe->second].insert(dispatcher);
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+        setup_pipe_map("alu");
+        setup_pipe_map("fpu");
+        setup_pipe_map("br");
 
         // Special case for the LSU
         dispatchers_[InstArchInfo::TargetUnit::LSU].emplace_back(new Dispatcher("lsu",
@@ -177,25 +271,67 @@ namespace olympia
                 // Get the dispatchers used to dispatch the target.
                 // Find a ready-to-go dispatcher
                 auto & dispatchers = dispatchers_[target_unit];
-                for(auto & disp : dispatchers)
-                {
-                    if(disp->canAccept())
-                    {
-                        disp->acceptInst(ex_inst_ptr);
-                        ++unit_distribution_[target_unit];
-                        ++(unit_distribution_context_.context(target_unit));
-                        ++(weighted_unit_distribution_context_.context(target_unit));
-
-                        ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
-                        ILOG("Sending instruction: "
-                             << ex_inst_ptr << " to " << disp->getName());
-                        dispatched = true;
-
-                        break;
+                // so we have a map here that checks for which valid dispatchers for that instruction target pipe
+                // map needs to be:
+                // "int": [alu0, alu1, alu2, alu3]
+                // "mul": [alu0, alu1]
+                // disp->getName()
+                // ex_inst_ptr->getTarget()
+                if(ex_inst_ptr->getUnit() != InstArchInfo::TargetUnit::LSU){
+                    auto pipe = ex_inst_ptr->getPipe();
+                    auto dispatchers_iq = pipe_map_.find(pipe)->second;
+                    uint32_t min_credits = 0;
+                    uint32_t idx = 0;
+                    uint32_t my_idx = 0;
+                    for(auto & dispatcher_iq: dispatchers_iq){
+                        if(dispatcher_iq->canAccept()){
+                            uint32_t dispatch_creds = dispatcher_iq->getCredits();
+                            if(dispatch_creds > min_credits){
+                                idx = my_idx;
+                                min_credits = dispatch_creds;
+                            }
+                        }
+                        ++my_idx;
                     }
-                    else {
-                        ILOG(disp->getName() << " cannot accept inst: " << ex_inst_ptr);
-                        blocking_dispatcher_ = target_unit;
+                    if(min_credits != 0){
+                        uint32_t curr_idx = 0;
+                        for(auto & dispatcher_iq: dispatchers_iq){
+                            if(curr_idx == idx){
+                                dispatcher_iq->acceptInst(ex_inst_ptr);
+                                ++unit_distribution_[target_unit];
+                                ++(unit_distribution_context_.context(target_unit));
+                                ++(weighted_unit_distribution_context_.context(target_unit));
+
+                                ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
+                                ILOG("Sending instruction: "
+                                    << ex_inst_ptr << " to " << dispatcher_iq->getName());
+                                dispatched = true;
+                            }
+                            ++curr_idx;
+                        }
+                    }
+                }
+                else{
+                    for(auto & disp : dispatchers)
+                    {
+                        if(disp->canAccept())
+                        {
+                            disp->acceptInst(ex_inst_ptr);
+                            ++unit_distribution_[target_unit];
+                            ++(unit_distribution_context_.context(target_unit));
+                            ++(weighted_unit_distribution_context_.context(target_unit));
+
+                            ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
+                            ILOG("Sending instruction: "
+                                << ex_inst_ptr << " to " << disp->getName());
+                            dispatched = true;
+
+                            break;
+                        }
+                        else {
+                            ILOG(disp->getName() << " cannot accept inst: " << ex_inst_ptr);
+                            blocking_dispatcher_ = target_unit;
+                        }
                     }
                 }
                 if(false == dispatched) {

@@ -21,6 +21,14 @@ namespace olympia::coreutils
         auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
         return sparta::notNull(execution_topology_param)->getValueAs<olympia::CoreExtensions::ExecutionTopology>();
     }
+    inline auto getPipeTopology(sparta::TreeNode * node, std::string pipe_name)
+    {
+        auto core_extension           = node->getExtension(olympia::CoreExtensions::name);
+        auto core_extension_params    = sparta::notNull(core_extension)->getParameters();
+        auto pipe_topology_param = sparta::notNull(core_extension_params)->getParameter(pipe_name);
+        return sparta::notNull(pipe_topology_param)->getValueAs<olympia::CoreExtensions::PipeTopology>();
+    }
+
     inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
     {
         static const std::map<mavis::InstMetaData::OperandTypes, core_types::RegFile> mavis_optype_to_regfile = {

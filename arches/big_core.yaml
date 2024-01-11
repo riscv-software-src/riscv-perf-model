@@ -16,43 +16,160 @@ top.cpu.core0:
   dcache.params:
     l1_size_kb: 64
 
+
+# questions:
+# accessing IssueQueue from dispatch -> easy way in sparta
+#   - need to be able to check issue queue status
+# in IssueQueue, how does it look from a Sparta point of view in terms of checking
+# previous conversations -> IQ just keeps trying to push instructions down into exe_unit
+# so would we have like:
+# if(!exe_pipe->canAccept(ex_inst))
+# {
+#   schedule one cycle later to try again? -> loop through all possible exe_pipes
+# }
+
+# extension? -> multi extension
+# configure
+# credit system (dispatch manages credits for issue queues)
+# ports to send issue queues back to them
+
+# callback
+# stall due to lack of credits
+# either check back in a cycle or credit
+
+# callback at IQ -> Execution
+# we fail to issue something
+# use a callback, because there are less checks, we can specify a specific instruction with a exectuion
+# IssueQueue logic (if you become ready first, you get first)
+# but we might have multiple callbacks? execution pipe triggers callbacks
+# function in issuequeue -> call callbacks
+# port to issuequeue from executepipe ("I'm Done")
+# lots of asserts
+
 top.cpu.core0.extension.core_extensions:
   execution_topology:
-  [["alu", "6"],
-   ["fpu", "2"],
-   ["br",  "2"]]
+    [["alu", "6"],
+    ["fpu", "2"],
+    ["br",  "2"]]
+  pipe_topology_alu_pipes:
+    [["int"], # alu0
+      ["int", "div"], # alu1
+      ["int", "mul"],
+      ["int", "mul", "i2f", "cmov"],
+      ["int"],
+      ["int"]]
+  pipe_topology_br_pipes:
+    [["br"],
+     ["br"]]
+  pipe_topology_fpu_pipes:
+    [["float", "faddsub", "fmac"], 
+     ["float", "f2i"]]
+  issue_queue_topology:
+    [["alu0"],
+     ["alu1", "alu2"],
+     ["alu3", "alu4", "alu5"],
+     ["fpu0", "fpu1"],
+     ["br0", "br1"]]
+
+    # [["int", "mul", "i2f", "cmov"]]
+  # top.cpu.core0.alu1.params:
+  #  pipes:
+  #     [["int", "div"]]
+  # top.cpu.core0.alu2.params:
+  #  pipes:
+  #     [["int", "mul"]]
+  # top.cpu.core0.alu3.params:
+  #  pipes:
+  #     [["int"]]
+  # top.cpu.core0.alu4.params:
+  #  pipes:
+  #     [["int"]]
+  # top.cpu.core0.alu5.params:
+  #  pipes:
+  #     [["int"]]
+  # top.cpu.core0.fpu0.params:
+  #  pipes:
+  #     [["float", "faddsub", "fmac"]]
+  # top.cpu.core0.fp1.params:
+  #  pipes:
+  #     [["float", "f2i"]]
+  # top.cpu.core0.br0.params:
+  #  pipes:
+  #     [["br"]]
+  # top.cpu.core0.br1.params:
+  #  pipes:
+  #     [["br"]]
+  #   # name by common exe unit
+  #   # dispatch looks at what pipe is needed for an instruction then allocates to corresponding issue queue
+  #   # dispatch needs to walk the tree, read the topology to see how many dispatchers to create and which pipes to use?
+  #   # walking the tree?
+  #   [["alu0", "alu1", "alu2"],
+  #   ["alu3", "alu4", "alu5"],
+  #   ["fpu0", "fpu1"],
+  #   ["br0", "br1"]]
+# top.cpu.core0.alu0.params:
+#   pipes:
+#     [["int"]]
+# top.cpu.core0.alu1.params:
+#   pipes:
+#     [["int", "mul"]]
+# top.cpu.core0.alu*.params:
+#   latency: 1
+# top.cpu.core0.vex0.params:
+#   pipes:
+#     [["gather", "smadd", "fadd"]]
+  # pipe_topology_br_pipes:
+  #   [["br"]]
+  # pipe_topology_float_pipes:
+  #   [["float", "faddsub", "mul"]]
+  # issue_queue_topology:
+  #   [["int_queue_0", "alu0", "alu1"],
+  #   ["int_queue_1", "alu2", "alu3"],
+  #   ["int_queue_2", "alu4", "alu5"],
+  #   ["fp_queue_0", "fpu0", "fpu1"],
+  #   ["br_queue_0", "br0", "br1"]]
 
 top.cpu.core0.rename.scoreboards:
   # From
   # |
   # V
   integer.params.latency_matrix: |
-    [["",      "alu0", "alu1", "alu2", "alu3", "alu4", "alu5", "fpu0", "fpu1", "br0",  "br1",  "lsu"],
-    ["alu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu2",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu3",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu4",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu5",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["fpu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["fpu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["br0",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["br1",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["lsu",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"]]
+    [["",      "alu0", "alu1", "alu2", "alu3", "alu4", "alu5", "fpu0", "fpu1", "br0",  "br1",  "lsu",  "iq0",  "iq1",  "iq2",  "iq3", "iq4"],
+    ["alu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu2",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu3",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu4",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu5",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["fpu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["fpu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["br0",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["br1",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["lsu",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq0",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq1",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq2",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq3",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq4",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"]]
 
 
   float.params.latency_matrix: |
-    [["",      "alu0", "alu1", "alu2", "alu3", "alu4", "alu5", "fpu0", "fpu1", "br0",  "br1",  "lsu"],
-    ["alu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu2",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu3",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu4",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["alu5",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["fpu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["fpu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["br0",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["br1",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"],
-    ["lsu",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1"]]
+    [["",      "alu0", "alu1", "alu2", "alu3", "alu4", "alu5", "fpu0", "fpu1", "br0",  "br1",  "lsu",  "iq0",  "iq1",  "iq2",  "iq3", "iq4"],
+    ["alu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu2",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu3",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu4",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["alu5",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["fpu0",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["fpu1",  "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["br0",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["br1",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["lsu",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq0",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq1",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq2",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq3",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"],
+    ["iq4",   "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",    "1",   "1",    "1",    "1",    "1",    "1",    "1"]]
 
 

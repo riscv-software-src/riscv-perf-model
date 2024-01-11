@@ -69,6 +69,7 @@ namespace olympia
         void scheduleDispatchSession();
 
     private:
+        std::unordered_map<InstArchInfo::TargetPipe, std::set<std::shared_ptr<Dispatcher>>> pipe_map_;
         InstQueue dispatch_queue_;
 
         // Ports
@@ -85,7 +86,7 @@ namespace olympia
         sparta::DataInPort<uint32_t>               in_reorder_credits_{&unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
         sparta::DataOutPort<InstGroupPtr>          out_reorder_write_ {&unit_port_set_, "out_reorder_buffer_write"};
 
-        std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
+        std::array<std::vector<std::shared_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>  dispatchers_;
         InstArchInfo::TargetUnit blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
 
         // For flush

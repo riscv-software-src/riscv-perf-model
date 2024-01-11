@@ -7,6 +7,7 @@
 
 #include "Inst.hpp"
 #include "ExecutePipe.hpp"
+#include "IssueQueue.hpp"
 
 namespace olympia
 {
@@ -49,6 +50,7 @@ namespace olympia
     {
     public:
         void onConfiguring(sparta::ResourceTreeNode* node) override;
+        void bindLate(sparta::TreeNode* node) override;
         void deleteSubtree(sparta::ResourceTreeNode*) override;
 
         ~ExecuteFactory() = default;
@@ -59,5 +61,9 @@ namespace olympia
         // the factory is used to destroy the nodes!
         ExecutePipeFactory exe_pipe_fact_;
         std::vector<std::unique_ptr<sparta::ResourceTreeNode>> exe_pipe_tns_;
+        
+        IssueQueueFactory issue_queue_fact_;
+        std::vector<std::vector<std::string>> issue_queue_topology_;
+        std::vector<std::unique_ptr<sparta::ResourceTreeNode>> issue_queues_;
     };
 }

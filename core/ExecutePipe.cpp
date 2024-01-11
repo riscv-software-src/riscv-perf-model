@@ -61,7 +61,7 @@ namespace olympia
         }
 
         // Send initial credits
-        out_scheduler_credits_.send(scheduler_size_);
+        //out_scheduler_credits_.send(scheduler_size_);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +135,28 @@ namespace olympia
         unit_busy_ = true;
         // Pop the insturction from the scheduler and send a credit back to dispatch
         ready_queue_.pop_front();
-        out_scheduler_credits_.send(1, 0);
+        //out_scheduler_credits_.send(1, 0);
+    }
+
+    void ExecutePipe::execute(const InstPtr & ex_inst_ptr)
+    {
+        auto & ex_inst = *ex_inst_ptr;
+        ex_inst.setStatus(Inst::Status::SCHEDULED);
+        const uint32_t exe_time =
+            ignore_inst_execute_time_ ? execute_time_ : ex_inst.getExecuteTime();
+        collected_inst_.collectWithDuration(ex_inst, exe_time);
+        ILOG("Executing: " << ex_inst << " for "
+             << exe_time + getClock()->currentCycle());
+        sparta_assert(exe_time != 0);
+
+        ++total_insts_issued_;
+        // Mark the instruction complete later...
+        complete_inst_.preparePayload(ex_inst_ptr)->schedule(exe_time);
+        // Mark the alu as busy
+        unit_busy_ = true;
+        // Pop the insturction from the scheduler and send a credit back to dispatch
+        //ready_queue_.pop_front();
+        //out_scheduler_credits_.send(1, 0);
     }
 
     // Called by the scheduler, scheduled by complete_inst_.
@@ -177,31 +198,36 @@ namespace olympia
         ++total_insts_executed_;
 
         // Schedule issue if we have instructions to issue
-        if (ready_queue_.size() > 0) {
-            issue_inst_.schedule(sparta::Clock::Cycle(0));
+        // if (ready_queue_.size() > 0) {
+        //     issue_inst_.schedule(sparta::Clock::Cycle(0));
+        // }
+
+        out_execute_pipe_.send(1); // send exe_pipe name back to IQ, so we can schedule another instruction
+    }
+
+    void ExecutePipe::flushInstIQ_(const FlushManager::FlushingCriteria & criteria)
+    {
+        ILOG("Got flush for criteria: " << criteria);
+        // Cancel outstanding instructions awaiting completion and
+        // instructions on their way to issue
+        auto cancel_critera = [criteria](const InstPtr & inst) -> bool {
+            if(inst->getUniqueID() >= uint64_t(criteria)) {
+                return true;
+            }
+            return false;
+        };
+        complete_inst_.cancelIf(cancel_critera);
+        issue_inst_.cancel();
+
+        if(complete_inst_.getNumOutstandingEvents() == 0) {
+            unit_busy_ = false;
+            collected_inst_.closeRecord();
         }
     }
 
     void ExecutePipe::flushInst_(const FlushManager::FlushingCriteria & criteria)
     {
-        ILOG("Got flush for criteria: " << criteria);
-
-        // Flush instructions in the ready queue
-        ReadyQueue::iterator it = ready_queue_.begin();
-        uint32_t credits_to_send = 0;
-        while(it != ready_queue_.end()) {
-            if((*it)->getUniqueID() >= uint64_t(criteria)) {
-                ready_queue_.erase(it++);
-                ++credits_to_send;
-            }
-            else {
-                ++it;
-            }
-        }
-        if(credits_to_send) {
-            out_scheduler_credits_.send(credits_to_send, 0);
-        }
-
+        ILOG("First Got flush for criteria: " << criteria);
         // Cancel outstanding instructions awaiting completion and
         // instructions on their way to issue
         auto cancel_critera = [criteria](const InstPtr & inst) -> bool {

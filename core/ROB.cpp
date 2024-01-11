@@ -92,11 +92,27 @@ namespace olympia
         ev_retire_.schedule(sparta::Clock::Cycle(0));
     }
 
-    void ROB::handleFlush_(const FlushManager::FlushingCriteria &)
+    void ROB::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
+        uint32_t credits_to_send = 0;
+
         // Clean up internals and send new credit count
-        out_reorder_buffer_credits_.send(reorder_buffer_.size());
-        reorder_buffer_.clear();
+        while (reorder_buffer_.size())
+        {
+            auto youngest_inst = reorder_buffer_.back();
+            if (criteria.includedInFlush(youngest_inst))
+            {
+                ILOG("flushing " << youngest_inst);
+                youngest_inst->setStatus(Inst::Status::FLUSHED);
+                reorder_buffer_.pop_back();
+                ++credits_to_send;
+            }
+            else
+            {
+                break;
+            }
+        }
+        out_reorder_buffer_credits_.send(credits_to_send);
     }
 
     void ROB::retireInstructions_()
@@ -129,6 +145,14 @@ namespace olympia
 
                 ILOG("retiring " << ex_inst);
 
+                // Use the program ID to verify that the program order has been maintained.
+                sparta_assert(ex_inst.getProgramID() == expected_program_id_,
+                    "Unexpected program ID when retiring instruction"
+                    << "(suggests wrong program order)"
+                    << " expected: " << expected_program_id_
+                    << " received: " << ex_inst.getProgramID());
+                ++expected_program_id_;
+
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()
                               << " instructions in " << getClock()->currentCycle()
@@ -149,11 +173,10 @@ namespace olympia
                 if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
                 {
                     ILOG("Instigating flush... " << ex_inst);
-                    // Signal flush to the system
-                    out_retire_flush_.send(ex_inst.getUniqueID());
 
-                    // Redirect fetch
-                    out_fetch_flush_redirect_.send(ex_inst.getTargetVAddr() + 4);
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+
 
                     ++num_flushes_;
                     break;

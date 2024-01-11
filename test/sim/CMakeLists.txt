@@ -64,6 +64,15 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
     --arch ${ARCH_NAME})
 endforeach()
 
+## Test branch misprediction flushes
+foreach(ARCH_FULL_PATH ${TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  sparta_named_test(olympia_arch_${ARCH_NAME}_random_branch_misprediction_test olympia
+    -i500K --workload traces/dhry_riscv.zstf
+    --arch ${ARCH_NAME}
+    -p top.cpu.core0.execute.br*.params.enable_random_misprediction 1)
+endforeach()
 
 set(test_params_list)
 list(APPEND test_params_list "top.cpu.core0.lsu.params.mmu_lookup_stage_length 3")

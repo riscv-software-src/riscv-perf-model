@@ -42,9 +42,12 @@ void Options::setup_options(int ac, char** av)
 // --------------------------------------------------------------------
 // Construct the std, hidden and positional option descriptions
 // --------------------------------------------------------------------
+// clang-format off
 void Options::build_options(po::options_description & stdOpts)
 {
-    stdOpts.add_options()("help,h", "...")
+    stdOpts.add_options()
+
+    ("help,h", "...")
 
     ("version,v", "report version and exit")
 
@@ -56,16 +59,17 @@ void Options::build_options(po::options_description & stdOpts)
     ("isa_file", po::value<vector<string>>(&isa_files),
      "Multiple --isa_file accepted")
 
-    ("dsl_file", po::value<vector<string>>(&dsl_files),
-     "Multiple --dsl_file accepted")
+    ("fsl_file", po::value<vector<string>>(&fsl_files),
+     "Multiple --fsl_file accepted")
 
-    ("cfg_file", po::value<vector<string>>(&isa_files),
-     "Multiple --cfg_file accepted")
+    ("fsl_syntax_file", po::value<vector<string>>(&fsl_syntax_files),
+     "Syntax stress test files. Multiple "
+     "--fsl_syntax_file accepted")
 
     ("tb_verbose", po::bool_switch(&tb_verbose) ->default_value(false),
          "Test bench message control");
 }
-
+// clang-format on
 // --------------------------------------------------------------------
 // Check sanity on the options, handle --help, --version
 // --------------------------------------------------------------------
@@ -86,12 +90,6 @@ bool Options::check_options(po::variables_map & vm,
             return false;
         }
     }
-
-    // Disable this for the testbench, keep for future use
-    // if(isa_files.size() == 0) {
-    //   msg->emsg("At least one --isa_file option must be specified");
-    //   return false;
-    // }
 
     return true;
 }

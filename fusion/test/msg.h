@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file header for simple uniform messages
+//! \file msg.h   header for simple uniform messages
 #pragma once
 #include <string>
 #include <iostream>
@@ -30,7 +30,7 @@ struct Msg
 
     //! \brief this adds an identifier prefix to messages
     //!
-    //! Example -I:MYUNIT: <message> 
+    //! Example -I:MYUNIT: {message}
     void setWho(std::string _w) { w = _w + ": "; }
 
     //! \brief shared message method
@@ -108,18 +108,22 @@ struct Msg
     //! \brief ...
     std::string w;
     /**
-      * \brief verbosity setting
-      *
-      * \verbatim
-      * verbose 0 - silent
-      *         1 - errors
-      *         2 - errors,warnings
-      *         3 - errors,warnings,info
-      *         >= 4 - errors,warnings,info,debug4
-      *              - debug messages can be a various levels, debugN
-      * \endverbatim
-      */
+     * \brief verbosity setting
+     *
+     * \verbatim
+     * verbose 0 - silent
+     *         1 - errors
+     *         2 - errors,warnings
+     *         3 - errors,warnings,info
+     *         >= 4 - errors,warnings,info,debug4
+     *              - debug messages can be a various levels, debugN
+     * \endverbatim
+     */
+
+    //! \brief ...
     int verbose{3};
+
+    //! \brief ...
     static Msg* instance;
 
   private:

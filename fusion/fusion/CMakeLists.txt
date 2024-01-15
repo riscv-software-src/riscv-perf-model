@@ -5,7 +5,8 @@ project(FusionLibrary)
 add_library(FusionLib INTERFACE)
 
 target_include_directories(FusionLib INTERFACE
-    ./dsl
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>  # for install
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../mavis
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../mavis/mavis
 )

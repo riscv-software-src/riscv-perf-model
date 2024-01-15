@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.17)
 project(FusionProject)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(FUSION_TOP ${CMAKE_SOURCE_DIR})
 
-# Add subdirectories
+# Add subdirectories in dependent order
 add_subdirectory(fusion)
+add_subdirectory(dsl)
 add_subdirectory(test)
 
 # Check if Doxygen is installed

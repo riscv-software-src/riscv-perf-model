@@ -1,8 +1,9 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fieldextractor.h  extract fields from encodings 
+//! \file fieldextractor.h  mavis shim, extract fields from encodings
 #pragma once
+#include "fusionexceptions.h"
 #include "uArchInfo.h"
 #include "Inst.h"
 #include "Mavis.h"
@@ -11,11 +12,12 @@
 #include <ostream>
 #include <iostream>
 using namespace std;
+
 //! \class FieldExtractor
 //!
 //! \brief example class for extracting field values from mavis encodings
 //!
-//! This implementation provides a shim between operations typically 
+//! This implementation provides a shim between operations typically
 //! used during fusion contraint checking and transformation and mavis.
 //!
 //! The intent is any alternative to FieldExtractor could be created
@@ -25,11 +27,10 @@ using namespace std;
 //! delegated to existing methods in mavis.
 class FieldExtractor
 {
-
   public:
     //! \brief Part of mechanism to extract named fields from encodings
     //!
-    //! OperandFieldID has no entry for immediates 
+    //! OperandFieldID has no entry for immediates
     //! \note I am overloading RS_MAX when referencing immediate fields
     using FieldName = mavis::InstMetaData::OperandFieldID;
     //! \brief alias used to extract Special fields by enum
@@ -42,12 +43,17 @@ class FieldExtractor
     //! \brief type for getXRegs operations from mavis
     using MavisBitMaskType = mavis::DecodedInstructionInfo::BitMask;
     //! \brief type for getXRegs operations from mavis
-    using RegsGetter = MavisBitMaskType (Instruction<uArchInfo>::*)() const;
+    using RegsGetter =
+        MavisBitMaskType (Instruction<uArchInfo>::*)() const;
     //! \brief duplicated arguments do not need to be explicitly expressed
     using OptArg = std::optional<FieldName>;
 
     //!  \brief compairson function primitives
-    enum FUNC { EQ, LT };
+    enum FUNC
+    {
+        EQ,
+        LT
+    };
 
     //!  \brief placeholder
     void info(std::ostream & os = std::cout)
@@ -57,37 +63,46 @@ class FieldExtractor
 
     //!  \brief extract value of named encoding field
     //!
-    //! handles field name and immediate checking 
+    //! handles field name and immediate checking
     //! \note RS_MAX is overloaded to identify get's for immediate fields
     uint32_t getField(InstPtrType inst, FieldName f) const
     {
         bool isDest = false;
         if (!checkInstHasField(inst, f, isDest))
         {
-            throw std::runtime_error("invalid field specified for inst.");
+            throw fusion::FieldExtUnknownField((uint32_t)f,
+                                               inst->dasmString());
         }
 
         if (f == FieldName::RS_MAX)
             return getImmField(inst);
+
         return getFieldById(inst, f, isDest);
     }
 
-    //! \brief get the encoded value of a named special field from an instptr
+    //! \brief get the encoded value of a named special field from an
+    //! instptr
     //!
-    //! performs a sanity check not performed by calling getSFieldById directly
+    //! This is simpler than getField, a return value of 0 from mavis
+    //! indicates the field does not exist so checkInstHasSField()
+    //! is redundant. getSFieldById() is also not necessary since
+    //! SpecialFields are not distinguished as a source or destination
+    //! operand and can be accessed from the same method.
     uint32_t getSField(InstPtrType inst, SFieldName f) const
     {
-        if (!checkInstHasSField(inst, f))
+        uint32_t value = inst->getSpecialField(f);
+        if (value == 0)
         {
-            throw std::runtime_error(
-                "invalid special field specified for inst.");
+            throw fusion::FieldExtUnknownSpecialField((uint32_t)f,
+                                                      inst->dasmString());
         }
-        return getSFieldById(inst, f);
+        return value;
+        //        return getSFieldById(inst, f);
     }
 
     //! \brief get the encoded value of the full immediate field
     //!
-    //! split immediate fields are (will be) ordered msb:lsb and 
+    //! split immediate fields are (will be) ordered msb:lsb and
     //! concatenated into one unsigned value
     uint32_t getImmField(InstPtrType inst) const { return 0; }
 
@@ -103,19 +118,21 @@ class FieldExtractor
         return inst->getSourceOpInfo().getFieldValue(f);
     }
 
-    //!  \brief helper function for getSField
-    //!
-    //! not that interesting except checkInstHasSField was called if this is
-    //! not called directly
-    uint32_t getSFieldById(InstPtrType inst, SFieldName sf) const
-    {
-        return inst->getSpecialField(sf);
-    }
+    //    //!  \brief helper function for getSField
+    //    //!
+    //    //! not that interesting except checkInstHasSField was called if
+    //    this is
+    //    //! not called directly
+    //    uint32_t getSFieldById(InstPtrType inst, SFieldName sf) const
+    //    {
+    //        return inst->getSpecialField(sf);
+    //    }
 
-    //! \brief Use mavis to determine if the FieldName exists in this inst obj
+    //! \brief Use mavis to determine if the FieldName exists in this inst
+    //! obj
     //!
-    //! Special case check for immediates, srcOp and dstOps have to be
-    //! checked separately.
+    //! Special case check for immediates;
+    //! srcOp and dstOps have to be checked separately.
     bool checkInstHasField(InstPtrType inst, FieldName f,
                            bool & isDest) const
     {
@@ -153,20 +170,19 @@ class FieldExtractor
         }
 
         // catch fall through
-        std::string dasm = inst->dasmString();
-        std::string msg = "invalid field specified for inst " + dasm;
-        throw std::runtime_error(msg);
+        throw fusion::FieldExtUnknownField((uint32_t)f,
+                                           inst->dasmString());
         return false; ///...
     }
 
-    //! \brief Use mavis to determine if the SFieldName exists in this inst obj
-    //!
-    //! Special case check for immediates, srcOp and dstOps have to be
-    //! checked separately. Not implemented yet
-    bool checkInstHasSField(InstPtrType inst, SFieldName f) const
-    {
-        return true;
-    }
+    //    //! \brief Use mavis to determine if the SFieldName exists in
+    //    this inst obj
+    //    //!
+    //    //!
+    //    bool checkInstHasSField(InstPtrType inst, SFieldName f) const
+    //    {
+    //        return false; ///...
+    //    }
 
     //! \brief equality
     bool eq(const InstPtrListType & input, size_t a, size_t b,
@@ -262,13 +278,17 @@ class FieldExtractor
         auto rhs = getField(B, f2);
         switch (func)
         {
-            case FUNC::LT: return lhs < rhs;
-            case FUNC::EQ: return lhs == rhs;
-            default: return false;
+        case FUNC::LT:
+            return lhs < rhs;
+        case FUNC::EQ:
+            return lhs == rhs;
+        default:
+            return false;
         }
     }
 
-    //! \brief count the number of read or write ports required by the group
+    //! \brief count the number of read or write ports required by the
+    //! group
     uint32_t countPorts(const InstPtrListType & input,
                         RegsGetter getRegs) const
     {

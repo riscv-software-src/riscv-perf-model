@@ -6,6 +6,8 @@
 #include <iostream>
 using namespace std;
 
+QParser* QP;
+
 Options* Options::instance = 0;
 std::shared_ptr<Options> opts(Options::getInstance());
 
@@ -15,8 +17,10 @@ std::unique_ptr<Msg> msg(Msg::getInstance());
 //  ------------------------------------------------------------------------
 int main(int ac, char** av)
 {
-    TestBench tb(ac, av);
+    QParser qp;
+    QP = &qp;
 
+    TestBench tb(ac, av);
     ofstream out("PASSFAIL");
     if (!out.is_open())
     {

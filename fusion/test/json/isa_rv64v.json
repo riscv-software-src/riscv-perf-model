@@ -1,0 +1,2634 @@
+[
+  {
+    "mnemonic": "vsetvli",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x7057",
+    "ignore": [ "func1b", "func3a", "func1c" ],
+    "xform": "V_vsetvli",
+    "l-oper": "all"
+  },
+  {
+    "mnemonic": "vsetvl",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x80007057",
+    "fixed": [ "vm" ],
+    "xform": "V_vsetvl",
+    "l-oper": "all"
+  },
+    {
+    "mnemonic": "vlm.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2b00007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "mask", "unit_stride", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ]
+  },
+  {
+    "mnemonic": "vsetivli",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xc0007057",
+    "ignore": [ "func3a", "func1c" ],
+    "xform": "V_vsetivli",
+    "l-oper": "all"
+  },
+  {
+    "mnemonic": "vle8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x7",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+  },
+  {
+    "mnemonic": "vle16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x5007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+
+  },
+  {
+    "mnemonic": "vle32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x6007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+  },
+  {
+    "mnemonic": "vle64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x7007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+  },
+    {
+    "mnemonic": "vsm.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2b00027",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "mask", "unit_stride", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ]
+  },
+  {
+    "mnemonic": "vse8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x27",
+    "fixed": [ "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 8
+  },
+  {
+    "mnemonic": "vse16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x5027",
+    "fixed": [ "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 16
+  },
+  {
+    "mnemonic": "vse32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x6027",
+    "fixed": [ "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 32
+  },
+  {
+    "mnemonic": "vse64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x7027",
+    "fixed": [ "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 64
+  },
+  {
+    "mnemonic": "vlse8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8000007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "stride", "segment", "load" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+  },
+  {
+    "mnemonic": "vlse16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8005007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "stride", "segment", "load" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+  },
+  {
+    "mnemonic": "vlse32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8006007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "stride", "segment", "load" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+  },
+  {
+    "mnemonic": "vlse64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8007007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "stride", "segment", "load" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+  },
+  {
+    "mnemonic": "vsse8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8000027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "stride", "segment", "store" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 8
+  },
+  {
+    "mnemonic": "vsse16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8005027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "stride", "segment", "store" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 16
+  },
+  {
+    "mnemonic": "vsse32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8006027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "stride", "segment", "store" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 32
+  },
+  {
+    "mnemonic": "vsse64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x8007027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "stride", "segment", "store" ],
+    "l-oper": [ "rs2", "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 64
+  },
+  {
+    "mnemonic": "vloxei8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc000007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vloxei16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc005007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vloxei32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc006007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vloxei64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc007007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 64
+    },
+    {
+    "mnemonic": "vluxei8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4000007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vluxei16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4005007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vluxei32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4006007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vluxei64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4007007",
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vsoxei8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc000027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vsoxei16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc005027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vsoxei32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc006027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vsoxei64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xc007027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "ordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vsuxei8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4000027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vsuxei16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4005027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vsuxei32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4006027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vsuxei64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x4007027",
+    "xform": "V_store",
+    "type": [ "vector", "maskable", "unordered_indexed", "segment", "store" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rs3" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vle8ff.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x1000007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "faultfirst", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vle16ff.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x1005007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "faultfirst", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vle32ff.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x1006007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "faultfirst", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vle64ff.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x1007007",
+    "fixed": [ "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "maskable", "unit_stride", "segment", "faultfirst", "load" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vl1re8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2800007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vl1re16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2805007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vl1re32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2806007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vl1re64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2807007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vl2re8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x22800007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vl2re16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x22805007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vl2re32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x22806007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vl2re64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x22807007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vl4re8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x62800007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vl4re16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x62805007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vl4re32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x62806007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vl4re64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x62807007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vl8re8.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xe2800007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vl8re16.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xe2805007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 16
+    },
+  {
+    "mnemonic": "vl8re32.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xe2806007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 32
+    },
+  {
+    "mnemonic": "vl8re64.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xe2807007",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_load",
+    "type": [ "vector", "load", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ],
+    "data" : 64
+    },
+  {
+    "mnemonic": "vs1r.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x2800027",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "store", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vs2r.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x22800027",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "store", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vs4r.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0x62800027",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "store", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vs8r.v",
+    "tags" : ["v"],
+    "form": "VF_mem",
+    "stencil": "0xe2800027",
+    "fixed": [ "nf", "vm", "rs2" ],
+    "xform": "V_store",
+    "type": [ "vector", "store", "whole" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs3" ],
+    "data" : 8
+    },
+  {
+    "mnemonic": "vadd.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x4057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsub.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vrsub.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vminu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x10004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmin.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x14004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmaxu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x18004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmax.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x1c004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vand.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x24004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vor.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x28004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vxor.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x2c004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vrgather.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x30004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vslideup.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x38004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vslidedown.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x3c004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vadc.vxm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x40004057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmadc.vxm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x44004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsbc.vxm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x48004057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsbc.vxm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x4c004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmerge.vxm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5c004057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv.v.x",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5e004057",
+    "fixed": [ "vm", "rs2" ],
+    "type": [ "vector" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ]
+  },
+  {
+    "mnemonic": "vmseq.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x60004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsne.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x64004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsltu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x68004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmslt.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x6c004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsleu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x70004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsle.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x74004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsgtu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x78004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsgt.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x7c004057",
+    "type": [ "vector", "mask", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsaddu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x80004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsadd.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x84004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vssubu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x88004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vssub.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8c004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsll.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x94004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsmul.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x9c004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsrl.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xa0004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsra.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xa4004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vssrl.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xa8004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vssra.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xac004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnsrl.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb0004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnsra.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb4004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnclipu.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb8004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnclip.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xbc004057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vadd.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x57",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsub.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vminu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x10000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmin.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x14000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmaxu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x18000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmax.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x1c000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vand.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x24000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vor.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x28000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vxor.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x2c000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vrgather.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x30000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vrgatherei16.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x38000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vadc.vvm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x40000057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmadc.vvm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x44000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsbc.vvm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x48000057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmsbc.vvm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x4c000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmerge.vvm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5c000057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmv.v.v",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5e000057",
+    "fixed": [ "vm", "rs2" ],
+    "type": [ "vector" ],
+    "v-oper": [ "rs1", "rd" ]
+  },
+  {
+    "mnemonic": "vmseq.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x60000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmsne.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x64000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmsltu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x68000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmslt.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x6c000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmsleu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x70000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmsle.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x74000057",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsaddu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x80000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsadd.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x84000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vssubu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x88000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vssub.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8c000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsll.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x94000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsmul.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x9c000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsrl.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xa0000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vsra.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xa4000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vssrl.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xa8000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vssra.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xac000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vnsrl.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb0000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vnsra.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb4000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vnclipu.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb8000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vnclip.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xbc000057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwredsumu.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc0000057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwredsum.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc4000057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+
+    "mnemonic": "vadd.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x3057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vrsub.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xc003057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vand.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x24003057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vor.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x28003057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vxor.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x2c003057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vrgather.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x30003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vslideup.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x38003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vslidedown.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x3c003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vadc.vim",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x40003057",
+    "fixed": [ "vm" ],
+    "xform": "V_simm",
+    "type": [ "vector" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmadc.vim",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x44003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmerge.vim",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5c003057",
+    "fixed": [ "vm" ],
+    "xform": "V_simm",
+    "type": [ "vector" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv.v.i",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5e003057",
+    "fixed": [ "vm", "rs2" ],
+    "xform": "V_simm",
+    "type": [ "vector" ],
+    "v-oper": [ "rd" ]
+  },
+  {
+    "mnemonic": "vmseq.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x60003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsne.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x64003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsleu.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x70003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsle.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x74003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsgtu.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x78003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsgt.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x7c003057",
+    "xform": "V_simm",
+    "type": [ "vector", "mask", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsaddu.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x80003057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsadd.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x84003057",
+    "xform": "V_simm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsll.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x94003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv1r.v",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x9e003057",
+    "fixed": [ "vm", "rs1" ],
+    "type": [ "vector", "whole" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv2r.v",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x9e00b057",
+    "fixed": [ "vm", "rs1" ],
+    "type": [ "vector", "whole" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv4r.v",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x9e01b057",
+    "fixed": [ "vm", "rs1" ],
+    "type": [ "vector", "whole" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv8r.v",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x9e03b057",
+    "fixed": [ "vm", "rs1" ],
+    "type": [ "vector", "whole" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsrl.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xa0003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsra.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xa4003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vssrl.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xa8003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vssra.vi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xac003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnsrl.wi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb0003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnsra.wi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb4003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnclipu.wi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xb8003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnclip.wi",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0xbc003057",
+    "xform": "V_uimm",
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vredsum.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x2057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredand.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x4002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredor.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredxor.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredminu.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x10002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredmin.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x14002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredmaxu.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x18002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vredmax.vs",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x1c002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vaaddu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x20002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vaadd.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x24002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vasubu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x28002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vasub.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x2c002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmv.x.s",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x42002057",
+    "fixed": [ "vm", "rs1" ],
+    "type": [ "vector" ],
+    "l-oper": [ "rd" ],
+    "v-oper": [ "rs2" ]
+  },
+  {
+    "mnemonic": "vzext.vf8",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x48012057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsext.vf8",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x4801a057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vzext.vf4",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x48022057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsext.vf4",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x4802a057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vzext.vf2",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x48032057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vsext.vf2",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x4803a057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vcompress.vm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5e002057",
+    "fixed": [ "vm" ],
+    "type": [ "vector" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmandnot.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x60002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmand.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x64002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmor.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x68002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmxor.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x6c002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmornot.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x70002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmnand.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x74002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmnor.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x78002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmxnor.mm",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x7c002057",
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmsbf.m",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5000a057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsof.m",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x50012057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmsif.m",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5001a057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable", "mask" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "viota.m",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x50082057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vid.v",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x5008a057",
+    "fixed": [ "rs2", "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "v-oper": [ "rd" ]
+  },
+  {
+    "mnemonic": "vpopc.m",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x40082057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rd" ],
+    "v-oper": [ "rs2" ]
+  },
+  {
+    "mnemonic": "vfirst.m",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x4008a057",
+    "fixed": [ "rs1" ],
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rd" ],
+    "v-oper": [ "rs2" ]
+  },
+  {
+    "mnemonic": "vdivu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x80002057",
+    "type": [ "vector", "maskable", "div"],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vdiv.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x84002057",
+    "type": [ "vector", "maskable", "div"],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vremu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x88002057",
+    "type": [ "vector", "maskable", "div"],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vrem.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8c002057",
+    "type": [ "vector", "maskable", "div"],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmulhu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x90002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmul.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x94002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmulhsu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x98002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmulh.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x9c002057",
+    "type": [ "vector", "maskable" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmadd.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xa4002057",
+    "type": [ "vector", "maskable", "int", "mac"],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vnmsub.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xac002057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vmacc.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xb4002057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vnmsac.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xbc002057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwaddu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc0002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwadd.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc4002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwsubu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc8002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwsub.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xcc002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwaddu.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xd0002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwadd.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xd4002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwsubu.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xd8002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwsub.wv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xdc002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwmulu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xe0002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwmulsu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xe8002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwmul.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xec002057",
+    "type": [ "vector", "maskable", "widening" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwmaccu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xf0002057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwmacc.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xf4002057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vwmaccsu.vv",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xfc002057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "v-oper": "all"
+  },
+  {
+    "mnemonic": "vaaddu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x20006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vaadd.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x24006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vasubu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x28006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vasub.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x2c006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmv.s.x",
+    "tags" : ["v"],
+    "form": "V",
+    "stencil": "0x42006057",
+    "fixed": [ "vm", "rs2" ],
+    "type": [ "vector" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rd" ]
+  },
+  {
+    "mnemonic": "vslide1up.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x38006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vslide1down.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x3c006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vdivu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x80006057",
+    "type": [ "vector", "maskable", "div"],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vdiv.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x84006057",
+    "type": [ "vector", "maskable", "div"],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vremu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x88006057",
+    "type": [ "vector", "maskable", "div"],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vrem.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x8c006057",
+    "type": [ "vector", "maskable", "div"],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmulhu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x90006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmul.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x94006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmulhsu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x98006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmulh.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0x9c006057",
+    "type": [ "vector", "maskable" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmadd.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xa4006057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnmsub.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xac006057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vmacc.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xb4006057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vnmsac.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xbc006057",
+    "type": [ "vector", "maskable", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwaddu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc0006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwadd.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc4006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwsubu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xc8006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwsub.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xcc006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwaddu.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xd0006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwadd.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xd4006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwsubu.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xd8006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwsub.wx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xdc006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmulu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xe0006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmulsu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xe8006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmul.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_op",
+    "stencil": "0xec006057",
+    "type": [ "vector", "maskable", "widening" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmaccu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xf0006057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmacc.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xf4006057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmaccus.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xf8006057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  },
+  {
+    "mnemonic": "vwmaccsu.vx",
+    "tags" : ["v"],
+    "form": "V",
+    "xform": "V_implied",
+    "stencil": "0xfc006057",
+    "type": [ "vector", "maskable", "widening", "int", "mac" ],
+    "l-oper": [ "rs1" ],
+    "v-oper": [ "rs2", "rd" ]
+  }
+]

@@ -1,11 +1,9 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file testbench options
+//! \file options.h  testbench options
 #pragma once
-
 #include <boost/program_options.hpp>
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -31,8 +29,7 @@ struct Options
     void build_options(po::options_description &);
 
     //! \brief ...
-    bool check_options(po::variables_map &, po::options_description &,
-                       bool);
+    bool check_options(po::variables_map &, po::options_description &,bool);
 
     //! \brief ...
     void setup_options(int, char**);
@@ -45,22 +42,20 @@ struct Options
 
     //! \brief placeholder
     void version();
+
     //! \brief placeholder
     void query_options();
     // ----------------------------------------------------------------
     //! \brief future STF file support in test bench
     std::string stf_file{""};
-
     //! \brief ...
     std::string output_file{""};
-
     //! \brief ...
     std::vector<std::string> isa_files;
     //! \brief ...
-    std::vector<std::string> dsl_files;
-    //! \brief placeholder
-    std::vector<std::string> cfg_files;
-
+    std::vector<std::string> fsl_files;
+    //! \brief files with contorted style
+    std::vector<std::string> fsl_syntax_files;
     //! \brief enable extra messages from the tb
     bool tb_verbose{false};
     // ----------------------------------------------------------------
@@ -86,5 +81,5 @@ struct Options
     Options & operator=(const Options &) = delete;
 };
 
-    //! \brief ...
+//! \brief ...
 extern std::shared_ptr<Options> opts;

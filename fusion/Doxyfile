@@ -118,7 +118,9 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ./fusion/fieldextractor.h \
+INPUT                  = \
+                         ./dsl/qparser.h \
+                         ./fusion/fieldextractor.h \
                          ./fusion/fusion.h \
                          ./fusion/fusioncontext.h \
                          ./fusion/fusionexceptions.h \

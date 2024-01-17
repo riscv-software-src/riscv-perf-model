@@ -37,12 +37,15 @@ namespace olympia
         virtual ~InstGenerator() {}
         virtual InstPtr getNextInst(const sparta::Clock * clk) = 0;
         static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
-                                                              const std::string & filename);
+                                                              const std::string & filename,
+                                                              const bool skip_nonuser_mode);
         virtual bool isDone() const = 0;
+        virtual void reset(const InstPtr &, const bool) = 0;
 
     protected:
         MavisType * mavis_facade_ = nullptr;
         uint64_t    unique_id_ = 0;
+        uint64_t    program_id_ = 1;
     };
 
     // Generates instructions from a JSON file
@@ -54,6 +57,9 @@ namespace olympia
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
         bool isDone() const override final;
+        void reset(const InstPtr &, const bool) override final;
+
+
     private:
         std::unique_ptr<nlohmann::json> jobj_;
         uint64_t                        curr_inst_index_ = 0;
@@ -64,12 +70,17 @@ namespace olympia
     class TraceInstGenerator : public InstGenerator
     {
     public:
+        // Creates a TraceInstGenerator with the given mavis facade
+        // and filename.  The parameter skip_nonuser_mode allows the
+        // trace generator to skip system instructions if present
         TraceInstGenerator(MavisType * mavis_facade,
-                           const std::string &);
+                           const std::string & filename,
+                           const bool skip_nonuser_mode);
 
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
         bool isDone() const override final;
+        void reset(const InstPtr &, const bool) override final;
     private:
         std::unique_ptr<stf::STFInstReader> reader_;
 

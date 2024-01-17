@@ -49,9 +49,16 @@ namespace olympia
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ROB, handleFlush_,
                                                                   FlushManager::FlushingCriteria));
 
-        // This event is ALWAYS scheduled, but it should not keep
-        // simulation continuing on.
+        // Do not allow this event to keep simulation alive
         ev_ensure_forward_progress_.setContinuing(false);
+
+        // Notify other components when ROB stops the simulation
+        rob_stopped_notif_source_.reset(new sparta::NotificationSource<bool>(
+            this->getContainer(),
+            "rob_stopped_notif_channel",
+            "ROB terminated simulation channel",
+            "rob_stopped_notif_channel"
+        ));
 
         // Send initial credits to anyone that cares.  Probably Dispatch.
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ROB, sendInitialCredits_));
@@ -71,9 +78,6 @@ namespace olympia
 
     void ROB::retireEvent_() {
         retireInstructions_();
-        if (reorder_buffer_.size() > 0) {
-            ev_retire_.schedule(sparta::Clock::Cycle(1));
-        }
     }
 
     // An illustration of the use of the callback -- instead of
@@ -88,11 +92,27 @@ namespace olympia
         ev_retire_.schedule(sparta::Clock::Cycle(0));
     }
 
-    void ROB::handleFlush_(const FlushManager::FlushingCriteria &)
+    void ROB::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
+        uint32_t credits_to_send = 0;
+
         // Clean up internals and send new credit count
-        out_reorder_buffer_credits_.send(reorder_buffer_.size());
-        reorder_buffer_.clear();
+        while (reorder_buffer_.size())
+        {
+            auto youngest_inst = reorder_buffer_.back();
+            if (criteria.includedInFlush(youngest_inst))
+            {
+                ILOG("flushing " << youngest_inst);
+                youngest_inst->setStatus(Inst::Status::FLUSHED);
+                reorder_buffer_.pop_back();
+                ++credits_to_send;
+            }
+            else
+            {
+                break;
+            }
+        }
+        out_reorder_buffer_credits_.send(credits_to_send);
     }
 
     void ROB::retireInstructions_()
@@ -116,12 +136,22 @@ namespace olympia
                 if (ex_inst.isStoreInst()) {
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
+                // sending retired instruction to rename
+                out_rob_retire_ack_rename_.send(ex_inst_ptr);
 
                 ++num_retired_;
                 ++retired_this_cycle;
                 reorder_buffer_.pop();
 
                 ILOG("retiring " << ex_inst);
+
+                // Use the program ID to verify that the program order has been maintained.
+                sparta_assert(ex_inst.getProgramID() == expected_program_id_,
+                    "Unexpected program ID when retiring instruction"
+                    << "(suggests wrong program order)"
+                    << " expected: " << expected_program_id_
+                    << " received: " << ex_inst.getProgramID());
+                ++expected_program_id_;
 
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()
@@ -133,6 +163,8 @@ namespace olympia
                 }
                 // Will be true if the user provides a -i option
                 if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_))) {
+                    rob_stopped_simulation_ = true;
+                    rob_stopped_notif_source_->postNotification(true);
                     getScheduler()->stopRunning();
                     break;
                 }
@@ -141,26 +173,43 @@ namespace olympia
                 if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
                 {
                     ILOG("Instigating flush... " << ex_inst);
-                    // Signal flush to the system
-                    out_retire_flush_.send(ex_inst.getUniqueID());
 
-                    // Redirect fetch
-                    out_fetch_flush_redirect_.send(ex_inst.getTargetVAddr() + 4);
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+
 
                     ++num_flushes_;
                     break;
                 }
-
             }
             else {
-                ILOG("set oldest: " << ex_inst);
-                ex_inst.setOldest(true, &ev_retire_);
                 break;
             }
         }
+
+        if(false == reorder_buffer_.empty()) {
+            const auto & oldest_inst = reorder_buffer_.front();
+            if(oldest_inst->getStatus() == Inst::Status::COMPLETED) {
+                ILOG("oldest is marked completed: " << oldest_inst);
+                ev_retire_.schedule();
+            }
+            else if(false == oldest_inst->isMarkedOldest()) {
+                ILOG("set oldest: " << oldest_inst);
+                oldest_inst->setOldest(true, &ev_retire_);
+            }
+        }
+
         if(retired_this_cycle != 0) {
             out_reorder_buffer_credits_.send(retired_this_cycle);
             last_retirement_ = getClock()->currentCycle();
+        }
+    }
+
+    void ROB::dumpDebugContent_(std::ostream& output) const
+    {
+        output << "ROB Contents" << std::endl;
+        for(const auto & entry : reorder_buffer_) {
+            output << '\t' << entry << std::endl;
         }
     }
 
@@ -171,9 +220,17 @@ namespace olympia
         {
             sparta::SpartaException e;
             e << "Been a while since we've retired an instruction.  Is the pipe stalled indefinitely?";
+            e << " currentCycle: "  << getClock()->currentCycle();
             throw e;
         }
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
+    }
+
+    void ROB::onStartingTeardown_() {
+        if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
+            std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
+            dumpDebugContent_(std::cerr);
+        }
     }
 
 }

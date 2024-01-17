@@ -1,0 +1,33 @@
+
+#
+# Set up the pipeline for a 2-wide machine
+#
+#top.cpu:
+#  dispatch.num_to_dispatch: 2
+
+top.extension.core_extensions:
+  execution_topology:
+    [["alu", "2"],
+     ["fpu", "2"],
+     ["br",  "2"]]
+top.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+    [["",     "alu0", "alu1", "alu2", "fpu0", "fpu1", "br0"],   # <-- TO
+     ["alu0",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["alu1",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["alu2",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["fpu0",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["fpu1",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["br0",     "1",    "1",    "1",    "1",    "1",   "1"]]
+
+  float.params.latency_matrix: |
+    [["",     "alu0", "alu1", "alu2", "fpu0", "fpu1", "br0"],   # <-- TO
+     ["alu0",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["alu1",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["alu2",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["fpu0",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["fpu1",    "1",    "1",    "1",    "1",    "1",   "1"],
+     ["br0",     "1",    "1",    "1",    "1",    "1",   "1"]]

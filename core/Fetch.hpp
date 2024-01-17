@@ -18,6 +18,7 @@
 
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
+#include "FlushManager.hpp"
 
 namespace olympia
 {
@@ -53,7 +54,8 @@ namespace olympia
                                                             "Num to fetch must be greater than 0");
             }
 
-            PARAMETER(uint32_t, num_to_fetch, 4, "Number of instructions to fetch")
+            PARAMETER(uint32_t, num_to_fetch,          4, "Number of instructions to fetch")
+            PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
         };
 
         /**
@@ -83,13 +85,16 @@ namespace olympia
             {&unit_port_set_, "in_fetch_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // Incoming flush from Retire w/ redirect
-        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
+        sparta::DataInPort<FlushManager::FlushingCriteria> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
+
+        // For traces with system instructions, skip them
+        const bool skip_nonuser_mode_;
 
         // Number of credits from decode that fetch has
         uint32_t credits_inst_queue_ = 0;
@@ -117,8 +122,8 @@ namespace olympia
         // Read data from a trace
         void fetchInstruction_();
 
-        // Receive flush from retire
-        void flushFetch_(const uint64_t & new_addr);
+        // Receive flush from FlushManager
+        void flushFetch_(const FlushManager::FlushingCriteria &);
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

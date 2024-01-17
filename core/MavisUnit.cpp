@@ -8,6 +8,8 @@
 #include "mavis/Mavis.h"
 #include "MavisUnit.hpp"
 
+#include "OlympiaAllocators.hpp"
+
 namespace olympia
 {
 
@@ -15,6 +17,9 @@ namespace olympia
                                          const std::string& pseudo_file_path)
     {
         std::vector<std::string> isa_files = {isa_file_path + "/isa_rv64g.json",
+                                              isa_file_path + "/isa_rv64zba.json",
+                                              isa_file_path + "/isa_rv64zbb.json",
+                                              isa_file_path + "/isa_rv64zbs.json",
                                               isa_file_path + "/isa_rv64c.json",
                                               isa_file_path + "/isa_rv64cf.json",
                                               isa_file_path + "/isa_rv64cd.json"};
@@ -64,8 +69,10 @@ namespace olympia
         mavis_facade_ (new MavisType(getISAFiles(n, p->isa_file_path, pseudo_file_path_),
                                      getUArchFiles(n, p, p->uarch_file_path, pseudo_file_path_),
                                      mavis_uid_list_, getUArchAnnotationOverrides(p),
-                                     InstPtrAllocator<InstAllocator>        (inst_allocator),
-                                     InstPtrAllocator<InstArchInfoAllocator>(inst_arch_info_allocator)))
+                                     InstPtrAllocator<InstAllocator>
+                                     (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_allocator),
+                                     InstPtrAllocator<InstArchInfoAllocator>
+                                     (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_arch_info_allocator)))
     {}
 
     /**

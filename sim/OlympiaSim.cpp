@@ -6,25 +6,12 @@
 
 #include "sparta/simulation/Clock.hpp"
 #include "sparta/simulation/TreeNode.hpp"
-#include "sparta/trigger/ContextCounterTrigger.hpp"
 #include "sparta/utils/StringUtils.hpp"
 
-#include "Core.hpp"
-#include "CPUTopology.hpp"
 #include "CPUFactory.hpp"
-#include "Fetch.hpp"
-#include "Decode.hpp"
-#include "Rename.hpp"
-#include "Dispatch.hpp"
-#include "Execute.hpp"
-#include "LSU.hpp"
-#include "ROB.hpp"
-#include "FlushManager.hpp"
-#include "Preloader.hpp"
 #include "SimulationConfiguration.hpp"
 
-#include "BIU.hpp"
-#include "MSS.hpp"
+#include "OlympiaAllocators.hpp"
 
 OlympiaSim::OlympiaSim(const std::string& topology,
                        sparta::Scheduler & scheduler,
@@ -63,6 +50,9 @@ void OlympiaSim::buildTree_()
     // Set the cpu topology that will be built
     cpu_factory->setTopology(cpu_topology_, num_cores_);
 
+    // Cerate the common Allocators
+    allocators_tn_.reset(new olympia::OlympiaAllocators(getRoot()));
+
     // Create a single CPU
     sparta::ResourceTreeNode* cpu_tn = new sparta::ResourceTreeNode(getRoot(),
                                                                     "cpu",
@@ -70,7 +60,12 @@ void OlympiaSim::buildTree_()
                                                                     sparta::TreeNode::GROUP_IDX_NONE,
                                                                     "CPU Node",
                                                                     cpu_factory);
-    to_delete_.emplace_back(cpu_tn);
+
+    // You _can_ use sparta::app::Simulation's to_delete_ vector and
+    // have the simulation class delete it for you.  However, by doing
+    // that, the Allocators object _will be destroyed_ before the CPU
+    // TN resulting in a seg fault at the end of simulation.
+    cpu_tn_to_delete_.reset(cpu_tn);
 
     cpu_tn->addExtensionFactory("simulation_configuration", [=](){return new olympia::SimulationConfiguration;});
 

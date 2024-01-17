@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 3bd8505..bd183bf 100644
+index a3f932a..008369f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -39,7 +39,7 @@
@@ -11,7 +11,24 @@ index 3bd8505..bd183bf 100644
  project(dromajo)
  option(TRACEOS "TRACEOS" OFF)
  option(SIMPOINT "SIMPOINT" OFF)
-@@ -138,6 +138,22 @@ else ()
+@@ -50,7 +50,7 @@ option(WARMUP "WARMUP" OFF)
+ 
+ add_compile_options(
+         -g
+-        -std=c++11
++        -std=c++17
+         -g
+         -Wall
+         -Wno-parentheses
+@@ -122,6 +122,7 @@ add_library(dromajo_cosim STATIC
+         src/riscv_machine.cpp
+         src/dromajo_main.cpp
+         src/dromajo_cosim.cpp
++        src/dromajo_stf.cpp
+         src/riscv_cpu.cpp
+         )
+ 
+@@ -138,6 +139,25 @@ else ()
    target_link_libraries(dromajo_cosim_test dromajo_cosim)
  endif ()
  
@@ -26,28 +43,53 @@ index 3bd8505..bd183bf 100644
 +target_link_directories(dromajo PRIVATE ${STF_LIB_BASE}/build/lib)
 +target_link_libraries(dromajo ${STF_LINK_LIBS})
 +
++target_link_directories(dromajo_cosim PRIVATE ${STF_LIB_BASE}/build/lib)
++target_link_libraries(dromajo_cosim ${STF_LINK_LIBS})
++
 +# Add STF library to the build
 +add_subdirectory (${STF_LIB_BASE})
 +
 +################################################################################
 +
  if (${CMAKE_HOST_APPLE})
-     include_directories(/usr/local/include /usr/local/include/libelf)
-     target_link_libraries(dromajo_cosim -L/usr/local/lib -lelf)
+     include_directories(/usr/local/include /usr/local/include/libelf /opt/homebrew/include /opt/homebrew/include/libelf)
+     target_link_libraries(dromajo_cosim -L/usr/local/lib -L/opt/homebrew/lib -lelf)
+diff --git a/include/dromajo_stf.h b/include/dromajo_stf.h
+new file mode 100644
+index 0000000..47497a5
+--- /dev/null
++++ b/include/dromajo_stf.h
+@@ -0,0 +1,15 @@
++//
++// STF gen protos.
++//
++#pragma once
++
++#include "machine.h"
++#include "riscv_cpu.h"
++#include "../../trace_macros.h"
++#include "stf-inc/stf_writer.hpp"
++#include "stf-inc/stf_record_types.hpp"
++
++extern stf::STFWriter stf_writer;
++extern void stf_trace_element(RISCVMachine*,int hartid,int priv,
++                              uint64_t last_pc,uint32_t insn);
++extern bool stf_trace_trigger(RISCVCPUState*,uint64_t PC,uint32_t insn);
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 925808b..bb233e2 100644
+index 2d8e9cc..eec6c39 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
-@@ -52,6 +52,8 @@
+@@ -52,6 +52,9 @@
  #error unsupported XLEN
  #endif
  
++#include "dromajo_stf.h"
 +#include <limits>
 +
  static inline intx_t glue(div, XLEN)(intx_t a, intx_t b) {
      if (b == 0) {
          return -1;
-@@ -272,6 +274,7 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+@@ -278,15 +281,16 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
      }
  
      s->pending_exception = -1;
@@ -55,23 +97,70 @@ index 925808b..bb233e2 100644
      n_cycles++;
      /* Note: we assume NULL is represented as a zero number */
      code_ptr          = NULL;
+     code_end          = NULL;
+     code_to_pc_addend = s->pc;
+-
+     /* we use a single execution loop to keep a simple control flow
+        for emscripten */
+     for (;;) {
++        s->last_pc = s->pc;
+         s->pc = GET_PC();
+         if (unlikely(!--n_cycles))
+             goto the_end;
+@@ -1807,6 +1811,14 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+         }
+         /* update PC for next instruction */
+     jump_insn:;
++
++        if(s->machine->common.stf_trace) {
++            if(stf_trace_trigger(s,GET_PC(),insn)) {
++              s->pc = GET_PC();
++              return insn_executed;
++            }
++        }
++
+     } /* end of main loop */
+ illegal_insn:
+     s->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;
 diff --git a/include/machine.h b/include/machine.h
-index cc89de2..2b0115a 100644
+index c359091..ca2888c 100644
 --- a/include/machine.h
 +++ b/include/machine.h
-@@ -205,6 +205,7 @@ typedef struct VirtMachine {
+@@ -41,6 +41,7 @@
+ #include <stdint.h>
+ 
+ #include "json.h"
++#include "dromajo_stf.h"
+ 
+ typedef struct RISCVMachine RISCVMachine;
+ 
+@@ -205,6 +206,13 @@ typedef struct VirtMachine {
      char *   terminate_event;
      uint64_t maxinsns;
      uint64_t trace;
-+    const char * stf_trace = nullptr;
++    const char * stf_trace = nullptr; // stf file name
++    bool         stf_tracing_enabled; // stf tracing is active
++    bool         stf_no_priv_check;   // override the priv==0 check
++    bool         stf_is_start_opc;    // detected the START_TRACE opcode
++    bool         stf_is_stop_opc;     // detected the STOP_TRACE opcode
++    uint64_t     stf_prog_asid;       // as named
++    uint64_t     stf_count;           // running number of traced insn's
  
      /* For co-simulation only, they are -1 if nothing is pending. */
      bool cosim;
 diff --git a/include/riscv_cpu.h b/include/riscv_cpu.h
-index 9dfb2cc..b509c9f 100644
+index 2f71c99..dd9427d 100644
 --- a/include/riscv_cpu.h
 +++ b/include/riscv_cpu.h
-@@ -170,6 +170,9 @@ typedef struct RISCVCPUState {
+@@ -195,6 +195,7 @@ typedef enum {
+ typedef struct RISCVCPUState {
+     RISCVMachine *machine;
+     target_ulong  pc;
++    target_ulong  last_pc;
+     target_ulong  reg[32];
+     /* Co-simulation sometimes need to see the value of a register
+      * prior to the just excuted instruction. */
+@@ -202,6 +203,9 @@ typedef struct RISCVCPUState {
      int          most_recently_written_reg;
  
      target_ulong last_data_paddr;
@@ -81,147 +170,116 @@ index 9dfb2cc..b509c9f 100644
  #ifdef GOLDMEM_INORDER
      target_ulong last_data_value;
  #endif
-diff --git a/run/boot.cfg b/run/boot.cfg
-index b220030..d80fb22 100644
---- a/run/boot.cfg
-+++ b/run/boot.cfg
-@@ -5,6 +5,6 @@
-     "bios":"fw_jump.bin",
-     "kernel":"Image",
-     "initrd":"rootfs.cpio",
--    "cmdline": "root=/dev/ram rw earlycon=sbi console=hvc0 bench=spec06_gcc",
-+    "cmdline": "root=/dev/ram rw earlycon=sbi console=hvc0",
-     "memory_base_addr":0x80000000
- }
 diff --git a/src/dromajo.cpp b/src/dromajo.cpp
-index 1169f23..47c5ecf 100644
+index c13239a..d2ff2b4 100644
 --- a/src/dromajo.cpp
 +++ b/src/dromajo.cpp
-@@ -46,6 +46,11 @@
+@@ -46,6 +46,9 @@
  #include "dromajo_cosim.h"
  #endif
  
-+
-+#include "../../trace_macros.h"
-+#include "stf-inc/stf_writer.hpp"
-+#include "stf-inc/stf_record_types.hpp"
++#include "dromajo_stf.h"
++#include <limits>
 +
  #ifdef SIMPOINT_BB
  FILE *simpoint_bb_file = nullptr;
  int   simpoint_roi     = 0;  // start without ROI enabled
-@@ -121,6 +126,14 @@ int simpoint_step(RISCVMachine *m, int hartid) {
- }
- #endif
+@@ -139,6 +142,12 @@ static int iterate_core(RISCVMachine *m, int hartid, int n_cycles) {
+     bool     do_trace = false;
  
-+////////////////////////////////////////////////////////////////////////////////
-+// STF Writing
-+stf::STFWriter stf_writer;
-+bool tracing_enabled = false;
-+uint64_t stf_prog_asid = 0;
-+uint64_t stf_count = 0;
-+////////////////////////////////////////////////////////////////////////////////
+     (void)riscv_read_insn(cpu, &insn_raw, last_pc);
 +
- int iterate_core(RISCVMachine *m, int hartid) {
-     if (m->common.maxinsns-- <= 0)
-         /* Succeed after N instructions without failure. */
-@@ -139,6 +152,92 @@ int iterate_core(RISCVMachine *m, int hartid) {
-     if (last_pc == virt_machine_get_pc(m, hartid))
-         return 0;
- 
-+    if(m->common.stf_trace) {
-+        // check for start trace marker
-+        if(insn_raw == START_TRACE_OPC)
-+        {
-+            tracing_enabled = true;
-+            fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Started at 0x%lx\n", virt_machine_get_pc(m, 0));
-+            stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;
-+            if((bool)stf_writer == false) {
-+                stf_writer.open(m->common.stf_trace);
-+                stf_writer.
-+                    addTraceInfo(stf::TraceInfoRecord(stf::STF_GEN::STF_GEN_DROMAJO, 1, 1, 0,
-+                                                      "Trace from Dromajo"));
-+                stf_writer.setISA(stf::ISA::RISCV);
-+                stf_writer.setHeaderIEM(stf::INST_IEM::STF_INST_IEM_RV64);
-+                stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_RV64);
-+                stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_PHYSICAL_ADDRESS);
-+                stf_writer.setHeaderPC(virt_machine_get_pc(m, 0));
-+                stf_writer.finalizeHeader();
-+            }
-+
-+            return keep_going;
-+        }
-+        else if (insn_raw == STOP_TRACE_OPC) {
-+            tracing_enabled = false;
-+            stf_writer.close();
-+            fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Stopped at 0x%lx\n", virt_machine_get_pc(m, 0));
-+            fprintf(dromajo_stderr, ">>> DROMAJO: Traced %ld insts\n", stf_count);
-+        }
-+
-+        if(tracing_enabled)
-+        {
-+            // Only trace in user priv and the same application that
-+            // started the trace
-+            if((priv == 0) &&
-+               (cpu->pending_exception == -1) &&
-+               (stf_prog_asid == ((cpu->satp >> 4) & 0xFFFF)))
-+            {
-+                ++stf_count;
-+                const uint32_t inst_width = ((insn_raw & 0x3) == 0x3) ? 4 : 2;
-+                bool skip_record = false;
-+
-+                // See if the instruction changed control flow or a
-+                // possible not-taken branch conditional
-+                if(cpu->info != ctf_nop) {
-+                    stf_writer << stf::InstPCTargetRecord(virt_machine_get_pc(m, 0));
-+                }
-+                else {
-+                    // Not sure what's going on, but there's a
-+                    // possibility that the current instruction will
-+                    // cause a page fault or a timer interrupt or
-+                    // process switch so the next instruction might
-+                    // not be on the program's path
-+                    if(cpu->pc != last_pc + inst_width) {
-+                        skip_record = true;
-+                    }
-+                }
-+
-+                // Record the instruction trace record
-+                if(false == skip_record)
-+                {
-+                    // If the last instruction were a load/store,
-+                    // record the last vaddr, size, and if it were a
-+                    // read or write.
-+                    if(cpu->last_data_vaddr != std::numeric_limits<decltype(cpu->last_data_vaddr)>::max())
-+                    {
-+                        stf_writer << stf::InstMemAccessRecord(cpu->last_data_vaddr,
-+                                                               cpu->last_data_size,
-+                                                               0,
-+                                                               (cpu->last_data_type == 0) ?
-+                                                               stf::INST_MEM_ACCESS::READ :
-+                                                               stf::INST_MEM_ACCESS::WRITE);
-+                        stf_writer << stf::InstMemContentRecord(0); // empty content for now
-+                    }
-+
-+                    if(inst_width == 4) {
-+                        stf_writer << stf::InstOpcode32Record(insn_raw);
-+                    }
-+                    else {
-+                        stf_writer << stf::InstOpcode16Record(insn_raw & 0xFFFF);
-+                    }
-+                }
-+            }
-+        }
-+        return keep_going;
++    //STF:The start OPC has been detected, throttle back n_cycles
++    if(m->common.stf_tracing_enabled) {
++      n_cycles = 1;
 +    }
 +
-     if (m->common.trace) {
-         --m->common.trace;
+     if (m->common.trace < (unsigned) n_cycles) {
+         n_cycles = 1;
+         do_trace = true;
+@@ -147,6 +156,68 @@ static int iterate_core(RISCVMachine *m, int hartid, int n_cycles) {
+ 
+     int keep_going = virt_machine_run(m, hartid, n_cycles);
+ 
++    //STF:Trace the insn if the start OPC has been detected,
++    //do not trace the start or stop insn's
++    if(m->common.stf_tracing_enabled
++       && !m->common.stf_is_start_opc
++       && !m->common.stf_is_stop_opc)
++    {
++        RISCVCPUState *cpu = m->cpu_state[hartid];
++
++        if((priv == 0 || m->common.stf_no_priv_check)
++               && (cpu->pending_exception == -1)
++               && (m->common.stf_prog_asid == ((cpu->satp >> 4) & 0xFFFF)))
++        {
++
++            ++m->common.stf_count;
++            const uint32_t inst_width = ((insn_raw & 0x3) == 0x3) ? 4 : 2;
++            bool skip_record = false;
++
++            // See if the instruction changed control flow or a
++            // possible not-taken branch conditional
++            if(cpu->info != ctf_nop) {
++                stf_writer << stf::InstPCTargetRecord(virt_machine_get_pc(m, 0));
++            }
++            else {
++                // Not sure what's going on, but there's a
++                // possibility that the current instruction will
++                // cause a page fault or a timer interrupt or
++                // process switch so the next instruction might
++                // not be on the program's path
++                if(cpu->pc != last_pc + inst_width) {
++                    skip_record = true;
++                }
++            }
++
++            // Record the instruction trace record
++            if(false == skip_record)
++            {
++                // If the last instruction were a load/store,
++                // record the last vaddr, size, and if it were a
++                // read or write.
++
++                if(cpu->last_data_vaddr
++                    != std::numeric_limits<decltype(cpu->last_data_vaddr)>::max())
++                {
++                    stf_writer << stf::InstMemAccessRecord(cpu->last_data_vaddr,
++                                                           cpu->last_data_size,
++                                                           0,
++                                                           (cpu->last_data_type == 0) ?
++                                                           stf::INST_MEM_ACCESS::READ :
++                                                           stf::INST_MEM_ACCESS::WRITE);
++                    stf_writer << stf::InstMemContentRecord(0); // empty content for now
++                }
++
++                if(inst_width == 4) {
++                   stf_writer << stf::InstOpcode32Record(insn_raw);
++                }
++                else {
++                   stf_writer << stf::InstOpcode16Record(insn_raw & 0xFFFF);
++                }
++            }
++        }
++    }
++
+     if (!do_trace) {
          return keep_going;
+     }
 diff --git a/src/dromajo_main.cpp b/src/dromajo_main.cpp
-index 8feb504..2c62ab8 100644
+index aeb1912..e0f66d2 100644
 --- a/src/dromajo_main.cpp
 +++ b/src/dromajo_main.cpp
-@@ -559,6 +559,7 @@ static void usage(const char *prog, const char *msg) {
+@@ -78,6 +78,8 @@
+ #endif
+ #include "elf64.h"
+ 
++#include "dromajo_stf.h"
++
+ FILE *dromajo_stdout;
+ FILE *dromajo_stderr;
+ 
+@@ -560,6 +562,7 @@ static void usage(const char *prog, const char *msg) {
              "       --maxinsns terminates execution after a number of instructions\n"
              "       --terminate-event name of the validate event to terminate execution\n"
              "       --trace start trace dump after a number of instructions. Trace disabled by default\n"
@@ -229,7 +287,15 @@ index 8feb504..2c62ab8 100644
              "       --ignore_sbi_shutdown continue simulation even upon seeing the SBI_SHUTDOWN call\n"
              "       --dump_memories dump memories that could be used to load a cosimulation\n"
              "       --memory_size sets the memory size in MiB (default 256 MiB)\n"
-@@ -617,6 +618,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+@@ -571,6 +574,7 @@ static void usage(const char *prog, const char *msg) {
+             "       --plic START:SIZE set PLIC start address and size in B (defaults to 0x%lx:0x%lx)\n"
+             "       --clint START:SIZE set CLINT start address and size in B (defaults to 0x%lx:0x%lx)\n"
+             "       --custom_extension add X extension to misa for all cores\n"
++            "       --stf_no_priv_check Turn off the privledge check in STF generation\n"
+ #ifdef LIVECACHE
+             "       --live_cache_size live cache warmup for checkpoint (default 8M)\n"
+ #endif
+@@ -618,10 +622,12 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
      long        ncpus                    = 0;
      uint64_t    maxinsns                 = 0;
      uint64_t    trace                    = UINT64_MAX;
@@ -237,44 +303,120 @@ index 8feb504..2c62ab8 100644
      long        memory_size_override     = 0;
      uint64_t    memory_addr_override     = 0;
      bool        ignore_sbi_shutdown      = false;
-@@ -637,7 +639,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
- #endif
- 
-     dromajo_stdout = stdout;
--    dromajo_stderr = stderr;
-+    dromajo_stderr = stdout;
- 
-     optind = 0;
- 
-@@ -651,6 +653,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
-             {"save",                    required_argument, 0,  's' },
+     bool        dump_memories            = false;
++    bool        stf_no_priv_check        = false;
+     char *      bootrom_name             = 0;
+     char *      dtb_name                 = 0;
+     bool        compact_bootrom          = false;
+@@ -655,6 +661,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
              {"simpoint",                required_argument, 0,  'S' },
              {"maxinsns",                required_argument, 0,  'm' }, // CFG
-+            {"stf_trace",               required_argument, 0,  'z' },
              {"trace   ",                required_argument, 0,  't' },
++            {"stf_trace",               required_argument, 0,  'z' },
              {"ignore_sbi_shutdown",     required_argument, 0,  'P' }, // CFG
              {"dump_memories",                 no_argument, 0,  'D' }, // CFG
-@@ -727,6 +730,10 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+             {"memory_size",             required_argument, 0,  'M' }, // CFG
+@@ -668,6 +675,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+             {"custom_extension",              no_argument, 0,  'u' }, // CFG
+             {"clear_ids",                     no_argument, 0,  'L' }, // CFG
+             {"ctrlc",                         no_argument, 0,  'X' },
++            {"stf_no_priv_check",             no_argument, 0,  'a' },
+ #ifdef LIVECACHE
+             {"live_cache_size",         required_argument, 0,  'w' }, // CFG
+ #endif
+@@ -734,6 +742,9 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
                  trace = (uint64_t)atoll(optarg);
                  break;
  
-+            case 'z':
-+                stf_trace = strdup(optarg);
-+                break;
++            case 'z': stf_trace = strdup(optarg); break;
++            case 'a': stf_no_priv_check = true; break;
 +
              case 'P': ignore_sbi_shutdown = true; break;
  
              case 'D': dump_memories = true; break;
-@@ -1028,6 +1035,7 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
+@@ -1058,6 +1069,11 @@ RISCVMachine *virt_machine_main(int argc, char **argv) {
  
      s->common.snapshot_save_name = snapshot_save_name;
      s->common.trace              = trace;
 +    s->common.stf_trace          = stf_trace;
++    s->common.stf_no_priv_check  = stf_no_priv_check;
++    s->common.stf_tracing_enabled = false;
++    s->common.stf_is_start_opc    = false;
++    s->common.stf_is_stop_opc     = false;
  
      // Allow the command option argument to overwrite the value
      // specified in the configuration file
+diff --git a/src/dromajo_stf.cpp b/src/dromajo_stf.cpp
+new file mode 100644
+index 0000000..7fdb2b1
+--- /dev/null
++++ b/src/dromajo_stf.cpp
+@@ -0,0 +1,63 @@
++/*
++ * STF gen trigger detection
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License")
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#include "dromajo.h"
++
++#ifdef REGRESS_COSIM
++#include "dromajo_cosim.h"
++#endif
++
++#include "dromajo_stf.h"
++stf::STFWriter stf_writer;
++bool stf_trace_trigger(RISCVCPUState *s,target_ulong PC,uint32_t insn)
++{
++    int hartid = s->mhartid;
++    RISCVCPUState *cpu = s->machine->cpu_state[hartid];
++
++    s->machine->common.stf_is_start_opc = insn == START_TRACE_OPC;
++    s->machine->common.stf_is_stop_opc  = insn == STOP_TRACE_OPC;
++
++    if(s->machine->common.stf_is_start_opc) {
++
++        s->machine->common.stf_tracing_enabled = true;
++        fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Started at 0x%lx\n", PC);
++
++        s->machine->common.stf_prog_asid = (cpu->satp >> 4) & 0xFFFF;
++
++        if((bool)stf_writer == false) {
++            stf_writer.open(s->machine->common.stf_trace);
++            stf_writer.addTraceInfo(stf::TraceInfoRecord(
++                       stf::STF_GEN::STF_GEN_DROMAJO, 1, 1, 0,"Trace from Dromajo"));
++            stf_writer.setISA(stf::ISA::RISCV);
++            stf_writer.setHeaderIEM(stf::INST_IEM::STF_INST_IEM_RV64);
++            stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_RV64);
++            stf_writer.setTraceFeature(stf::TRACE_FEATURES::STF_CONTAIN_PHYSICAL_ADDRESS);
++            stf_writer.setHeaderPC(PC);
++            stf_writer.finalizeHeader();
++        }
++        return true;
++
++    } else if(s->machine->common.stf_is_stop_opc) {
++
++        s->machine->common.stf_tracing_enabled = false;
++        fprintf(dromajo_stderr, ">>> DROMAJO: Tracing Stopped at 0x%lx\n", PC);
++        fprintf(dromajo_stderr, ">>> DROMAJO: Traced %ld insts\n",
++                             s->machine->common.stf_count);
++        stf_writer.close();
++        return false;
++    }
++
++    return s->machine->common.stf_tracing_enabled;
++}
 diff --git a/src/riscv_cpu.cpp b/src/riscv_cpu.cpp
-index ddacaea..f02ff51 100644
+index c7e8926..9c49919 100644
 --- a/src/riscv_cpu.cpp
 +++ b/src/riscv_cpu.cpp
 @@ -153,6 +153,9 @@ static inline void track_write(RISCVCPUState *s, uint64_t vaddr, uint64_t paddr,
@@ -297,27 +439,3 @@ index ddacaea..f02ff51 100644
      //printf("track.ld[%llx:%llx]=%llx\n", paddr, paddr+size-1, data);
  
      return data;
-diff --git a/src/riscv_machine.cpp b/src/riscv_machine.cpp
-index 2942762..55a4e8a 100644
---- a/src/riscv_machine.cpp
-+++ b/src/riscv_machine.cpp
-@@ -412,8 +412,9 @@ static void plic_set_irq(void *opaque, int irq_num, int state) {
-     }
- }
- 
--static uint8_t *get_ram_ptr(RISCVMachine *s, uint64_t paddr) {
-+static uint8_t *get_ram_ptr(RISCVMachine *s, uint64_t paddr, size_t size = 0) {
-     PhysMemoryRange *pr = get_phys_mem_range(s->mem_map, paddr);
-+    assert(size < pr->size);
-     if (!pr || !pr->is_ram)
-         return NULL;
-     return pr->phys_mem + (uintptr_t)(paddr - pr->addr);
-@@ -889,7 +890,7 @@ static void load_elf_image(RISCVMachine *s, const uint8_t *image, size_t image_l
-                    can't fix this without a substantial rewrite as the handling of IO devices
-                    depends on this. */
-                 cpu_register_ram(s->mem_map, ph->p_vaddr, rounded_size, 0);
--            memcpy(get_ram_ptr(s, ph->p_vaddr), image + ph->p_offset, ph->p_filesz);
-+            memcpy(get_ram_ptr(s, ph->p_vaddr, ph->p_filesz), image + ph->p_offset, ph->p_filesz);
-         }
- }
- 

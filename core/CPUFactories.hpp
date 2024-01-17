@@ -11,8 +11,10 @@
 #include "Dispatch.hpp"
 #include "Execute.hpp"
 #include "LSU.hpp"
+#include "MMU.hpp"
 #include "SimpleTLB.hpp"
 #include "BIU.hpp"
+#include "L2Cache.hpp"
 #include "MSS.hpp"
 #include "ROB.hpp"
 #include "FlushManager.hpp"
@@ -53,13 +55,26 @@ namespace olympia{
         //! \brief Resouce Factory to build a Execute Unit
         ExecuteFactory  execute_rf;
 
+
+        //! \brief Resouce Factory to build a MMU Unit
+        sparta::ResourceFactory<olympia::DCache,
+                olympia::DCache::CacheParameterSet> dcache_rf;
+
+        //! \brief Resouce Factory to build a TLB Unit
+        sparta::ResourceFactory<olympia::SimpleTLB,
+                olympia::SimpleTLB::TLBParameterSet> tlb_rf;
+
+        //! \brief Resouce Factory to build a MMU Unit
+        sparta::ResourceFactory<olympia::MMU,
+                                olympia::MMU::MMUParameterSet> mmu_rf;
+
         //! \brief Resouce Factory to build a LSU Unit
         sparta::ResourceFactory<olympia::LSU,
                                 olympia::LSU::LSUParameterSet> lsu_rf;
 
-        //! \brief Resouce Factory to build a TLB Unit
-        sparta::ResourceFactory<olympia::SimpleTLB,
-                                olympia::SimpleTLB::TLBParameterSet> tlb_rf;
+        //! \brief Resouce Factory to build a L2Cache Unit
+        sparta::ResourceFactory<olympia_mss::L2Cache,
+                                olympia_mss::L2Cache::L2CacheParameterSet> l2cache_rf;
 
         //! \brief Resouce Factory to build a BIU Unit
         sparta::ResourceFactory<olympia_mss::BIU,

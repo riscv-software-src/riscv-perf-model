@@ -69,6 +69,31 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->execute_rf
         },
         {
+            "dcache",
+            "cpu.core*",
+            "Data Cache Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->dcache_rf
+        },
+        {
+            "mmu",
+            "cpu.core*",
+            "MMU Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->mmu_rf
+        },
+        {
+            "tlb",
+            "cpu.core*.mmu",
+            "TLB Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->tlb_rf,
+            true
+        },
+        {
             "lsu",
             "cpu.core*",
             "Load-Store Unit",
@@ -77,13 +102,12 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->lsu_rf
         },
         {
-            "tlb",
-            "cpu.core*.lsu",
-            "TLB Unit",
+            "l2cache",
+            "cpu.core*",
+            "L2Cache Unit",
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
-            &factories->tlb_rf,
-            true
+            &factories->l2cache_rf
         },
         {
             "biu",
@@ -170,12 +194,60 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.rob.ports.out_reorder_buffer_credits"
         },
         {
-            "cpu.core*.lsu.ports.out_biu_req",
+            "cpu.core*.lsu.ports.out_cache_lookup_req",
+            "cpu.core*.dcache.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_lookup_ack",
+            "cpu.core*.lsu.ports.in_cache_lookup_ack"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_lookup_req",
+            "cpu.core*.lsu.ports.in_cache_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_lsu_free_req",
+            "cpu.core*.lsu.ports.in_cache_free_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_l2cache_req",
+            "cpu.core*.l2cache.ports.in_dcache_l2cache_req"
+        },
+        {
+            "cpu.core*.dcache.ports.in_l2cache_ack",
+            "cpu.core*.l2cache.ports.out_l2cache_dcache_ack"
+        },
+        {
+            "cpu.core*.dcache.ports.in_l2cache_resp",
+            "cpu.core*.l2cache.ports.out_l2cache_dcache_resp"
+        },
+        {
+            "cpu.core*.l2cache.ports.out_l2cache_biu_req",
             "cpu.core*.biu.ports.in_biu_req"
         },
         {
-            "cpu.core*.lsu.ports.in_biu_ack",
-            "cpu.core*.biu.ports.out_biu_ack"
+            "cpu.core*.biu.ports.out_biu_ack",
+            "cpu.core*.l2cache.ports.in_biu_l2cache_ack"
+        },
+        {
+            "cpu.core*.biu.ports.out_biu_resp",
+            "cpu.core*.l2cache.ports.in_biu_l2cache_resp"
+        },
+        {
+            "cpu.core*.lsu.ports.out_mmu_lookup_req",
+            "cpu.core*.mmu.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_lookup_ack",
+            "cpu.core*.lsu.ports.in_mmu_lookup_ack"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_lookup_req",
+            "cpu.core*.lsu.ports.in_mmu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_lsu_free_req",
+            "cpu.core*.lsu.ports.in_mmu_free_req"
         },
         {
             "cpu.core*.biu.ports.out_mss_req_sync",
@@ -187,38 +259,46 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         },
         {
             "cpu.core*.rob.ports.out_retire_flush",
-            "cpu.core*.flushmanager.ports.in_retire_flush"
-        },
-        {
-            "cpu.core*.rob.ports.out_fetch_flush_redirect",
-            "cpu.core*.flushmanager.ports.in_fetch_flush_redirect"
+            "cpu.core*.flushmanager.ports.in_flush_request"
         },
         {
             "cpu.core*.rob.ports.out_rob_retire_ack",
             "cpu.core*.lsu.ports.in_rob_retire_ack"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.rob.ports.out_rob_retire_ack_rename",
+            "cpu.core*.rename.ports.in_rename_retire_ack"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.dispatch.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.decode.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_lower",
+            "cpu.core*.decode.ports.in_reorder_flush"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.rename.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.rob.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_retire_flush",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.lsu.ports.in_reorder_flush"
         },
         {
-            "cpu.core*.flushmanager.ports.out_fetch_flush_redirect",
+            "cpu.core*.flushmanager.ports.out_flush_upper",
+            "cpu.core*.fetch.ports.in_fetch_flush_redirect"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_lower",
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
         }
     };
@@ -241,7 +321,8 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
         const auto dispatch_ports     = core_node + ".dispatch.ports";
         const auto flushmanager_ports = core_node + ".flushmanager.ports";
 
-        auto execution_topology = olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
+        auto execution_topology =
+            olympia::coreutils::getExecutionTopology(root_node->getChild(core_node));
         for (auto exe_unit_pair : execution_topology)
         {
             const auto tgt_name   = exe_unit_pair[0];
@@ -267,8 +348,14 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                 // Bind flushing
                 const std::string exe_flush_in =
                     core_node + ".execute." +  unit_name + ".ports.in_reorder_flush";;
-                const std::string flush_manager = flushmanager_ports + ".out_retire_flush";
+                const std::string flush_manager = flushmanager_ports + ".out_flush_upper";
                 bind_ports(exe_flush_in, flush_manager);
+
+                // Bind flush requests
+                const std::string exe_flush_out =
+                    core_node + ".execute." +  unit_name + ".ports.out_execute_flush";;
+                const std::string flush_manager_in = flushmanager_ports + ".in_flush_request";
+                bind_ports(exe_flush_out, flush_manager_in);
             }
         }
     }

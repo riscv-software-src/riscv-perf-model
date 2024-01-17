@@ -56,6 +56,9 @@ public:
     auto getResourceNames() const -> const std::vector<std::string>&;
 private:
 
+    //! Destroy internal components
+    void deleteSubtree(sparta::ResourceTreeNode*) override;
+
     /**
      * @brief Implementation : Build the device tree by instantiating resource nodes
      */

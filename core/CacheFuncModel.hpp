@@ -22,7 +22,7 @@ namespace olympia
             valid_(false)
         {
             sparta_assert(sparta::utils::is_power_of_2(line_size),
-                "Cache line size must be a power of 2. line_size=" << line_size);
+                "DCache line size must be a power of 2. line_size=" << line_size);
         }
 
         // Copy constructor
@@ -87,15 +87,15 @@ namespace olympia
 
     }; // class SimpleCacheLine
 
-    class SimpleDL1 : public sparta::cache::SimpleCache2<SimpleCacheLine>,
+    class CacheFuncModel : public sparta::cache::SimpleCache2<SimpleCacheLine>,
                       public sparta::TreeNode,
                       public sparta::cache::PreloadableIF,
                       public sparta::cache::PreloadDumpableIF
 
     {
     public:
-        using Handle = std::shared_ptr<SimpleDL1>;
-        SimpleDL1(sparta::TreeNode* parent,
+        using Handle = std::shared_ptr<CacheFuncModel>;
+        CacheFuncModel(sparta::TreeNode* parent,
                   uint64_t cache_size_kb,
                   uint64_t line_size,
                   const sparta::cache::ReplacementIF& rep) :
@@ -104,11 +104,11 @@ namespace olympia
                                                         line_size,
                                                         SimpleCacheLine(line_size),
                                                         rep),
-            sparta::TreeNode(parent, "l1cache", "Simple L1 Cache"),
+            sparta::TreeNode(parent, "l1cache", "Simple L1 DCache"),
             sparta::cache::PreloadableIF(),
             sparta::cache::PreloadDumpableIF(),
-            preloadable_(this, std::bind(&SimpleDL1::preloadPkt_, this, _1),
-                         std::bind(&SimpleDL1::preloadDump_, this, _1))
+            preloadable_(this, std::bind(&CacheFuncModel::preloadPkt_, this, _1),
+                         std::bind(&CacheFuncModel::preloadDump_, this, _1))
         {}
     private:
         /**
@@ -161,6 +161,6 @@ namespace olympia
         //! the preloadPkt call to us.
         sparta::cache::PreloadableNode preloadable_;
 
-    }; // class SimpleDL1
+    }; // class CacheFuncModel
 
 } // namespace olympia

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "sparta/memory/AddressTypes.hpp"
-#include "sparta/resources/SharedData.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 #include "sparta/resources/Queue.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
@@ -12,12 +11,16 @@
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "mavis/OpcodeInfo.h"
 
+#include "stf-inc/stf_inst_reader.hpp"
+
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
+#include "MiscUtils.hpp"
 
 #include <cstdlib>
 #include <ostream>
 #include <map>
+#include <variant>
 
 namespace olympia
 {
@@ -32,6 +35,49 @@ namespace olympia
     class Inst {
     public:
 
+        class RenameData
+        {
+        public:
+            // A register consists of its value and its register file.
+            struct Reg {
+                uint32_t val = 0;
+                core_types::RegFile rf = core_types::RegFile::RF_INVALID;
+                mavis::InstMetaData::OperandFieldID field_id = mavis::InstMetaData::OperandFieldID::NONE;
+                bool is_x0 = false;
+            };
+            using RegList = std::vector<Reg>;
+
+            void setOriginalDestination(const Reg & destination){
+                original_dest_ = destination;
+            }
+            void setDestination(const Reg & destination){
+                dest_ = destination;
+            }
+            void setDataReg(const Reg & data_reg){
+                data_reg_ = data_reg;
+            }
+            void setSource(const Reg & source){
+                src_.emplace_back(source);
+            }
+            const RegList & getSourceList() const {
+                return src_;
+            }
+            const Reg & getOriginalDestination() const {
+                return original_dest_;
+            }
+            const Reg & getDestination() const {
+                return dest_;
+            }
+            const Reg & getDataReg() const {
+                return data_reg_;
+            }
+        private:
+            Reg original_dest_;
+            Reg dest_;
+            RegList src_;
+            Reg data_reg_;
+        };
+
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
 
@@ -45,13 +91,13 @@ namespace olympia
             __FIRST = FETCHED,
             DECODED,
             RENAMED,
+            DISPATCHED,
             SCHEDULED,
             COMPLETED,
             RETIRED,
+            FLUSHED,
             __LAST
         };
-
-        using InstStatus = sparta::SharedData<Status>;
 
         /*!
          * \brief Construct an Instruction
@@ -64,12 +110,7 @@ namespace olympia
         */
         Inst(const mavis::OpcodeInfo::PtrType& opcode_info,
              const InstArchInfo::PtrType     & inst_arch_info,
-             const sparta::Clock             * clk) :
-            opcode_info_    (opcode_info),
-            inst_arch_info_ (inst_arch_info),
-            status_("inst_status", clk, Status::FETCHED),
-            status_state_(Status::FETCHED)
-        { }
+             const sparta::Clock             * clk);
 
         // This is needed by Mavis as an optimization.  Try NOT to
         // implement it and let the compiler do it for us for speed.
@@ -77,18 +118,25 @@ namespace olympia
 
         const Status & getStatus() const {
             return status_state_;
-            //return status_state_.getEnumValue();
         }
 
         bool getCompletedStatus() const {
             return getStatus() == olympia::Inst::Status::COMPLETED;
         }
 
+        bool getFlushedStatus() const {
+            return getStatus() == olympia::Inst::Status::FLUSHED;
+        }
+
         void setStatus(Status status) {
-            //status_state_.setValue(status);
+            sparta_assert(status_state_ != status,
+                          "Status being set twice to the same value: "
+                          << status << " " << *this);
+            sparta_assert(status > status_state_,
+                          "Cannot go backwards in status.  Current: "
+                          << status_state_ << " New: " << status << *this);
             status_state_ = status;
-            status_.write(status);
-            if(getStatus() == olympia::Inst::Status::COMPLETED) {
+            if(getStatus() == Status::COMPLETED) {
                 if(ev_retire_ != 0) {
                     ev_retire_->schedule();
                 }
@@ -99,14 +147,22 @@ namespace olympia
             return inst_arch_info_->getTargetUnit();
         }
 
+        InstArchInfo::TargetPipe getPipe() const {
+            return inst_arch_info_->getTargetPipe();
+        }
+
+        // ROB handling -- mark this instruction as the oldest in the machine
         void setOldest(bool oldest, sparta::Scheduleable * rob_retire_event) {
             ev_retire_ = rob_retire_event;
             is_oldest_ = oldest;
-
-            if(status_.isValidNS() && status_.readNS() == olympia::Inst::Status::COMPLETED) {
-                ev_retire_->schedule();
-            }
         }
+        bool isMarkedOldest() const { return is_oldest_; }
+
+        // Rewind iterator used for going back in program simulation after flushes
+        template<typename T>
+        void setRewindIterator(T iter) { rewind_iter_ = iter; }
+        template<typename T>
+        T getRewindIterator() const { return std::get<T>(rewind_iter_); }
 
         // Set the instructions unique ID.  This ID in constantly
         // incremented and does not repeat.  The same instruction in a
@@ -129,6 +185,9 @@ namespace olympia
         void     setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const                { return target_vaddr_; }
 
+        // Branch instruction was taken (always set for JAL/JALR)
+        void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
+
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
@@ -143,11 +202,18 @@ namespace olympia
         const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
 
         // Static instruction information
-        bool        isStoreInst() const    { return inst_arch_info_->isLoadStore(); }
+        bool        isStoreInst() const    { return is_store_; }
+        bool        isLoadStoreInst() const {return inst_arch_info_->isLoadStore(); }
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
         bool        isSpeculative() const  { return is_speculative_; }
+        bool        isTransfer() const     { return is_transfer_; }
+        bool        isTakenBranch() const  { return is_taken_branch_; }
+        bool        isBranch() const       { return is_branch_; }
+        bool        isCondBranch() const   { return is_condbranch_; }
+        bool        isCall() const         { return is_call_; }
+        bool        isReturn() const       { return is_return_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) {
@@ -156,31 +222,54 @@ namespace olympia
         core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) {
             return dest_reg_bit_masks_[rf];
         }
+        core_types::RegisterBitMask & getDataRegisterBitMask(const core_types::RegFile rf) {
+            return store_data_mask_[rf];
+        }
         const core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf) const {
             return src_reg_bit_masks_[rf];
         }
         const core_types::RegisterBitMask & getDestRegisterBitMask(const core_types::RegFile rf) const {
             return dest_reg_bit_masks_[rf];
         }
-
+        const core_types::RegisterBitMask & getDataRegisterBitMask(const core_types::RegFile rf) const {
+            return store_data_mask_[rf];
+        }
+        RenameData & getRenameData() {
+            return rename_data;
+        }
+        const RenameData & getRenameData() const{
+            return rename_data;
+        }
     private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType      inst_arch_info_;
 
         sparta::memory::addr_t inst_pc_       = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_  = 0; // Instruction's Target PC (for branches, loads/stores)
-        bool                   is_oldest_       = false;
+        bool                   is_oldest_     = false;
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
+        const bool             is_store_;
+        const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
+        const bool             is_branch_;
+        const bool             is_condbranch_;
+        const bool             is_call_;
+        const bool             is_return_;
+        bool                   is_taken_branch_ = false;
         sparta::Scheduleable * ev_retire_    = nullptr;
-        InstStatus             status_;
         Status                 status_state_;
+
+        using JSONIterator = uint64_t;
+        using RewindIterator = std::variant<stf::STFInstReader::iterator, JSONIterator>;
+        RewindIterator rewind_iter_;
 
         // Rename information
         using RegisterBitMaskArray = std::array<core_types::RegisterBitMask, core_types::RegFile::N_REGFILES>;
         RegisterBitMaskArray src_reg_bit_masks_;
         RegisterBitMaskArray dest_reg_bit_masks_;
+        RegisterBitMaskArray store_data_mask_;
+        RenameData rename_data;
     };
 
     using InstPtr = Inst::PtrType;
@@ -197,6 +286,9 @@ namespace olympia
             case Inst::Status::RENAMED:
                 os << "RENAMED";
                 break;
+            case Inst::Status::DISPATCHED:
+                os << "DISPATCHED";
+                break;
             case Inst::Status::SCHEDULED:
                 os << "SCHEDULED";
                 break;
@@ -206,6 +298,9 @@ namespace olympia
             case Inst::Status::RETIRED:
                 os << "RETIRED";
                 break;
+            case Inst::Status::FLUSHED:
+                os << "FLUSHED";
+                break;
             case Inst::Status::__LAST:
                 throw sparta::SpartaException("__LAST cannot be a valid enum state.");
         }
@@ -213,8 +308,10 @@ namespace olympia
     }
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
-        os << "uid: " << inst.getUniqueID() << " " << inst.getStatus() << " "
-           << std::hex << inst.getPC() << std::dec << " '" << inst.getDisasm() << "' ";
+        os << "uid: " << inst.getUniqueID()
+           << " " << std::setw(10) << inst.getStatus()
+           << " " << std::hex << inst.getPC() << std::dec
+           << " pid: " << inst.getProgramID() << " '" << inst.getDisasm() << "' ";
         return os;
     }
 
@@ -250,8 +347,4 @@ namespace olympia
     // Instruction allocators
     using InstAllocator         = sparta::SpartaSharedPointerAllocator<Inst>;
     using InstArchInfoAllocator = sparta::SpartaSharedPointerAllocator<InstArchInfo>;
-
-    extern InstAllocator         inst_allocator;
-    extern InstArchInfoAllocator inst_arch_info_allocator;
-
 }

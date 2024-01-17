@@ -21,17 +21,19 @@ namespace olympia
                  const FetchParameterSet * p) :
         sparta::Unit(node),
         num_insts_to_fetch_(p->num_to_fetch),
+        skip_nonuser_mode_(p->skip_nonuser_mode),
         my_clk_(getClock())
     {
         in_fetch_queue_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
 
+        in_fetch_flush_redirect_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, FlushManager::FlushingCriteria));
+
         fetch_inst_event_.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_random",
                                                                      CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
-
-        in_fetch_flush_redirect_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, uint64_t));
 
     }
 
@@ -43,7 +45,9 @@ namespace olympia
         auto cpu_node   = getContainer()->getParent()->getParent();
         auto extension  = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
         auto workload   = extension->getParameters()->getParameter("workload");
-        inst_generator_ = InstGenerator::createGenerator(getMavis(getContainer()), workload->getValueAsString());
+        inst_generator_ = InstGenerator::createGenerator(getMavis(getContainer()),
+                                                         workload->getValueAsString(),
+                                                         skip_nonuser_mode_);
 
         fetch_inst_event_->schedule(1);
     }
@@ -102,16 +106,28 @@ namespace olympia
         fetch_inst_event_->schedule(sparta::Clock::Cycle(0));
     }
 
-    // Called from Retire via in_fetch_flush_redirect_ port
-    void Fetch::flushFetch_(const uint64_t & new_addr) {
-        ILOG("Fetch: receive flush on new_addr=0x"
-             << std::hex << new_addr << std::dec);
+    // Called from FlushManager via in_fetch_flush_redirect_port
+    void Fetch::flushFetch_(const FlushManager::FlushingCriteria &criteria)
+    {
+        ILOG("Fetch: received flush " << criteria);
+
+        auto flush_inst = criteria.getInstPtr();
+
+        // Rewind the tracefile
+        if (criteria.isInclusiveFlush())
+        {
+            inst_generator_->reset(flush_inst, false); // Replay this instruction
+        }
+        else
+        {
+            inst_generator_->reset(flush_inst, true); // Skip to next instruction
+        }
 
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();
 
         // No longer speculative
-        speculative_path_ = false;
+        // speculative_path_ = false;
     }
 
 }

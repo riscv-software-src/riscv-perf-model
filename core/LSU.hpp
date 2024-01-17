@@ -13,51 +13,51 @@
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/resources/Pipeline.hpp"
 #include "sparta/resources/Buffer.hpp"
+#include "sparta/resources/PriorityQueue.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/resources/Scoreboard.hpp"
 
 #include "cache/TreePLRUReplacement.hpp"
 
 #include "Inst.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
-#include "SimpleTLB.hpp"
-#include "SimpleDL1.hpp"
+#include "CacheFuncModel.hpp"
+#include "MemoryAccessInfo.hpp"
+#include "LoadStoreInstInfo.hpp"
+#include "MMU.hpp"
+#include "DCache.hpp"
 
 namespace olympia
 {
     class LSU : public sparta::Unit
     {
-    public:
+      public:
         /*!
          * \class LSUParameterSet
          * \brief Parameters for LSU model
          */
         class LSUParameterSet : public sparta::ParameterSet
         {
-        public:
+          public:
             //! Constructor for LSUParameterSet
-            LSUParameterSet(sparta::TreeNode* n):
-                sparta::ParameterSet(n)
-            {
-            }
+            LSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
-            // Parameters for the TLB cache
-            PARAMETER(bool, tlb_always_hit, false, "L1 TLB will always hit")
-            // Parameters for the DL1 cache
-            PARAMETER(uint32_t, dl1_line_size, 64, "DL1 line size (power of 2)")
-            PARAMETER(uint32_t, dl1_size_kb, 32, "Size of DL1 in KB (power of 2)")
-            PARAMETER(uint32_t, dl1_associativity, 8, "DL1 associativity (power of 2)")
-            PARAMETER(bool, dl1_always_hit, false, "DL1 will always hit")
-            // Parameters for event scheduling
-            PARAMETER(uint32_t, issue_latency, 1, "Instruction issue latency")
-            PARAMETER(uint32_t, mmu_latency, 1, "MMU/TLB access latency")
-            PARAMETER(uint32_t, cache_latency, 1, "Cache access latency")
-            PARAMETER(uint32_t, complete_latency, 1, "Instruction complete latency")
+            PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
+            PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
+            // LSU microarchitecture parameters
+            PARAMETER(
+                bool, allow_speculative_load_exec, true,
+                "Allow loads to proceed speculatively before all older store addresses are known")
+            // Pipeline length
+            PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
+            PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
+            PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
         };
 
         /*!
@@ -67,300 +67,62 @@ namespace olympia
          */
         LSU(sparta::TreeNode* node, const LSUParameterSet* p);
 
-        ~LSU() {
-            DLOG(getContainer()->getLocation()
-                 << ": "
-                 << load_store_info_allocator.getNumAllocated()
-                 << " LoadStoreInstInfo objects allocated/created");
-            DLOG(getContainer()->getLocation()
-                 << ": "
-                 << memory_access_allocator.getNumAllocated()
-                 << " MemoryAccessInfo objects allocated/created");
-        }
+        //! Destroy the LSU
+        ~LSU();
 
         //! name of this resource.
         static const char name[];
-
 
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
 
-
-        class LoadStoreInstInfo;
-        class MemoryAccessInfo;
-
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
-        using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
+        using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
+
         using FlushCriteria = FlushManager::FlushingCriteria;
 
-        enum class PipelineStage
-        {
-            MMU_LOOKUP = 0,     //1,
-            CACHE_LOOKUP = 1,   //3,
-            COMPLETE = 2,       //4
-            NUM_STAGES
-        };
+      private:
+        using ScoreboardViews =
+            std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
 
-        // Forward declaration of the Pair Definition class is must as we are friending it.
-        class MemoryAccessInfoPairDef;
-        // Keep record of memory access information in LSU
-        class MemoryAccessInfo {
-        public:
-
-            // The modeler needs to alias a type called "SpartaPairDefinitionType" to the Pair Definition class of itself
-            using SpartaPairDefinitionType = MemoryAccessInfoPairDef;
-
-            enum class MMUState : std::uint32_t {
-                NO_ACCESS = 0,
-                __FIRST = NO_ACCESS,
-                MISS,
-                HIT,
-                NUM_STATES,
-                __LAST = NUM_STATES
-            };
-
-            enum class CacheState : std::uint64_t {
-                NO_ACCESS = 0,
-                __FIRST = NO_ACCESS,
-                MISS,
-                HIT,
-                NUM_STATES,
-                __LAST = NUM_STATES
-            };
-
-            MemoryAccessInfo() = delete;
-
-            MemoryAccessInfo(const InstPtr & inst_ptr) :
-                ldst_inst_ptr_(inst_ptr),
-                phyAddrIsReady_(false),
-                mmu_access_state_(MMUState::NO_ACCESS),
-
-                // Construct the State object here
-                cache_access_state_(CacheState::NO_ACCESS) {}
-
-            virtual ~MemoryAccessInfo() {}
-
-            // This Inst pointer will act as our portal to the Inst class
-            // and we will use this pointer to query values from functions of Inst class
-            const InstPtr & getInstPtr() const { return ldst_inst_ptr_; }
-
-            // This is a function which will be added in the SPARTA_ADDPAIRs API.
-            uint64_t getInstUniqueID() const {
-                const InstPtr &inst_ptr = getInstPtr();
-
-                return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
-            }
-
-            void setPhyAddrStatus(bool isReady) { phyAddrIsReady_ = isReady; }
-            bool getPhyAddrStatus() const { return phyAddrIsReady_; }
-
-            const MMUState & getMMUState() const {
-                return mmu_access_state_.getEnumValue();
-            }
-
-            void setMMUState(const MMUState & state) {
-                mmu_access_state_.setValue(state);
-            }
-
-            const CacheState & getCacheState() const {
-                return cache_access_state_.getEnumValue();
-            }
-            void setCacheState(const CacheState & state) {
-                cache_access_state_.setValue(state);
-            }
-
-            // This is a function which will be added in the addArgs API.
-            bool getPhyAddrIsReady() const{
-                return phyAddrIsReady_;
-            }
-
-
-        private:
-            // load/store instruction pointer
-            InstPtr ldst_inst_ptr_;
-
-            // Indicate MMU address translation status
-            bool phyAddrIsReady_;
-
-            // MMU access status
-            sparta::State<MMUState> mmu_access_state_;
-
-            // Cache access status
-            sparta::State<CacheState> cache_access_state_;
-
-        };  // class MemoryAccessInfo
-
-        // allocator for this object type
-        sparta::SpartaSharedPointerAllocator<MemoryAccessInfo> memory_access_allocator;
-
-        /*!
-        * \class MemoryAccessInfoPairDef
-        * \brief Pair Definition class of the Memory Access Information that flows through the example/CoreModel
-        */
-
-        // This is the definition of the PairDefinition class of MemoryAccessInfo.
-        // This PairDefinition class could be named anything but it needs to inherit
-        // publicly from sparta::PairDefinition templatized on the actual class MemoryAcccessInfo.
-        class MemoryAccessInfoPairDef : public sparta::PairDefinition<MemoryAccessInfo>{
-        public:
-
-            // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-            MemoryAccessInfoPairDef() : PairDefinition<MemoryAccessInfo>(){
-                SPARTA_INVOKE_PAIRS(MemoryAccessInfo);
-            }
-            SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &MemoryAccessInfo::getInstUniqueID),
-                                  SPARTA_ADDPAIR("valid", &MemoryAccessInfo::getPhyAddrIsReady),
-                                  SPARTA_ADDPAIR("mmu",   &MemoryAccessInfo::getMMUState),
-                                  SPARTA_ADDPAIR("cache", &MemoryAccessInfo::getCacheState),
-                                  SPARTA_FLATTEN(         &MemoryAccessInfo::getInstPtr))
-        };
-
-        // Forward declaration of the Pair Definition class is must as we are friending it.
-        class LoadStoreInstInfoPairDef;
-        // Keep record of instruction issue information
-        class LoadStoreInstInfo
-        {
-        public:
-            // The modeler needs to alias a type called "SpartaPairDefinitionType" to the Pair Definition class  of itself
-            using SpartaPairDefinitionType = LoadStoreInstInfoPairDef;
-            enum class IssuePriority : std::uint16_t
-            {
-                HIGHEST = 0,
-                __FIRST = HIGHEST,
-                CACHE_RELOAD,   // Receive mss ack, waiting for cache re-access
-                CACHE_PENDING,  // Wait for another outstanding miss finish
-                MMU_RELOAD,     // Receive for mss ack, waiting for mmu re-access
-                MMU_PENDING,    // Wait for another outstanding miss finish
-                NEW_DISP,       // Wait for new issue
-                LOWEST,
-                NUM_OF_PRIORITIES,
-                __LAST = NUM_OF_PRIORITIES
-            };
-
-            enum class IssueState : std::uint32_t
-            {
-                READY = 0,          // Ready to be issued
-                __FIRST = READY,
-                ISSUED,         // On the flight somewhere inside Load/Store Pipe
-                NOT_READY,      // Not ready to be issued
-                NUM_STATES,
-                __LAST = NUM_STATES
-            };
-
-            LoadStoreInstInfo() = delete;
-            LoadStoreInstInfo(const MemoryAccessInfoPtr & info_ptr) :
-                mem_access_info_ptr_(info_ptr),
-                rank_(IssuePriority::LOWEST),
-                state_(IssueState::NOT_READY) {}
-
-            // This Inst pointer will act as one of the two portals to the Inst class
-            // and we will use this pointer to query values from functions of Inst class
-            const InstPtr & getInstPtr() const {
-                return mem_access_info_ptr_->getInstPtr();
-            }
-
-            // This MemoryAccessInfo pointer will act as one of the two portals to the MemoryAccesInfo class
-            // and we will use this pointer to query values from functions of MemoryAccessInfo class
-            const MemoryAccessInfoPtr & getMemoryAccessInfoPtr() const {
-                return mem_access_info_ptr_;
-            }
-
-            // This is a function which will be added in the SPARTA_ADDPAIRs API.
-            uint64_t getInstUniqueID() const {
-                const MemoryAccessInfoPtr &mem_access_info_ptr = getMemoryAccessInfoPtr();
-
-                return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUniqueID();
-            }
-
-            void setPriority(const IssuePriority & rank) {
-                rank_.setValue(rank);
-            }
-
-            const IssuePriority & getPriority() const {
-                return rank_.getEnumValue();
-            }
-
-            void setState(const IssueState & state) {
-                state_.setValue(state);
-             }
-
-            const IssueState & getState() const {
-                return state_.getEnumValue();
-            }
-
-
-            bool isReady() const { return (getState() == IssueState::READY); }
-
-            bool winArb(const LoadStoreInstInfoPtr & that) const
-            {
-                if (that == nullptr) {
-                    return true;
-                }
-
-                return (static_cast<uint32_t>(this->getPriority())
-                    < static_cast<uint32_t>(that->getPriority()));
-            }
-
-        private:
-            MemoryAccessInfoPtr mem_access_info_ptr_;
-            sparta::State<IssuePriority> rank_;
-            sparta::State<IssueState> state_;
-
-        };  // class LoadStoreInstInfo
-
-        sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo> load_store_info_allocator;
-
-        /*!
-        * \class LoadStoreInstInfoPairDef
-        * \brief Pair Definition class of the load store instruction that flows through the example/CoreModel
-        */
-        // This is the definition of the PairDefinition class of LoadStoreInstInfo.
-        // This PairDefinition class could be named anything but it needs to inherit
-        // publicly from sparta::PairDefinition templatized on the actual class LoadStoreInstInfo.
-        class LoadStoreInstInfoPairDef : public sparta::PairDefinition<LoadStoreInstInfo>{
-        public:
-
-            // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-            LoadStoreInstInfoPairDef() : PairDefinition<LoadStoreInstInfo>(){
-                SPARTA_INVOKE_PAIRS(LoadStoreInstInfo);
-            }
-            SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",   &LoadStoreInstInfo::getInstUniqueID),
-                                  SPARTA_ADDPAIR("rank",  &LoadStoreInstInfo::getPriority),
-                                  SPARTA_ADDPAIR("state", &LoadStoreInstInfo::getState),
-                                  SPARTA_FLATTEN(         &LoadStoreInstInfo::getMemoryAccessInfoPtr))
-        };
-
-        void setTLB(SimpleTLB& tlb)
-        {
-            tlb_cache_ = &tlb;
-        }
-    private:
+        ScoreboardViews scoreboard_views_;
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_
-            {&unit_port_set_, "in_lsu_insts", 1};
+        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
 
-        sparta::DataInPort<InstPtr> in_biu_ack_
-            {&unit_port_set_, "in_biu_ack", 1};
+        sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
 
-        sparta::DataInPort<InstPtr> in_rob_retire_ack_
-            {&unit_port_set_, "in_rob_retire_ack", 1};
+        sparta::DataInPort<FlushCriteria> in_reorder_flush_{&unit_port_set_, "in_reorder_flush",
+                                                            sparta::SchedulingPhase::Flush, 1};
 
-        sparta::DataInPort<FlushCriteria> in_reorder_flush_
-            {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_req_{&unit_port_set_,
+                                                                   "in_mmu_lookup_req", 1};
 
+        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_{&unit_port_set_,
+                                                                   "in_mmu_lookup_ack", 0};
+
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_{&unit_port_set_,
+                                                                     "in_cache_lookup_req", 1};
+
+        sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_{&unit_port_set_,
+                                                                     "in_cache_lookup_ack", 0};
+
+        sparta::SignalInPort in_cache_free_req_{&unit_port_set_, "in_cache_free_req", 0};
+
+        sparta::SignalInPort in_mmu_free_req_{&unit_port_set_, "in_mmu_free_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataOutPort<uint32_t> out_lsu_credits_
-            {&unit_port_set_, "out_lsu_credits"};
+        sparta::DataOutPort<uint32_t> out_lsu_credits_{&unit_port_set_, "out_lsu_credits"};
 
-        sparta::DataOutPort<InstPtr> out_biu_req_
-            {&unit_port_set_, "out_biu_req"};
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_{&unit_port_set_,
+                                                                     "out_mmu_lookup_req", 0};
 
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_{&unit_port_set_,
+                                                                       "out_cache_lookup_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -371,47 +133,45 @@ namespace olympia
         LoadStoreIssueQueue ldst_inst_queue_;
         const uint32_t ldst_inst_queue_size_;
 
-        // TLB Cache
-        SimpleTLB* tlb_cache_ = nullptr;
-        const bool tlb_always_hit_;
+        sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
+        const uint32_t replay_buffer_size_;
+        const uint32_t replay_issue_delay_;
+
+        sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
+        // MMU unit
         bool mmu_busy_ = false;
-        bool mmu_pending_inst_flushed = false;
-        // Keep track of the instruction that causes current outstanding TLB miss
-        InstPtr mmu_pending_inst_ptr_ = nullptr;
-
-        // NOTE:
-        // Depending on how many outstanding TLB misses the MMU could handle at the same time
-        // This single slot could potentially be extended to a mmu pending miss queue
-
 
         // L1 Data Cache
-        using DL1Handle = SimpleDL1::Handle;
-        DL1Handle dl1_cache_;
-        const bool dl1_always_hit_;
         bool cache_busy_ = false;
-        bool cache_pending_inst_flushed_ = false;
-        // Keep track of the instruction that causes current outstanding cache miss
-        InstPtr cache_pending_inst_ptr_ = nullptr;
 
-        sparta::collection::Collectable<bool> cache_busy_collectable_{
-            getContainer(), "dcache_busy", &cache_busy_};
+        sparta::collection::Collectable<bool> cache_busy_collectable_{getContainer(), "dcache_busy",
+                                                                      &cache_busy_};
+
+        // LSInstInfo allocator
+        LoadStoreInstInfoAllocator & load_store_info_allocator_;
+
+        // allocator for this object type
+        MemoryAccessInfoAllocator & memory_access_allocator_;
 
         // NOTE:
         // Depending on which kind of cache (e.g. blocking vs. non-blocking) is being used
         // This single slot could potentially be extended to a cache pending miss queue
 
+        const int address_calculation_stage_;
+        const int mmu_lookup_stage_;
+        const int cache_lookup_stage_;
+        const int cache_read_stage_;
+        const int complete_stage_;
 
         // Load/Store Pipeline
-        using LoadStorePipeline = sparta::Pipeline<MemoryAccessInfoPtr>;
-        LoadStorePipeline ldst_pipeline_
-            {"LoadStorePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
+        using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
+        LoadStorePipeline ldst_pipeline_;
 
-        // Event Scheduling Parameters
-        const uint32_t issue_latency_;
-        const uint32_t mmu_latency_;
-        const uint32_t cache_latency_;
-        const uint32_t complete_latency_;
+        // LSU Microarchitecture parameters
+        const bool allow_speculative_load_exec_;
 
+        // ROB stopped simulation early, transactions could still be inflight.
+        bool rob_stopped_simulation_ = false;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
@@ -419,29 +179,30 @@ namespace olympia
 
         // Event to issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
-                CREATE_SPARTA_HANDLER(LSU, issueInst_)};
+                                              CREATE_SPARTA_HANDLER(LSU, issueInst_)};
 
-        // Event to drive BIU request port from MMU
-        sparta::UniqueEvent<> uev_mmu_drive_biu_port_ {&unit_event_set_, "mmu_drive_biu_port",
-                CREATE_SPARTA_HANDLER(LSU, driveBIUPortFromMMU_)};
+        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{
+            &unit_event_set_, "replay_ready",
+            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, replayReady_, LoadStoreInstInfoPtr)};
 
-        // Event to drive BIU request port from Cache
-        sparta::UniqueEvent<> uev_cache_drive_biu_port_ {&unit_event_set_, "cache_drive_biu_port",
-                CREATE_SPARTA_HANDLER(LSU, driveBIUPortFromCache_)};
-
+        sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_append_ready_{
+            &unit_event_set_, "append_ready",
+            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, appendReady_, LoadStoreInstInfoPtr)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
-
         // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
         void sendInitialCredits_();
+
+        // Setup Scoreboard Views
+        void setupScoreboard_();
 
         // Receive new load/store Instruction from Dispatch Unit
         void getInstsFromDispatch_(const InstPtr &);
 
-        // Receive MSS access acknowledge from Bus Interface Unit
-        void getAckFromBIU_(const InstPtr &);
+        // Callback from Scoreboard to inform Operand Readiness
+        void handleOperandIssueCheck_(const InstPtr & inst_ptr);
 
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
@@ -449,208 +210,135 @@ namespace olympia
         // Issue/Re-issue ready instructions in the issue queue
         void issueInst_();
 
+        // Calculate memory load/store address
+        void handleAddressCalculation_();
         // Handle MMU access request
         void handleMMULookupReq_();
-
-        // Drive BIU request port from MMU
-        void driveBIUPortFromMMU_();
+        void handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void getAckFromMMU_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
 
         // Handle cache access request
         void handleCacheLookupReq_();
+        void handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void getAckFromCache_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
 
-        // Drive BIU request port from cache
-        void driveBIUPortFromCache_();
-
+        // Perform cache read
+        void handleCacheRead_();
         // Retire load/store instruction
         void completeInst_();
 
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);
 
+        // Instructions in the replay ready to issue
+        void replayReady_(const LoadStoreInstInfoPtr &);
+
+        // Mark instruction as not ready and schedule replay ready
+        void updateInstReplayReady_(const LoadStoreInstInfoPtr &);
+
+        // Instructions in the replay ready to issue
+        void appendReady_(const LoadStoreInstInfoPtr &);
+
+        // Called when ROB terminates the simulation
+        void onROBTerminate_(const bool & val);
+
+        // When simulation is ending (error or not), this function
+        // will be called
+        void onStartingTeardown_() override;
+
+        // Typically called when the simulator is shutting down due to an exception
+        // writes out text to aid debug
+        void dumpDebugContent_(std::ostream & output) const override final;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
 
-        // Append new load/store instruction into issue queue
-        void appendIssueQueue_(const LoadStoreInstInfoPtr &);
+        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
+
+        void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+
+        bool olderStoresExists_(const InstPtr & inst_ptr);
+
+        bool allOlderStoresIssued_(const InstPtr & inst_ptr);
+
+        void readyDependentLoads_(const LoadStoreInstInfoPtr &);
+
+        bool instOperandReady_(const InstPtr &);
+
+        void abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr);
+
+        // Remove instruction from pipeline which share the same address
+        void dropInstFromPipeline_(const LoadStoreInstInfoPtr &);
+
+        // Append new store instruction into replay queue
+        void appendToReplayQueue_(const LoadStoreInstInfoPtr & inst_info_ptr);
+
+        // Pop completed load/store instruction out of replay queue
+        void removeInstFromReplayQueue_(const LoadStoreInstInfoPtr & inst_to_remove);
+        void removeInstFromReplayQueue_(const InstPtr & inst_to_remove);
+
+        void appendToReadyQueue_(const LoadStoreInstInfoPtr &);
+
+        void appendToReadyQueue_(const InstPtr &);
 
         // Pop completed load/store instruction out of issue queue
-        void popIssueQueue_(const InstPtr &);
+        void popIssueQueue_(const LoadStoreInstInfoPtr &);
 
         // Arbitrate instruction issue from ldst_inst_queue
-        const LoadStoreInstInfoPtr & arbitrateInstIssue_();
+        LoadStoreInstInfoPtr arbitrateInstIssue_();
 
         // Check for ready to issue instructions
         bool isReadyToIssueInsts_() const;
-
-        // Access MMU/TLB
-        bool MMULookup_(const MemoryAccessInfoPtr &);
-
-        // Re-handle outstanding MMU access request
-        void rehandleMMULookupReq_(const InstPtr &);
-
-        // Reload TLB entry
-        void reloadTLB_(uint64_t);
-
-        // Access Cache
-        bool cacheLookup_(const MemoryAccessInfoPtr &);
-
-        // Re-handle outstanding cache access request
-        void rehandleCacheLookupReq_(const InstPtr &);
-
-        // Reload cache line
-        void reloadCache_(uint64_t);
 
         // Update issue priority after dispatch
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);
 
         // Update issue priority after TLB reload
-        void updateIssuePriorityAfterTLBReload_(const InstPtr &,
-                                                const bool = false);
+        void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after cache reload
-        void updateIssuePriorityAfterCacheReload_(const InstPtr &,
-                                                  const bool = false);
+        void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after store instruction retires
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
 
         // Flush instruction issue queue
-        template<typename Comp>
-        void flushIssueQueue_(const Comp &);
+        void flushIssueQueue_(const FlushCriteria &);
 
         // Flush load/store pipeline
-        template<typename Comp>
-        void flushLSPipeline_(const Comp &);
+        void flushLSPipeline_(const FlushCriteria &);
+
+        // Flush Ready Queue
+        void flushReadyQueue_(const FlushCriteria &);
+
+        // Flush Replay Buffer
+        void flushReplayBuffer_(const FlushCriteria &);
 
         // Counters
-        sparta::Counter lsu_insts_dispatched_{
-            getStatisticSet(), "lsu_insts_dispatched",
-            "Number of LSU instructions dispatched", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter stores_retired_{
-            getStatisticSet(), "stores_retired",
-            "Number of stores retired", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter lsu_insts_issued_{
-            getStatisticSet(), "lsu_insts_issued",
-            "Number of LSU instructions issued", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter lsu_insts_completed_{
-            getStatisticSet(), "lsu_insts_completed",
-            "Number of LSU instructions completed", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter lsu_flushes_{
-            getStatisticSet(), "lsu_flushes",
-            "Number of instruction flushes at LSU", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter tlb_hits_{
-            getStatisticSet(), "tlb_hits",
-            "Number of TLB hits", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter tlb_misses_{
-            getStatisticSet(), "tlb_misses",
-            "Number of TLB misses", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter dl1_cache_hits_{
-            getStatisticSet(), "dl1_cache_hits",
-            "Number of DL1 cache hits", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter dl1_cache_misses_{
-            getStatisticSet(), "dl1_cache_misses",
-            "Number of DL1 cache misses", sparta::Counter::COUNT_NORMAL
-        };
-        sparta::Counter biu_reqs_{
-            getStatisticSet(), "biu_reqs",
-            "Number of BIU reqs", sparta::Counter::COUNT_NORMAL
-        };
+        sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",
+                                              "Number of LSU instructions dispatched",
+                                              sparta::Counter::COUNT_NORMAL};
+        sparta::Counter stores_retired_{getStatisticSet(), "stores_retired",
+                                        "Number of stores retired", sparta::Counter::COUNT_NORMAL};
+        sparta::Counter lsu_insts_issued_{getStatisticSet(), "lsu_insts_issued",
+                                          "Number of LSU instructions issued",
+                                          sparta::Counter::COUNT_NORMAL};
+        sparta::Counter replay_insts_{getStatisticSet(), "replay_insts_",
+                                      "Number of Replay instructions issued",
+                                      sparta::Counter::COUNT_NORMAL};
+        sparta::Counter lsu_insts_completed_{getStatisticSet(), "lsu_insts_completed",
+                                             "Number of LSU instructions completed",
+                                             sparta::Counter::COUNT_NORMAL};
+        sparta::Counter lsu_flushes_{getStatisticSet(), "lsu_flushes",
+                                     "Number of instruction flushes at LSU",
+                                     sparta::Counter::COUNT_NORMAL};
 
+        sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
+                                  sparta::Counter::COUNT_NORMAL};
 
+        friend class LSUTester;
     };
 
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::LSU::MemoryAccessInfo::MMUState & mmu_access_state){
-        switch(mmu_access_state){
-            case LSU::MemoryAccessInfo::MMUState::NO_ACCESS:
-                os << "no_access";
-                break;
-            case LSU::MemoryAccessInfo::MMUState::MISS:
-                os << "miss";
-                break;
-            case LSU::MemoryAccessInfo::MMUState::HIT:
-                os << "hit";
-                break;
-            case LSU::MemoryAccessInfo::MMUState::NUM_STATES:
-                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
-        }
-        return os;
-    }
-
-    inline std::ostream & operator<<(std::ostream & os,
-        const olympia::LSU::MemoryAccessInfo::CacheState & cache_access_state){
-        switch(cache_access_state){
-            case LSU::MemoryAccessInfo::CacheState::NO_ACCESS:
-                os << "no_access";
-                break;
-            case LSU::MemoryAccessInfo::CacheState::MISS:
-                os << "miss";
-                break;
-            case LSU::MemoryAccessInfo::CacheState::HIT:
-                os << "hit";
-                break;
-            case LSU::MemoryAccessInfo::CacheState::NUM_STATES:
-                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
-        }
-        return os;
-    }
-
-    inline std::ostream& operator<<(std::ostream& os,
-        const olympia::LSU::LoadStoreInstInfo::IssuePriority& rank){
-        switch(rank){
-            case LSU::LoadStoreInstInfo::IssuePriority::HIGHEST:
-                os << "(highest)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::CACHE_RELOAD:
-                os << "($_reload)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::CACHE_PENDING:
-                os << "($_pending)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::MMU_RELOAD:
-                os << "(mmu_reload)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::MMU_PENDING:
-                os << "(mmu_pending)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::NEW_DISP:
-                os << "(new_disp)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::LOWEST:
-                os << "(lowest)";
-                break;
-            case LSU::LoadStoreInstInfo::IssuePriority::NUM_OF_PRIORITIES:
-                throw sparta::SpartaException("NUM_OF_PRIORITIES cannot be a valid enum state.");
-        }
-        return os;
-    }
-
-    inline std::ostream& operator<<(std::ostream& os,
-        const olympia::LSU::LoadStoreInstInfo::IssueState& state){
-        // Print instruction issue state
-        switch(state){
-            case LSU::LoadStoreInstInfo::IssueState::READY:
-                os << "(ready)";
-                break;
-            case LSU::LoadStoreInstInfo::IssueState::ISSUED:
-                os << "(issued)";
-                break;
-            case LSU::LoadStoreInstInfo::IssueState::NOT_READY:
-                os << "(not_ready)";
-                break;
-            case LSU::LoadStoreInstInfo::IssueState::NUM_STATES:
-                throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
-        }
-        return os;
-    }
+    class LSUTester;
 } // namespace olympia

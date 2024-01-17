@@ -90,8 +90,8 @@ auto olympia::CPUFactory::bindTree_(sparta::RootTreeNode* root_node,
         auto core_tree_node = root_node->getChild(std::string("cpu.core") +
                                                   std::to_string(num_of_cores));
         sparta_assert(core_tree_node != nullptr);
-        (core_tree_node->getChild("lsu")->getResourceAs<olympia::LSU>())->
-            setTLB(*private_nodes_.at(num_of_cores)->getResourceAs<olympia::SimpleTLB>());
+        (core_tree_node->getChild("mmu")->getResourceAs<olympia::MMU>())->
+                setTLB(*private_nodes_.at(num_of_cores)->getResourceAs<olympia::SimpleTLB>());
         (core_tree_node->getChild("preloader")->getResourceAs<olympia::Preloader>())->
             preload();
     }
@@ -122,4 +122,9 @@ auto olympia::CPUFactory::bindTree(sparta::RootTreeNode* root_node) -> void
 auto olympia::CPUFactory::getResourceNames() const -> const std::vector<std::string>&
 {
     return resource_names_;
+}
+
+// Destroy internal components
+void olympia::CPUFactory::deleteSubtree(sparta::ResourceTreeNode*) {
+    to_delete_.clear();
 }

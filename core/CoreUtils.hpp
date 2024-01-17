@@ -21,4 +21,21 @@ namespace olympia::coreutils
         auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
         return sparta::notNull(execution_topology_param)->getValueAs<olympia::CoreExtensions::ExecutionTopology>();
     }
+    inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
+    {
+        static const std::map<mavis::InstMetaData::OperandTypes, core_types::RegFile> mavis_optype_to_regfile = {
+            // mapping of supported types ...
+            {mavis::InstMetaData::OperandTypes::SINGLE, core_types::RegFile::RF_FLOAT},
+            {mavis::InstMetaData::OperandTypes::DOUBLE, core_types::RegFile::RF_FLOAT},
+            {mavis::InstMetaData::OperandTypes::WORD, core_types::RegFile::RF_INTEGER},
+            {mavis::InstMetaData::OperandTypes::LONG, core_types::RegFile::RF_INTEGER},
+            {mavis::InstMetaData::OperandTypes::QUAD, core_types::RegFile::RF_INTEGER}
+         };
+        if(auto match = mavis_optype_to_regfile.find(reg.operand_type); match != mavis_optype_to_regfile.end()) {
+            return match->second;
+        }
+        sparta_assert(false, "Unknown reg type: " << static_cast<uint32_t>(reg.operand_type));
+        return core_types::RegFile::RF_INVALID;
+    }
+
 }

@@ -15,6 +15,21 @@ namespace olympia
         {"unknown", InstArchInfo::TargetUnit::UNKNOWN},
     };
 
+    const InstArchInfo::TargetPipeMap InstArchInfo::execution_pipe_map = {
+        {"br",      InstArchInfo::TargetPipe::BR},
+        {"cmov",    InstArchInfo::TargetPipe::CMOV},
+        {"div",     InstArchInfo::TargetPipe::DIV},
+        {"faddsub", InstArchInfo::TargetPipe::FADDSUB},
+        {"float",   InstArchInfo::TargetPipe::FLOAT},
+        {"fmac",    InstArchInfo::TargetPipe::FMAC},
+        {"i2f",     InstArchInfo::TargetPipe::I2F},
+        {"f2i",     InstArchInfo::TargetPipe::F2I},
+        {"int",     InstArchInfo::TargetPipe::INT},
+        {"lsu",     InstArchInfo::TargetPipe::LSU},
+        {"mul",     InstArchInfo::TargetPipe::MUL},
+        {"sys",     InstArchInfo::TargetPipe::SYS}
+    };
+
     void InstArchInfo::update(const nlohmann::json& jobj)
     {
         // Get the dispatch target
@@ -30,6 +45,17 @@ namespace olympia
         }
         sparta_assert(tgt_unit_ != TargetUnit::UNKNOWN,
                       "Unknown target unit (dispatch) for " << jobj["mnemonic"].get<std::string>());
+
+        if (jobj.find("pipe") != jobj.end()) {
+            auto pipe_name = jobj["pipe"].get<std::string>();
+            const auto itr = execution_pipe_map.find(pipe_name);
+            sparta_assert(itr != execution_pipe_map.end(),
+                          "Unknown pipe target: " << pipe_name << " for inst: " << jobj["mnemonic"].get<std::string>());
+            tgt_pipe_ = itr->second;
+        }
+        sparta_assert(tgt_pipe_ != TargetPipe::UNKNOWN,
+                      "Unknown target pipe (execution) for " << jobj["mnemonic"].get<std::string>());
+
 
         if (jobj.find("latency") != jobj.end()) {
             execute_time_ = jobj["latency"].get<uint32_t>();

@@ -14,6 +14,10 @@
 
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
+#include "sparta/utils/LogUtils.hpp"
+#include "sparta/utils/ValidValue.hpp"
+
+#include "Inst.hpp"
 
 namespace olympia
 {
@@ -38,7 +42,66 @@ namespace olympia
     class FlushManager : public sparta::Unit
     {
     public:
-        typedef uint64_t FlushingCriteria;
+
+        enum class FlushCause : std::uint16_t {
+            TRAP = 0,
+            __FIRST = TRAP,
+            MISPREDICTION,
+            TARGET_MISPREDICTION,
+            MISFETCH,
+            POST_SYNC,
+            UKNOWN,
+            __LAST
+        };
+
+        class FlushingCriteria
+        {
+        public:
+            FlushingCriteria(FlushCause cause, InstPtr inst_ptr) :
+                cause_(cause),
+                inst_ptr_(inst_ptr) {}
+
+            FlushingCriteria() = default;
+            FlushingCriteria(const FlushingCriteria &rhs) = default;
+            FlushingCriteria &operator=(const FlushingCriteria &rhs) = default;
+
+            FlushCause getCause() const        { return cause_; }
+            const InstPtr & getInstPtr() const { return inst_ptr_; }
+
+            bool isInclusiveFlush() const
+            {
+                static const std::map<FlushCause, bool> inclusive_flush_map = {
+                    {FlushCause::TRAP,                 true},
+                    {FlushCause::MISFETCH,             true},
+                    {FlushCause::MISPREDICTION,        false},
+                    {FlushCause::TARGET_MISPREDICTION, false},
+                    {FlushCause::POST_SYNC,            false}
+                };
+                if(auto match = inclusive_flush_map.find(cause_); match != inclusive_flush_map.end()) {
+                    return match->second;
+                }
+                sparta_assert(false, "Unknown flush cause: " << static_cast<uint16_t>(cause_));
+                return true;
+            }
+
+            bool isLowerPipeFlush() const
+            {
+                return cause_ == FlushCause::MISFETCH;
+            }
+
+            bool includedInFlush(const InstPtr& other) const
+            {
+                return isInclusiveFlush() ?
+                    inst_ptr_->getUniqueID() <= other->getUniqueID() :
+                    inst_ptr_->getUniqueID() < other->getUniqueID();
+            }
+
+        private:
+            FlushCause cause_ = FlushCause::UKNOWN;
+            InstPtr inst_ptr_;
+        };
+
+
         static constexpr char name[] = "flushmanager";
 
         class FlushManagerParameters : public sparta::ParameterSet
@@ -57,42 +120,99 @@ namespace olympia
          */
         FlushManager(sparta::TreeNode *rc, const FlushManagerParameters * params) :
             Unit(rc, name),
-            out_retire_flush_(getPortSet(), "out_retire_flush", false),
-            in_retire_flush_(getPortSet(), "in_retire_flush", 0),
-            out_fetch_flush_redirect_(getPortSet(), "out_fetch_flush_redirect", false),
-            in_fetch_flush_redirect_(getPortSet(), "in_fetch_flush_redirect", 0)
+            in_flush_request_(getPortSet(), "in_flush_request", 0),
+            out_flush_lower_(getPortSet(), "out_flush_lower", false),
+            out_flush_upper_(getPortSet(), "out_flush_upper", false)
         {
             (void)params;
-            in_retire_flush_.
+
+            in_flush_request_.
                 registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
-                                                                      forwardRetireFlush_,
+                                                                      receiveFlush_,
                                                                       FlushingCriteria));
-            in_fetch_flush_redirect_.
-                registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(FlushManager,
-                                                                      forwardFetchRedirectFlush_,
-                                                                      uint64_t));
+
+            in_flush_request_.registerConsumerEvent(ev_flush_);
         }
 
     private:
 
         // Flushing criteria
-        sparta::DataOutPort<FlushingCriteria> out_retire_flush_;
-        sparta::DataInPort <FlushingCriteria> in_retire_flush_;
+        sparta::DataInPort <FlushingCriteria> in_flush_request_;
+        sparta::DataOutPort<FlushingCriteria> out_flush_lower_;
+        sparta::DataOutPort<FlushingCriteria> out_flush_upper_;
 
-        // Flush redirect for Fetch
-        sparta::DataOutPort<uint64_t> out_fetch_flush_redirect_;
-        sparta::DataInPort <uint64_t> in_fetch_flush_redirect_;
+        sparta::UniqueEvent<> ev_flush_ {&unit_event_set_,
+                                        "flush_event",
+                                         CREATE_SPARTA_HANDLER(FlushManager, forwardFlush_)};
 
-        // Internal method used to forward the flush to the attached
-        // listeners
-        void forwardRetireFlush_(const FlushingCriteria & flush_data) {
-            out_retire_flush_.send(flush_data);
+        // Hold oldest incoming flush request for forwarding
+        sparta::utils::ValidValue<FlushingCriteria> pending_flush_;
+
+        // Arbitrates and forwards the flush request from the input flush ports, to the output ports
+        void forwardFlush_()
+        {
+            sparta_assert(pending_flush_.isValid(), "no flush to forward onwards?");
+            auto flush_data = pending_flush_.getValue();
+            if (flush_data.isLowerPipeFlush())
+            {
+                ILOG("instigating lower pipeline flush for: " << flush_data);
+                out_flush_lower_.send(flush_data);
+            }
+            else
+            {
+                ILOG("instigating upper pipeline flush for: " << flush_data);
+                out_flush_upper_.send(flush_data);
+            }
+            pending_flush_.clearValid();
         }
 
-        // Internal method used to forward the fetch redirect
-        void forwardFetchRedirectFlush_(const uint64_t & flush_data) {
-            out_fetch_flush_redirect_.send(flush_data);
+        void receiveFlush_(const FlushingCriteria & flush_data)
+        {
+            ev_flush_.schedule();
+
+            // Capture the oldest flush request only
+            if (pending_flush_.isValid())
+            {
+                auto pending = pending_flush_.getValue();
+                if (pending.includedInFlush(flush_data.getInstPtr()))
+                {
+                    return;
+                }
+            }
+            pending_flush_ = flush_data;
         }
+
     };
-}
 
+
+    inline std::ostream & operator<<(std::ostream & os, const FlushManager::FlushCause & cause) {
+        switch(cause) {
+            case FlushManager::FlushCause::TRAP:
+                os << "TRAP";
+                break;
+            case FlushManager::FlushCause::MISPREDICTION:
+                os << "MISPREDICTION";
+                break;
+            case FlushManager::FlushCause::TARGET_MISPREDICTION:
+                os << "TARGET_MISPREDICTION";
+                break;
+            case FlushManager::FlushCause::MISFETCH:
+                os << "MISFETCH";
+                break;
+            case FlushManager::FlushCause::POST_SYNC:
+                os << "POST_SYNC";
+                break;
+            case FlushManager::FlushCause::UKNOWN:
+                os << "UKNOWN";
+                break;
+            case FlushManager::FlushCause::__LAST:
+                throw sparta::SpartaException("__LAST cannot be a valid enum state.");
+        }
+        return os;
+    }
+
+    inline std::ostream & operator<<(std::ostream & os, const FlushManager::FlushingCriteria & criteria) {
+        os << criteria.getInstPtr() << " " << criteria.getCause();
+        return os;
+    }
+}

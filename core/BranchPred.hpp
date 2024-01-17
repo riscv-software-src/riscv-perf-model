@@ -23,6 +23,7 @@
  * implementations of Prediction output, Prediction input and Update input, along with
  * implementations of getPrediction and updatePredictor operations.
  * */
+#include <cstdint>
 #include <map>
 
 template <class PredictionT, class UpdateT, class InputT>

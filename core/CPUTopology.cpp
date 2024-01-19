@@ -332,19 +332,7 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             for(uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
             {
                 const std::string unit_name = tgt_name + std::to_string(unit_num);
-
-                // Bind credits
-                // const std::string exe_credits_out =
-                //     core_node + ".execute." + unit_name + ".ports.out_scheduler_credits";
-                // const std::string disp_credits_in = dispatch_ports + ".in_" + unit_name + "_credits";
-                // bind_ports(exe_credits_out, disp_credits_in);
-
-                // // Bind instruction transfer
-                // const std::string exe_inst_in   =
-                //     core_node + ".execute." + unit_name + ".ports.in_execute_write";
-                // const std::string disp_inst_out = dispatch_ports + ".out_" + unit_name + "_write";
-                // bind_ports(exe_inst_in, disp_inst_out);
-
+                
                 // Bind flushing
                 const std::string exe_flush_in =
                     core_node + ".execute." +  unit_name + ".ports.in_reorder_flush";;
@@ -387,22 +375,6 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                     core_node + ".execute." +  unit_name + ".ports.in_reorder_flush";;
             const std::string flush_manager = flushmanager_ports + ".out_flush_upper";
             bind_ports(exe_flush_in, flush_manager);
-            // // create another one of the above for execute_pipe -> iq signal that there is a flush
-            // const std::string flush_exe_pipe_in   =
-            //     core_node + ".execute." + unit_name + ".ports.flush_execute_pipe_in";
-            
-            // for(auto exe_unit: issue_queue_topology[i]){
-            //     const std::string flush_exe_pipe_out = core_node + ".execute." + exe_unit + ".ports.flush_out_execute_pipe";
-            //     bind_ports(flush_exe_pipe_in, flush_exe_pipe_out);
-            // }
-            // // create another one for iq -> execute_pipe
-            // const std::string flush_issue_queue_out   =
-            //     core_node + ".execute." + unit_name + ".ports.flush_issue_queue_out";
-            
-            // for(auto exe_unit: issue_queue_topology[i]){
-            //     const std::string flush_issue_queue_in = core_node + ".execute." + exe_unit + ".ports.flush_issue_queue_in";
-            //     bind_ports(flush_issue_queue_in, flush_issue_queue_out);
-            // }
         }
 
     }

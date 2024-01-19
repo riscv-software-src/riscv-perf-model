@@ -21,7 +21,7 @@ top.cpu.core0.extension.core_extensions:
     [["alu", "6"],
     ["fpu", "2"],
     ["br",  "2"]]
-  # this defines what pipe types are assigned to which alu
+  # this defines what pipe types are assigned to which execution unit
   pipe_topology_alu_pipes:
     [["int"], # alu0
       ["int", "div"], # alu1

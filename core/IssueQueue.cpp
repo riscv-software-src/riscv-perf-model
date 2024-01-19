@@ -28,10 +28,16 @@ IssueQueue::IssueQueue(sparta::TreeNode *node, const IssueQueueParameterSet *p)
 void IssueQueue::setupIssueQueue_() {
   std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
                                                 core_types::RF_FLOAT};
+  // if we ever move to multicore, we only want to have resources look for scoreboard in their cpu
+  // if we're running a test where we only have top.rename or top.issue_queue, then we can just use the root
+  auto cpu_node = getContainer()->findAncestorByName("core.*");
+  if(cpu_node == nullptr){
+    cpu_node = getContainer()->getRoot();
+  }
   for (const auto rf : reg_files) {
     scoreboard_views_[rf].reset(new sparta::ScoreboardView(
         getContainer()->getName(), core_types::regfile_names[rf],
-        getContainer()));
+        cpu_node));
   }
   out_scheduler_credits_.send(scheduler_size_);
 }
@@ -48,8 +54,6 @@ void IssueQueue::dumpDebugContent_(std::ostream &output) const {
 }
 
 void IssueQueue::onStartingTeardown_() {
-  // If ROB has not stopped the simulation &
-  // the ldst has entries to process we should fail
   if ((false == rob_stopped_simulation_) && (false == ready_queue_.empty())) {
     dumpDebugContent_(std::cerr);
     sparta_assert(false, "Issue queue has pending instructions");
@@ -63,8 +67,6 @@ void IssueQueue::setExePipe(std::string exe_pipe_name,
 
 void IssueQueue::setExePipeMapping(InstArchInfo::TargetPipe tgt_pipe,
                                    olympia::ExecutePipe *exe_pipe) {
-  // auto pipe_vector = pipe_exe_pipe_mapping_.find(tgt_pipe);
-  // pipe_vector->second.emplace_back(exe_pipe);
   if (pipe_exe_pipe_mapping_.find(tgt_pipe) == pipe_exe_pipe_mapping_.end()) {
     pipe_exe_pipe_mapping_[tgt_pipe] = std::vector<olympia::ExecutePipe *>();
   }
@@ -129,13 +131,6 @@ void IssueQueue::readyExeUnit_(const uint32_t &readyExe) {
   TODO:
   have a map/mask to see which execution units are ready
   signal port
-
-  mask concept -> value of the pipe, don't calculate every time, boolean ands
-  everytime pipe -> has a specific mask and we and it, precalculate it
-
-  LSU ROB changes -> sends notification that ends simulation
-  - if ROB is not taking down simulation and there's stuff in Queue, add debug
-  logic
   */
   if (!ready_queue_.empty()) {
     ev_issue_ready_inst_.schedule(sparta::Clock::Cycle(0));
@@ -143,12 +138,6 @@ void IssueQueue::readyExeUnit_(const uint32_t &readyExe) {
 }
 
 void IssueQueue::sendReadyInsts_() {
-  /*
-  if instruction is ready, we can send
-  but what do we do if an instruction ISN'T ready?
-  we have a queue, we check each instruction if it's ready and there is a pipe
-  is ready to accept
-  */
   sparta_assert(
       ready_queue_.size() <= scheduler_size_,
       "ready queue greater than issue queue size: " << scheduler_size_);
@@ -158,7 +147,7 @@ void IssueQueue::sendReadyInsts_() {
     bool sent = false;
     for (auto &exe_pipe : valid_exe_pipe) {
       if (exe_pipe->canAccept()) {
-        exe_pipe->issueInst_(inst);
+        exe_pipe->issueInst(inst);
         inst_itr = ready_queue_.erase(inst_itr);
         popIssueQueue_(inst);
         out_scheduler_credits_.send(
@@ -172,35 +161,9 @@ void IssueQueue::sendReadyInsts_() {
       ++inst_itr;
     }
   }
-  // InstPtr & ex_inst_ptr = ready_queue_.front();
-  // auto & ex_inst = *ex_inst_ptr;
-  // ex_inst.setStatus(Inst::Status::SCHEDULED);
 }
 
 void IssueQueue::flushInst_(const FlushManager::FlushingCriteria &criteria) {
-  // ILOG("Issue Queue, Got flush for criteria: " << criteria);
-  // // design -> store all instructions in flight, so we know which execute
-  // pipes have which instruction
-  // // on flush, we can then notify only relevant execute pipes
-  // // we also need a signal from execute pipe saying it's done (which we
-  // already have), we then are able to pop
-  // // from this mapping structure!
-  // // Flush instructions in the ready queue
-  // ReadyQueue::iterator it = ready_queue_.begin();
-  // uint32_t credits_to_send = 0;
-  // while(it != ready_queue_.end()) {
-  //     if((*it)->getUniqueID() >= uint64_t(criteria)) {
-  //         ready_queue_.erase(it++);
-  //         ++credits_to_send;
-  //     }
-  //     else {
-  //         ++it;
-  //     }
-  // }
-  // if(credits_to_send) {
-  //     // send credits back to dispatch
-  //     out_scheduler_credits_.send(credits_to_send, 0);
-  // }
   uint32_t credits_to_send = 0;
 
   auto issue_queue_iter = issue_queue_.begin();

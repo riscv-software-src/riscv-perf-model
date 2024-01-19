@@ -44,14 +44,20 @@ void ExecutePipe::setupExecutePipe_() {
   // Setup scoreboard view upon register file
   std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
                                                 core_types::RF_FLOAT};
+  // if we ever move to multicore, we only want to have resources look for scoreboard in their cpu
+  // if we're running a test where we only have top.rename or top.issue_queue, then we can just use the root
+  auto cpu_node = getContainer()->findAncestorByName("core.*");
+  if(cpu_node == nullptr){
+    cpu_node = getContainer()->getRoot();
+  }
   for (const auto rf : reg_files) {
     scoreboard_views_[rf].reset(new sparta::ScoreboardView(
         getContainer()->getName(), core_types::regfile_names[rf],
-        getContainer()));
+        cpu_node));
   }
 }
 
-void ExecutePipe::issueInst_(const InstPtr &ex_inst) {
+void ExecutePipe::issueInst(const InstPtr &ex_inst) {
   sparta_assert_context(
       unit_busy_ == false,
       "ExecutePipe is receiving a new instruction when it's already busy!!");
@@ -117,12 +123,7 @@ void ExecutePipe::executeInst_(const InstPtr &ex_inst) {
 
   // Count the instruction as completely executed
   ++total_insts_executed_;
-
-  // Schedule issue if we have instructions to issue
-  // if (ready_queue_.size() > 0) {
-  //     issue_inst_.schedule(sparta::Clock::Cycle(0));
-  // }
-
+  
   // Schedule completion
   complete_inst_.preparePayload(ex_inst)->schedule(1);
 }

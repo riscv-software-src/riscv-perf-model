@@ -45,31 +45,6 @@ public:
   std::unordered_map<std::string, olympia::ExecutePipe *> getExePipes();
 
 private:
-  /*
-      {
-          "alu0": ptr
-          "alu1": ptr
-          ...
-
-      }
-
-      how to create: pipe_exe_pipe_mapping_
-          - just walk the parameters passed, which tells us which target types
-     are valid for each exe_unit ex_inst -> "int"
-
-      pipe_exe_pipe_mapping_["int"] --> (vector) [alu0, alu1, alu2]
-
-
-
-      Flow:
-          ex_inst->getPipe() -> call this, find out what pipe type it needs
-          we look at all the IQs that support it, send it to the IQ with least
-     amount of instructions IQ then pops the front inst, we then call
-     ex_inst->getPipe(), need to look at which execution units support that pipe
-
-          we need two mappings, one for dispatch to know which IQs support which
-     TARGETs one for IQs to know which execution units support which targets
-  */
   // Scoreboards
   using ScoreboardViews = std::array<std::unique_ptr<sparta::ScoreboardView>,
                                      core_types::N_REGFILES>;
@@ -93,7 +68,7 @@ private:
 
   sparta::DataInPort<InstQueue::value_type> in_execute_inst_{
       &unit_port_set_, "in_execute_write", 1};
-  // in_exe_pipe_done tells us an executon pipe is done
+  // in_exe_pipe_done tells us an execution pipe is done
   sparta::DataInPort<uint32_t> in_exe_pipe_done_{&unit_port_set_,
                                                  "in_execute_pipe"};
   sparta::DataOutPort<uint32_t> out_scheduler_credits_{&unit_port_set_,

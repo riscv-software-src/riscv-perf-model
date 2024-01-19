@@ -58,8 +58,7 @@ public:
   static const char name[];
   bool canAccept() { return !unit_busy_; }
   // Write result to registers
-  void executeInst_(const InstPtr &);
-  void issueInst_(const InstPtr &);
+  void issueInst(const InstPtr &);
 
 private:
   // Ports and the set -- remove the ", 1" to experience a DAG issue!
@@ -90,7 +89,7 @@ private:
   // Events used to issue, execute and complete the instruction
   sparta::UniqueEvent<> issue_inst_{
       &unit_event_set_, getName() + "_issue_inst",
-      CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, issueInst_, InstPtr)};
+      CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, issueInst, InstPtr)};
   sparta::PayloadEvent<InstPtr> execute_inst_{
       &unit_event_set_, getName() + "_execute_inst",
       CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, executeInst_, InstPtr)};
@@ -107,6 +106,7 @@ private:
       sparta::Counter::COUNT_NORMAL};
 
   void setupExecutePipe_();
+  void executeInst_(const InstPtr &);
 
   // Callback from Scoreboard to inform Operand Readiness
   // void handleOperandIssueCheck_(const InstPtr &);

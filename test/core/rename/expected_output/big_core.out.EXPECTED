@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu Jan 18 19:21:10 2024
-#Elapsed:  0.021166s
+#Start:    Friday Fri Jan 19 10:43:23 2024
+#Elapsed:  0.015041s
 {0000000000 00000000 top.execute.alu0 info} ExecutePipe: ExecutePipe construct: #0
 {0000000000 00000000 top.execute.alu1 info} ExecutePipe: ExecutePipe construct: #1
 {0000000000 00000000 top.execute.alu2 info} ExecutePipe: ExecutePipe construct: #2
@@ -54,7 +54,7 @@
 {0000000003 00000003 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(1)  PID(2)  add
 {0000000003 00000003 top.rob info} retireInstructions_: num to retire: 1
 {0000000003 00000003 top.rob info} retireInstructions_: set oldest: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' 
-{0000000003 00000003 top.execute.alu0 info} issueInst_: Executing: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2'  for 4
+{0000000003 00000003 top.execute.alu0 info} issueInst: Executing: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2'  for 4
 {0000000003 00000003 top.dispatch info} receiveCredits_: iq0 got 1 credits, total: 8
 {0000000003 00000003 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
 {0000000003 00000003 top.dispatch info} acceptInst: iq0: dispatching uid: 1    RENAMED 0 pid: 2 'add	4,3,2' 

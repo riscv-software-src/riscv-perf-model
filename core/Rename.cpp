@@ -173,6 +173,17 @@ namespace olympia
                 freelist_[src.rf].push(src.val);
             }
         }
+        // Instruction queue bookkeeping
+        if (SPARTA_EXPECT_TRUE(!inst_queue_.empty()))
+        {
+            const auto & oldest_inst = inst_queue_.front();
+            sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(), "ROB and rename inst_queue out of sync");
+            inst_queue_.pop_front();
+        }
+        else
+        {
+            sparta_assert(false, "ROB and rename inst_queue out of sync");
+        }
         if(credits_dispatch_ > 0 && (uop_queue_.size() > 0)){
             ev_schedule_rename_.schedule();
         }
@@ -184,6 +195,68 @@ namespace olympia
     void Rename::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
         ILOG("Got a flush call for " << criteria);
+        // Restore the rename map, reference counters and freelist by walking through the inst_queue
+        while (inst_queue_.size())
+        {
+            const auto & inst_ptr = inst_queue_.back();
+            if (!criteria.includedInFlush(inst_ptr))
+            {
+                break;
+            }
+            else
+            {
+                auto const & dests = inst_ptr->getDestOpInfoList();
+                for (const auto & dest : dests)
+                {
+                    // restore rename table following a flush
+                    const auto rf  = olympia::coreutils::determineRegisterFile(dest);
+                    const auto num = dest.field_value;
+                    const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+                    if (!is_x0)
+                    {
+                        auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+                        map_table_[rf][num] = original_dest.val;
+
+                        // free renamed PRF mapping when reference counter reaches zero
+                        auto const & renamed_dest = inst_ptr->getRenameData().getDestination();
+                        --reference_counter_[renamed_dest.rf][renamed_dest.val];
+                        if(reference_counter_[renamed_dest.rf][renamed_dest.val] <= 0){
+                            freelist_[renamed_dest.rf].push(renamed_dest.val);
+                        }
+                    }
+                }
+
+                const auto & srcs = inst_ptr->getRenameData().getSourceList();
+                // decrement reference to data register
+                if(inst_ptr->isLoadStoreInst()){
+                    const auto & data_reg = inst_ptr->getRenameData().getDataReg();
+                    if(data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2 && data_reg.is_x0 != true){
+                        --reference_counter_[data_reg.rf][data_reg.val];
+                        if(reference_counter_[data_reg.rf][data_reg.val] <= 0){
+                            // freeing data register value, because it's not in the source list, so won't get caught below
+                            freelist_[data_reg.rf].push(data_reg.val);
+                        }
+                    }
+                }
+                // freeing references to PRF
+                for(const auto & src: srcs){
+                    --reference_counter_[src.rf][src.val];
+                    if(reference_counter_[src.rf][src.val] <= 0){
+                        // freeing a register in the case where it still has references and has already been retired
+                        // we wait until the last reference is retired to then free the prf
+                        // any "valid" PRF that is the true mapping of an ARF will have a reference_counter of at least 1,
+                        // and thus shouldn't be retired
+                        freelist_[src.rf].push(src.val);
+                    }
+                }
+                inst_queue_.pop_back();
+            }
+        }
+
+        current_stall_ = NO_DECODE_INSTS;
+
+        // Clean up buffers
+        uop_queue_regcount_data_.clear();
         out_uop_queue_credits_.send(uop_queue_.size());
         uop_queue_.clear();
     }
@@ -349,19 +422,20 @@ namespace olympia
                             << " for '" << rf << "' scoreboard");
                     }
                 }
-                
+
                 for(const auto & dest : dests)
                 {
                     const auto rf  = olympia::coreutils::determineRegisterFile(dest);
                     const auto num = dest.field_value;
-                    if (num == 0 && rf == core_types::RF_INTEGER) { 
-                        continue; 
+                    if (num == 0 && rf == core_types::RF_INTEGER) {
+                        continue;
                     }
                     else{
                         auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
                         const uint32_t prf = freelist_[rf].front();
                         freelist_[rf].pop();
                         renaming_inst->getRenameData().setOriginalDestination({map_table_[rf][num], rf, dest.field_id});
+                        renaming_inst->getRenameData().setDestination({prf, rf, dest.field_id});
                         map_table_[rf][num] = prf;
                         // we increase reference_counter_ for destinations to mark them as "valid",
                         // so the PRF in the reference_counter_ should have a value of 1
@@ -378,7 +452,8 @@ namespace olympia
                     }
                 }
                 // Remove it from uop queue
-                insts->emplace_back(uop_queue_.read(0));
+                insts->emplace_back(renaming_inst);
+                inst_queue_.emplace_back(renaming_inst);
                 uop_queue_.pop();
             }
 

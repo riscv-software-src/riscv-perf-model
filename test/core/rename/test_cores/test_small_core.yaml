@@ -1,27 +1,44 @@
-
 #
 # Set up the pipeline for a 2-wide machine
 #
-#top.cpu:
-#  dispatch.num_to_dispatch: 2
 
 top.extension.core_extensions:
   execution_topology:
     [["alu", "1"],
      ["fpu", "1"],
      ["br",  "1"]]
+  pipe_topology_alu_pipes:
+    [["int", "mul", "i2f", "cmov", "div"]]
+  pipe_topology_br_pipes:
+    [["br"]]
+  pipe_topology_fpu_pipes:
+    [["float", "faddsub", "fmac", "f2i"]]
+      # 6 alu issue queues
+  issue_queue_topology:
+    [["alu0"],
+     ["fpu0"],
+     ["br0"]]
+
 top.rename.scoreboards:
   # From
   # |
   # V
   integer.params.latency_matrix: |
-    [["",     "alu0", "fpu0", "br0"],   # <-- TO
-     ["alu0",    "1",    "1",   "1"],
-     ["fpu0",    "1",    "1",   "1"],
-     ["br0",     "1",    "1",   "1"]]
+    [["",     "alu0", "fpu0", "br0", "lsu", "iq0", "iq1", "iq2"],   # <-- TO
+     ["alu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["fpu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["br0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["lsu",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq1",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq2",     "1",    "1",   "1",   "1",   "1",   "1",   "1"]]
 
   float.params.latency_matrix: |
-    [["",     "alu0", "fpu0", "br0"],
-     ["alu0",    "1",    "1",   "1"],
-     ["fpu0",    "1",    "1",   "1"],
-     ["br0",     "1",    "1",   "1"]]
+    [["",     "alu0", "fpu0", "br0", "lsu", "iq0", "iq1", "iq2"],   # <-- TO
+     ["alu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["fpu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["br0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["lsu",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq1",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq2",     "1",    "1",   "1",   "1",   "1",   "1",   "1"]]

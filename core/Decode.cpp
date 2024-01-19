@@ -95,10 +95,10 @@ namespace olympia
             uop_queue_outp_.send(insts);
 
             // Decrement internal Uop Queue credits
-            uop_queue_credits_ -= num_decode;
+            uop_queue_credits_ -= insts->size();
 
             // Send credits back to Fetch to get more instructions
-            fetch_queue_credits_outp_.send(num_decode);
+            fetch_queue_credits_outp_.send(insts->size());
         }
 
         // If we still have credits to send instructions as well as

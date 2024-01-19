@@ -18,6 +18,7 @@
 
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
+#include "FlushManager.hpp"
 
 namespace olympia
 {
@@ -84,7 +85,7 @@ namespace olympia
             {&unit_port_set_, "in_fetch_queue_credits", sparta::SchedulingPhase::Tick, 0};
 
         // Incoming flush from Retire w/ redirect
-        sparta::DataInPort<uint64_t> in_fetch_flush_redirect_
+        sparta::DataInPort<FlushManager::FlushingCriteria> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -121,8 +122,8 @@ namespace olympia
         // Read data from a trace
         void fetchInstruction_();
 
-        // Receive flush from retire
-        void flushFetch_(const uint64_t & new_addr);
+        // Receive flush from FlushManager
+        void flushFetch_(const FlushManager::FlushingCriteria &);
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

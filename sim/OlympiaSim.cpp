@@ -50,7 +50,7 @@ void OlympiaSim::buildTree_()
     // Set the cpu topology that will be built
     cpu_factory->setTopology(cpu_topology_, num_cores_);
 
-    // Cerate the common Allocators
+    // Create the common Allocators
     allocators_tn_.reset(new olympia::OlympiaAllocators(getRoot()));
 
     // Create a single CPU

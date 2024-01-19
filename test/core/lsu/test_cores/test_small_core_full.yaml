@@ -14,26 +14,46 @@ top.cpu.core0:
   dcache.params:
     l1_size_kb: 16
 
+#
+# Set up the pipeline for a 2-wide machine
+#
+
 top.cpu.core0.extension.core_extensions:
   execution_topology:
     [["alu", "1"],
      ["fpu", "1"],
      ["br",  "1"]]
+  pipe_topology_alu_pipes:
+    [["int", "mul", "i2f", "cmov", "div"]]
+  pipe_topology_br_pipes:
+    [["br"]]
+  pipe_topology_fpu_pipes:
+    [["float", "faddsub", "fmac", "f2i"]]
+  issue_queue_topology:
+    [["alu0"],
+     ["fpu0"],
+     ["br0"]]
 
 top.cpu.core0.rename.scoreboards:
   # From
   # |
   # V
   integer.params.latency_matrix: |
-    [["",     "alu0", "fpu0", "br0", "lsu"],   # <-- TO
-     ["alu0",    "1",    "1",   "1",   "1"],
-     ["fpu0",    "1",    "1",   "1",   "1"],
-     ["br0",     "1",    "1",   "1",   "1"],
-     ["lsu",     "1",    "1",   "1",   "1"]]
+    [["",     "alu0", "fpu0", "br0", "lsu", "iq0", "iq1", "iq2"],   # <-- TO
+     ["alu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["fpu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["br0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["lsu",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq1",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq2",     "1",    "1",   "1",   "1",   "1",   "1",   "1"]]
 
   float.params.latency_matrix: |
-    [["",     "alu0", "fpu0", "br0", "lsu"],   # <-- TO
-     ["alu0",    "1",    "1",   "1",   "1"],
-     ["fpu0",    "1",    "1",   "1",   "1"],
-     ["br0",     "1",    "1",   "1",   "1"],
-     ["lsu",     "1",    "1",   "1",   "1"]]
+    [["",     "alu0", "fpu0", "br0", "lsu", "iq0", "iq1", "iq2"],   # <-- TO
+     ["alu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["fpu0",    "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["br0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["lsu",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq0",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq1",     "1",    "1",   "1",   "1",   "1",   "1",   "1"],
+     ["iq2",     "1",    "1",   "1",   "1",   "1",   "1",   "1"]]

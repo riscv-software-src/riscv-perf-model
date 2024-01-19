@@ -1,41 +1,24 @@
 #
 # Set up the pipeline for a 8-wide machine
 #
-
-# Build on top of a medium core
-include: medium_core.yaml
-
-top.cpu.core0:
-  fetch.params.num_to_fetch:   8
-  decode.params.num_to_decode: 8
-  rename.params.num_to_rename: 8
-  rename.params.num_integer_renames: 64
-  rename.params.num_float_renames: 64
-  dispatch.params.num_to_dispatch: 8
-  rob.params.num_to_retire:    8
-  dcache.params:
-    l1_size_kb: 64
-
-top.cpu.core0.extension.core_extensions:
+top.extension.core_extensions:
   execution_topology:
     [["alu", "6"],
     ["fpu", "2"],
     ["br",  "2"]]
-  # this defines what pipe types are assigned to which alu
   pipe_topology_alu_pipes:
     [["int"], # alu0
-      ["int", "div"], # alu1
-      ["int", "mul"],
-      ["int", "mul", "i2f", "cmov"],
-      ["int"],
-      ["int"]]
+      ["div"], # alu1
+      ["mul"],
+      ["i2f", "cmov"],
+      ["div"],
+      ["div"]]
   pipe_topology_br_pipes:
     [["br"],
      ["br"]]
   pipe_topology_fpu_pipes:
     [["float", "faddsub", "fmac"], 
      ["float", "f2i"]]
-  # this defines which execution units are mapped to which issue queue
   issue_queue_topology:
     [["alu0"],
      ["alu1", "alu2"],
@@ -43,7 +26,7 @@ top.cpu.core0.extension.core_extensions:
      ["fpu0", "fpu1"],
      ["br0", "br1"]]
 
-top.cpu.core0.rename.scoreboards:
+top.rename.scoreboards:
   # From
   # |
   # V

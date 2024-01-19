@@ -69,7 +69,7 @@ namespace olympia
         void scheduleDispatchSession();
 
     private:
-        std::unordered_map<InstArchInfo::TargetPipe, std::set<std::shared_ptr<Dispatcher>>> pipe_map_;
+        std::unordered_map<InstArchInfo::TargetPipe, std::vector<std::shared_ptr<Dispatcher>>> pipe_map_;
         InstQueue dispatch_queue_;
 
         // Ports
@@ -99,6 +99,7 @@ namespace olympia
 
         const uint32_t num_to_dispatch_;
         uint32_t credits_rob_ = 0;
+        uint32_t dispatch_queue_depth_;
 
         // Send rename initial credits
         void sendInitialCredits_();

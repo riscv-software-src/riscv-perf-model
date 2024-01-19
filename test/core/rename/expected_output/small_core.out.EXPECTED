@@ -3,17 +3,20 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu Nov 16 20:04:48 2023
-#Elapsed:  0.00973s
+#Start:    Friday Fri Jan 19 02:03:26 2024
+#Elapsed:  0.012335s
+{0000000000 00000000 top.execute.alu0 info} ExecutePipe: ExecutePipe construct: #0
+{0000000000 00000000 top.execute.fpu0 info} ExecutePipe: ExecutePipe construct: #0
+{0000000000 00000000 top.execute.br0 info} ExecutePipe: ExecutePipe construct: #0
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
-{0000000000 00000000 top.dispatch info} robCredits_: ROB got 10 credits, total: 10
-{0000000000 00000000 top.dispatch info} receiveCredits_: alu0 got 10 credits, total: 10
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
-{0000000000 00000000 top.dispatch info} receiveCredits_: fpu0 got 10 credits, total: 10
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
-{0000000000 00000000 top.dispatch info} receiveCredits_: br0 got 10 credits, total: 10
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} robCredits_: ROB got 30 credits, total: 30
 {0000000000 00000000 top.dispatch info} receiveCredits_: lsu got 10 credits, total: 10
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} receiveCredits_: iq0 got 8 credits, total: 8
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} receiveCredits_: iq1 got 8 credits, total: 8
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} receiveCredits_: iq2 got 8 credits, total: 8
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
 {0000000000 00000000 top.decode info} inCredits: Got credits from dut: 10
 {0000000000 00000000 top.decode info} Sending group: 0x00000000 UID(0)  PID(1)  add
@@ -26,8 +29,8 @@
 {0000000001 00000001 top.decode info} Sending group: 0x00000000 UID(1)  PID(2)  add
 {0000000002 00000002 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(0)  PID(1)  add
 {0000000002 00000002 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000002 00000002 top.dispatch info} acceptInst: alu0: dispatching uid: 0    RENAMED 0 pid: 1 'add	3,1,2' 
-{0000000002 00000002 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2'  to alu0
+{0000000002 00000002 top.dispatch info} acceptInst: iq0: dispatching uid: 0    RENAMED 0 pid: 1 'add	3,1,2' 
+{0000000002 00000002 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2'  to iq0
 {0000000002 00000002 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000002 00000002 top.rename info} renameInstructions_: sending inst to dispatch: uid: 1    RENAMED 0 pid: 2 'add	4,3,2' 
 {0000000002 00000002 top.rename info} renameInstructions_: 	setup source register bit mask [0] for 'integer' scoreboard
@@ -35,12 +38,16 @@
 {0000000002 00000002 top.rename info} renameInstructions_: 	setup destination register bit mask [32] for 'integer' scoreboard
 {0000000002 00000002 top.decode info} inCredits: Got credits from dut: 1
 {0000000002 00000002 top.decode info} Sending group: 0x00000000 UID(2)  PID(3)  mul
+{0000000003 00000003 top.execute.iq0 info} handleOperandIssueCheck_: Sending to issue queue uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' 
+{0000000003 00000003 top.rob info} robAppended_: retire appended: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' 
 {0000000003 00000003 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(1)  PID(2)  add
-{0000000003 00000003 top.alu0 info} sinkInst_: Instruction: 'uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' ' sinked
-{0000000003 00000003 top.alu0 info} sinkRetireInst_: Instruction: 'uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' ' sinked
+{0000000003 00000003 top.rob info} retireInstructions_: num to retire: 1
+{0000000003 00000003 top.rob info} retireInstructions_: set oldest: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' 
+{0000000003 00000003 top.execute.alu0 info} issueInst_: Executing: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2'  for 4
+{0000000003 00000003 top.dispatch info} receiveCredits_: iq0 got 1 credits, total: 8
 {0000000003 00000003 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000003 00000003 top.dispatch info} acceptInst: alu0: dispatching uid: 1    RENAMED 0 pid: 2 'add	4,3,2' 
-{0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2'  to alu0
+{0000000003 00000003 top.dispatch info} acceptInst: iq0: dispatching uid: 1    RENAMED 0 pid: 2 'add	4,3,2' 
+{0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2'  to iq0
 {0000000003 00000003 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000003 00000003 top.rename info} renameInstructions_: sending inst to dispatch: uid: 2    RENAMED 0 pid: 3 'mul	13,12,11' 
 {0000000003 00000003 top.rename info} renameInstructions_: 	setup source register bit mask [12] for 'integer' scoreboard
@@ -48,14 +55,14 @@
 {0000000003 00000003 top.rename info} renameInstructions_: 	setup destination register bit mask [33] for 'integer' scoreboard
 {0000000003 00000003 top.decode info} inCredits: Got credits from dut: 1
 {0000000003 00000003 top.decode info} Sending group: 0x00000000 UID(3)  PID(4)  sub
-{0000000004 00000004 top.rename info} getAckFromROB_: Retired instruction: uid: 0    RETIRED 0 pid: 1 'add	3,1,2' 
+{0000000004 00000004 top.execute.iq0 info} handleOperandIssueCheck_: Instruction NOT ready: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2'  Bits needed:[0,2]
+{0000000004 00000004 top.rob info} robAppended_: retire appended: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2' 
 {0000000004 00000004 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(2)  PID(3)  mul
-{0000000004 00000004 top.alu0 info} sinkInst_: Instruction: 'uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2' ' sinked
-{0000000004 00000004 top.alu0 info} sinkRetireInst_: Instruction: 'uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2' ' sinked
-{0000000004 00000004 top.dispatch info} receiveCredits_: alu0 got 2 credits, total: 10
+{0000000004 00000004 top.execute.alu0 info} executeInst_: Executed inst: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2' 
+{0000000004 00000004 top.rob info} retireInstructions_: num to retire: 2
 {0000000004 00000004 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000004 00000004 top.dispatch info} acceptInst: alu0: dispatching uid: 2    RENAMED 0 pid: 3 'mul	13,12,11' 
-{0000000004 00000004 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 2 DISPATCHED 0 pid: 3 'mul	13,12,11'  to alu0
+{0000000004 00000004 top.dispatch info} acceptInst: iq0: dispatching uid: 2    RENAMED 0 pid: 3 'mul	13,12,11' 
+{0000000004 00000004 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 2 DISPATCHED 0 pid: 3 'mul	13,12,11'  to iq0
 {0000000004 00000004 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000004 00000004 top.rename info} renameInstructions_: sending inst to dispatch: uid: 3    RENAMED 0 pid: 4 'sub	14,13,12' 
 {0000000004 00000004 top.rename info} renameInstructions_: 	setup source register bit mask [33] for 'integer' scoreboard
@@ -63,100 +70,3 @@
 {0000000004 00000004 top.rename info} renameInstructions_: 	setup destination register bit mask [34] for 'integer' scoreboard
 {0000000004 00000004 top.decode info} inCredits: Got credits from dut: 1
 {0000000004 00000004 top.decode info} Sending group: 0x00000000 UID(4)  PID(5)  sub
-{0000000005 00000005 top.rename info} getAckFromROB_: Retired instruction: uid: 1    RETIRED 0 pid: 2 'add	4,3,2' 
-{0000000005 00000005 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(3)  PID(4)  sub
-{0000000005 00000005 top.alu0 info} sinkInst_: Instruction: 'uid: 2 DISPATCHED 0 pid: 3 'mul	13,12,11' ' sinked
-{0000000005 00000005 top.alu0 info} sinkRetireInst_: Instruction: 'uid: 2 DISPATCHED 0 pid: 3 'mul	13,12,11' ' sinked
-{0000000005 00000005 top.dispatch info} receiveCredits_: alu0 got 1 credits, total: 10
-{0000000005 00000005 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000005 00000005 top.dispatch info} acceptInst: alu0: dispatching uid: 3    RENAMED 0 pid: 4 'sub	14,13,12' 
-{0000000005 00000005 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 3 DISPATCHED 0 pid: 4 'sub	14,13,12'  to alu0
-{0000000005 00000005 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
-{0000000005 00000005 top.rename info} renameInstructions_: sending inst to dispatch: uid: 4    RENAMED 0 pid: 5 'sub	5,4,3' 
-{0000000005 00000005 top.rename info} renameInstructions_: 	setup source register bit mask [32] for 'integer' scoreboard
-{0000000005 00000005 top.rename info} renameInstructions_: 	setup source register bit mask [0,32] for 'integer' scoreboard
-{0000000005 00000005 top.rename info} renameInstructions_: 	setup destination register bit mask [35] for 'integer' scoreboard
-{0000000005 00000005 top.decode info} inCredits: Got credits from dut: 1
-{0000000005 00000005 top.decode info} Sending group: 0x00000000 UID(5)  PID(6)  lw
-{0000000006 00000006 top.rename info} getAckFromROB_: Retired instruction: uid: 2    RETIRED 0 pid: 3 'mul	13,12,11' 
-{0000000006 00000006 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(4)  PID(5)  sub
-{0000000006 00000006 top.alu0 info} sinkInst_: Instruction: 'uid: 3 DISPATCHED 0 pid: 4 'sub	14,13,12' ' sinked
-{0000000006 00000006 top.alu0 info} sinkRetireInst_: Instruction: 'uid: 3 DISPATCHED 0 pid: 4 'sub	14,13,12' ' sinked
-{0000000006 00000006 top.dispatch info} receiveCredits_: alu0 got 1 credits, total: 10
-{0000000006 00000006 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000006 00000006 top.dispatch info} acceptInst: alu0: dispatching uid: 4    RENAMED 0 pid: 5 'sub	5,4,3' 
-{0000000006 00000006 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 4 DISPATCHED 0 pid: 5 'sub	5,4,3'  to alu0
-{0000000006 00000006 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
-{0000000006 00000006 top.rename info} renameInstructions_: sending inst to dispatch: uid: 5    RENAMED 0 pid: 6 'lw	5,4,3' 
-{0000000006 00000006 top.rename info} renameInstructions_: 	setup source register bit mask [32] for 'integer' scoreboard
-{0000000006 00000006 top.rename info} renameInstructions_: 	setup store data register bit mask [0] for 'integer' scoreboard
-{0000000006 00000006 top.rename info} renameInstructions_: 	setup destination register bit mask [36] for 'integer' scoreboard
-{0000000006 00000006 top.decode info} inCredits: Got credits from dut: 1
-{0000000006 00000006 top.decode info} Sending group: 0x00000000 UID(6)  PID(7)  sw
-{0000000007 00000007 top.rename info} getAckFromROB_: Retired instruction: uid: 3    RETIRED 0 pid: 4 'sub	14,13,12' 
-{0000000007 00000007 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(5)  PID(6)  lw
-{0000000007 00000007 top.alu0 info} sinkInst_: Instruction: 'uid: 4 DISPATCHED 0 pid: 5 'sub	5,4,3' ' sinked
-{0000000007 00000007 top.alu0 info} sinkRetireInst_: Instruction: 'uid: 4 DISPATCHED 0 pid: 5 'sub	5,4,3' ' sinked
-{0000000007 00000007 top.dispatch info} receiveCredits_: alu0 got 1 credits, total: 10
-{0000000007 00000007 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000007 00000007 top.dispatch info} acceptInst: lsu: dispatching uid: 5    RENAMED 0 pid: 6 'lw	5,4,3' 
-{0000000007 00000007 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 5 DISPATCHED 0 pid: 6 'lw	5,4,3'  to lsu
-{0000000007 00000007 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
-{0000000007 00000007 top.rename info} renameInstructions_: sending inst to dispatch: uid: 6    RENAMED 0 pid: 7 'sw	3' 
-{0000000007 00000007 top.rename info} renameInstructions_: 	setup store data register bit mask [0] for 'integer' scoreboard
-{0000000007 00000007 top.decode info} inCredits: Got credits from dut: 1
-{0000000007 00000007 top.decode info} Sending group: 0x00000000 UID(7)  PID(8)  div
-{0000000008 00000008 top.rename info} getAckFromROB_: Retired instruction: uid: 4    RETIRED 0 pid: 5 'sub	5,4,3' 
-{0000000008 00000008 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(6)  PID(7)  sw
-{0000000008 00000008 top.lsu info} sinkInst_: Instruction: 'uid: 5 DISPATCHED 0 pid: 6 'lw	5,4,3' ' sinked
-{0000000008 00000008 top.lsu info} sinkRetireInst_: Instruction: 'uid: 5 DISPATCHED 0 pid: 6 'lw	5,4,3' ' sinked
-{0000000008 00000008 top.dispatch info} receiveCredits_: alu0 got 0 credits, total: 10
-{0000000008 00000008 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000008 00000008 top.dispatch info} acceptInst: lsu: dispatching uid: 6    RENAMED 0 pid: 7 'sw	3' 
-{0000000008 00000008 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 6 DISPATCHED 0 pid: 7 'sw	3'  to lsu
-{0000000008 00000008 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
-{0000000008 00000008 top.rename info} renameInstructions_: sending inst to dispatch: uid: 7    RENAMED 0 pid: 8 'div	20,10,15' 
-{0000000008 00000008 top.rename info} renameInstructions_: 	setup source register bit mask [10] for 'integer' scoreboard
-{0000000008 00000008 top.rename info} renameInstructions_: 	setup source register bit mask [10,15] for 'integer' scoreboard
-{0000000008 00000008 top.rename info} renameInstructions_: 	setup destination register bit mask [37] for 'integer' scoreboard
-{0000000008 00000008 top.decode info} inCredits: Got credits from dut: 1
-{0000000008 00000008 top.decode info} Sending group: 0x00000000 UID(8)  PID(9)  fadd.s
-{0000000009 00000009 top.rename info} getAckFromROB_: Retired instruction: uid: 5    RETIRED 0 pid: 6 'lw	5,4,3' 
-{0000000009 00000009 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(7)  PID(8)  div
-{0000000009 00000009 top.lsu info} sinkInst_: Instruction: 'uid: 6 DISPATCHED 0 pid: 7 'sw	3' ' sinked
-{0000000009 00000009 top.lsu info} sinkRetireInst_: Instruction: 'uid: 6 DISPATCHED 0 pid: 7 'sw	3' ' sinked
-{0000000009 00000009 top.dispatch info} receiveCredits_: lsu got 2 credits, total: 10
-{0000000009 00000009 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000009 00000009 top.dispatch info} acceptInst: alu0: dispatching uid: 7    RENAMED 0 pid: 8 'div	20,10,15' 
-{0000000009 00000009 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 7 DISPATCHED 0 pid: 8 'div	20,10,15'  to alu0
-{0000000009 00000009 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
-{0000000009 00000009 top.rename info} renameInstructions_: sending inst to dispatch: uid: 8    RENAMED 0 pid: 9 'fadd.s	' 
-{0000000009 00000009 top.decode info} inCredits: Got credits from dut: 1
-{0000000009 00000009 top.decode info} Sending group: 0x00000000 UID(9)  PID(10)  beq
-{0000000010 00000010 top.rename info} getAckFromROB_: Retired instruction: uid: 6    RETIRED 0 pid: 7 'sw	3' 
-{0000000010 00000010 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(8)  PID(9)  fadd.s
-{0000000010 00000010 top.alu0 info} sinkInst_: Instruction: 'uid: 7 DISPATCHED 0 pid: 8 'div	20,10,15' ' sinked
-{0000000010 00000010 top.alu0 info} sinkRetireInst_: Instruction: 'uid: 7 DISPATCHED 0 pid: 8 'div	20,10,15' ' sinked
-{0000000010 00000010 top.dispatch info} receiveCredits_: lsu got 0 credits, total: 10
-{0000000010 00000010 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000010 00000010 top.dispatch info} acceptInst: fpu0: dispatching uid: 8    RENAMED 0 pid: 9 'fadd.s	' 
-{0000000010 00000010 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 8 DISPATCHED 0 pid: 9 'fadd.s	'  to fpu0
-{0000000010 00000010 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
-{0000000010 00000010 top.rename info} renameInstructions_: sending inst to dispatch: uid: 9    RENAMED 0 pid: 10 'beq	' 
-{0000000010 00000010 top.decode info} inCredits: Got credits from dut: 1
-{0000000011 00000011 top.rename info} getAckFromROB_: Retired instruction: uid: 7    RETIRED 0 pid: 8 'div	20,10,15' 
-{0000000011 00000011 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(9)  PID(10)  beq
-{0000000011 00000011 top.fpu0 info} sinkInst_: Instruction: 'uid: 8 DISPATCHED 0 pid: 9 'fadd.s	' ' sinked
-{0000000011 00000011 top.fpu0 info} sinkRetireInst_: Instruction: 'uid: 8 DISPATCHED 0 pid: 9 'fadd.s	' ' sinked
-{0000000011 00000011 top.dispatch info} receiveCredits_: alu0 got 1 credits, total: 10
-{0000000011 00000011 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
-{0000000011 00000011 top.dispatch info} acceptInst: br0: dispatching uid: 9    RENAMED 0 pid: 10 'beq	' 
-{0000000011 00000011 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 9 DISPATCHED 0 pid: 10 'beq	'  to br0
-{0000000012 00000012 top.rename info} getAckFromROB_: Retired instruction: uid: 8    RETIRED 0 pid: 9 'fadd.s	' 
-{0000000012 00000012 top.br0 info} sinkInst_: Instruction: 'uid: 9 DISPATCHED 0 pid: 10 'beq	' ' sinked
-{0000000012 00000012 top.br0 info} sinkRetireInst_: Instruction: 'uid: 9 DISPATCHED 0 pid: 10 'beq	' ' sinked
-{0000000012 00000012 top.dispatch info} receiveCredits_: fpu0 got 1 credits, total: 10
-{0000000012 00000012 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
-{0000000013 00000013 top.rename info} getAckFromROB_: Retired instruction: uid: 9    RETIRED 0 pid: 10 'beq	' 
-{0000000013 00000013 top.dispatch info} receiveCredits_: br0 got 1 credits, total: 10
-{0000000013 00000013 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process

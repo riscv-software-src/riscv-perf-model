@@ -48,6 +48,7 @@ namespace olympia
                 exe_units_string += exe_unit + ", ";
             }
             const std::string issue_queue_name = "iq" + std::to_string(i);
+            // naming it for the target type it supports, i.e issue_queue_alu or issue_queue_fpu
             const std::string tgt_name = "IssueQueue_" + issue_queue_topology_[i][0].substr(0, issue_queue_topology_[i][0].size()-1);
             //const std::string tgt_name = issue_queue_topology_[i][0].substr(0, issue_queue_topology_[i][0].size()-1);
             auto iq_node = new sparta::ResourceTreeNode(node,
@@ -59,54 +60,58 @@ namespace olympia
             // auto iq_resource = iq_node->getResourceAs<olympia::IssueQueue*>();
             issue_queues_.emplace_back(iq_node);
         }
-        
-        // loop through and create N IssueQueues
 
     }
     void ExecuteFactory::bindLate(sparta::TreeNode* node){
+        /*
+            For issue queue we need to establish mappings such that a mapping of target pipe to execution pipe
+            in an issue queue is known such as:
+                iq_0:
+                    "int": alu0, alu1
+                    "div": alu1
+                    "mul": alu3
+            so when we have an instruction, we can get the target pipe of an instruction and lookup available
+            execution units
+        */
+        std::unordered_map<std::string, int> pipe_to_iq_number;
 
-        std::unordered_map<std::string, int> reverse_map;
-        olympia::ExecutePipe* exe_pipe = exe_pipe_tns_[0]->getResourceAs<olympia::ExecutePipe*>();
-        auto exe_pipe_name = exe_pipe->getName();
-        for(size_t i = 0; i < issue_queues_.size(); i++){
-            //auto & b = issue_queues_[i];
-            for(auto alu_name : issue_queue_topology_[i]){
-                for(auto & exe_pipe_tns: exe_pipe_tns_){
+        for (size_t i = 0; i < issue_queues_.size(); ++i) {
+            for (auto alu_name : issue_queue_topology_[i]) {
+                for (auto& exe_pipe_tns : exe_pipe_tns_) {
                     olympia::ExecutePipe* exe_pipe = exe_pipe_tns->getResourceAs<olympia::ExecutePipe*>();
-                    std::string exe_pipe_name = exe_pipe->getName();
-                    if(alu_name == exe_pipe_name){
+                    std::string exe_unit_name = exe_pipe->getName();
+
+                    if (alu_name == exe_unit_name) {
                         olympia::IssueQueue* my_issue_queue = issue_queues_[i]->getResourceAs<olympia::IssueQueue*>();
-                        my_issue_queue->setExePipe(exe_pipe_name, exe_pipe);
-                        reverse_map[exe_pipe_name] = i;
+                        my_issue_queue->setExePipe(exe_unit_name, exe_pipe);
+                        pipe_to_iq_number[exe_unit_name] = i;
                     }
                 }
             }
         }
 
-        auto setup_issue_queue_tgts = [this, reverse_map](sparta::TreeNode* node, std::string exe_unit){
+        auto setup_issue_queue_tgts = [this, &pipe_to_iq_number](sparta::TreeNode* node, std::string exe_unit) {
             std::string topology_string = "pipe_topology_" + exe_unit + "_pipes";
             auto pipe_topology = olympia::coreutils::getPipeTopology(node->getParent(), topology_string);
-        
-        
-            // allocate alu target mappings
-            for(size_t i = 0; i < pipe_topology.size(); ++i){
-                for(size_t j = 0; j < pipe_topology[i].size(); ++j){
+
+            for (size_t i = 0; i < pipe_topology.size(); ++i) {
+                for (size_t j = 0; j < pipe_topology[i].size(); ++j) {
                     std::string pipe_name = pipe_topology[i][j];
                     const auto tgt_pipe = InstArchInfo::execution_pipe_map.find(pipe_name);
                     std::string exe_unit_name = exe_unit + std::to_string(i);
-                    // alu0
-                    int iq_num = reverse_map.find(exe_unit_name)->second;
+
+                    int iq_num = pipe_to_iq_number.at(exe_unit_name);
                     olympia::IssueQueue* my_issue_queue = issue_queues_[iq_num]->getResourceAs<olympia::IssueQueue*>();
-                    const auto exe_pipes = my_issue_queue->getExePipes();
-                    const auto exe_pipe = exe_pipes.find(exe_unit_name);
                     
-                    my_issue_queue->setExePipeMapping(tgt_pipe->second, exe_pipe->second);
+                    my_issue_queue->setExePipeMapping(tgt_pipe->second, my_issue_queue->getExePipes().at(exe_unit_name));
                 }
             }
         };
+
         setup_issue_queue_tgts(node, "alu");
         setup_issue_queue_tgts(node, "fpu");
         setup_issue_queue_tgts(node, "br");
+
     }
     void ExecuteFactory::deleteSubtree(sparta::ResourceTreeNode*){
         exe_pipe_tns_.clear();

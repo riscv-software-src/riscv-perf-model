@@ -5,13 +5,8 @@
 #include "MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 #include "OlympiaSim.hpp"
-#include "Rename.hpp"
+#include "IssueQueue.hpp"
 #include "test/core/dispatch/Dispatch_test.hpp"
-
-#include "test/core/common/SinkUnit.hpp"
-#include "test/core/common/SourceUnit.hpp"
-#include "test/core/dispatch/ExecutePipeSinkUnit.hpp"
-#include "test/core/rename/ROBSinkUnit.hpp"
 
 #include "sparta/app/CommandLineSimulator.hpp"
 #include "sparta/app/Simulation.hpp"

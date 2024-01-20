@@ -1,14 +1,13 @@
 // <IssueQueue.cpp> -*- C++ -*-
 
 #include "IssueQueue.hpp"
-#include "ExecutePipe.cpp"
-
+#include "CoreUtils.hpp"
 namespace olympia {
 const char IssueQueue::name[] = "issue_queue";
 
 IssueQueue::IssueQueue(sparta::TreeNode *node, const IssueQueueParameterSet *p)
     : sparta::Unit(node),
-      reg_file_(determineRegisterFile(
+      reg_file_(olympia::coreutils::determineRegisterFile(
           node->getGroup().substr(node->getGroup().find("_") + 1))),
       scheduler_size_(p->scheduler_size), in_order_issue_(p->in_order_issue) {
   in_execute_inst_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(

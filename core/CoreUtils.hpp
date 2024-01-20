@@ -46,4 +46,14 @@ namespace olympia::coreutils
         return core_types::RegFile::RF_INVALID;
     }
 
+    inline core_types::RegFile determineRegisterFile(const std::string &target_name)
+    {
+        if (target_name == "alu" || target_name == "br") {
+            return core_types::RF_INTEGER;
+        } else if (target_name == "fpu") {
+            return core_types::RF_FLOAT;
+        }
+        sparta_assert(false, "Not supported this target: " << target_name);
+    }
+
 }

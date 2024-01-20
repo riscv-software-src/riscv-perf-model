@@ -6,15 +6,6 @@
 #include "sparta/utils/SpartaAssert.hpp"
 
 namespace olympia {
-core_types::RegFile determineRegisterFile(const std::string &target_name) {
-  if (target_name == "alu" || target_name == "br") {
-    return core_types::RF_INTEGER;
-  } else if (target_name == "fpu") {
-    return core_types::RF_FLOAT;
-  }
-  sparta_assert(false, "Not supported this target: " << target_name);
-}
-
 const char ExecutePipe::name[] = "exe_pipe";
 
 ExecutePipe::ExecutePipe(sparta::TreeNode *node,
@@ -23,7 +14,7 @@ ExecutePipe::ExecutePipe(sparta::TreeNode *node,
       ignore_inst_execute_time_(p->ignore_inst_execute_time),
       execute_time_(p->execute_time),
       enable_random_misprediction_(p->enable_random_misprediction),
-      reg_file_(determineRegisterFile(node->getGroup())),
+      reg_file_(olympia::coreutils::determineRegisterFile(node->getGroup())),
       collected_inst_(node, node->getName()) {
   in_reorder_flush_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
       ExecutePipe, flushInst_, FlushManager::FlushingCriteria));

@@ -23,12 +23,12 @@
 void SimpleBranchPredictor::updatePredictor(DefaultUpdate & update) {
 
     sparta_assert(branch_target_buffer_.find(update.FetchPC) != branch_target_buffer_.end());
-    branch_target_buffer_[input.FetchPC].branch_idx = update.branch_idx;
+    branch_target_buffer_[update.FetchPC].branch_idx = update.branch_idx;
     if (update.actuallyTaken) {
         branch_history_table_[update.FetchPC] =
             (branch_history_table_[update.FetchPC] == 3) ? 3 :
              branch_history_table_[update.FetchPC] + 1;
-        branch_target_buffer_[input.FetchPC].predictedPC = update.predictedPC;
+        branch_target_buffer_[update.FetchPC].predictedPC = update.correctedPC;
     } else {
         branch_history_table_[update.FetchPC] =
             (branch_history_table_[update.FetchPC] == 0) ? 0 :
@@ -39,7 +39,7 @@ void SimpleBranchPredictor::updatePredictor(DefaultUpdate & update) {
 DefaultPrediction SimpleBranchPredictor::getPrediction(const DefaultInput & input) {
     bool predictTaken;
     if (branch_history_table_.find(input.FetchPC) != branch_history_table_.end()) {
-        predictTaken = (branch_history_table_[input.fetchPC] > 1);
+        predictTaken = (branch_history_table_[input.FetchPC] > 1);
     } else {
         predictTaken = false;
     }
@@ -61,7 +61,7 @@ DefaultPrediction SimpleBranchPredictor::getPrediction(const DefaultInput & inpu
         prediction.predictedPC = input.FetchPC + max_fetch_insts_ * BYTES_PER_INST;
         // add new entry to BTB
         branch_target_buffer_.insert(std::pair<uint64_t,BTBEntry>(
-            input.FetchPC, BTBEntry(prediction.branch_idx, prediction.predictedPC));
+            input.FetchPC, BTBEntry(prediction.branch_idx, prediction.predictedPC)));
     }
 
     return prediction;

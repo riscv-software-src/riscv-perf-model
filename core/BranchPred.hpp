@@ -23,14 +23,17 @@
  * implementations of Prediction output, Prediction input and Update input, along with
  * implementations of getPrediction and updatePredictor operations.
  * */
+#pragma once
+
 #include <cstdint>
 #include <map>
+#include "sparta/utils/SpartaAssert.hpp"
 
 template <class PredictionT, class UpdateT, class InputT>
 class BranchPredictorIF
 {
 public:
-    virtual PredictionT & getPrediction(const InputT &) = 0;
+    virtual PredictionT getPrediction(const InputT &) = 0;
     virtual void updatePredictor(UpdateT &) = 0;
 };
 
@@ -65,7 +68,8 @@ public:
 class BTBEntry 
 {
 public:
-    BTBEntry(uint32_t bidx, uint64_t predPC) :
+    // use of BTBEntry in std:map operator [] requires default constructor
+    BTBEntry(uint32_t bidx=0, uint64_t predPC=0) :
         branch_idx(bidx),
         predictedPC(predPC)
     {} 
@@ -75,9 +79,12 @@ public:
 
 class SimpleBranchPredictor : public BranchPredictorIF<DefaultPrediction, DefaultUpdate, DefaultInput> 
 {
+public:
     SimpleBranchPredictor(uint32_t max_fetch_insts) :
         max_fetch_insts_(max_fetch_insts)
     {}
+    DefaultPrediction getPrediction(const DefaultInput &);
+    void updatePredictor(DefaultUpdate &);
 private:
     // maximum number of instructions in a FetchPacket
     uint32_t max_fetch_insts_; 

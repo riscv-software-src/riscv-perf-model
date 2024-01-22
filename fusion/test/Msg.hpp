@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file msg.h   header for simple uniform messages
+//! \file Msg.hpp   header for simple uniform messages
 #pragma once
 #include <string>
 #include <iostream>
@@ -34,76 +34,76 @@ struct Msg
     void setWho(std::string _w) { w = _w + ": "; }
 
     //! \brief shared message method
-    void mmsg(std::string p, std::string m)
+    void mmsg(std::string p, std::string m) const
     {
         std::cout << p << w << m << std::endl;
     }
 
     //! \brief debug messages
-    void dmsg(std::string m = "", int v = 4)
+    void dmsg(std::string m = "", int v = 4) const
     {
         if (v <= verbose)
             mmsg("-D: ", m);
     }
 
     //! \brief error messages
-    void emsg(std::string m = "", int v = 1)
+    void emsg(std::string m = "", int v = 1) const
     {
         if (v <= verbose)
             mmsg("-E: ", m);
     }
 
     //! \brief info messages
-    void imsg(std::string m = "", int v = 3)
+    void imsg(std::string m = "", int v = 3) const
     {
         if (v <= verbose)
             mmsg("-I: ", m);
     }
 
     //! \brief warining messages
-    void wmsg(std::string m = "", int v = 2)
+    void wmsg(std::string m = "", int v = 2) const
     {
         if (v <= verbose)
             mmsg("-W: ", m);
     }
 
     //! \brief warining messages
-    void mmsg(std::ostream & o, std::string p, std::string m)
+    void mmsg(std::ostream & o, std::string p, std::string m) const
     {
         o << p << w << m << std::endl;
     }
 
     // ----------------------------------------------------------------
     //! \brief dmsg should be v level 4
-    void dmsg(std::ostream & o, std::string m = "", int v = 4)
+    void dmsg(std::ostream & o, std::string m = "", int v = 4) const
     {
         mmsg(o, "-D: ", m);
     }
 
     //! \brief ...
-    void emsg(std::ostream & o, std::string m = "", int v = 1)
+    void emsg(std::ostream & o, std::string m = "", int v = 1) const
     {
         mmsg(o, "-E: ", m);
     }
 
     //! \brief ...
-    void imsg(std::ostream & o, std::string m = "", int v = 3)
+    void imsg(std::ostream & o, std::string m = "", int v = 3) const
     {
         mmsg(o, "-I: ", m);
     }
 
     //! \brief ...
-    void wmsg(std::ostream & o, std::string m = "", int v = 2)
+    void wmsg(std::ostream & o, std::string m = "", int v = 2) const
     {
         mmsg(o, "-W: ", m);
     }
 
     //! \brief ...
-    void msg(std::string m) { std::cout << m << std::endl; }
+    void msg(std::string m) const { std::cout << m << std::endl; }
 
     // ----------------------------------------------------------------
     //! \brief helper to show potentially empty strings
-    std::string tq(std::string s) { return "'" + s + "'"; }
+    std::string tq(std::string s) const { return "'" + s + "'"; }
 
     //! \brief ...
     std::string w;

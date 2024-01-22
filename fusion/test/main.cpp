@@ -1,12 +1,15 @@
-#include "testbench.h"
-#include "msg.h"
-#include "options.h"
+// HEADER PLACEHOLDER
+// contact Jeff Nye, jeffnye-gh, Condor Computing Corp.
+//
+#include "TestBench.hpp"
+#include "Msg.hpp"
+#include "Options.hpp"
 
 #include <fstream>
 #include <iostream>
 using namespace std;
 
-QParser* QP;
+FslParser* FP;
 
 Options* Options::instance = 0;
 std::shared_ptr<Options> opts(Options::getInstance());
@@ -17,8 +20,8 @@ std::unique_ptr<Msg> msg(Msg::getInstance());
 //  ------------------------------------------------------------------------
 int main(int ac, char** av)
 {
-    QParser qp;
-    QP = &qp;
+    FslParser fp;
+    FP = &fp;
 
     TestBench tb(ac, av);
     ofstream out("PASSFAIL");

@@ -1,12 +1,12 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fusiontypes.h marshalled types used by fusion
+//! \file FusionTypes.hpp marshalled types used by fusion
 #pragma once
 #include "Mavis.h"
 #include "mavis/DecoderTypes.h"
-#include "Inst.h"
-#include "uArchInfo.h"
+#include "Instruction.hpp"
+#include "uArchInfo.hpp"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -24,6 +24,10 @@ using UidType = mavis::InstructionUniqueID;
 //! \brief ...
 using InstUidListType = std::vector<mavis::InstructionUniqueID>;
 
+//! \brief ...
+using FieldName  = mavis::InstMetaData::OperandFieldID;
+//! \brief ...
+using SFieldName = mavis::ExtractorIF::SpecialField;
 //! \brief ...
 using Opcode = mavis::Opcode;
 //! \brief ...

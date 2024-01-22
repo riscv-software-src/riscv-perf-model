@@ -1,9 +1,7 @@
 //
 // Created by David Murrell on 2/19/20.
 //
-
-#ifndef DABBLE_UARCHINFOEXCEPTIONS_HPP
-#define DABBLE_UARCHINFOEXCEPTIONS_HPP
+#pragma once
 
 #include <exception>
 #include <sstream>
@@ -85,5 +83,3 @@ public:
     why_ = ss.str();
   }
 };
-
-#endif // DABBLE_UARCHINFOEXCEPTIONS_HPP

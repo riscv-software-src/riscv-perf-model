@@ -1,10 +1,7 @@
 //
 // Created by David Murrell on 12/2/19.
 //
-
-#ifndef DABBLE_UARCHINFO_HPP
-#define DABBLE_UARCHINFO_HPP
-
+#pragma once
 #include "json.hpp"
 #include "mavis/DecoderExceptions.h"
 #include "mavis/DecoderTypes.h"
@@ -192,5 +189,3 @@ inline std::ostream &operator<<(std::ostream &os, const uArchInfo &ui) {
   ui.print(os);
   return os;
 }
-
-#endif // DABBLE_UARCHINFO_HPP

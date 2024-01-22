@@ -1,0 +1,30 @@
+
+-----------------------------------------------------
+Symbol table
+Name   Type                  Line     File            
+-----------------------------------------------------
+word1  ENCODING_DECL_NAME    24      syntax2.fsl     
+_opt0  OPT_TYPE              14      syntax2.fsl     
+c3     UNSIGNED              13      syntax2.fsl     
+opc    UNSIGNED              24      syntax2.fsl     
+cons1  CONSTRAINTS_DECL_NAME 18      syntax2.fsl     
+g2     GPR                   12      syntax2.fsl     
+fs1    FUSION_DECL_NAME      5       syntax1.fsl     
+fs2    FUSION_DECL_NAME      9       syntax1.fsl     
+oly1   UARCH_DECL_NAME       5       syntax2.fsl     
+in_seq INPUT_SEQ_DECL_NAME   6       syntax2.fsl     
+c.lui  MNEMONIC              9       syntax2.fsl     
+c.srli MNEMONIC              15      syntax2.fsl     
+seq1   SEQUENCE_DECL_NAME    8       syntax2.fsl     
+_req0  REQ_TYPE              11      syntax2.fsl     
+0x234  UNKNOWN               33      syntax2.fsl     
+rv64g  ISA_DECL_NAME         4       syntax2.fsl     
+g1     GPR                   9       syntax2.fsl     
+t1     TRANSFORM_DECL_NAME   23      syntax2.fsl     
+c1     SIGNED                9       syntax2.fsl     
+c.addi MNEMONIC              10      syntax2.fsl     
+c.slli MNEMONIC              13      syntax2.fsl     
+c2     SIGNED                10      syntax2.fsl     
+c.xor  MNEMONIC              12      syntax2.fsl     
+
+Symbol table total entries 23

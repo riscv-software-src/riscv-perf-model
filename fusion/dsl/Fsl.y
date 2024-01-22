@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fsl.y  bison grammar for FSL
+//! \file Fsl.y  bison grammar for FSL
 // ----------------------------------------------------------------
 // Simplified grammar with ID location info and symbol table
 //
@@ -9,16 +9,17 @@
 // Future: %language, variant api, unique_ptr
 // ----------------------------------------------------------------
 %{
+#include "FslParser.hpp"
+
 #include <cstdio>
 #include <string>
 #include <vector>
 #include <map>
 #include <memory>
 #include <iostream>
-#include "qparser.h"
 using namespace std;
 
-extern QParser *QP;
+extern FslParser *FP;
 
 extern int yylex();
 extern int yyparse();
@@ -74,11 +75,11 @@ source_line:
 fusion_decl:
     FUSION id '{'  fusion_statements '}'
     {
-      QP->setSymType(*$2,"FUSION_DECL_NAME");
+      FP->setSymType(*$2,"FUSION_DECL_NAME");
     }
   | FUSION id '{' '}'
     {
-      QP->setSymType(*$2,"FUSION_DECL_NAME");
+      FP->setSymType(*$2,"FUSION_DECL_NAME");
     }
   ;
 
@@ -100,32 +101,32 @@ fusion_statement:
 isa_decl:
     ISA id
     {
-      QP->setSymType(*$2,"ISA_DECL_NAME");
+      FP->setSymType(*$2,"ISA_DECL_NAME");
     }
   ;
 
 input_seq_decl:
     INPUT_SEQ id
     {
-      QP->setSymType(*$2,"INPUT_SEQ_DECL_NAME");
+      FP->setSymType(*$2,"INPUT_SEQ_DECL_NAME");
     }
   ;
 
 uarch_decl:
     UARCH id
     {
-      QP->setSymType(*$2,"UARCH_DECL_NAME");
+      FP->setSymType(*$2,"UARCH_DECL_NAME");
     }
   ;
 
 constraints_decl:
     CONSTRAINTS id '(' arg_list ')' '{' constraints_statements '}'
     {
-      QP->setSymType(*$2,"CONSTRAINTS_DECL_NAME");
+      FP->setSymType(*$2,"CONSTRAINTS_DECL_NAME");
     }
   | CONSTRAINTS id '(' arg_list ')' '{' '}'
     {
-      QP->setSymType(*$2,"CONSTRAINTS_DECL_NAME");
+      FP->setSymType(*$2,"CONSTRAINTS_DECL_NAME");
     }
   | constraints_ctor
   ;
@@ -133,11 +134,11 @@ constraints_decl:
 constraints_ctor:
     CONSTRAINTS id '(' arg_list ')'
     {
-      QP->setSymType(*$2,"CONSTRAINTS_CTOR_NAME");
+      FP->setSymType(*$2,"CONSTRAINTS_CTOR_NAME");
     }
   | CONSTRAINTS id '('          ')'
     {
-      QP->setSymType(*$2,"CONSTRAINTS_CTOR_NAME");
+      FP->setSymType(*$2,"CONSTRAINTS_CTOR_NAME");
     }
   ;
 
@@ -171,11 +172,11 @@ chained_not_equal_statement:
 sequence_decl:
     SEQUENCE id '(' arg_list ')' '{' sequence_statements '}'
     {
-      QP->setSymType(*$2,"SEQUENCE_DECL_NAME");
+      FP->setSymType(*$2,"SEQUENCE_DECL_NAME");
     }
   | SEQUENCE id '(' arg_list ')' '{' '}'
     {
-      QP->setSymType(*$2,"SEQUENCE_DECL_NAME");
+      FP->setSymType(*$2,"SEQUENCE_DECL_NAME");
     }
   | sequence_ctor
   ;
@@ -183,11 +184,11 @@ sequence_decl:
 sequence_ctor:
     SEQUENCE id '(' arg_list ')'
     {
-      QP->setSymType(*$2,"SEQUENCE_CTOR_NAME");
+      FP->setSymType(*$2,"SEQUENCE_CTOR_NAME");
     }
   | SEQUENCE id '('          ')'
     {
-      QP->setSymType(*$2,"SEQUENCE_CTOR_NAME");
+      FP->setSymType(*$2,"SEQUENCE_CTOR_NAME");
     }
   ;
 
@@ -199,7 +200,7 @@ sequence_statements:
 sequence_statement:
     id id_list 
     {
-      QP->setSymType(*$1,"MNEMONIC");
+      FP->setSymType(*$1,"MNEMONIC");
     }
   | REQ_TOKEN
     {
@@ -214,11 +215,11 @@ sequence_statement:
 transform_decl:
     TRANSFORM id '(' arg_list ')' '{' transform_statements '}'
     {
-      QP->setSymType(*$2,"TRANSFORM_DECL_NAME");
+      FP->setSymType(*$2,"TRANSFORM_DECL_NAME");
     }
   | TRANSFORM id '(' arg_list ')' '{' '}'
     {
-      QP->setSymType(*$2,"TRANSFORM_DECL_NAME");
+      FP->setSymType(*$2,"TRANSFORM_DECL_NAME");
     }
   | transform_ctor
   ;
@@ -226,11 +227,11 @@ transform_decl:
 transform_ctor:
     TRANSFORM id '(' arg_list ')'
     {
-      QP->setSymType(*$2,"TRANSFORM_CTOR_NAME");
+      FP->setSymType(*$2,"TRANSFORM_CTOR_NAME");
     }
   | TRANSFORM id '('          ')'
     {
-      QP->setSymType(*$2,"TRANSFORM_CTOR_NAME");
+      FP->setSymType(*$2,"TRANSFORM_CTOR_NAME");
     }
   ;
 
@@ -247,22 +248,22 @@ transform_statement:
 encoding_decl:
     ENCODING id '(' arg_list ')' '{' encoding_statements '}'
     {
-      QP->setSymType(*$2,"ENCODING_DECL_NAME");
+      FP->setSymType(*$2,"ENCODING_DECL_NAME");
     }
   | ENCODING id '(' arg_list ')' '{' '}'
     {
-      QP->setSymType(*$2,"ENCODING_DECL_NAME");
+      FP->setSymType(*$2,"ENCODING_DECL_NAME");
     }
   | encoding_ctor
 
 encoding_ctor:
     ENCODING id '(' arg_list ')'
     {
-      QP->setSymType(*$2,"ENCODING_CTOR_NAME");
+      FP->setSymType(*$2,"ENCODING_CTOR_NAME");
     }
   | ENCODING id '('          ')'
     {
-      QP->setSymType(*$2,"ENCODING_CTOR_NAME");
+      FP->setSymType(*$2,"ENCODING_CTOR_NAME");
     }
   ;
 
@@ -274,15 +275,15 @@ encoding_statements:
 encoding_statement:
     unsigned_type id
     {
-      QP->setSymType(*$2,"UNSIGNED");
+      FP->setSymType(*$2,"UNSIGNED");
     }
   | signed_type id
     {
-      QP->setSymType(*$2,"SIGNED");
+      FP->setSymType(*$2,"SIGNED");
     }
   | gpr_type id
     {
-      QP->setSymType(*$2,"GPR");
+      FP->setSymType(*$2,"GPR");
     }
   | encode_order_statement
   ;
@@ -343,7 +344,6 @@ id:
     ID
     {
       $$ = new std::string($1);
-//      $$ = make_shared<string>($1);
       @$ = @1;
     }
   ;

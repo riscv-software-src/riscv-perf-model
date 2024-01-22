@@ -1,6 +1,9 @@
-#include "msg.h"
-#include "options.h"
-#include "testbench.h"
+// HEADER PLACEHOLDER
+// contact Jeff Nye, jeffnye-gh, Condor Computing Corp.
+//
+#include "Msg.hpp"
+#include "Options.hpp"
+#include "TestBench.hpp"
 #include <sstream>
 #include <iostream>
 using namespace std;
@@ -12,19 +15,19 @@ using namespace std;
 // tests. SField and ImmField tests are less used elsewhere.
 // These outliers are tested here.
 // --------------------------------------------------------------------
-bool TestBench::field_extractor_tests(bool debug)
+bool TestBench::fieldExtractorTests(bool debug)
 {
     FieldExtractor fe;
     using InstPtrType = FieldExtractor::InstPtrType;
 
     if (verbose)
-        msg->imsg("field_extractor_tests BEGIN");
+        msg->imsg("fieldExtractorTests BEGIN");
 
     bool ok = true;
     MavisType mavis(opts->isa_files, {});
 
     // add x1,x2,x3
-    InstPtrType inst_1 = make_inst(mavis, 0x003100b3);
+    InstPtrType inst_1 = makeInst(mavis, 0x003100b3);
 
     if (inst_1 == nullptr)
         ok = false;
@@ -37,11 +40,11 @@ bool TestBench::field_extractor_tests(bool debug)
     uint32_t rs1_inst_1 = fe.getField(inst_1, FN::RS1);
     uint32_t rs2_inst_1 = fe.getField(inst_1, FN::RS2);
 
-    if (!test_field_value(0, "RD", rd_inst_1, 0x1))
+    if (!testFieldValue(0, "RD", rd_inst_1, 0x1))
         ok = false;
-    if (!test_field_value(1, "RS1", rs1_inst_1, 0x2))
+    if (!testFieldValue(1, "RS1", rs1_inst_1, 0x2))
         ok = false;
-    if (!test_field_value(2, "RS2", rs2_inst_1, 0x3))
+    if (!testFieldValue(2, "RS2", rs2_inst_1, 0x3))
         ok = false;
 
     bool isDest = false;
@@ -63,25 +66,25 @@ bool TestBench::field_extractor_tests(bool debug)
     //  1098 7654 3210 9876 5432 1098 7654 3210
     //  0111 0010 1010 0111 1111 0101 0100 0011
     //  RM should be  111 -> 0x7
-    InstPtrType inst_2 = make_inst(mavis, 0x72a7f543);
+    InstPtrType inst_2 = makeInst(mavis, 0x72a7f543);
     if (inst_2 == nullptr)
         ok = false;
     uint32_t rm_inst_2 = fe.getSField(inst_2, SFN::RM);
-    if (!test_field_value(4, "RM", rm_inst_2, 0x7))
+    if (!testFieldValue(4, "RM", rm_inst_2, 0x7))
         ok = false;
 
     // Test for uint32_t getImmField(InstPtrType inst) const
 
     if (!ok)
-        msg->emsg("field_extractor_tests FAILED");
+        msg->emsg("fieldExtractor_tests FAILED");
     if (verbose)
-        msg->imsg("field_extractor_tests END");
+        msg->imsg("fieldExtractor_tests END");
     return ok;
 }
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-FieldExtractor::InstPtrType TestBench::make_inst(MavisType & m,
+FieldExtractor::InstPtrType TestBench::makeInst(MavisType & m,
                                                  uint32_t opc)
 {
     FieldExtractor::InstPtrType inst;
@@ -108,7 +111,7 @@ FieldExtractor::InstPtrType TestBench::make_inst(MavisType & m,
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-bool TestBench::test_field_value(uint32_t id, string name, uint32_t act,
+bool TestBench::testFieldValue(uint32_t id, string name, uint32_t act,
                                  uint32_t exp)
 {
     if (act != exp)

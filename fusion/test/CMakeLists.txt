@@ -11,12 +11,12 @@ set_target_properties(mavis PROPERTIES IMPORTED_LOCATION
              "${MAVIS_LIB_PATH}/libmavis.a")
 
 add_executable(fusiontest
-               testbench.cpp
-               testdata.cpp
-               testfieldextractor.cpp
-               fsltests.cpp
+               TestBench.cpp
+               TestData.cpp
+               TestFieldExtractor.cpp
+               FslTests.cpp
                main.cpp
-               options.cpp )
+               Options.cpp )
 
 target_link_libraries(fusiontest PRIVATE FusionLib FusionDSL mavis)
 
@@ -40,8 +40,7 @@ set(TB_OPTS --tb_verbose)
 # There is a mavis required dependency for c after g
 set(ISA_FILES
       --isa_file  ${JSON_BASE}/isa_rv64g.json
-      --isa_file  ${JSON_BASE}/isa_rv64c.json
-      --isa_file  ${JSON_BASE}/isa_rv64v.json)
+      --isa_file  ${JSON_BASE}/isa_rv64c.json)
 
 set(FSL_FILES
       --fsl_file "${FSL_BASE}/test1.fsl"
@@ -58,5 +57,5 @@ list(APPEND OPTS ${ISA_FILES}
 
 add_custom_target(regress
     COMMAND fusiontest ${OPTS}
-    DEPENDS fusiontest
+    DEPENDS fusiontest copy_symtab_expect
 )

@@ -1,9 +1,10 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fusionexceptions.h  fusion defined exceptions
+//! \file FusionExceptions.hpp  fusion defined exceptions
 #pragma once
-#include "fusiontypes.h"
+#include "FusionTypes.hpp"
+
 #include <exception>
 #include <sstream>
 #include <string>

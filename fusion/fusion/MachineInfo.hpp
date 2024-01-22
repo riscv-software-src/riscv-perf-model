@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file machineinfo.h processor implementation details
+//! \file MachineInfo.hpp processor implementation details
 #pragma once
 #include <cstdint>
 #include <string>
@@ -55,14 +55,6 @@ struct MachineInfo
     void setName(std::string n) { name_ = n; }
     //! \brief ...
     std::string name() const { return name_; }
-
-    //! \brief placeholder for machine info to console
-    //!
-    //! I prefer this to overloading the << operator
-    void info(std::ostream & os = std::cout)
-    {
-        os << "MachineInfo data for: " << name_ << std::endl;
-    }
 
   private:
     //! \brief arbitrary name

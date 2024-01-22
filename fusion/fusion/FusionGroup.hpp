@@ -1,11 +1,12 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fusiongroup.h  holds fusion definitions and transforms
+//! \file FusionGroup.hpp  holds fusion definitions and transforms
 #pragma once
-#include "fusiontypes.h"
-#include "Inst.h"
+#include "FusionTypes.hpp"
+#include "Instruction.hpp"
 #include "Mavis.h"
+
 #include <memory>
 #include <vector>
 #include <cstdint>
@@ -139,7 +140,7 @@ class FusionGroupBase
     //! \brief report fgroup state to stream
     //!
     //! I prefer this instead of overloading <<
-    virtual void info(std::ostream & os = std::cout)
+    virtual void info(std::ostream & os = std::cout) const
     {
         std::cout << "Name: " << name() << std::endl;
         std::cout << "  HASH: " << std::hex << "  0x" << hash()
@@ -323,4 +324,5 @@ class FusionGroup : public FusionGroupBase
     //! \brief handle to transform functor
     TransformFuncType transform_ = default_transform;
 };
+
 } // namespace fusion

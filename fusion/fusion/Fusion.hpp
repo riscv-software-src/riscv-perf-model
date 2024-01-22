@@ -1,15 +1,16 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh, Condor Computing Corp.
 //
-//! \file fusion.h  top level fusion API
+//! \file Fusion.hpp  top level fusion API
 #pragma once
-#include "qparser.h"
-#include "fusioncontext.h"
-#include "fusionexceptions.h"
-#include "fusiontypes.h"
-#include "fusiongroup.h"
-#include "machineinfo.h"
-#include "fieldextractor.h"
+#include "FieldExtractor.hpp"
+#include "FslParser.hpp"
+#include "FusionContext.hpp"
+#include "FusionExceptions.hpp"
+#include "FusionGroup.hpp"
+#include "FusionTypes.hpp"
+#include "MachineInfo.hpp"
+
 #include <unordered_map>
 #include <stdexcept>
 #include <vector>
@@ -120,11 +121,11 @@ namespace fusion
         }
 
         //! \brief bare ctor
-        Fusion() :
-            Fusion({}, {}, {}, FusionGroupTypeAlloc(),
-                   MachineInfoTypeAlloc(), FieldExtractorType())
-        {
-        }
+        //Fusion() :
+        //    Fusion({}, {}, {}, FusionGroupTypeAlloc(),
+        //           MachineInfoTypeAlloc(), FieldExtractorType())
+        //{
+        //}
 
         //! \brief initialize state from a group list
         void initialize(const FusionGroupListType & fusiongroup_list)
@@ -150,17 +151,18 @@ namespace fusion
             }
             else
             {
-                qp.setInputFiles(txt_file_list);
-                int ret = qp.parse();
+                fp.setInputFiles(txt_file_list);
+                int ret = fp.parse();
                 if (ret)
                 {
-                    // throw fusion::DslSyntaxError(qp.errMsg, qp.lineNo);
+                    // Future feature - needs additional handling
+                    throw fusion::DslSyntaxError(fp.errMsg, fp.lineNo);
                 }
             }
         }
 
         //! \brief future file type detector
-        bool isJsonFile(std::string fn) { return false; }
+        bool isJsonFile(std::string) const { return false; }
 
         //! \brief initialize from a group cfg list
         void initialize(const FusionGroupCfgListType & grp_list)
@@ -232,7 +234,7 @@ namespace fusion
         //!
         //! At present this performs syntax checking of the input
         //! files. The remaining operations have not been implemented
-        QParser qp;
+        FslParser fp;
 
         // JParser lohmann;
 

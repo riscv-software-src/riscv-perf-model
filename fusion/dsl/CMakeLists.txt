@@ -14,8 +14,8 @@ if(NOT FLEX_FOUND)
 endif()
 
 # Bison and Flex targets
-BISON_TARGET(FusionParser fsl.y ${CMAKE_CURRENT_BINARY_DIR}/yy.tab.cpp VERBOSE)
-FLEX_TARGET(FusionScanner fsl.l ${CMAKE_CURRENT_BINARY_DIR}/yy.lex.cpp)
+BISON_TARGET(FusionParser Fsl.y ${CMAKE_CURRENT_BINARY_DIR}/yy.tab.cpp VERBOSE)
+FLEX_TARGET(FusionScanner Fsl.l ${CMAKE_CURRENT_BINARY_DIR}/yy.lex.cpp)
 
 ADD_FLEX_BISON_DEPENDENCY(FusionScanner FusionParser)
 
@@ -23,7 +23,7 @@ ADD_FLEX_BISON_DEPENDENCY(FusionScanner FusionParser)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(PARSER_SOURCES 
-    qparser.cpp
+    FslParser.cpp
     ${BISON_FusionParser_OUTPUTS}
     ${FLEX_FusionScanner_OUTPUTS}
 )

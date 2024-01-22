@@ -2,29 +2,18 @@
 // contact Jeff Nye, jeffnye-gh
 //
 //! \file qparser.cpp  wrapper around parser state machine(s)
-#include "qparser.h"
+#include "FslParser.hpp"
+#include <filesystem>
 #include <iomanip>
 using namespace std;
 
 extern FILE* yyin;
 extern int yyparse();
-extern QParser* PR;
+extern FslParser* PR;
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
-QParser::QParser() :
-    TRACE_EN(0),
-    lineNo(1),
-    curCol(1),
-    currentFile(""),
-    syntaxName(""),
-    inputFiles()
-{
-}
-
-// ----------------------------------------------------------------
-// ----------------------------------------------------------------
-bool QParser::parse(string fn)
+bool FslParser::parse(string fn)
 {
     currentFile = fn;
 
@@ -54,7 +43,7 @@ bool QParser::parse(string fn)
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
-bool QParser::parseFiles()
+bool FslParser::parseFiles()
 {
     for (size_t i = 0; i < inputFiles.size(); ++i)
     {
@@ -70,24 +59,28 @@ bool QParser::parseFiles()
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
-void SymbolTable::info(ostream & os, bool shortPath)
+void SymbolTable::info(ostream & os, bool justFileName) const
 {
     size_t maxNameLen = 0, maxTypeLen = 0, maxFileLen = 0;
+
 
     for (const auto & pair : table)
     {
         const FslSymbol & symbol = pair.second;
+
+        size_t srcFileLength = symbol.srcFile.length();
+        //Get the max length of the path or just file name+ext
+        if(justFileName)
+        {
+            filesystem::path path(symbol.srcFile);
+            string baseName  = path.filename().string();
+            string extension = path.extension().string();
+            srcFileLength  = string(baseName+"."+extension).length();
+        } 
+    
         maxNameLen = max(maxNameLen, symbol.name.length());
         maxTypeLen = max(maxTypeLen, symbol.type.length());
-        maxFileLen = max(maxFileLen, symbol.srcFile.length());
-    }
-
-    size_t elideLen = 32;
-    string elideSep = "....";
-
-    if (shortPath && maxFileLen > elideLen)
-    {
-        maxFileLen = elideLen + elideSep.length();
+        maxFileLen = max(maxFileLen, srcFileLength);
     }
 
     size_t totalLen = maxNameLen + maxTypeLen + maxFileLen;
@@ -111,11 +104,11 @@ void SymbolTable::info(ostream & os, bool shortPath)
 
         string srcFile = symbol.srcFile;
 
-        if (shortPath && srcFile.length() > elideLen)
+        if(justFileName)
         {
-            srcFile =
-                elideSep + srcFile.substr(srcFile.length() - elideLen);
-        }
+            filesystem::path path(srcFile);
+            srcFile  = string(path.filename().string()); 
+        } 
 
         os << left << setw(maxNameLen) << symbol.name << " "
            << setw(maxTypeLen) << symbol.type << " " << setw(7)

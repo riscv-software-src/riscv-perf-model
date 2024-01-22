@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file qparser.h  wrapper around parser state machine(s)
+//! \file FslParser.hpp  wrapper around parser state machine(s)
 #pragma once
 #include <fstream>
 #include <iostream>
@@ -15,12 +15,14 @@
 struct FslSymbol
 {
     //! \brief ...
-    FslSymbol(std::string _n, uint32_t _ln = 0,
-              std::string _fn = "", std::string _ty = "UNKNOWN") :
-        name(_n),
-        lineNo(_ln),
-        srcFile(_fn),
-        type(_ty)
+    FslSymbol(const std::string _n,
+              const uint32_t _ln = 0,
+              const std::string _fn = "",
+              const std::string _ty = "UNKNOWN")
+        : name(_n),
+          lineNo(_ln),
+          srcFile(_fn),
+          type(_ty)
     {
     }
 
@@ -45,10 +47,10 @@ struct FslSymbol
 struct SymbolTable
 {
     //! \brief symbol table iterator
-    using TableItrType = std::unordered_map<std::string, FslSymbol>::iterator;
+    using TableItrType = std::unordered_map<std::string,FslSymbol>::iterator;
 
     //! \brief look up name in table
-    bool findSymbol(std::string name)
+    bool hasSymbol(const std::string name) const
     {
         if (table.find(name) != table.end())
             return true;
@@ -56,14 +58,14 @@ struct SymbolTable
     }
 
     //! \brief if not already in symtab, insert it
-    void insertSymbol(std::string name, FslSymbol s)
+    void insertSymbol(const std::string name,const FslSymbol s)
     {
-        if (!findSymbol(name))
+        if (!hasSymbol(name))
             table.insert(make_pair(name, s));
     }
 
     //! \brief ...
-    void setType(std::string name, std::string type)
+    void setType(const std::string name,const std::string type)
     {
         TableItrType itr = table.find(name);
         if (itr != table.end())
@@ -76,26 +78,32 @@ struct SymbolTable
     void clear() { table.clear(); }
 
     //! \brief symbol info to stream
-    void info(std::ostream & os, bool shortPath = false);
+    //!
+    //! FIXME: consider using operator<<, handle shortPath arg
+    void info(std::ostream & os, bool shortPath = false) const;
 
     //! \brief the symbol table
     std::unordered_map<std::string, FslSymbol> table;
 };
 
 // ----------------------------------------------------------------
-//! \brief QParser support for flex/bison
+//! \brief FslParser support for flex/bison
 //!
-//! This is an edited version of QParser. It supports the fusion
-//! dsl proposal, other functionality was removed, so the structure
-//! looks like over kill. 
 // ----------------------------------------------------------------
-struct QParser
+struct FslParser
 {
     //! \brief ...
-    QParser();
+    FslParser()
+        : TRACE_EN(0),
+          lineNo(1),
+          curCol(1),
+          currentFile(""),
+          syntaxName(""),
+          inputFiles()
+    {}  
 
     //! \brief ...
-    ~QParser() {}
+    ~FslParser() {}
 
     //! \brief initialize parser state between code bases
     void coldReset()
@@ -116,57 +124,89 @@ struct QParser
     }
 
     //! \brief set the inputFile vector when isInLine
-    void setInputFiles(const std::vector<std::string> & fv) { inputFiles = fv; }
+    void setInputFiles(const std::vector<std::string> & fv)
+    {
+      inputFiles = fv;
+    }
 
     //! \brief parse all input files
-    bool parse() { return parseFiles(); }
+    //!
+    //! not const, eventually currentFile is modified
+    bool parse()
+    {
+        return parseFiles();
+    }
 
     //! \brief parse all input files
+    //!
+    //! not const, eventually currentFile is modified
     bool parseFiles();
 
     //! \brief parse one file
-    bool parse(std::string);
+    //!
+    //! not const, currentFile is modified
+    bool parse(const std::string);
 
-    //! \brief remove the Msg dependency for QParser
-    void emsg(std::string m) { std::cout << "-E:QP: " << m << std::endl; }
+    //! \brief remove the Msg dependency for FslParser
+    void emsg(const std::string m) const
+    {
+        std::cout << "-E:QP: " << m << std::endl;
+    }
 
     // --------------------------------------------------------------
     // Symbol table shim
     // --------------------------------------------------------------
     //! \brief look up string in symbol table
-    bool findSymbol(const std::string name) { return symtab.findSymbol(name); }
+    bool hasSymbol(const std::string name) const
+    {
+        return symtab.hasSymbol(name);
+    }
 
     //! \brief look up const/char in symbol table
-    bool findSymbol(const char* name)
-        { return symtab.findSymbol(std::string(name)); }
+    bool hasSymbol(const char* name) const
+    {
+        return symtab.hasSymbol(std::string(name));
+    }
 
     //! \brief insert string symbol name into table if not duplicated
     void insertSymbol(const std::string sym, FslSymbol s)
-        { symtab.insertSymbol(sym, s); }
+    {
+        symtab.insertSymbol(sym, s);
+    }
 
     //! \brief insert const/char symbol name into table if not duplicated
     void insertSymbol(const char* sym, FslSymbol s)
-        { symtab.insertSymbol(std::string(sym), s); }
+    {
+        symtab.insertSymbol(std::string(sym), s);
+    }
 
     //! \brief set type field of symbol using string name
     void setSymType(const std::string sym, std::string typ)
-        { symtab.setType(sym, typ); }
+    {
+        symtab.setType(sym, typ);
+    }
 
     //! \brief set type field of symbol using const/char name
     void setSymType(const char* sym, std::string typ)
-        { symtab.setType(std::string(sym), typ); }
+    {
+        symtab.setType(std::string(sym), typ);
+    }
 
     //! \brief create a unique string id for a _req_ symbol
     //!
     //! _reg + string(reqId++)
     std::string newReqSymbol()
-        { return std::string("_req" + std::to_string(reqId++)); }
+    {
+        return std::string("_req" + std::to_string(reqId++));
+    }
 
     //! \brief create a unique id for a _opt_ symbol
     //!
     //! _opt + string(optId++)
     std::string newOptSymbol()
-        { return std::string("_opt" + std::to_string(optId++)); }
+    {
+        return std::string("_opt" + std::to_string(optId++));
+    }
 
     // --------------------------------------------------------------
     //! \brief verbose lexer console output
@@ -198,7 +238,7 @@ struct QParser
     //! \brief list of files
     //!
     //! This is the only case so far where this could be a fusion
-    //! type as in FileNameListType. Standard QParser does not know
+    //! type as in FileNameListType. Standard FslParser does not know
     //! about those types of course.
     std::vector<std::string> inputFiles;
 

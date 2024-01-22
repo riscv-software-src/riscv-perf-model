@@ -1,13 +1,13 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file testbench.h  testbench interface and utils
+//! \file TestBench.hpp  testbench interface and utils
 #pragma once
-#include "fieldextractor.h"
-#include "fusion.h"
-#include "fusiongroup.h"
-#include "fusiontypes.h"
-#include "machineinfo.h"
+#include "FieldExtractor.hpp"
+#include "Fusion.hpp"
+#include "FusionGroup.hpp"
+#include "FusionTypes.hpp"
+#include "MachineInfo.hpp"
 
 //! \class TestBench
 // ====================================================================
@@ -51,63 +51,66 @@ struct TestBench
     TestBench(int, char**);
 
     //! \brief hold functor proxies used by the tb
-    struct cb_proxy;
+    struct cbProxy;
 
     //! \brief run all tests
     bool run();
 
     //! \brief sanity check compilation of ctors
-    bool fusion_ctor_compile_test(bool debug = false);
+    bool fusionCtorCompileTest(bool debug = false);
 
     //! \brief basic find fusiongroup, match to input, and transform
-    bool fusion_search_test(bool debug = false);
+    bool fusionSearchTest(bool debug = false);
 
     //! \brief sanity check the way mavis and isa files supplied are used
-    bool basic_mavis_test(bool debug = false);
+    bool basicMavisTest(bool debug = false);
 
     //! \brief check constraints and perform simple transform
-    bool basic_constraints_test();
+    bool basicConstraintsTest();
 
     //! \brief test using alternatives to MachineInfo and FieldExtractor
-    bool fusiongroup_alt_ctor_test();
+    bool fusionGroupAltCtorTest();
 
     //! \brief test choices in specifying FusionGroupCfg
-    bool fusiongroup_cfg_ctor_test();
+    bool fusionGroupCfgCtorTest();
 
     //! \brief unit test for class::FusionContext
-    bool fusion_context_test(bool debug = false);
+    bool fusionContextTest(bool debug = false);
 
     //! \brief unit test for class::RadixTrie
-    bool radix_trie_test(bool debug = false);
+    bool radixTrieTest(bool debug = false);
 
     //! \brief catch all for start up checks
-    bool sanity_test(bool debug = false);
+    bool sanityTest(bool debug = false);
 
     // -------------------------------------------------------------
     // field extractor method tests and support, testfieldextractor.cpp
     // -------------------------------------------------------------
     //! \brief top level extractor test runner
-    bool field_extractor_tests(bool debug = false);
+    bool fieldExtractorTests(bool debug = false);
 
     //! \brief create an inst from opcode, catch conversion errors
-    FieldExtractor::InstPtrType make_inst(MavisType &, uint32_t);
+    FieldExtractor::InstPtrType makeInst(MavisType &, uint32_t);
 
     //! \brief helper for testing field values
-    bool test_field_value(uint32_t, std::string, uint32_t act,
-                          uint32_t exp);
+    bool testFieldValue(uint32_t, std::string, uint32_t act,uint32_t exp);
 
     // -------------------------------------------------------------
     // fusion domain language tests and support
     // -------------------------------------------------------------
     //! \brief this calls the fsl sub-tests
-    bool fsl_tests(bool debug = false);
+    bool fslTests(bool debug = false);
 
     //! \brief tests/(will test) syntax edge cases
-    bool fsl_syntax_test(bool debug = false);
+    bool fslSyntaxTest(bool debug = false);
 
     //! \brief support for fsl_syntax_test
-    bool check_syntax(std::vector<std::string> &, bool debug = false);
+    bool checkSyntax(std::vector<std::string> &, bool debug = false);
 
+    //! \brief return true if files are identical
+    //!
+    //! whitespace is significant
+    bool compareFiles(const std::string,const std::string,bool=true);
     // -------------------------------------------------------------
 
     //! \brief transform funcs
@@ -128,10 +131,10 @@ struct TestBench
     //! \brief duplicate of hash function found in fusion group
     //!
     //! duplicated  to support debug
-    fusion::HashType jenkins_1aat(const std::vector<fusion::UidType> &);
+    fusion::HashType jenkinsOneAtATime(const std::vector<fusion::UidType> &);
 
     //! \brief common isa files to separate from the cmd line versions
-    static const std::vector<std::string> std_isa_files;
+    static const std::vector<std::string> stdIsaFiles;
 
     //! \brief extra messages
     bool verbose{false};
@@ -171,7 +174,7 @@ struct TestBench
     static OpcodeListType of5, of5_1, of5_2, of5_3;
     //! }@
 
-    static const std::string symbolTableExpectData;
+//    static const std::string symbolTableExpectData;
 };
 
 // ---------------------------------------------------------------------
@@ -179,7 +182,7 @@ struct TestBench
 //!
 //! There is a callback for each fusion group test case  f1, f1.1, etc
 // ---------------------------------------------------------------------
-struct TestBench::cb_proxy
+struct TestBench::cbProxy
 {
     //! \brief ...
     static bool uf1_func(FusionGroupType &, InstPtrListType &,

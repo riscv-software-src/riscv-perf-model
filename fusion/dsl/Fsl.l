@@ -2,39 +2,26 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fsl.l  flex scanner for FSL
+//! \file Fsl.l  flex scanner for FSL
 // ----------------------------------------------------------------
-// Simple lexer derived from the original qparser
-// Future: complete wrapping into QP, location info, api variants
+// Simple lexer derived from the original QParser
+// Future: complete wrapping into FP, location info, api variants
 // ----------------------------------------------------------------
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
-#include "qparser.h"
+#include "FslParser.hpp"
 #include "yy.tab.hpp"
 using namespace std;
 
-extern QParser *QP;
-
-const std::string DIGIT = "[0-9]";
-const std::string LETTER = "[a-zA-Z_]";
-const std::string HEX_DIGIT = "[a-fA-F0-9]";
-const std::string EXPONENT = "[Ee][+-]?" + DIGIT + "+";
-
-//D   [0-9]
-//L   [a-zA-Z_]
-//H   [a-fA-F0-9]
-//E   [Ee][+-]?{D}+
-//FS  (f|F|l|L)
-//IS  (u|U|l|L)*
-
+extern FslParser *FP;
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 #define YY_DECL extern int yylex()
 
-#define E(s) if(QP->TRACE_EN) cout<<dec<<QP->lineNo<<": "<<s<<endl;
+#define E(s) if(FP->TRACE_EN) cout<<dec<<FP->lineNo<<": "<<s<<endl;
 
 #define GET_STR yylval.str = new string(yytext)
 //Future feature - RET will help with capturing location info
@@ -61,7 +48,7 @@ SIGNED_CONST   s[0-9]+[0-9]*
   "*/"        { BEGIN(INITIAL); } 
   [^*\n]+     { /* Ignore non-newline and non-asterisk characters */ }
   "*"         { /* Ignore standalone asterisk characters */ }
-  "\n"        { ++QP->lineNo; } // Increment line count on newline
+  "\n"        { ++FP->lineNo; } // Increment line count on newline
 }
 
 \/\/[^\n]*   { E("COMMENT") }
@@ -80,17 +67,17 @@ uarch        { E("UARCH")        RET(UARCH);     }
 
 _req_        {  /* get a unique ID for _req_ symbols and add to symtab */
                E("REQ")
-               std::string symName = QP->newReqSymbol();
-               FslSymbol sym(symName,QP->lineNo,QP->currentFile,"REQ_TYPE");
-               QP->insertSymbol(symName,sym);
+               std::string symName = FP->newReqSymbol();
+               FslSymbol sym(symName,FP->lineNo,FP->currentFile,"REQ_TYPE");
+               FP->insertSymbol(symName,sym);
                RET(REQ_TOKEN);
              }
 
 _opt_        { /* get a unique ID for _opt_ symbols and add to symtab */
                E("OPT")
-               std::string symName = QP->newOptSymbol();
-               FslSymbol sym(symName,QP->lineNo,QP->currentFile,"OPT_TYPE");
-               QP->insertSymbol(symName,sym);
+               std::string symName = FP->newOptSymbol();
+               FslSymbol sym(symName,FP->lineNo,FP->currentFile,"OPT_TYPE");
+               FP->insertSymbol(symName,sym);
                RET(OPT_TOKEN);
              }
 
@@ -104,20 +91,20 @@ _opt_        { /* get a unique ID for _opt_ symbols and add to symtab */
                  //E("ID")
                  yylval.sval = strdup(yytext);
                  E(yytext)
-                 FslSymbol sym(yytext,QP->lineNo,QP->currentFile);
-                 QP->insertSymbol(yytext,sym);
+                 FslSymbol sym(yytext,FP->lineNo,FP->currentFile);
+                 FP->insertSymbol(yytext,sym);
                  RET(ID);
-    return ID;
+                 return ID;
                }
 
-[\n]   { ++QP->lineNo; QP->curCol=1; }
+[\n]   { ++FP->lineNo; FP->curCol=1; }
 [ \t]  { /* this does not handle col position yet */; }
-.      { ++QP->curCol; E(yytext[0]) RET(yytext[0]); }
+.      { ++FP->curCol; E(yytext[0]) RET(yytext[0]); }
 %%
 // ------------------------------------------------------------------
 // ------------------------------------------------------------------
 void yyerror(const char *s) {
-  std::cout << "-E: "<<QP->currentFile<<": "
-            << s <<" line "<<std::dec<<QP->lineNo<<std::endl;
+  std::cout << "-E: "<<FP->currentFile<<": "
+            << s <<" line "<<std::dec<<FP->lineNo<<std::endl;
 }
 

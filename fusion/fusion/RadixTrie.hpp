@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file radixtrie.h  space optimized search tree(trie)
+//! \file RadixTrie.hpp  space optimized search tree(trie)
 #pragma once
 #include <chrono>
 #include <cstdint>
@@ -39,8 +39,8 @@ template <uint32_t BIT_WIDTH> class RadixTrieNode
 //!
 //! This is not used in the current implementation. It is provided
 //! in the DPR for comment on future use and because I am comparing
-//! performance against real sets of fusion groups. There little to
-//! no protection against 'bad' input. That will come later
+//! performance against real sets of fusion groups. There is little
+//! to no protection against 'bad' input. That will come later.
 //!
 //! 1            1024*1024
 //! Time taken for insertion: 7.31112 seconds

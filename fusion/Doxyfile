@@ -119,18 +119,18 @@ WARN_LOGFILE           =
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = \
-                         ./dsl/qparser.h \
-                         ./fusion/fieldextractor.h \
-                         ./fusion/fusion.h \
-                         ./fusion/fusioncontext.h \
-                         ./fusion/fusionexceptions.h \
-                         ./fusion/fusiongroup.h \
-                         ./fusion/fusiontypes.h \
-                         ./fusion/machineinfo.h \
-                         ./fusion/radixtrie.h \
-                         ./test/msg.h \
-                         ./test/options.h \
-                         ./test/testbench.h \
+                         ./dsl/FslParser.hpp \
+                         ./fusion/FieldExtractor.hpp \
+                         ./fusion/Fusion.hpp \
+                         ./fusion/FusionContext.hpp \
+                         ./fusion/FusionExceptions.hpp \
+                         ./fusion/FusionGroup.hpp \
+                         ./fusion/FusionTypes.hpp \
+                         ./fusion/MachineInfo.hpp \
+                         ./fusion/RadixTrie.hpp \
+                         ./test/Msg.hpp \
+                         ./test/Options.hpp \
+                         ./test/TestBench.hpp \
                          README.md
                          
 INPUT_ENCODING         = UTF-8

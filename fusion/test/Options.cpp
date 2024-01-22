@@ -1,12 +1,15 @@
-#include "msg.h"
-#include "options.h"
+// HEADER PLACEHOLDER
+// contact Jeff Nye, jeffnye-gh, Condor Computing Corp.
+//
+#include "Msg.hpp"
+#include "Options.hpp"
 #include <iostream>
 using namespace std;
 
 // --------------------------------------------------------------------
 // Build the option set and check the options
 // --------------------------------------------------------------------
-void Options::setup_options(int ac, char** av)
+void Options::setupOptions(int ac, char** av)
 {
     notify_error = false;
 
@@ -15,7 +18,7 @@ void Options::setup_options(int ac, char** av)
         "Usage:: test [--help|-h|--version|-v] { options }");
 
     po::options_description stdOpts("Standard options");
-    build_options(stdOpts);
+    buildOptions(stdOpts);
 
     try
     {
@@ -35,7 +38,7 @@ void Options::setup_options(int ac, char** av)
     }
 
     po::notify(vm);
-    if (!check_options(vm, stdOpts, true))
+    if (!checkOptions(vm, stdOpts, true))
         exit(1);
 }
 
@@ -43,7 +46,7 @@ void Options::setup_options(int ac, char** av)
 // Construct the std, hidden and positional option descriptions
 // --------------------------------------------------------------------
 // clang-format off
-void Options::build_options(po::options_description & stdOpts)
+void Options::buildOptions(po::options_description & stdOpts)
 {
     stdOpts.add_options()
 
@@ -73,9 +76,9 @@ void Options::build_options(po::options_description & stdOpts)
 // --------------------------------------------------------------------
 // Check sanity on the options, handle --help, --version
 // --------------------------------------------------------------------
-bool Options::check_options(po::variables_map & vm,
-                            po::options_description & stdOpts,
-                            bool firstPass)
+bool Options::checkOptions(po::variables_map & vm,
+                           po::options_description & stdOpts,
+                           bool firstPass)
 {
     if (firstPass)
     {
@@ -96,7 +99,7 @@ bool Options::check_options(po::variables_map & vm,
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-void Options::version()
+void Options::version() const
 {
     msg->imsg("");
     msg->imsg("Fusion api tester");

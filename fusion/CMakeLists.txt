@@ -9,7 +9,21 @@ add_subdirectory(fusion)
 add_subdirectory(dsl)
 add_subdirectory(test)
 
-# Check if Doxygen is installed
+# Copy the symtab_expect.txt file
+set(SYM_EXPECT_SRC ${CMAKE_SOURCE_DIR}/test/expect/symtab_expect.txt)
+set(SYM_EXPECT_DST ${CMAKE_BINARY_DIR}/test/symtab_expect.txt)
+
+add_custom_command(
+    OUTPUT ${SYM_EXPECT_DST}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SYM_EXPECT_SRC} ${SYM_EXPECT_DST}
+    DEPENDS ${SYM_EXPECT_SRC}
+    COMMENT "Copying symtab_expect.txt to build/test directory"
+)
+
+add_custom_target(copy_symtab_expect ALL
+    DEPENDS ${SYM_EXPECT_DST}
+)
+
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     # Set input and output files
@@ -19,14 +33,13 @@ if(DOXYGEN_FOUND)
     # Request to configure the file
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
 
-    # Add a custom target to run Doxygen when user types "make docs"
+    # Add a custom target for "make docs"
     add_custom_target(docs
                       COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                       COMMENT "Generating API documentation with Doxygen"
                       VERBATIM)
-else(DOXYGEN_FOUND)
-  message("Doxygen needs to be installed to generate the doxygen documentation")
-endif(DOXYGEN_FOUND)
-
+else()
+    message("Doxygen needs to be installed to generate documentation")
+endif()
 

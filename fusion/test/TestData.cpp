@@ -1,13 +1,16 @@
-#include "fieldextractor.h"
-#include "fusion.h"
-#include "fusioncontext.h"
-#include "fusiongroup.h"
-#include "fusiontypes.h"
-#include "machineinfo.h"
-#include "msg.h"
-#include "options.h"
-#include "radixtrie.h"
-#include "testbench.h"
+// HEADER PLACEHOLDER
+// contact Jeff Nye, jeffnye-gh, Condor Computing Corp.
+//
+#include "FieldExtractor.hpp"
+#include "Fusion.hpp"
+#include "FusionContext.hpp"
+#include "FusionGroup.hpp"
+#include "FusionTypes.hpp"
+#include "MachineInfo.hpp"
+#include "Msg.hpp"
+#include "Options.hpp"
+#include "RadixTrie.hpp"
+#include "TestBench.hpp"
 
 #include <boost/range/combine.hpp>
 

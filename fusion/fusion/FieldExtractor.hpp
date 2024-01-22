@@ -1,11 +1,11 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fieldextractor.h  mavis shim, extract fields from encodings
+//! \file FieldExtractor.hpp  mavis shim, extract fields from encodings
 #pragma once
-#include "fusionexceptions.h"
-#include "uArchInfo.h"
-#include "Inst.h"
+#include "FusionExceptions.hpp"
+#include "uArchInfo.hpp"
+#include "Instruction.hpp"
 #include "Mavis.h"
 #include <vector>
 #include <optional>
@@ -55,29 +55,23 @@ class FieldExtractor
         LT
     };
 
-    //!  \brief placeholder
-    void info(std::ostream & os = std::cout)
-    {
-        os << "FieldExtractor info()" << std::endl;
-    }
-
     //!  \brief extract value of named encoding field
     //!
     //! handles field name and immediate checking
     //! \note RS_MAX is overloaded to identify get's for immediate fields
-    uint32_t getField(InstPtrType inst, FieldName f) const
+    uint32_t getField(InstPtrType inst, FieldName field) const
     {
         bool isDest = false;
-        if (!checkInstHasField(inst, f, isDest))
+        if (!checkInstHasField(inst, field, isDest))
         {
-            throw fusion::FieldExtUnknownField((uint32_t)f,
+            throw fusion::FieldExtUnknownField((uint32_t)field,
                                                inst->dasmString());
         }
 
-        if (f == FieldName::RS_MAX)
+        if (field == FieldName::RS_MAX)
             return getImmField(inst);
 
-        return getFieldById(inst, f, isDest);
+        return getFieldById(inst, field, isDest);
     }
 
     //! \brief get the encoded value of a named special field from an
@@ -88,16 +82,16 @@ class FieldExtractor
     //! is redundant. getSFieldById() is also not necessary since
     //! SpecialFields are not distinguished as a source or destination
     //! operand and can be accessed from the same method.
-    uint32_t getSField(InstPtrType inst, SFieldName f) const
+    uint32_t getSField(InstPtrType inst, SFieldName field) const
     {
-        uint32_t value = inst->getSpecialField(f);
+        uint32_t value = inst->getSpecialField(field);
         if (value == 0)
         {
-            throw fusion::FieldExtUnknownSpecialField((uint32_t)f,
+            throw fusion::FieldExtUnknownSpecialField((uint32_t)field,
                                                       inst->dasmString());
         }
         return value;
-        //        return getSFieldById(inst, f);
+        //        return getSFieldById(inst, field);
     }
 
     //! \brief get the encoded value of the full immediate field
@@ -109,40 +103,33 @@ class FieldExtractor
     //!  \brief helper function for getField, src/dst switch
     //!
     //! isDest is set previously by checkInstHasField()
-    uint32_t getFieldById(InstPtrType inst, FieldName f, bool isDest) const
+    uint32_t getFieldById(InstPtrType inst, FieldName field, bool isDest) const
     {
         if (isDest)
         {
-            return inst->getDestOpInfo().getFieldValue(f);
+            return inst->getDestOpInfo().getFieldValue(field);
         }
-        return inst->getSourceOpInfo().getFieldValue(f);
+        return inst->getSourceOpInfo().getFieldValue(field);
     }
-
-    //    //!  \brief helper function for getSField
-    //    //!
-    //    //! not that interesting except checkInstHasSField was called if
-    //    this is
-    //    //! not called directly
-    //    uint32_t getSFieldById(InstPtrType inst, SFieldName sf) const
-    //    {
-    //        return inst->getSpecialField(sf);
-    //    }
 
     //! \brief Use mavis to determine if the FieldName exists in this inst
     //! obj
     //!
     //! Special case check for immediates;
     //! srcOp and dstOps have to be checked separately.
-    bool checkInstHasField(InstPtrType inst, FieldName f,
+    //!
+    //! This is legally marked const, it does not modify *this,
+    //! but it does modifies the argument isDest.
+    bool checkInstHasField(InstPtrType inst, FieldName field,
                            bool & isDest) const
     {
-        if (inst->hasImmediate() && f == FieldName::RS_MAX)
+        if (inst->hasImmediate() && field == FieldName::RS_MAX)
         {
             return true;
         }
 
-        if (inst->getSourceOpInfo().hasFieldID(f)
-            && f != FieldName::RS_MAX)
+        if (inst->getSourceOpInfo().hasFieldID(field)
+            && field != FieldName::RS_MAX)
         {
             return true;
         }
@@ -153,7 +140,7 @@ class FieldExtractor
         //                          'mavis::OperandInfoInvalidFieldID'
         //                what():  OperandInfo field ID '' is invalid
         //
-        //   if(inst->getDestOpInfo().hasFieldID(f) && f !=
+        //   if(inst->getDestOpInfo().hasFieldID(field) && field !=
         //   FieldName::RS_MAX)
         //   {
         //     isDest = true;
@@ -161,8 +148,8 @@ class FieldExtractor
         //   }
         //
         //  But doing this is fine...
-        bool idok = inst->getDestOpInfo().hasFieldID(f);
-        bool fok = f != FieldName::RS_MAX;
+        bool idok = inst->getDestOpInfo().hasFieldID(field);
+        bool fok = field != FieldName::RS_MAX;
         if (idok && fok)
         {
             isDest = true;
@@ -170,19 +157,10 @@ class FieldExtractor
         }
 
         // catch fall through
-        throw fusion::FieldExtUnknownField((uint32_t)f,
+        throw fusion::FieldExtUnknownField((uint32_t)field,
                                            inst->dasmString());
         return false; ///...
     }
-
-    //    //! \brief Use mavis to determine if the SFieldName exists in
-    //    this inst obj
-    //    //!
-    //    //!
-    //    bool checkInstHasSField(InstPtrType inst, SFieldName f) const
-    //    {
-    //        return false; ///...
-    //    }
 
     //! \brief equality
     bool eq(const InstPtrListType & input, size_t a, size_t b,
@@ -270,20 +248,19 @@ class FieldExtractor
 
   private:
     //! \brief compare common method
-    bool compare(const InstPtrType A, const InstPtrType B,
+    bool compare(const InstPtrType LHS, const InstPtrType RHS,
                  const FieldName f1, const OptArg _f2, FUNC func) const
     {
         FieldName f2 = _f2.value_or(f1);
-        auto lhs = getField(A, f1);
-        auto rhs = getField(B, f2);
+
+        auto lhs = getField(LHS, f1);
+        auto rhs = getField(RHS, f2);
+
         switch (func)
         {
-        case FUNC::LT:
-            return lhs < rhs;
-        case FUNC::EQ:
-            return lhs == rhs;
-        default:
-            return false;
+            case FUNC::LT: { return lhs < rhs;  }
+            case FUNC::EQ: { return lhs == rhs; }
+            default:       { return false;      }
         }
     }
 

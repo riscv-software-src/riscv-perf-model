@@ -1,7 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file options.h  testbench options
+//! \file Options.hpp  testbench options
 #pragma once
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -26,25 +26,23 @@ struct Options
     // support methods
     // ----------------------------------------------------------------
     //! \brief ...
-    void build_options(po::options_description &);
+    void buildOptions(po::options_description &);
 
     //! \brief ...
-    bool check_options(po::variables_map &, po::options_description &,bool);
+    bool checkOptions(po::variables_map &, po::options_description &,bool);
 
     //! \brief ...
-    void setup_options(int, char**);
+    void setupOptions(int, char**);
 
     //! \brief ...
-    void usage(po::options_description & o)
+    void usage(po::options_description & o) const
     {
         std::cout << o << std::endl;
     }
 
-    //! \brief placeholder
-    void version();
+    //! \brief ...
+    void version() const;
 
-    //! \brief placeholder
-    void query_options();
     // ----------------------------------------------------------------
     //! \brief future STF file support in test bench
     std::string stf_file{""};

@@ -1,11 +1,11 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh
 //
-//! \file fusioncontext.h  fusiongroup set context
+//! \file FusionContext.hpp  FusionGroup set context
 #pragma once
-#include "fusionexceptions.h"
-#include "fusiontypes.h"
-// Future : #include "radixtrie.h"
+#include "FusionExceptions.hpp"
+#include "FusionTypes.hpp"
+
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -91,41 +91,4 @@ class FusionContext
     // Future:  LookupType lookup_;
 };
 
-// =======================================================================
-// Future feature
-// =======================================================================
-// template<typename FusionContextType,
-//         typename ContextContainerType =
-//         std::unordered_map<std::string,FusionContextType>, typename
-//         ContextContainerTypeAllocator =
-//         fusion::ShrPtrAlloc<ContextContainerType> >
-// class ContextContainer
-//{
-//  using FusionGroupListType = std::vector<FusionGroupType>;
-//
-//  public:
-//    explicit ContextContainer(
-//        const ContextContainerTypeAllocator &alloc =
-//        fusion::ShrPtrAlloc<ContextContainerType>())
-//      : container_alloc_(alloc)
-//  {}
-//
-//  ContextContainer(const ContextContainer&) = delete;
-//  ContextContainer(ContextContainer&&) = default;
-//  ContextContainer& operator=(ContextContainer&&) = default;
-//
-//  void makeContext(const std::string &name,const FusionGroupListType
-//  &groups)
-//  {
-//    if(container_.find(name) != container_.end()) {
-//      throw fusion::ContextDuplicateError(name);
-//    }
-//    container_.insert(name,FusionContext(groups));
-//  }
-//
-//  private:
-//    ContextContainerTypeAllocator container_alloc_;
-//    ContextContainerType container_;
-//};
-
-} // namespace fusion
+}

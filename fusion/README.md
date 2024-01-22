@@ -57,9 +57,13 @@ Pull the DPR, build and run the local testbench, create the doxygen docs.
 The dpr is on branch jeffnye-gh/fusion_dpr
 
 ```
-cd fusion
-mkdir -p release; cd release
-cmake ..
+<build the release version of olympia>
+cd riscv-perf-model
+mkdir release; cd release; cmake .. -DCMAKE_BUILD_TYPE=Release
+
+<build/run fusion>
+cd ../fusion
+mkdir -p release; cd release; cmake ..
 make -j32 regress
 make docs
 ```

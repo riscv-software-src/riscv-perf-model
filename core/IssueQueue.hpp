@@ -145,4 +145,5 @@ namespace olympia
 
     using IssueQueueFactory =
         sparta::ResourceFactory<olympia::IssueQueue, olympia::IssueQueue::IssueQueueParameterSet>;
+    class IssueQueueTester;
 } // namespace olympia

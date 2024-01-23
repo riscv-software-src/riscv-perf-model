@@ -97,6 +97,64 @@ namespace olympia
         uint32_t   execute_time_ = 0;
         bool       is_load_store_ = false;
     };
+    /*
+    CMOV,
+            DIV,
+            FADDSUB,
+            FLOAT,
+            FMAC,
+            I2F,
+            F2I,
+            INT,
+            LSU,
+            MUL,
+            SYS,
+            UNKNOWN
+    */
+    inline std::ostream & operator<<(std::ostream & os, const InstArchInfo::TargetPipe & unit) {
+        switch(unit) {
+            case InstArchInfo::TargetPipe::BR:
+                os << "BR";
+                break;
+            case InstArchInfo::TargetPipe::CMOV:
+                os << "CMOV";
+                break;
+            case InstArchInfo::TargetPipe::DIV:
+                os << "DIV";
+                break;
+            case InstArchInfo::TargetPipe::FADDSUB:
+                os << "FADDSUB";
+                break;
+            case InstArchInfo::TargetPipe::FLOAT:
+                os << "FLOAT";
+                break;
+            case InstArchInfo::TargetPipe::FMAC:
+                os << "FMAC";
+                break;
+            case InstArchInfo::TargetPipe::I2F:
+                os << "I2F";
+                break;
+            case InstArchInfo::TargetPipe::F2I:
+                os << "F2I";
+                break;
+            case InstArchInfo::TargetPipe::INT:
+                os << "INT";
+                break;
+            case InstArchInfo::TargetPipe::LSU:
+                os << "LSU";
+                break;
+            case InstArchInfo::TargetPipe::MUL:
+                os << "MUL";
+                break;
+            case InstArchInfo::TargetPipe::SYS:
+                os << "SYS";
+                break;
+                
+            case InstArchInfo::TargetPipe::UNKNOWN:
+                throw sparta::SpartaException("Got UNKNOWN/NONE target pipe.");
+        }
+        return os;
+    }
 
     inline std::ostream & operator<<(std::ostream & os, const InstArchInfo::TargetUnit & unit) {
         switch(unit) {

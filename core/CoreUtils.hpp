@@ -54,6 +54,7 @@ namespace olympia::coreutils
             return core_types::RF_FLOAT;
         }
         sparta_assert(false, "Not supported this target: " << target_name);
+        return core_types::RF_INVALID;
     }
 
 }

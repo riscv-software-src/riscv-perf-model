@@ -70,7 +70,7 @@ namespace olympia
         // Reset the bandwidth
         void reset() { num_can_dispatch_ = 1; }
 
-        uint32_t getCredits() {return unit_credits_;}
+        uint32_t getCredits() const {return unit_credits_;}
 
     private:
         uint32_t unit_credits_ = 0;

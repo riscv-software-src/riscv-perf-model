@@ -66,31 +66,38 @@ namespace olympia
             so when we have an instruction, we can get the target pipe of an instruction and lookup
            available execution units
         */
-        std::unordered_map<std::string, int> pipe_to_iq_number;
+        std::unordered_map<std::string, int> exe_pipe_to_iq_number;
 
         for (size_t i = 0; i < issue_queues_.size(); ++i)
         {
-            for (const auto & alu_name : issue_queue_topology_[i])
+            // loop through execution units in each definition of the issue queue topology
+            // "alu0", "alu1"
+            for (const auto & exe_name : issue_queue_topology_[i])
             {
+                // we need to find the corresponding exe_pipe_ with the same name, search through
+                // exe_pipe_tns_
                 for (const auto & exe_pipe_tns : exe_pipe_tns_)
                 {
                     olympia::ExecutePipe* exe_pipe =
                         exe_pipe_tns->getResourceAs<olympia::ExecutePipe*>();
-                    const std::string exe_unit_name = exe_pipe->getName();
-
-                    if (alu_name == exe_unit_name)
+                    const std::string exe_pipe_name = exe_pipe->getName();
+                    // check if the names match, then we have the correct exe_pipe_
+                    if (exe_name == exe_pipe_name)
                     {
-                        olympia::IssueQueue* my_issue_queue =
+                        olympia::IssueQueue* issue_queue =
                             issue_queues_[i]->getResourceAs<olympia::IssueQueue*>();
-                        my_issue_queue->setExePipe(exe_unit_name, exe_pipe);
-                        pipe_to_iq_number[exe_unit_name] = i;
+                        // set in the issue_queue the corresponding exe_pipe
+                        issue_queue->setExePipe(exe_pipe_name, exe_pipe);
+                        // establish a mapping of execution_pipe type to which issue_queue number it
+                        // is
+                        exe_pipe_to_iq_number[exe_pipe_name] = i;
                     }
                 }
             }
         }
 
         auto setup_issue_queue_tgts =
-            [this, &pipe_to_iq_number](sparta::TreeNode* node, std::string exe_unit)
+            [this, &exe_pipe_to_iq_number](sparta::TreeNode* node, std::string exe_unit)
         {
             std::string topology_string = "pipe_topology_" + exe_unit + "_pipes";
             auto pipe_topology =
@@ -98,17 +105,19 @@ namespace olympia
 
             for (size_t i = 0; i < pipe_topology.size(); ++i)
             {
+                // loop through pipe topology, which defines pipes per execution unit:
+                // ["INT", "MUL"] -> ALU0 supports pipes "INT", "MUL"
+                // so we're looping on "INT" and "MUL" to set the mapping of:
+                // "INT": ["alu0", "alu1"] in the issue_queue
                 for (size_t j = 0; j < pipe_topology[i].size(); ++j)
                 {
-                    const std::string pipe_name = pipe_topology[i][j];
+                    const auto pipe_name = pipe_topology[i][j];
                     const auto tgt_pipe = InstArchInfo::execution_pipe_map.find(pipe_name);
-                    const std::string exe_unit_name = exe_unit + std::to_string(i);
-                    // because we don't know how many different pipes for each type are defined in
-                    // the issue queue topology definition we have to iterate through all issue
-                    // queue elements and do a look up, so iq_num does not always equal i. i is the
-                    // iterator through pipe_topology, of which we then look up it's corresponding
-                    // issue queue number in the issue_queues_ based on the execution name.
-                    const int iq_num = pipe_to_iq_number.at(exe_unit_name);
+                    const auto exe_unit_name = exe_unit + std::to_string(i);
+                    // iq_num is the issue queue number based on the execution name, as we are
+                    // looping through the pipe types for a execution unit, we don't know which
+                    // issue queue it maps to, unless we use a map
+                    const auto iq_num = exe_pipe_to_iq_number.at(exe_unit_name);
                     olympia::IssueQueue* my_issue_queue =
                         issue_queues_[iq_num]->getResourceAs<olympia::IssueQueue*>();
 

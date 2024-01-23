@@ -78,13 +78,12 @@ namespace olympia
 
         IssueQueue(sparta::TreeNode* node, const IssueQueueParameterSet* p);
         static const char name[];
-        void setExePipe(std::string exe_pipe_name, olympia::ExecutePipe* exe_pipe);
-        void setExePipeMapping(InstArchInfo::TargetPipe tgt_pipe, olympia::ExecutePipe* exe_pipe);
+        void setExePipe(const std::string & exe_pipe_name, olympia::ExecutePipe* exe_pipe);
+        void setExePipeMapping(const InstArchInfo::TargetPipe tgt_pipe,
+                               olympia::ExecutePipe* exe_pipe);
+        typedef std::unordered_map<std::string, olympia::ExecutePipe*> StringToExePipe;
 
-        std::unordered_map<std::string, olympia::ExecutePipe*> const getExePipes()
-        {
-            return exe_pipes_;
-        };
+        StringToExePipe const getExePipes() { return exe_pipes_; };
 
       private:
         // Scoreboards
@@ -117,7 +116,7 @@ namespace olympia
             &unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
         // mapping used to lookup based on execution unit name
         // {"alu0": ExecutePipe0}
-        std::unordered_map<std::string, olympia::ExecutePipe*> exe_pipes_;
+        StringToExePipe exe_pipes_;
         // mapping of target pipe -> vector of execute pipes
         // i.e {"INT", <ExecutePipe0, ExecutePipe1>}
         std::unordered_map<InstArchInfo::TargetPipe, std::vector<olympia::ExecutePipe*>>
@@ -127,8 +126,6 @@ namespace olympia
         std::vector<std::string> exe_unit_str_;
         const core_types::RegFile reg_file_;
         IssueQueueSorter iq_sorter;
-        // Ready queue
-        // typedef std::list<InstPtr> ReadyQueue({IssueQueueSorter(&iq_sorter)});
         sparta::PriorityQueue<InstPtr, IssueQueueSorter>
             ready_queue_;                // queue for instructions that have operands ready
         std::list<InstPtr> issue_queue_; // instructions that have been sent from dispatch,

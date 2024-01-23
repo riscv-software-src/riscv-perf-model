@@ -91,7 +91,7 @@ namespace olympia
                 Iterate onto alu0, look at pipe_toplology_alu_pipes[0] which is "int",
                 set in pipe_map_ "int": issue_queue0 dispatcher
         */
-        auto setup_pipe_map = [this, issue_queue_pipe_topology, node](const std::string exe_unit)
+        auto setup_pipe_map = [this, issue_queue_pipe_topology, node](const std::string & exe_unit)
         {
             auto exe_unit_pipe_topology = olympia::coreutils::getPipeTopology(
                 node->getParent(), "pipe_topology_" + exe_unit + "_pipes");
@@ -129,12 +129,12 @@ namespace olympia
                 for (size_t k = 0; k < issue_queue_pipe_topology[j].size(); ++k)
                 {
                     // loop through each element in an issue queue, i.e "alu0", "alu1"
-                    std::string tgt_unit_name = issue_queue_pipe_topology[j][k];
+                    const std::string tgt_unit_name = issue_queue_pipe_topology[j][k];
                     if (tgt_unit_name.find(exe_unit) != std::string::npos)
                     {
                         // find the corresponding pipes for the target unit, i.e "alu0" can take
                         // pipe targets of "INT", "MUL"
-                        std::vector<std::string> pipes = exe_unit_to_pipe_mapping[tgt_unit_name];
+                        const std::vector<std::string> & pipes = exe_unit_to_pipe_mapping[tgt_unit_name];
                         // for each pipe target, insert into a map that defines a pipe to issue
                         // queue target: "INT": ["iq0", "iq1"] "MUL": ["iq2"]
                         for (auto pipe : pipes)

@@ -70,12 +70,12 @@ namespace olympia
         }
     }
 
-    void IssueQueue::setExePipe(std::string exe_pipe_name, olympia::ExecutePipe* exe_pipe)
+    void IssueQueue::setExePipe(const std::string & exe_pipe_name, olympia::ExecutePipe* exe_pipe)
     {
         exe_pipes_[exe_pipe_name] = exe_pipe;
     }
 
-    void IssueQueue::setExePipeMapping(InstArchInfo::TargetPipe tgt_pipe,
+    void IssueQueue::setExePipeMapping(const InstArchInfo::TargetPipe tgt_pipe,
                                        olympia::ExecutePipe* exe_pipe)
     {
         if (pipe_exe_pipe_mapping_.find(tgt_pipe) == pipe_exe_pipe_mapping_.end())

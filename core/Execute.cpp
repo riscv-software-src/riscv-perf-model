@@ -80,7 +80,7 @@ namespace olympia
                 {
                     olympia::ExecutePipe* exe_pipe =
                         exe_pipe_tns->getResourceAs<olympia::ExecutePipe*>();
-                    const std::string exe_pipe_name = exe_pipe->getName();
+                    const std::string exe_pipe_name = exe_pipe_tns->getName();
                     // check if the names match, then we have the correct exe_pipe_
                     if (exe_name == exe_pipe_name)
                     {

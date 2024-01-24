@@ -21,7 +21,7 @@ namespace olympia::coreutils
         auto execution_topology_param = sparta::notNull(core_extension_params)->getParameter("execution_topology");
         return sparta::notNull(execution_topology_param)->getValueAs<olympia::CoreExtensions::ExecutionTopology>();
     }
-    inline auto getPipeTopology(sparta::TreeNode * node, std::string pipe_name)
+    inline auto getPipeTopology(sparta::TreeNode * node, const std::string & pipe_name)
     {
         auto core_extension           = node->getExtension(olympia::CoreExtensions::name);
         auto core_extension_params    = sparta::notNull(core_extension)->getParameters();

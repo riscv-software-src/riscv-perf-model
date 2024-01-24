@@ -29,8 +29,6 @@ namespace olympia
 
     void IssueQueue::setupIssueQueue_()
     {
-        // std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
-        // core_types::RF_FLOAT};
         //  if we ever move to multicore, we only want to have resources look for scoreboard in
         //  their cpu if we're running a test where we only have top.rename or top.issue_queue, then
         //  we can just use the root
@@ -39,13 +37,8 @@ namespace olympia
         {
             cpu_node = getContainer()->getRoot();
         }
-        scoreboard_views_[reg_file_].reset(new sparta::ScoreboardView(
+        scoreboard_views_.reset(new sparta::ScoreboardView(
             getContainer()->getName(), core_types::regfile_names[reg_file_], cpu_node));
-        // for (const auto rf : reg_files)
-        // {
-        //     scoreboard_views_[rf].reset(new sparta::ScoreboardView(
-        //         getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
-        // }
         out_scheduler_credits_.send(scheduler_size_);
     }
 
@@ -99,7 +92,7 @@ namespace olympia
     {
         // FIXME: Now every source operand should be ready
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
-        if (scoreboard_views_[reg_file_]->isSet(src_bits))
+        if (scoreboard_views_->isSet(src_bits))
         {
             // Insert at the end if we are doing in order issue or if the scheduler is
             // empty
@@ -111,7 +104,7 @@ namespace olympia
         }
         else
         {
-            scoreboard_views_[reg_file_]->registerReadyCallback(
+            scoreboard_views_->registerReadyCallback(
                 src_bits, ex_inst->getUniqueID(),
                 [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
                 { this->handleOperandIssueCheck_(ex_inst); });
@@ -181,7 +174,7 @@ namespace olympia
             {
                 issue_queue_.erase(delete_iter);
 
-                scoreboard_views_[reg_file_]->clearCallbacks(inst_ptr->getUniqueID());
+                scoreboard_views_->clearCallbacks(inst_ptr->getUniqueID());
 
                 ++credits_to_send;
 

@@ -99,7 +99,7 @@ namespace olympia
             // Get mapping of execution units
             for (size_t i = 0; i < exe_unit_pipe_topology.size(); ++i)
             {
-                std::string unit_name = exe_unit + std::to_string(i);
+                const std::string unit_name = exe_unit + std::to_string(i);
                 exe_unit_to_pipe_mapping[unit_name] = exe_unit_pipe_topology[i];
             }
             std::unordered_map<std::string, Dispatcher*> string_to_dispatcher;

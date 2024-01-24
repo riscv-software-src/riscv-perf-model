@@ -88,7 +88,7 @@ namespace olympia
       private:
         // Scoreboards
         using ScoreboardViews =
-            std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+            std::unique_ptr<sparta::ScoreboardView>;
         ScoreboardViews scoreboard_views_;
 
         // Tick events

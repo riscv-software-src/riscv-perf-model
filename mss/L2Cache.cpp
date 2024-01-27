@@ -88,13 +88,13 @@ namespace olympia_mss
 
     	// In Port Handler registration
         in_dcache_l2cache_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromDCache_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromDCache_, olympia::MemoryAccessInfoPtr));
 
         in_icache_l2cache_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromICache_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getReqFromICache_, olympia::MemoryAccessInfoPtr));
 
         in_biu_resp_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getRespFromBIU_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getRespFromBIU_, olympia::MemoryAccessInfoPtr));
 
         in_biu_ack_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getAckFromBIU_, uint32_t));
@@ -145,33 +145,33 @@ namespace olympia_mss
     }
 
     // Receive new L2Cache request from DCache
-    void L2Cache::getReqFromDCache_(const olympia::InstPtr & inst_ptr) {
+    void L2Cache::getReqFromDCache_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr) {
 
         ILOG("Request received from DCache on the port");
 
-        appendDCacheReqQueue_(inst_ptr);
+        appendDCacheReqQueue_(memory_access_info_ptr);
 
         ev_handle_dcache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
         ++num_reqs_from_dcache_;
     }
 
     // Receive new L2Cache request from ICache
-    void L2Cache::getReqFromICache_(const olympia::InstPtr & inst_ptr) {
+    void L2Cache::getReqFromICache_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr) {
 
         ILOG("Request received from ICache on the port");
 
-        appendICacheReqQueue_(inst_ptr);
+        appendICacheReqQueue_(memory_access_info_ptr);
 
         ev_handle_icache_l2cache_req_.schedule(sparta::Clock::Cycle(0));
         ++num_reqs_from_icache_;
     }
 
     // Handle BIU resp
-    void L2Cache::getRespFromBIU_(const olympia::InstPtr & inst_ptr) {
+    void L2Cache::getRespFromBIU_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr) {
 
         ILOG("Response received from BIU on the port");
 
-        appendBIURespQueue_(inst_ptr);
+        appendBIURespQueue_(memory_access_info_ptr);
 
         // Schedule BIU resp handling event only when:
         // Request queue is not empty
@@ -281,14 +281,14 @@ namespace olympia_mss
 
         if (arbitration_winner == Channel::BIU) {
 
-            const olympia::InstPtr &instPtr = biu_resp_queue_.front();
+            const olympia::MemoryAccessInfoPtr &memory_access_info_ptr = biu_resp_queue_.front();
 
             // Function to check if the request to the given cacheline is present in the miss_pending_buffer_
-            auto getCacheLine = [this] (auto inst_ptr) { return inst_ptr->getRAdr() >> shiftBy_; };
-            auto const inst_cl = getCacheLine(instPtr);
+            auto getCacheLine = [this] (auto memory_access_info_ptr) { return memory_access_info_ptr->getPhyAddr() >> shiftBy_; };
+            auto const inst_cl = getCacheLine(memory_access_info_ptr);
 
-            auto is_cl_present = [inst_cl, getCacheLine] (auto reqPtr)
-                        { return getCacheLine(reqPtr->getInstPtr()) == inst_cl; };
+            auto is_cl_present = [inst_cl, getCacheLine] (auto req)
+                        { return getCacheLine(req) == inst_cl; };
 
             auto req = std::find_if(miss_pending_buffer_.begin(), miss_pending_buffer_.end(), is_cl_present);
 
@@ -326,7 +326,7 @@ namespace olympia_mss
         else if (arbitration_winner == Channel::ICACHE) {
 
             const auto &reqPtr = sparta::allocate_sparta_shared_pointer<olympia::MemoryAccessInfo>(memory_access_allocator_,
-                                                                         icache_req_queue_.front());
+                                                                         *(icache_req_queue_.front()));
 
             reqPtr->setSrcUnit(L2ArchUnit::ICACHE);
             reqPtr->setDestUnit(L2ArchUnit::ICACHE);
@@ -342,7 +342,7 @@ namespace olympia_mss
         else if (arbitration_winner == Channel::DCACHE) {
 
             const auto &reqPtr = sparta::allocate_sparta_shared_pointer<olympia::MemoryAccessInfo>(memory_access_allocator_,
-                                                                         dcache_req_queue_.front());
+                                                                         *(dcache_req_queue_.front()));
 
             reqPtr->setSrcUnit(L2ArchUnit::DCACHE);
             reqPtr->setDestUnit(L2ArchUnit::DCACHE);
@@ -397,7 +397,7 @@ namespace olympia_mss
     // Pipeline Stage CACHE_LOOKUP
     void L2Cache::handleCacheAccessRequest_() {
         const auto req = l2cache_pipeline_[stages_.CACHE_LOOKUP];
-        ILOG("Pipeline stage CACHE_LOOKUP : " << req->getInstPtr());
+        ILOG("Pipeline stage CACHE_LOOKUP : " << req);
 
         const L2CacheState cacheLookUpResult = cacheLookup_(req);
 
@@ -407,9 +407,9 @@ namespace olympia_mss
             if (cacheLookUpResult == L2CacheState::MISS) {
 
                 // Reload cache line
-                reloadCache_(req->getInstPtr()->getRAdr());
+                reloadCache_(req->getPhyAddr());
 
-                ILOG("Reload Complete: phyAddr=0x" << std::hex << req->getInstPtr()->getRAdr());
+                ILOG("Reload Complete: phyAddr=0x" << std::hex << req->getPhyAddr());
             }
 
             req->setCacheState(L2CacheState::HIT);
@@ -424,7 +424,7 @@ namespace olympia_mss
     // Pipeline Stage HIT_MISS_HANDLING
     void L2Cache::handleCacheAccessResult_() {
         const auto req = l2cache_pipeline_[stages_.HIT_MISS_HANDLING];
-        ILOG("Pipeline stage HIT_MISS_HANDLING : " << req->getInstPtr());
+        ILOG("Pipeline stage HIT_MISS_HANDLING : " << req);
 
         --inFlight_reqs_;
 
@@ -437,7 +437,7 @@ namespace olympia_mss
             // If it was a hit in L2Cache, return the request back to where it originally came from.
             //
             // Send out the resp to the original SrcUnit -- which is now the DestUnit.
-            sendOutResp_(req->getDestUnit(), req->getInstPtr());
+            sendOutResp_(req->getDestUnit(), req);
         }
         else { // if (req->getCacheState() == L2CacheState::MISS)
 
@@ -456,7 +456,7 @@ namespace olympia_mss
             }
 
             // Function to check if the request to the given cacheline is present in the miss_pending_buffer_
-            auto getCacheLine = [this] (auto reqPtr) { return reqPtr->getInstPtr()->getRAdr() >> shiftBy_; };
+            auto getCacheLine = [this] (auto reqPtr) { return reqPtr->getPhyAddr() >> shiftBy_; };
             const auto req_cl = getCacheLine(req);
 
             auto is_cl_present = [&req, req_cl, getCacheLine] (auto reqPtr)
@@ -466,7 +466,7 @@ namespace olympia_mss
             auto reqIter = std::find_if(miss_pending_buffer_.rbegin(), miss_pending_buffer_.rend(), is_cl_present);
 
             if (reqIter == miss_pending_buffer_.rend()) {
-                sendOutReq_(req->getDestUnit(), req->getInstPtr());
+                sendOutReq_(req->getDestUnit(), req);
             }
             else {
                 // Found a request to same cacheLine.
@@ -481,75 +481,75 @@ namespace olympia_mss
     ////////////////////////////////////////////////////////////////////////////////
 
     // Append L2Cache request queue for reqs from DCache
-    void L2Cache::appendDCacheReqQueue_(const olympia::InstPtr& inst_ptr) {
+    void L2Cache::appendDCacheReqQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr) {
         sparta_assert(dcache_req_queue_.size() <= dcache_req_queue_size_ ,"DCache request queue overflows!");
 
         // Push new requests from back
-        dcache_req_queue_.emplace_back(inst_ptr);
+        dcache_req_queue_.emplace_back(memory_access_info_ptr);
         ILOG("Append DCache->L2Cache request queue!");
     }
 
     // Append L2Cache request queue for reqs from ICache
-    void L2Cache::appendICacheReqQueue_(const olympia::InstPtr& inst_ptr) {
+    void L2Cache::appendICacheReqQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr) {
         sparta_assert(icache_req_queue_.size() <= icache_req_queue_size_ ,"ICache request queue overflows!");
 
         // Push new requests from back
-        icache_req_queue_.emplace_back(inst_ptr);
+        icache_req_queue_.emplace_back(memory_access_info_ptr);
         ILOG("Append ICache->L2Cache request queue!");
     }
 
     // Append BIU resp queue
-    void L2Cache::appendBIURespQueue_(const olympia::InstPtr& inst_ptr) {
+    void L2Cache::appendBIURespQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr) {
         sparta_assert(biu_resp_queue_.size() <= biu_resp_queue_size_ ,"BIU resp queue overflows!");
 
         // Push new requests from back
-        biu_resp_queue_.emplace_back(inst_ptr);
+        biu_resp_queue_.emplace_back(memory_access_info_ptr);
 
         ILOG("Append BIU->L2Cache resp queue!");
     }
 
     // Append DCache resp queue
-    void L2Cache::appendDCacheRespQueue_(const olympia::InstPtr& inst_ptr) {
+    void L2Cache::appendDCacheRespQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr) {
         sparta_assert(dcache_resp_queue_.size() <= dcache_resp_queue_size_ ,"DCache resp queue overflows!");
 
         // Push new resp to the dcache_resp_queue_
-        dcache_resp_queue_.emplace_back(inst_ptr);
+        dcache_resp_queue_.emplace_back(memory_access_info_ptr);
         ev_handle_l2cache_dcache_resp_.schedule(sparta::Clock::Cycle(0));
 
         ILOG("Append L2Cache->DCache resp queue!");
     }
 
     // Append ICache resp queue
-    void L2Cache::appendICacheRespQueue_(const olympia::InstPtr& inst_ptr) {
+    void L2Cache::appendICacheRespQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr) {
         sparta_assert(icache_resp_queue_.size() <= icache_resp_queue_size_ ,"ICache resp queue overflows!");
 
         // Push new resp to the icache_resp_queue_
-        icache_resp_queue_.emplace_back(inst_ptr);
+        icache_resp_queue_.emplace_back(memory_access_info_ptr);
         ev_handle_l2cache_icache_resp_.schedule(sparta::Clock::Cycle(0));
 
         ILOG("Append L2Cache->ICache resp queue!");
     }
 
     // Append BIU req queue
-    void L2Cache::appendBIUReqQueue_(const olympia::InstPtr& inst_ptr) {
+    void L2Cache::appendBIUReqQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr) {
         sparta_assert(biu_req_queue_.size() <= biu_req_queue_size_ ,"BIU req queue overflows!");
 
         // Push new request to the biu_req_queue_ if biu credits are available with the L2Cache
-        biu_req_queue_.emplace_back(inst_ptr);
+        biu_req_queue_.emplace_back(memory_access_info_ptr);
         ev_handle_l2cache_biu_req_.schedule(sparta::Clock::Cycle(0));
 
         ILOG("Append L2Cache->BIU req queue");
     }
 
     // Return the resp to the master units
-    void L2Cache::sendOutResp_(const L2ArchUnit &unit, const olympia::InstPtr& instPtr) {
-        // if (instPtr is originally from DCache)
+    void L2Cache::sendOutResp_(const L2ArchUnit &unit, const olympia::MemoryAccessInfoPtr& MemoryAccessInfoPtr) {
+        // if (MemoryAccessInfoPtr is originally from DCache)
         if (unit == L2ArchUnit::DCACHE) {
-            appendDCacheRespQueue_(instPtr);
+            appendDCacheRespQueue_(MemoryAccessInfoPtr);
         }
-        // if (instPtr is originally from ICache)
+        // if (MemoryAccessInfoPtr is originally from ICache)
         else if (unit == L2ArchUnit::ICACHE) {
-            appendICacheRespQueue_(instPtr);
+            appendICacheRespQueue_(MemoryAccessInfoPtr);
         }
         else {
             sparta_assert(false, "Resp is being sent to a Unit that is not valid");
@@ -557,10 +557,10 @@ namespace olympia_mss
     }
 
     // Send the request to the slave units
-    void L2Cache::sendOutReq_(const L2ArchUnit &unit, const olympia::InstPtr& instPtr) {
-        // if (instPtr is destined for BIU on L2Cache miss)
+    void L2Cache::sendOutReq_(const L2ArchUnit &unit, const olympia::MemoryAccessInfoPtr& MemoryAccessInfoPtr) {
+        // if (MemoryAccessInfoPtr is destined for BIU on L2Cache miss)
         if (unit == L2ArchUnit::BIU) {
-            appendBIUReqQueue_(instPtr);
+            appendBIUReqQueue_(MemoryAccessInfoPtr);
         }
         else {
             sparta_assert(false, "Request is being sent to a Unit that is not valid");
@@ -622,8 +622,7 @@ namespace olympia_mss
 
     // Cache lookup for a HIT or MISS on a given request
     L2Cache::L2CacheState L2Cache::cacheLookup_(olympia::MemoryAccessInfoPtr mem_access_info_ptr) {
-        const olympia::InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t phyAddr = inst_ptr->getRAdr();
+        uint64_t phyAddr = mem_access_info_ptr->getPhyAddr();
 
         bool cache_hit = false;
 

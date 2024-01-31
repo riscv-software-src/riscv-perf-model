@@ -65,6 +65,8 @@ namespace olympia
 
         MemoryAccessInfo() = delete;
 
+        MemoryAccessInfo(const MemoryAccessInfo &rhs) = default;
+
         MemoryAccessInfo(const InstPtr & inst_ptr) :
             ldst_inst_ptr_(inst_ptr),
             phy_addr_ready_(false),
@@ -101,6 +103,10 @@ namespace olympia
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
+
+        uint64_t getPhyAddr() const { return ldst_inst_ptr_->getRAdr(); }
+
+        sparta::memory::addr_t getVAddr() const { return ldst_inst_ptr_->getTargetVAddr(); }
 
         void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
 
@@ -167,11 +173,6 @@ namespace olympia
         // (Note : Currently used only to track request with same cacheline in L2Cache
         // Not for functional/performance purpose)
         MemoryAccessInfoPtr next_req_ = nullptr;
-
-        // Scoreboards
-        using ScoreboardViews =
-            std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
-        ScoreboardViews scoreboard_views_;
 
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;

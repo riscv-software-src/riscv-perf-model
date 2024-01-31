@@ -14,7 +14,7 @@
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/resources/Pipe.hpp"
 
-#include "Inst.hpp"
+#include "MemoryAccessInfo.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 
@@ -53,7 +53,7 @@ namespace olympia_mss
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::SyncInPort<olympia::InstPtr> in_mss_req_sync_
+        sparta::SyncInPort<olympia::MemoryAccessInfoPtr> in_mss_req_sync_
             {&unit_port_set_, "in_mss_req_sync", getClock()};
 
 
@@ -86,7 +86,7 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Receive new MSS request from BIU
-        void getReqFromBIU_(const olympia::InstPtr &);
+        void getReqFromBIU_(const olympia::MemoryAccessInfoPtr &);
 
         // Handle MSS request
         void handle_MSS_req_();

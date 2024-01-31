@@ -18,7 +18,6 @@
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
-//#include "CorePEvents.hpp"
 
 namespace olympia
 {

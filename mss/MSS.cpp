@@ -17,7 +17,7 @@ namespace olympia_mss
         mss_latency_(p->mss_latency)
     {
         in_mss_req_sync_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(MSS, getReqFromBIU_, olympia::MemoryAccessInfoPtr));
         in_mss_req_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
         ILOG("MSS construct: #" << node->getGroupIdx());
@@ -29,9 +29,9 @@ namespace olympia_mss
     ////////////////////////////////////////////////////////////////////////////////
 
     // Receive new MSS request from BIU
-    void MSS::getReqFromBIU_(const olympia::InstPtr & inst_ptr)
+    void MSS::getReqFromBIU_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr)
     {
-        sparta_assert((inst_ptr != nullptr), "MSS is not handling a valid request!");
+        sparta_assert((memory_access_info_ptr != nullptr), "MSS is not handling a valid request!");
 
         // Handle MSS request event can only be scheduled when MMS is not busy
         if (!mss_busy_) {

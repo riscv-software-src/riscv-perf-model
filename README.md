@@ -155,6 +155,39 @@ dyff between baseline.yaml always_hit_DL1.yaml
    -l top.*.*.decode info decode_rob.log \
    -l top.*.*.rob    info decode_rob.log
 ```
+### Generate PEvents (for Correlation)
+
+PEvents or Performance Events are part of the Sparta Modeling
+Framework typically used to correlate a performance model with RTL.
+Unlike pipeout collection Name/Value Definition Pairs (see an example
+in
+[Inst.hpp](https://github.com/riscv-software-src/riscv-perf-model/blob/db6c2f1878381389966544d7844c7d10c557083e/core/Inst.hpp#L330)),
+PEvent Name/Value Definitions are typically more compact.  Below the
+surface, Sparta uses the logging infrastructure to collect the data.
+
+Olympia has instrumented a few PEvents as an example.  The following
+commands are useful in listing/using this functionality.
+
+```
+# Dump the list of supported PEvents
+./olympia --help-pevents --no-run
+
+# Generate RETIRE only pevents for the first 100 instructions of Dhrystone
+./olympia traces/dhry_riscv.zstf --pevents retire.out RETIRE -i100
+
+# Generate COMPLETE only pevents ...
+./olympia traces/dhry_riscv.zstf --pevents complete.out COMPLETE -i100
+
+# Generate COMPLETE pevents into complete.out and RETIRE pevents into retire.out ...
+./olympia traces/dhry_riscv.zstf --pevents retire.out RETIRE --pevents complete.out COMPLETE -i100
+
+# Generate RETIRE and COMPLETE pevents to the same file
+./olympia traces/dhry_riscv.zstf --pevents complete_retire.out RETIRE,COMPLETE -i100
+
+# Generate all pevents
+./olympia traces/dhry_riscv.zstf --pevents complete_retire.out ALL -i100
+```
+
 ### Generate Reports
 ```
 # Run with 1M instructions, generate a report from the top of the tree

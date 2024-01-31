@@ -12,7 +12,7 @@
 #include "sparta/collection/Collectable.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
-#include "Inst.hpp"
+#include "MemoryAccessInfo.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 
@@ -56,7 +56,7 @@ namespace olympia_mss
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataInPort<olympia::InstQueue::value_type> in_biu_req_
+        sparta::DataInPort<olympia::MemoryAccessInfoPtr> in_biu_req_
             {&unit_port_set_, "in_biu_req", 1};
 
         sparta::SyncInPort<bool> in_mss_ack_sync_
@@ -70,10 +70,10 @@ namespace olympia_mss
         sparta::DataOutPort<uint32_t> out_biu_ack_
             {&unit_port_set_, "out_biu_ack"};
 
-        sparta::DataOutPort<olympia::InstPtr> out_biu_resp_
+        sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_biu_resp_
             {&unit_port_set_, "out_biu_resp"};
 
-        sparta::SyncOutPort<olympia::InstPtr> out_mss_req_sync_
+        sparta::SyncOutPort<olympia::MemoryAccessInfoPtr> out_mss_req_sync_
             {&unit_port_set_, "out_mss_req_sync", getClock()};
 
 
@@ -81,7 +81,7 @@ namespace olympia_mss
         // Internal States
         ////////////////////////////////////////////////////////////////////////////////
 
-        using BusRequestQueue = std::list<olympia::InstPtr>;
+        using BusRequestQueue = std::list<olympia::MemoryAccessInfoPtr>;
         BusRequestQueue biu_req_queue_;
 
         const uint32_t biu_req_queue_size_;
@@ -112,7 +112,7 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Receive new BIU request from L2Cache
-        void receiveReqFromL2Cache_(const olympia::InstPtr &);
+        void receiveReqFromL2Cache_(const olympia::MemoryAccessInfoPtr &);
 
         // Handle BIU request
         void handle_BIU_Req_();
@@ -135,6 +135,6 @@ namespace olympia_mss
         ////////////////////////////////////////////////////////////////////////////////
 
         // Append BIU request queue
-        void appendReqQueue_(const olympia::InstPtr &);
+        void appendReqQueue_(const olympia::MemoryAccessInfoPtr &);
     };
 }

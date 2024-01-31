@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include "core/MemoryAccessInfo.hpp"
 #include "core/InstGenerator.hpp"
 #include "core/MavisUnit.hpp"
 #include "mavis/ExtractorDirectInfo.h"
@@ -41,7 +42,7 @@ namespace l2cache_test
             sparta_assert(mavis_facade_ != nullptr, "Could not find the Mavis Unit");
 
             in_source_resp_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveInst_, olympia::InstPtr));
+                (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveInst_, olympia::MemoryAccessInfoPtr));
             in_source_ack_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveAck_, uint32_t));
 
@@ -72,7 +73,9 @@ namespace l2cache_test
                     dinst = inst_generator_->getNextInst(getClock());
                     dinst->setUniqueID(unique_id_++);
 
-                    req_inst_queue_.emplace_back(dinst);
+                    olympia::MemoryAccessInfoPtr mem_info_ptr(new olympia::MemoryAccessInfo(dinst));
+
+                    req_inst_queue_.emplace_back(mem_info_ptr);
                     ev_req_inst_.schedule(schedule_time_);
 
                     schedule_time_ += delay_btwn_insts_;
@@ -82,7 +85,7 @@ namespace l2cache_test
 
         void req_inst_() {
 
-            ILOG("Instruction: '" << req_inst_queue_.front() << "' Requested");
+            ILOG("Instruction: '" << req_inst_queue_.front()->getInstPtr() << "' Requested");
 
             pending_reqs_++;
             pending_acks_++;
@@ -91,9 +94,9 @@ namespace l2cache_test
             req_inst_queue_.erase(req_inst_queue_.begin());
         }
 
-        void ReceiveInst_(const olympia::InstPtr & instPtr) {
+        void ReceiveInst_(const olympia::MemoryAccessInfoPtr & mem_info_ptr) {
             pending_reqs_--;
-            ILOG("Instruction: '" << instPtr << "' Received");
+            ILOG("Instruction: '" << mem_info_ptr->getInstPtr() << "' Received");
         }
 
         void ReceiveAck_(const uint32_t & ack) {
@@ -101,11 +104,11 @@ namespace l2cache_test
             ILOG("Ack: '" << ack << "' Received");
         }
 
-        sparta::DataInPort<olympia::InstPtr>      in_source_resp_     {&unit_port_set_, "in_source_resp",
+        sparta::DataInPort<olympia::MemoryAccessInfoPtr>  in_source_resp_ {&unit_port_set_, "in_source_resp",
                 sparta::SchedulingPhase::Tick, 1};
-        sparta::DataInPort<uint32_t>              in_source_ack_ {&unit_port_set_, "in_source_ack"};
+        sparta::DataInPort<uint32_t>                      in_source_ack_  {&unit_port_set_, "in_source_ack"};
 
-        sparta::DataOutPort<olympia::InstPtr>     out_source_req_ {&unit_port_set_, "out_source_req"};
+        sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_source_req_ {&unit_port_set_, "out_source_req"};
 
         uint32_t pending_acks_ = 1;
         uint32_t pending_reqs_ = 0;
@@ -119,7 +122,7 @@ namespace l2cache_test
         sparta::UniqueEvent<> ev_req_inst_
             {&unit_event_set_, "req_inst", CREATE_SPARTA_HANDLER(L2SourceUnit, req_inst_)};
 
-        std::vector<olympia::InstPtr> req_inst_queue_;
+        std::vector<olympia::MemoryAccessInfoPtr> req_inst_queue_;
         sparta::Clock::Cycle schedule_time_ = 0;
         sparta::Clock::Cycle delay_btwn_insts_ = 0;
         bool unit_enable_;

@@ -19,7 +19,7 @@ namespace olympia_mss
         biu_latency_(p->biu_latency)
     {
         in_biu_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, receiveReqFromL2Cache_, olympia::InstPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, receiveReqFromL2Cache_, olympia::MemoryAccessInfoPtr));
 
         in_mss_ack_sync_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
@@ -41,9 +41,9 @@ namespace olympia_mss
     }
 
     // Receive new BIU request from L2Cache
-    void BIU::receiveReqFromL2Cache_(const olympia::InstPtr & inst_ptr)
+    void BIU::receiveReqFromL2Cache_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr)
     {
-        appendReqQueue_(inst_ptr);
+        appendReqQueue_(memory_access_info_ptr);
 
         // Schedule BIU request handling event only when:
         // (1)BIU is not busy, and (2)Request queue is not empty
@@ -81,9 +81,9 @@ namespace olympia_mss
     void BIU::handle_MSS_Ack_()
     {
         out_biu_resp_.send(biu_req_queue_.front(), biu_latency_);
-        
+
         biu_req_queue_.pop_front();
-        
+
         // Send out the ack to L2Cache through , we just created space in biu_req_queue_
         ev_handle_biu_l2cache_ack_.schedule(sparta::Clock::Cycle(0));
         biu_busy_ = false;
@@ -113,7 +113,7 @@ namespace olympia_mss
     }
 
     // Handle ack backto L2Cache
-    void BIU::handle_BIU_L2Cache_Ack_() 
+    void BIU::handle_BIU_L2Cache_Ack_()
     {
         uint32_t available_slots = biu_req_queue_size_ - biu_req_queue_.size();
         out_biu_ack_.send(available_slots);
@@ -126,12 +126,12 @@ namespace olympia_mss
     ////////////////////////////////////////////////////////////////////////////////
 
     // Append BIU request queue
-    void BIU::appendReqQueue_(const olympia::InstPtr& inst_ptr)
+    void BIU::appendReqQueue_(const olympia::MemoryAccessInfoPtr& memory_access_info_ptr)
     {
         sparta_assert(biu_req_queue_.size() <= biu_req_queue_size_ ,"BIU request queue overflows!");
 
         // Push new requests from back
-        biu_req_queue_.emplace_back(inst_ptr);
+        biu_req_queue_.emplace_back(memory_access_info_ptr);
 
         ILOG("Append BIU request queue!");
     }

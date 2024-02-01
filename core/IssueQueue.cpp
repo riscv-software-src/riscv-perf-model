@@ -9,8 +9,6 @@ namespace olympia
 
     IssueQueue::IssueQueue(sparta::TreeNode* node, const IssueQueueParameterSet* p) :
         sparta::Unit(node),
-        reg_file_(olympia::coreutils::determineRegisterFile(
-            node->getGroup().substr(node->getGroup().find("_") + 1))),
         ready_queue_(IssueQueueSorter(&iq_sorter)),
         scheduler_size_(p->scheduler_size),
         in_order_issue_(p->in_order_issue)
@@ -37,8 +35,12 @@ namespace olympia
         {
             cpu_node = getContainer()->getRoot();
         }
-        scoreboard_views_.reset(new sparta::ScoreboardView(
-            getContainer()->getName(), core_types::regfile_names[reg_file_], cpu_node));
+        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+        for (const auto rf : reg_files)
+        {
+            scoreboard_views_[rf].reset(new sparta::ScoreboardView(
+                getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
+        }
         out_scheduler_credits_.send(scheduler_size_);
     }
 
@@ -91,8 +93,18 @@ namespace olympia
     void IssueQueue::handleOperandIssueCheck_(const InstPtr & ex_inst)
     {
         // FIXME: Now every source operand should be ready
-        const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file_);
-        if (scoreboard_views_->isSet(src_bits))
+        auto reg_file = coreutils::determineRegisterFile(ex_inst->getUnit());
+        const auto & dests = ex_inst->getDestOpInfoList();
+        if (dests.size() > 0 && ex_inst->getUnit() != InstArchInfo::TargetUnit::BR)
+        {
+            // need to be able to catch i2f/f2i so we override with destination if one is available
+            reg_file = ex_inst->getRenameData().getDestination().rf;
+        }
+        sparta_assert(reg_file != core_types::RegFile::RF_INVALID,
+                      "Something wrong with instruction passed to issue queue, cannot determine "
+                      "register file type!");
+        const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file);
+        if (scoreboard_views_[reg_file]->isSet(src_bits))
         {
             // Insert at the end if we are doing in order issue or if the scheduler is
             // empty
@@ -104,7 +116,7 @@ namespace olympia
         }
         else
         {
-            scoreboard_views_->registerReadyCallback(
+            scoreboard_views_[reg_file]->registerReadyCallback(
                 src_bits, ex_inst->getUniqueID(),
                 [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
                 { this->handleOperandIssueCheck_(ex_inst); });
@@ -174,7 +186,8 @@ namespace olympia
             {
                 issue_queue_.erase(delete_iter);
 
-                scoreboard_views_->clearCallbacks(inst_ptr->getUniqueID());
+                scoreboard_views_[core_types::RegFile::RF_INTEGER]->clearCallbacks(
+                    inst_ptr->getUniqueID());
 
                 ++credits_to_send;
 

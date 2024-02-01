@@ -297,37 +297,39 @@ private:
 
     const std::string dispatch_ports = "dispatch.ports";
     const std::string flushmanager_ports = "flushmanager.ports";
-    auto issue_queue_topology =
-        olympia::coreutils::getPipeTopology(root_node, "issue_queue_topology");
-    auto bind_ports = [root_node](const std::string &left,
-                                  const std::string &right) {
-      sparta::bind(root_node->getChildAs<sparta::Port>(left),
-                   root_node->getChildAs<sparta::Port>(right));
+    auto issue_queue_to_pipe_map =
+        olympia::coreutils::getPipeTopology(root_node, "issue_queue_to_pipe_map");
+    auto bind_ports = [root_node](const std::string & left, const std::string & right)
+    {
+        sparta::bind(root_node->getChildAs<sparta::Port>(left),
+                      root_node->getChildAs<sparta::Port>(right));
     };
-    for (size_t i = 0; i < issue_queue_topology.size(); ++i) {
-      std::string unit_name = "iq" + std::to_string(i);
-      const std::string exe_credits_out =
-          "execute." + unit_name + ".ports.out_scheduler_credits";
-      const std::string disp_credits_in =
-          dispatch_ports + ".in_" + unit_name + "_credits";
-      bind_ports(exe_credits_out, disp_credits_in);
+    for (size_t i = 0; i < issue_queue_to_pipe_map.size(); ++i)
+    {
+        auto iq = issue_queue_to_pipe_map[i];
+        std::string unit_name = "iq" + std::to_string(i);
+        const std::string exe_credits_out =
+            "execute." + unit_name + ".ports.out_scheduler_credits";
+        const std::string disp_credits_in = dispatch_ports + ".in_" + unit_name + "_credits";
+        bind_ports(exe_credits_out, disp_credits_in);
 
-      // Bind instruction transfer
-      const std::string exe_inst_in =
-          "execute." + unit_name + ".ports.in_execute_write";
-      const std::string disp_inst_out =
-          dispatch_ports + ".out_" + unit_name + "_write";
-      bind_ports(exe_inst_in, disp_inst_out);
+        // Bind instruction transfer
+        const std::string exe_inst_in = "execute." + unit_name + ".ports.in_execute_write";
+        const std::string disp_inst_out = dispatch_ports + ".out_" + unit_name + "_write";
+        bind_ports(exe_inst_in, disp_inst_out);
+        // in_execute_pipe
+        const std::string exe_pipe_in = "execute." + unit_name + ".ports.in_execute_pipe";
 
-      // in_execute_pipe
-      const std::string exe_pipe_in =
-          "execute." + unit_name + ".ports.in_execute_pipe";
-
-      for (auto exe_unit : issue_queue_topology[i]) {
-        const std::string exe_pipe_out =
-            "execute." + exe_unit + ".ports.out_execute_pipe";
-        bind_ports(exe_pipe_in, exe_pipe_out);
-      }
+        auto pipe_target_start = stoi(iq[0]);
+        auto pipe_target_end = stoi(iq[0]);
+        if(iq.size() > 1){
+            pipe_target_end = stoi(iq[1]);
+        }
+        pipe_target_end++;
+        for(int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx){
+            const std::string exe_pipe_out = "execute.exe" + std::to_string(pipe_idx) + ".ports.out_execute_pipe";
+            bind_ports(exe_pipe_in, exe_pipe_out);
+        }
     }
     // Bind the "LSU" SinkUnit to Dispatch
     sparta::bind(
@@ -358,7 +360,6 @@ private:
   std::vector<std::unique_ptr<sparta::TreeNode>> tns_to_delete_;
   std::vector<sparta::ResourceTreeNode *> exe_units_;
   std::vector<std::unique_ptr<sparta::ResourceTreeNode>> issue_queues_;
-  std::vector<std::vector<std::string>> issue_queue_topology_;
 
   const std::string input_file_;
   sparta::log::Tap test_tap_;

@@ -91,7 +91,7 @@ namespace olympia
         sparta::DataOutPort<InstGroupPtr> out_reorder_write_{&unit_port_set_,
                                                              "out_reorder_buffer_write"};
 
-        std::array<std::vector<std::unique_ptr<Dispatcher>>, InstArchInfo::N_TARGET_UNITS>
+        std::array<std::vector<std::shared_ptr<Dispatcher>>, InstArchInfo::N_TARGET_PIPES>
             dispatchers_;
         InstArchInfo::TargetUnit blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
 

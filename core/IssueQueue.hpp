@@ -88,7 +88,7 @@ namespace olympia
       private:
         // Scoreboards
         using ScoreboardViews =
-            std::unique_ptr<sparta::ScoreboardView>;
+            std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
         ScoreboardViews scoreboard_views_;
 
         // Tick events
@@ -124,7 +124,6 @@ namespace olympia
         // storage of what pipes are in this issue queues
         std::vector<olympia::ExecutePipe*> pipes_;
         std::vector<std::string> exe_unit_str_;
-        const core_types::RegFile reg_file_;
         IssueQueueSorter iq_sorter;
         sparta::PriorityQueue<InstPtr, IssueQueueSorter>
             ready_queue_;                // queue for instructions that have operands ready
@@ -133,9 +132,6 @@ namespace olympia
 
         const uint32_t scheduler_size_;
         const bool in_order_issue_;
-        // sparta::collection::IterableCollector<sparta::PriorityQueue<InstPtr, IssueQueueSorter>>
-        //     ready_queue_collector_{getContainer(), "scheduler_queue", &IssueQueue::ready_queue_,
-        //                            scheduler_size_};
         sparta::Counter total_insts_issued_{getStatisticSet(), "total_insts_issued",
                                             "Total instructions issued",
                                             sparta::Counter::COUNT_NORMAL};

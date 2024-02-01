@@ -172,34 +172,27 @@ namespace olympia
                                            "Topology Post Dispatch -- the execution pipes. "
                                            "Expect: [[\"<unit_name>\", \"<count>\"]] ",
                                            ps));
-            alu_pipe_topology_.reset(
-                new PipeTopologyParam("pipe_topology_alu_pipes", PipeTopology(),
-                                      "ALU Pipe Topology. "
-                                      "Expect: [[\"<unit_name>\", \"<count>\"]] ",
-                                      ps));
-            br_pipe_topology_.reset(
-                new PipeTopologyParam("pipe_topology_br_pipes", PipeTopology(),
-                                      "BR Pipe Topology. "
-                                      "Expect: [[\"<unit_name>\", \"<count>\"]] ",
-                                      ps));
-            float_pipe_topology_.reset(
-                new PipeTopologyParam("pipe_topology_fpu_pipes", PipeTopology(),
-                                      "FPU Pipe Topology"
-                                      "Expect: [[\"<unit_name>\", \"<count>\"]] ",
-                                      ps));
-            issue_queue_topology_.reset(
-                new IssueQueueTopologyParam("issue_queue_topology", IssueQueueTopology(),
+            pipelines_.reset(new PipeTopologyParam("pipelines", PipeTopology(),
+                                                   "Topology Mapping"
+                                                   "Mapping of Pipe Targets to execution unit",
+                                                   ps));
+            issue_queue_to_pipe_map_.reset(
+                new IssueQueueTopologyParam("issue_queue_to_pipe_map", IssueQueueTopology(),
                                             "Issue Queue Topology"
-                                            "Expect: [[\"<unit_name>\", \"<count>\"]] ",
+                                            "Defines Issue Queue to Execution Unit Mapping",
                                             ps));
+            exe_pipe_alias_.reset(new IssueQueueTopologyParam("exe_pipe_alias",
+                                                              IssueQueueTopology(),
+                                                              "Alias for ExecutionPipes"
+                                                              "Defines alias for ExecutionPipe",
+                                                              ps));
         }
 
       private:
         std::unique_ptr<ExecutionTopologyParam> execution_topology_;
-        std::unique_ptr<PipeTopologyParam> alu_pipe_topology_;
-        std::unique_ptr<PipeTopologyParam> br_pipe_topology_;
-        std::unique_ptr<PipeTopologyParam> float_pipe_topology_;
-        std::unique_ptr<IssueQueueTopologyParam> issue_queue_topology_;
+        std::unique_ptr<PipeTopologyParam> pipelines_;
+        std::unique_ptr<IssueQueueTopologyParam> issue_queue_to_pipe_map_;
+        std::unique_ptr<PipeTopologyParam> exe_pipe_alias_;
     };
 
     /**

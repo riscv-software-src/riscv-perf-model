@@ -60,7 +60,7 @@ namespace olympia
         std::vector<std::unique_ptr<sparta::ResourceTreeNode>> exe_pipe_tns_;
 
         IssueQueueFactory issue_queue_fact_;
-        std::vector<std::vector<std::string>> issue_queue_topology_;
+        std::vector<std::vector<std::string>> issue_queue_to_pipe_map_;
         std::vector<std::unique_ptr<sparta::ResourceTreeNode>> issue_queues_;
     };
 } // namespace olympia

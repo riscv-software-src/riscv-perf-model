@@ -65,6 +65,10 @@ namespace olympia
         // Write result to registers
         void insertInst(const InstPtr &);
 
+        // Used to set enable_random_misprediction_ for an execution pipe
+        // set from Execute.cpp
+        void setBranchRandomMisprediction(bool is_branch);
+
       private:
         // Ports and the set -- remove the ", 1" to experience a DAG issue!
         sparta::DataInPort<InstQueue::value_type> in_execute_inst_{&unit_port_set_,
@@ -87,9 +91,9 @@ namespace olympia
         // Execution unit's execution time
         const bool ignore_inst_execute_time_ = false;
         const uint32_t execute_time_;
-        const bool enable_random_misprediction_;
-        const core_types::RegFile reg_file_;
+        bool enable_random_misprediction_;
 
+        const std::string issue_queue_name_;
         // Events used to issue, execute and complete the instruction
         sparta::UniqueEvent<> issue_inst_{
             &unit_event_set_, getName() + "_insert_inst",

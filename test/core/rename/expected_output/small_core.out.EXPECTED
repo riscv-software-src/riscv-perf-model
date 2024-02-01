@@ -3,11 +3,22 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Tuesday Tue Jan 23 00:41:25 2024
-#Elapsed:  0.006314s
-{0000000000 00000000 top.execute.alu0 info} ExecutePipe: ExecutePipe construct: #0
-{0000000000 00000000 top.execute.fpu0 info} ExecutePipe: ExecutePipe construct: #0
-{0000000000 00000000 top.execute.br0 info} ExecutePipe: ExecutePipe construct: #0
+#Start:    Wednesday Wed Jan 31 20:12:03 2024
+#Elapsed:  0.004363s
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq0
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: MULiq0
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: I2Fiq0
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: CMOViq0
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: DIViq0
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: FLOATiq1
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: FADDSUBiq1
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: FMACiq1
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: F2Iiq1
+{0000000000 00000000 top.dispatch info} Dispatch: mapping target: BRiq2
+{0000000000 00000000 top.execute.exe0 info} ExecutePipe: ExecutePipe construct: #0
+{0000000000 00000000 top.execute.exe1 info} ExecutePipe: ExecutePipe construct: #1
+{0000000000 00000000 top.execute.exe2 info} ExecutePipe: ExecutePipe construct: #2
+{0000000000 00000000 top.execute.exe2 info} setBranchRandomMisprediction: Setting enable_random_misprediction for execution pipe
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
 {0000000000 00000000 top.dispatch info} robCredits_: ROB got 30 credits, total: 30
 {0000000000 00000000 top.dispatch info} receiveCredits_: lsu got 10 credits, total: 10
@@ -30,7 +41,7 @@
 {0000000002 00000002 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(0)  PID(1)  add
 {0000000002 00000002 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
 {0000000002 00000002 top.dispatch info} acceptInst: iq0: dispatching uid: 0    RENAMED 0 pid: 1 'add	3,1,2' 
-{0000000002 00000002 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2'  to iq0
+{0000000002 00000002 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2'  to iq0 of target type: INT
 {0000000002 00000002 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000002 00000002 top.rename info} renameInstructions_: sending inst to dispatch: uid: 1    RENAMED 0 pid: 2 'add	4,3,2' 
 {0000000002 00000002 top.rename info} renameInstructions_: 	setup source register bit mask [0] for 'integer' scoreboard
@@ -43,12 +54,12 @@
 {0000000003 00000003 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(1)  PID(2)  add
 {0000000003 00000003 top.rob info} retireInstructions_: num to retire: 1
 {0000000003 00000003 top.rob info} retireInstructions_: set oldest: uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2' 
-{0000000003 00000003 top.execute.iq0 info} sendReadyInsts_: Sending instruction uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2'  to exe_pipe alu0
-{0000000003 00000003 top.execute.alu0 info} insertInst: Executing: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2'  for 4
+{0000000003 00000003 top.execute.iq0 info} sendReadyInsts_: Sending instruction uid: 0 DISPATCHED 0 pid: 1 'add	3,1,2'  to exe_pipe exe0
+{0000000003 00000003 top.execute.exe0 info} insertInst: Executing: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2'  for 4
 {0000000003 00000003 top.dispatch info} receiveCredits_: iq0 got 1 credits, total: 8
 {0000000003 00000003 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
 {0000000003 00000003 top.dispatch info} acceptInst: iq0: dispatching uid: 1    RENAMED 0 pid: 2 'add	4,3,2' 
-{0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2'  to iq0
+{0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2'  to iq0 of target type: INT
 {0000000003 00000003 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000003 00000003 top.rename info} renameInstructions_: sending inst to dispatch: uid: 2    RENAMED 0 pid: 3 'mul	13,12,11' 
 {0000000003 00000003 top.rename info} renameInstructions_: 	setup source register bit mask [12] for 'integer' scoreboard
@@ -59,11 +70,11 @@
 {0000000004 00000004 top.execute.iq0 info} handleOperandIssueCheck_: Instruction NOT ready: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2'  Bits needed:[0,2]
 {0000000004 00000004 top.rob info} robAppended_: retire appended: uid: 1 DISPATCHED 0 pid: 2 'add	4,3,2' 
 {0000000004 00000004 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(2)  PID(3)  mul
-{0000000004 00000004 top.execute.alu0 info} executeInst_: Executed inst: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2' 
+{0000000004 00000004 top.execute.exe0 info} executeInst_: Executed inst: uid: 0  SCHEDULED 0 pid: 1 'add	3,1,2' 
 {0000000004 00000004 top.rob info} retireInstructions_: num to retire: 2
 {0000000004 00000004 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
 {0000000004 00000004 top.dispatch info} acceptInst: iq0: dispatching uid: 2    RENAMED 0 pid: 3 'mul	13,12,11' 
-{0000000004 00000004 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 2 DISPATCHED 0 pid: 3 'mul	13,12,11'  to iq0
+{0000000004 00000004 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 2 DISPATCHED 0 pid: 3 'mul	13,12,11'  to iq0 of target type: MUL
 {0000000004 00000004 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000004 00000004 top.rename info} renameInstructions_: sending inst to dispatch: uid: 3    RENAMED 0 pid: 4 'sub	14,13,12' 
 {0000000004 00000004 top.rename info} renameInstructions_: 	setup source register bit mask [33] for 'integer' scoreboard

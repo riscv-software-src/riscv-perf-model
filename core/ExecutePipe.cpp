@@ -14,19 +14,13 @@ namespace olympia
         ignore_inst_execute_time_(p->ignore_inst_execute_time),
         execute_time_(p->execute_time),
         enable_random_misprediction_(p->enable_random_misprediction),
-        reg_file_(olympia::coreutils::determineRegisterFile(node->getGroup())),
+        issue_queue_name_(node->getGroup().substr(0, node->getGroup().find("_"))),
         collected_inst_(node, node->getName())
     {
         in_reorder_flush_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
             ExecutePipe, flushInst_, FlushManager::FlushingCriteria));
         // Startup handler for sending initiatl credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ExecutePipe, setupExecutePipe_));
-
-        if (enable_random_misprediction_)
-        {
-            sparta_assert(node->getGroup() == "br",
-                          "random branch misprediction can only be enabled on a branch unit");
-        }
 
         ILOG("ExecutePipe construct: #" << node->getGroupIdx());
     }
@@ -38,6 +32,8 @@ namespace olympia
         // if we ever move to multicore, we only want to have resources look for
         // scoreboard in their cpu if we're running a test where we only have
         // top.rename or top.issue_queue, then we can just use the root
+
+        // internal parameter, which scoreboard views it has
         auto cpu_node = getContainer()->findAncestorByName("core.*");
         if (cpu_node == nullptr)
         {
@@ -45,9 +41,17 @@ namespace olympia
         }
         for (const auto rf : reg_files)
         {
-            scoreboard_views_[rf].reset(new sparta::ScoreboardView(
-                getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
+            // alu0, alu1 name is based on exe names, point to issue_queue name instead
+            scoreboard_views_[rf].reset(
+                new sparta::ScoreboardView(issue_queue_name_, core_types::regfile_names[rf],
+                                           cpu_node)); // name needs to come from issue_queue
         }
+    }
+
+    void ExecutePipe::setBranchRandomMisprediction(bool is_branch)
+    {
+        enable_random_misprediction_ = enable_random_misprediction_ & is_branch;
+        ILOG("Setting enable_random_misprediction for execution pipe");
     }
 
     // change to insertInst
@@ -71,45 +75,18 @@ namespace olympia
     void ExecutePipe::executeInst_(const InstPtr & ex_inst)
     {
         ILOG("Executed inst: " << ex_inst);
-
-        // set scoreboard
-        if (SPARTA_EXPECT_FALSE(ex_inst->isTransfer()))
+        auto reg_file = coreutils::determineRegisterFile(ex_inst->getUnit());
+        const auto & dests = ex_inst->getDestOpInfoList();
+        if (dests.size() > 0 && ex_inst->getUnit() != InstArchInfo::TargetUnit::BR)
         {
-            if (ex_inst->getPipe() == InstArchInfo::TargetPipe::I2F)
-            {
-                // Integer source -> FP dest -- need to mark the appropriate destination
-                // SB
-                sparta_assert(reg_file_ == core_types::RegFile::RF_INTEGER,
-                              "Got an I2F instruction in an ExecutionPipe that does not "
-                              "source the integer RF: "
-                                  << ex_inst);
-                const auto & dest_bits =
-                    ex_inst->getDestRegisterBitMask(core_types::RegFile::RF_FLOAT);
-                scoreboard_views_[core_types::RegFile::RF_FLOAT]->setReady(dest_bits);
-            }
-            else
-            {
-                // FP source -> Integer dest -- need to mark the appropriate destination
-                // SB
-                sparta_assert(ex_inst->getPipe() == InstArchInfo::TargetPipe::F2I,
-                              "Instruction is marked transfer type, but I2F nor F2I: " << ex_inst);
-                sparta_assert(reg_file_ == core_types::RegFile::RF_FLOAT,
-                              "Got an F2I instruction in an ExecutionPipe that does not "
-                              "source the Float RF: "
-                                  << ex_inst);
-                const auto & dest_bits =
-                    ex_inst->getDestRegisterBitMask(core_types::RegFile::RF_INTEGER);
-                scoreboard_views_[core_types::RegFile::RF_INTEGER]->setReady(dest_bits);
-            }
+            // need to be able to catch i2f/f2i so we override with destination if one is available
+            reg_file = ex_inst->getRenameData().getDestination().rf;
         }
-        else
-        {
-            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file_);
-            scoreboard_views_[reg_file_]->setReady(dest_bits);
-        }
+        sparta_assert(reg_file != core_types::RegFile::RF_INVALID,
+                      "Invalid Register File, bad register file type on instruction?")
+            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
+        scoreboard_views_[reg_file]->setReady(dest_bits);
 
-        // Testing mode to inject random branch misprediction to stress flushing
-        // mechanism
         if (enable_random_misprediction_)
         {
             if (ex_inst->isBranch() && (std::rand() % 20) == 0)

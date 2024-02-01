@@ -1,8 +1,8 @@
 // <Execute.cpp> -*- C++ -*-
-
 #include "Execute.hpp"
 #include "CoreUtils.hpp"
 #include "IssueQueue.hpp"
+#include "sparta/utils/SpartaAssert.hpp"
 
 namespace olympia
 {
@@ -10,50 +10,64 @@ namespace olympia
 
     void ExecuteFactory::onConfiguring(sparta::ResourceTreeNode* node)
     {
-        auto execution_topology = olympia::coreutils::getExecutionTopology(node->getParent());
-        for (auto exe_unit_pair : execution_topology)
+        issue_queue_to_pipe_map_ =
+            olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_to_pipe_map");
+        // create issue queue sparta units
+        for (size_t i = 0; i < issue_queue_to_pipe_map_.size(); ++i)
         {
-            // Go through the core topology extension and create a
-            // pipe for each entry.  For example:
-            //    ["alu", "2"] will create 2 tree nodes:
-            //
-            //    execute.alu0
-            //    execute.alu1
-            //
-            // both of type ExecutePipe
-            //
-            const auto tgt_name = exe_unit_pair[0];
-            const auto unit_count = exe_unit_pair[1];
-            const auto exe_idx = (unsigned int)std::stoul(unit_count);
-            sparta_assert(exe_idx > 0, "Expected more than 0 units! " << tgt_name);
-            for (uint32_t unit_num = 0; unit_num < exe_idx; ++unit_num)
-            {
-                const std::string unit_name = tgt_name + std::to_string(unit_num);
-                exe_pipe_tns_.emplace_back(new sparta::ResourceTreeNode(
-                    node, unit_name, tgt_name, unit_num, std::string(unit_name + " Execution Pipe"),
-                    &exe_pipe_fact_));
-            }
+            const std::string issue_queue_name = "iq" + std::to_string(i);
+            const std::string tgt_name = "Issue_Queue";
+            issue_queues_.emplace_back(
+                new sparta::ResourceTreeNode(node, issue_queue_name, tgt_name, i,
+                                             std::string("Issue_Queue"), &issue_queue_fact_));
         }
 
-        issue_queue_topology_ =
-            olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_topology");
-        for (size_t i = 0; i < issue_queue_topology_.size(); ++i)
+        std::vector<int> pipe_to_iq_mapping;
+        // map of which pipe goes to which issue queue
+        // "int": "iq0", "iq1"
+        for (size_t iq_num = 0; iq_num < issue_queue_to_pipe_map_.size(); ++iq_num)
         {
-            // loop through the issue_queue_topology and create a corresponding issue_queue sparta
-            // unit
-            std::string exe_units_string = "";
-            for (auto exe_unit : issue_queue_topology_[i])
+            const auto iq = issue_queue_to_pipe_map_[iq_num];
+            const auto pipe_target_start = std::stoi(iq[0]);
+            auto pipe_target_end = pipe_target_start;
+            // we could have a 1 to 1 mapping or multiple, so have
+            // to check accordingly
+            if (iq.size() > 1)
             {
-                exe_units_string += exe_unit + ", ";
+                pipe_target_end = std::stoi(iq[1]);
             }
-            const std::string issue_queue_name = "iq" + std::to_string(i);
-            // naming it for the target type it supports, i.e issue_queue_alu or issue_queue_fpu
-            const std::string tgt_name =
-                "IssueQueue_"
-                + issue_queue_topology_[i][0].substr(0, issue_queue_topology_[i][0].size() - 1);
-            issue_queues_.emplace_back(new sparta::ResourceTreeNode(
-                node, issue_queue_name, tgt_name, i, exe_units_string + std::string("Issue Queue"),
-                &issue_queue_fact_));
+            pipe_target_end++;
+            for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
+            {
+                pipe_to_iq_mapping.push_back(iq_num);
+            }
+        }
+        const auto exe_pipe_alias =
+            olympia::coreutils::getPipeTopology(node->getParent(), "exe_pipe_alias");
+        const auto pipelines = olympia::coreutils::getPipeTopology(node->getParent(), "pipelines");
+        for (size_t pipeidx = 0; pipeidx < pipelines.size(); ++pipeidx)
+        {
+            const auto tgt_name = "iq" + std::to_string(pipe_to_iq_mapping[pipeidx]) + "_group";
+            const auto unit_name = "exe" + std::to_string(pipeidx);
+            if (exe_pipe_alias.size() > 0)
+            {
+                // if alias, we have to construct node, add alias then add as a child, because
+                // we can't add an alias if there is a parent already
+                std::unique_ptr<sparta::ResourceTreeNode> exepipe =
+                    std::make_unique<sparta::ResourceTreeNode>(
+                        unit_name, tgt_name, pipeidx, std::string(unit_name + " Execution Pipe"),
+                        &exe_pipe_fact_);
+                exepipe->addAlias(exe_pipe_alias[pipeidx][1]);
+                node->addChild(*exepipe);
+                exe_pipe_tns_.emplace_back(std::move(exepipe));
+            }
+            else
+            {
+                // no alias
+                exe_pipe_tns_.emplace_back(new sparta::ResourceTreeNode(
+                    node, unit_name, tgt_name, pipeidx, std::string(unit_name + " Execution Pipe"),
+                    &exe_pipe_fact_));
+            }
         }
     }
 
@@ -61,21 +75,31 @@ namespace olympia
     {
         /*
             For issue queue we need to establish mappings such that a mapping of target pipe to
-           execution pipe in an issue queue is known such as: iq_0: "int": alu0, alu1 "div": alu1
-                    "mul": alu3
+           execution pipe in an issue queue is known such as:
+                    iq_0:
+                    "int": exe0, exe1
+                    "div": exe1
+                    "mul": exe2
             so when we have an instruction, we can get the target pipe of an instruction and lookup
            available execution units
         */
+
+        auto pipelines = olympia::coreutils::getPipeTopology(node->getParent(), "pipelines");
         std::unordered_map<std::string, int> exe_pipe_to_iq_number;
 
-        for (size_t i = 0; i < issue_queues_.size(); ++i)
+        for (size_t iq_num = 0; iq_num < issue_queue_to_pipe_map_.size(); ++iq_num)
         {
-            // loop through execution units in each definition of the issue queue topology
-            // "alu0", "alu1"
-            for (const auto & exe_name : issue_queue_topology_[i])
+            auto iq = issue_queue_to_pipe_map_[iq_num];
+            auto pipe_target_start = std::stoi(iq[0]);
+            auto pipe_target_end = pipe_target_start;
+            if (iq.size() > 1)
             {
-                // we need to find the corresponding exe_pipe_ with the same name, search through
-                // exe_pipe_tns_
+                pipe_target_end = std::stoi(iq[1]);
+            }
+            pipe_target_end++;
+            for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
+            {
+                const std::string exe_name = "exe" + std::to_string(pipe_idx);
                 for (const auto & exe_pipe_tns : exe_pipe_tns_)
                 {
                     olympia::ExecutePipe* exe_pipe =
@@ -84,51 +108,65 @@ namespace olympia
                     // check if the names match, then we have the correct exe_pipe_
                     if (exe_name == exe_pipe_name)
                     {
+                        auto pipe_targets = pipelines[pipe_idx];
+                        // if execution has branch pipe target
+                        if (std::find(pipe_targets.begin(), pipe_targets.end(), "br")
+                            != pipe_targets.end())
+                        {
+                            exe_pipe->setBranchRandomMisprediction(true);
+                        }
                         olympia::IssueQueue* issue_queue =
-                            issue_queues_[i]->getResourceAs<olympia::IssueQueue*>();
+                            issue_queues_[iq_num]->getResourceAs<olympia::IssueQueue*>();
                         // set in the issue_queue the corresponding exe_pipe
                         issue_queue->setExePipe(exe_pipe_name, exe_pipe);
                         // establish a mapping of execution_pipe type to which issue_queue number it
                         // is
-                        exe_pipe_to_iq_number[exe_pipe_name] = i;
+                        exe_pipe_to_iq_number[exe_pipe_name] = iq_num;
                     }
                 }
             }
         }
-
-        auto setup_issue_queue_tgts =
-            [this, &exe_pipe_to_iq_number](sparta::TreeNode* node, std::string exe_unit)
+        // need to create a index that tells which pipe # each pipeline is i.e
+        /*
+            ["int"], # exe0
+            ["int", "div"], # exe1
+            ["int", "mul"], exe2
+            ["int", "mul", "i2f", "cmov"], exe3
+            ["int"], exe4
+            ["int"], exe5
+            ["float", "faddsub", "fmac"], exe6
+            ["float", "f2i"], exe7
+            ["br"], exe8
+            ["br"] exe9
+        */
+        for (auto iq : issue_queue_to_pipe_map_)
         {
-            std::string topology_string = "pipe_topology_" + exe_unit + "_pipes";
-            auto pipe_topology =
-                olympia::coreutils::getPipeTopology(node->getParent(), topology_string);
-
-            for (size_t i = 0; i < pipe_topology.size(); ++i)
+            auto pipe_target_start = std::stoi(iq[0]);
+            // check if issue queue has more than 1 pipe
+            auto pipe_target_end = pipe_target_start;
+            if (iq.size() > 1)
             {
-                // loop through pipe topology, which defines pipes per execution unit:
-                // ["INT", "MUL"] -> ALU0 supports pipes "INT", "MUL"
-                // so we're looping on "INT" and "MUL" to set the mapping of:
-                // "INT": ["alu0", "alu1"] in the issue_queue
-                for (size_t j = 0; j < pipe_topology[i].size(); ++j)
+                pipe_target_end = std::stoi(iq[1]);
+            }
+            pipe_target_end++;
+            for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
+            {
+                for (size_t pipe_target_idx = 0; pipe_target_idx < pipelines[pipe_idx].size();
+                     ++pipe_target_idx)
                 {
-                    const auto pipe_name = pipe_topology[i][j];
+                    const auto pipe_name = pipelines[pipe_idx][pipe_target_idx];
                     const auto tgt_pipe = InstArchInfo::execution_pipe_map.find(pipe_name);
-                    const auto exe_unit_name = exe_unit + std::to_string(i);
+                    const auto exe_unit_name = "exe" + std::to_string(pipe_idx);
                     // iq_num is the issue queue number based on the execution name, as we are
                     // looping through the pipe types for a execution unit, we don't know which
                     // issue queue it maps to, unless we use a map
                     const auto iq_num = exe_pipe_to_iq_number.at(exe_unit_name);
                     olympia::IssueQueue* my_issue_queue =
                         issue_queues_[iq_num]->getResourceAs<olympia::IssueQueue*>();
-
                     my_issue_queue->setExePipeMapping(
                         tgt_pipe->second, my_issue_queue->getExePipes().at(exe_unit_name));
                 }
             }
-        };
-        for (auto iq_type : core_types::issue_queue_types)
-        {
-            setup_issue_queue_tgts(node, iq_type);
         }
     }
 

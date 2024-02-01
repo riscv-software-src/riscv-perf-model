@@ -170,7 +170,7 @@ namespace olympia
                 }
 
                 // This is rare for the example
-                if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
+                if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
                     ILOG("Instigating flush... " << ex_inst);
 

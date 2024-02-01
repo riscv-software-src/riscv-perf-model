@@ -93,16 +93,12 @@ namespace olympia
     void IssueQueue::handleOperandIssueCheck_(const InstPtr & ex_inst)
     {
         // FIXME: Now every source operand should be ready
-        auto reg_file = coreutils::determineRegisterFile(ex_inst->getUnit());
-        const auto & dests = ex_inst->getDestOpInfoList();
-        if (dests.size() > 0 && ex_inst->getUnit() != InstArchInfo::TargetUnit::BR)
+        auto reg_file = core_types::RegFile::RF_INTEGER;
+        const auto srcs = ex_inst->getRenameData().getSourceList();
+        if (srcs.size() > 0)
         {
-            // need to be able to catch i2f/f2i so we override with destination if one is available
-            reg_file = ex_inst->getRenameData().getDestination().rf;
+            reg_file = srcs[0].rf;
         }
-        sparta_assert(reg_file != core_types::RegFile::RF_INVALID,
-                      "Something wrong with instruction passed to issue queue, cannot determine "
-                      "register file type!");
         const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file);
         if (scoreboard_views_[reg_file]->isSet(src_bits))
         {

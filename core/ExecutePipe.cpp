@@ -75,17 +75,12 @@ namespace olympia
     void ExecutePipe::executeInst_(const InstPtr & ex_inst)
     {
         ILOG("Executed inst: " << ex_inst);
-        auto reg_file = coreutils::determineRegisterFile(ex_inst->getUnit());
-        const auto & dests = ex_inst->getDestOpInfoList();
-        if (dests.size() > 0 && ex_inst->getUnit() != InstArchInfo::TargetUnit::BR)
+        auto reg_file = ex_inst->getRenameData().getDestination().rf;
+        if (reg_file != core_types::RegFile::RF_INVALID)
         {
-            // need to be able to catch i2f/f2i so we override with destination if one is available
-            reg_file = ex_inst->getRenameData().getDestination().rf;
-        }
-        sparta_assert(reg_file != core_types::RegFile::RF_INVALID,
-                      "Invalid Register File, bad register file type on instruction?")
             const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
-        scoreboard_views_[reg_file]->setReady(dest_bits);
+            scoreboard_views_[reg_file]->setReady(dest_bits);
+        }
 
         if (enable_random_misprediction_)
         {

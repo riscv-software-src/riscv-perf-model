@@ -119,7 +119,7 @@ namespace olympia
             Dispatch, handleFlush_, FlushManager::FlushingCriteria));
         in_reorder_flush_.enableCollection(node);
 
-        blocking_dispatcher_ = InstArchInfo::TargetUnit::ALU;
+        blocking_dispatcher_ = InstArchInfo::TargetPipe::INT;
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Dispatch, sendInitialCredits_));
     }
 
@@ -129,14 +129,14 @@ namespace olympia
         {
             // See if the one of the original blocking dispatcher
             // types is still blocking.
-            if (blocking_dispatcher_ != InstArchInfo::TargetUnit::NONE)
+            if (blocking_dispatcher_ != InstArchInfo::TargetPipe::UNKNOWN)
             {
                 auto & dispatchers = dispatchers_[blocking_dispatcher_];
                 for (auto & disp : dispatchers)
                 {
                     if (disp->canAccept())
                     {
-                        blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
+                        blocking_dispatcher_ = InstArchInfo::TargetPipe::UNKNOWN;
                         ev_dispatch_insts_.schedule(sparta::Clock::Cycle(0));
                         break;
                     }
@@ -211,12 +211,11 @@ namespace olympia
             InstPtr & ex_inst_ptr = dispatch_queue_.access(0);
             Inst & ex_inst = *ex_inst_ptr;
             const auto target_pipe = ex_inst.getPipe();
-            const auto target_unit = ex_inst.getUnit();
 
             sparta_assert(target_pipe != InstArchInfo::TargetPipe::UNKNOWN,
                           "Have an instruction that doesn't know where to go: " << ex_inst);
 
-            if (SPARTA_EXPECT_FALSE(target_unit == InstArchInfo::TargetUnit::ROB))
+            if (SPARTA_EXPECT_FALSE(target_pipe == InstArchInfo::TargetPipe::SYS))
             {
                 ex_inst.setStatus(Inst::Status::COMPLETED);
                 // Indicate that this instruction was dispatched
@@ -251,9 +250,9 @@ namespace olympia
                     if (max_credits != 0)
                     {
                         best_dispatcher->acceptInst(ex_inst_ptr);
-                        ++unit_distribution_[target_unit];
-                        ++unit_distribution_context_.context(target_unit);
-                        ++weighted_unit_distribution_context_.context(target_unit);
+                        ++unit_distribution_[target_pipe];
+                        ++unit_distribution_context_.context(target_pipe);
+                        ++weighted_unit_distribution_context_.context(target_pipe);
 
                         ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
                         ILOG("Sending instruction: " << ex_inst_ptr << " to "
@@ -269,9 +268,9 @@ namespace olympia
                         if (disp->canAccept())
                         {
                             disp->acceptInst(ex_inst_ptr);
-                            ++unit_distribution_[target_unit];
-                            ++(unit_distribution_context_.context(target_unit));
-                            ++(weighted_unit_distribution_context_.context(target_unit));
+                            ++unit_distribution_[target_pipe];
+                            ++(unit_distribution_context_.context(target_pipe));
+                            ++(weighted_unit_distribution_context_.context(target_pipe));
 
                             ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
                             ILOG("Sending instruction: " << ex_inst_ptr << " to "
@@ -283,13 +282,13 @@ namespace olympia
                         else
                         {
                             ILOG(disp->getName() << " cannot accept inst: " << ex_inst_ptr);
-                            blocking_dispatcher_ = target_unit;
+                            blocking_dispatcher_ = target_pipe;
                         }
                     }
                 }
                 if (false == dispatched)
                 {
-                    current_stall_ = static_cast<StallReason>(target_unit);
+                    current_stall_ = static_cast<StallReason>(target_pipe);
                     keep_dispatching = false;
                 }
             }

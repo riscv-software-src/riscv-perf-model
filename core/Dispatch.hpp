@@ -93,7 +93,7 @@ namespace olympia
 
         std::array<std::vector<std::shared_ptr<Dispatcher>>, InstArchInfo::N_TARGET_PIPES>
             dispatchers_;
-        InstArchInfo::TargetUnit blocking_dispatcher_ = InstArchInfo::TargetUnit::NONE;
+        InstArchInfo::TargetPipe blocking_dispatcher_ = InstArchInfo::TargetPipe::UNKNOWN;
 
         // For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_{
@@ -125,15 +125,30 @@ namespace olympia
         // Stall counters
         enum StallReason
         {
-            ALU_BUSY =
-                InstArchInfo::TargetUnit::ALU, // Could not send any or all instructions -- ALU busy
-            FPU_BUSY =
-                InstArchInfo::TargetUnit::FPU, // Could not send any or all instructions -- FPU busy
+            CMOV_BUSY = InstArchInfo::TargetPipe::CMOV, // Could not send any or all instructions --
+                                                        // CMOV busy
+            DIV_BUSY =
+                InstArchInfo::TargetPipe::DIV, // Could not send any or all instructions -- DIV busy
+            FADDSUB_BUSY = InstArchInfo::TargetPipe::FADDSUB, // Could not send any or all
+                                                              // instructions -- FADDSUB busy
+            FLOAT_BUSY = InstArchInfo::TargetPipe::FLOAT, // Could not send any or all instructions
+                                                          // -- FLOAT busy
+            FMAC_BUSY = InstArchInfo::TargetPipe::FMAC, // Could not send any or all instructions --
+                                                        // FMAC busy
+            I2F_BUSY =
+                InstArchInfo::TargetPipe::I2F, // Could not send any or all instructions -- I2F busy
+            F2I_BUSY =
+                InstArchInfo::TargetPipe::F2I, // Could not send any or all instructions -- F2I busy
+            INT_BUSY =
+                InstArchInfo::TargetPipe::INT, // Could not send any or all instructions -- INT busy
+            LSU_BUSY =
+                InstArchInfo::TargetPipe::LSU, // Could not send any or all instructions -- LSU busy
+            MUL_BUSY =
+                InstArchInfo::TargetPipe::MUL, // Could not send any or all instructions -- MUL busy
             BR_BUSY =
-                InstArchInfo::TargetUnit::BR, // Could not send any or all instructions -- BR busy
-            LSU_BUSY = InstArchInfo::TargetUnit::LSU,
-            NO_ROB_CREDITS = InstArchInfo::TargetUnit::ROB, // No credits from the ROB
-            NOT_STALLED, // Made forward progress (dipatched all instructions or no instructions)
+                InstArchInfo::TargetPipe::BR, // Could not send any or all instructions -- MUL busy
+            NO_ROB_CREDITS = InstArchInfo::TargetPipe::SYS, // No credits from the ROB
+            NOT_STALLED, // Made forward progress (dispatched all instructions or no instructions)
             N_STALL_REASONS
         };
 
@@ -143,30 +158,58 @@ namespace olympia
         // Counters -- this is only supported in C++11 -- uses
         // Counter's move semantics
         std::array<sparta::CycleCounter, N_STALL_REASONS> stall_counters_{
-            {sparta::CycleCounter(getStatisticSet(), "stall_alu_busy", "ALU busy",
+            {sparta::CycleCounter(getStatisticSet(), "stall_cmov_busy", "CMOV busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
-             sparta::CycleCounter(getStatisticSet(), "stall_fpu_busy", "FPU busy",
+             sparta::CycleCounter(getStatisticSet(), "stall_div_busy", "DIV busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
-             sparta::CycleCounter(getStatisticSet(), "stall_br_busy", "BR busy",
+             sparta::CycleCounter(getStatisticSet(), "stall_faddsub_busy", "FADDSUB busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_float_busy", "FLOAT busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_fmac_busy", "FMAC busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_i2f_busy", "I2F busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_f2i_busy", "F2I busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_int_busy", "INT busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_lsu_busy", "LSU busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
-             sparta::CycleCounter(getStatisticSet(), "stall_no_rob_credits", "No credits from ROB",
+             sparta::CycleCounter(getStatisticSet(), "stall_mul_busy", "MUL busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_br_busy", "BR busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_sys_busy", "No credits from ROB",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
                                   "Dispatch not stalled, all instructions dispatched",
                                   sparta::Counter::COUNT_NORMAL, getClock())}};
 
-        std::array<sparta::Counter, InstArchInfo::N_TARGET_UNITS> unit_distribution_{
-            {sparta::Counter(getStatisticSet(), "count_alu_insts", "Total ALU insts",
+        std::array<sparta::Counter, InstArchInfo::N_TARGET_PIPES> unit_distribution_{
+            {sparta::Counter(getStatisticSet(), "count_cmov_insts", "Total CMOV insts",
                              sparta::Counter::COUNT_NORMAL),
-             sparta::Counter(getStatisticSet(), "count_fpu_insts", "Total FPU insts",
+             sparta::Counter(getStatisticSet(), "count_div_insts", "Total DIV insts",
                              sparta::Counter::COUNT_NORMAL),
-             sparta::Counter(getStatisticSet(), "count_br_insts", "Total BR insts",
+             sparta::Counter(getStatisticSet(), "count_faddsub_insts", "Total FADDSUB insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_float_insts", "Total FLOAT insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_fmac_insts", "Total FMAC insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_i2f_insts", "Total I2F insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_f2i_insts", "Total F2I insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_int_insts", "Total INT insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_lsu_insts", "Total LSU insts",
                              sparta::Counter::COUNT_NORMAL),
-             sparta::Counter(getStatisticSet(), "count_rob_insts", "Total ROB insts",
+             sparta::Counter(getStatisticSet(), "count_mul_insts", "Total MUL insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_br_insts", "Total BR insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_sys_insts", "Total SYS insts",
                              sparta::Counter::COUNT_NORMAL)}};
 
         // As an example, this is a context counter that does the same
@@ -176,7 +219,7 @@ namespace olympia
             getStatisticSet(),
             "count_insts_per_unit",
             "Unit distributions",
-            InstArchInfo::N_TARGET_UNITS,
+            InstArchInfo::N_TARGET_PIPES,
             "dispatch_inst_count",
             sparta::Counter::COUNT_NORMAL,
             sparta::InstrumentationNode::VIS_NORMAL};
@@ -190,7 +233,7 @@ namespace olympia
             getStatisticSet(),
             "weighted_count_insts_per_unit",
             "Weighted unit distributions",
-            InstArchInfo::N_TARGET_UNITS,
+            InstArchInfo::N_TARGET_PIPES,
             sparta::CounterBase::COUNT_NORMAL,
             sparta::InstrumentationNode::VIS_NORMAL};
 
@@ -198,19 +241,20 @@ namespace olympia
         // than other ContextCounters; they are not automatically expanded to
         // include per-context information in reports, since that is redundant
         // information.
-        sparta::ContextCounter<sparta::Counter> alu_context_{
+        sparta::ContextCounter<sparta::Counter> int_context_{
             getStatisticSet(),
-            "context_count_alu_insts",
-            "ALU instruction count",
+            "context_count_int_insts",
+            "INT instruction count",
             1,
-            "dispatch_alu_inst_count",
+            "dispatch_int_inst_count",
             sparta::CounterBase::COUNT_NORMAL,
             sparta::InstrumentationNode::VIS_NORMAL};
-
-        sparta::StatisticDef total_insts_{getStatisticSet(), "count_total_insts_dispatched",
-                                          "Total number of instructions dispatched",
-                                          getStatisticSet(),
-                                          "count_alu_insts + count_fpu_insts + count_lsu_insts"};
+        sparta::StatisticDef total_insts_{
+            getStatisticSet(), "count_total_insts_dispatched",
+            "Total number of instructions dispatched", getStatisticSet(),
+            "count_cmov_insts + count_div_insts + count_faddsub_insts + count_float_insts + "
+            "count_fmac_insts + count_i2f_insts + count_f2i_insts + count_int_insts + "
+            "count_lsu_insts + count_mul_insts + count_br_insts"};
     };
 
     using DispatchFactory =
@@ -226,14 +270,35 @@ namespace olympia
         case Dispatch::StallReason::NO_ROB_CREDITS:
             os << "NO_ROB_CREDITS";
             break;
-        case Dispatch::StallReason::ALU_BUSY:
-            os << "ALU_BUSY";
-            break;
-        case Dispatch::StallReason::FPU_BUSY:
-            os << "FPU_BUSY";
-            break;
         case Dispatch::StallReason::LSU_BUSY:
             os << "LSU_BUSY";
+            break;
+        case Dispatch::StallReason::CMOV_BUSY:
+            os << "CMOV_BUSY";
+            break;
+        case Dispatch::StallReason::DIV_BUSY:
+            os << "DIV_BUSY";
+            break;
+        case Dispatch::StallReason::FADDSUB_BUSY:
+            os << "FADDSUB_BUSY";
+            break;
+        case Dispatch::StallReason::FLOAT_BUSY:
+            os << "FLOAT_BUSY";
+            break;
+        case Dispatch::StallReason::FMAC_BUSY:
+            os << "FMAC_BUSY";
+            break;
+        case Dispatch::StallReason::I2F_BUSY:
+            os << "I2F_BUSY";
+            break;
+        case Dispatch::StallReason::F2I_BUSY:
+            os << "F2I_BUSY";
+            break;
+        case Dispatch::StallReason::INT_BUSY:
+            os << "INT_BUSY";
+            break;
+        case Dispatch::StallReason::MUL_BUSY:
+            os << "MUL_BUSY";
             break;
         case Dispatch::StallReason::BR_BUSY:
             os << "BR_BUSY";
@@ -241,6 +306,7 @@ namespace olympia
         case Dispatch::StallReason::N_STALL_REASONS:
             sparta_assert(false, "How'd we get here?");
         }
+
         return os;
     }
 } // namespace olympia

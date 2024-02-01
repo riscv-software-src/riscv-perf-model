@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Wednesday Wed Jan 31 12:03:24 2024
-#Elapsed:  0.004672s
+#Start:    Thursday Thu Feb  1 17:22:43 2024
+#Elapsed:  0.004406s
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: MULiq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: I2Fiq0
@@ -61,7 +61,7 @@
 {0000000002 00000002 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 0 DISPATCHED 0 pid: 0 'add	2,0,1'  to iq0 of target type: INT
 {0000000002 00000002 top.dispatch info} acceptInst: iq1: dispatching uid: 1    RENAMED 0 pid: 0 'add	4,2,3' 
 {0000000002 00000002 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 1 DISPATCHED 0 pid: 0 'add	4,2,3'  to iq1 of target type: INT
-{0000000002 00000002 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 2    RENAMED 0 pid: 0 'add	6,4,5'  stall: ALU_BUSY
+{0000000002 00000002 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 2    RENAMED 0 pid: 0 'add	6,4,5'  stall: INT_BUSY
 {0000000002 00000002 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000002 00000002 top.rename info} renameInstructions_: sending inst to dispatch: uid: 4    RENAMED 0 pid: 0 'add	10,8,9' 
 {0000000002 00000002 top.rename info} renameInstructions_: 	setup source register bit mask [34] for 'integer' scoreboard
@@ -92,7 +92,7 @@
 {0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 2 DISPATCHED 0 pid: 0 'add	6,4,5'  to iq0 of target type: INT
 {0000000003 00000003 top.dispatch info} acceptInst: iq1: dispatching uid: 3    RENAMED 0 pid: 0 'add	8,6,7' 
 {0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 3 DISPATCHED 0 pid: 0 'add	8,6,7'  to iq1 of target type: INT
-{0000000003 00000003 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 4    RENAMED 0 pid: 0 'add	10,8,9'  stall: ALU_BUSY
+{0000000003 00000003 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 4    RENAMED 0 pid: 0 'add	10,8,9'  stall: INT_BUSY
 {0000000003 00000003 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000003 00000003 top.rename info} renameInstructions_: sending inst to dispatch: uid: 8    RENAMED 0 pid: 0 'add	18,16,17' 
 {0000000003 00000003 top.rename info} renameInstructions_: 	setup source register bit mask [38] for 'integer' scoreboard
@@ -121,7 +121,7 @@
 {0000000004 00000004 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 4 DISPATCHED 0 pid: 0 'add	10,8,9'  to iq0 of target type: INT
 {0000000004 00000004 top.dispatch info} acceptInst: iq1: dispatching uid: 5    RENAMED 0 pid: 0 'add	12,10,11' 
 {0000000004 00000004 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 5 DISPATCHED 0 pid: 0 'add	12,10,11'  to iq1 of target type: INT
-{0000000004 00000004 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 6    RENAMED 0 pid: 0 'add	14,12,13'  stall: ALU_BUSY
+{0000000004 00000004 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 6    RENAMED 0 pid: 0 'add	14,12,13'  stall: INT_BUSY
 {0000000004 00000004 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000004 00000004 top.rename info} renameInstructions_: sending inst to dispatch: uid: 12    RENAMED 0 pid: 0 'add	26,24,25' 
 {0000000004 00000004 top.rename info} renameInstructions_: 	setup source register bit mask [42] for 'integer' scoreboard
@@ -153,7 +153,7 @@
 {0000000005 00000005 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 6 DISPATCHED 0 pid: 0 'add	14,12,13'  to iq0 of target type: INT
 {0000000005 00000005 top.dispatch info} acceptInst: iq1: dispatching uid: 7    RENAMED 0 pid: 0 'add	16,14,15' 
 {0000000005 00000005 top.dispatch info} dispatchInstructions_: Sending instruction: uid: 7 DISPATCHED 0 pid: 0 'add	16,14,15'  to iq1 of target type: INT
-{0000000005 00000005 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 8    RENAMED 0 pid: 0 'add	18,16,17'  stall: ALU_BUSY
+{0000000005 00000005 top.dispatch info} dispatchInstructions_: Could not dispatch: uid: 8    RENAMED 0 pid: 0 'add	18,16,17'  stall: INT_BUSY
 {0000000005 00000005 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
 {0000000005 00000005 top.rename info} renameInstructions_: sending inst to dispatch: uid: 16    RENAMED 0 pid: 0 'add	2,0,1' 
 {0000000005 00000005 top.rename info} renameInstructions_: 	setup source register bit mask [1] for 'integer' scoreboard

@@ -51,16 +51,4 @@ namespace olympia::coreutils
         sparta_assert(false, "Not supported this target: " << target_name);
         return core_types::RF_INVALID;
     }
-
-    inline core_types::RegFile determineRegisterFile(const InstArchInfo::TargetUnit & target_unit){
-        if(target_unit == InstArchInfo::TargetUnit::ALU || target_unit == InstArchInfo::TargetUnit::BR){
-            return core_types::RF_INTEGER;
-        }
-        else if(target_unit == InstArchInfo::TargetUnit::FPU){
-            return core_types::RF_FLOAT;
-        }
-        sparta_assert(false, "Not supported this target unit: " << target_unit);
-        return core_types::RF_INVALID;
-    }
-
 } // namespace olympia::coreutils

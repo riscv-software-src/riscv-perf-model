@@ -105,9 +105,12 @@ public:
     EXPECT_TRUE(rename.reference_counter_[0][2] == 1);
     EXPECT_TRUE(rename.reference_counter_[0][30] == 1);
     EXPECT_TRUE(rename.reference_counter_[0][31] == 1);
-    //
+    // x0 for RF_INTEGER should be not assigned because x0 for RF_INTEGER doesn't use physical registerfile
+    // since it's hardcoded to 0, no need to rename, so we get an extra free register back. Test to make sure
+    // this is actually modeled
+    EXPECT_TRUE(rename.reference_counter_[0][0] == 0);
+    EXPECT_TRUE(rename.reference_counter_[0][32] == 0);
     EXPECT_TRUE(rename.reference_counter_[0][33] == 0);
-    EXPECT_TRUE(rename.reference_counter_[0][34] == 0);
   }
   void test_float(olympia::Rename &rename) {
     // ensure the correct register file is used

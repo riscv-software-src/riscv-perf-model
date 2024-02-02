@@ -84,8 +84,7 @@ bool TestBench::fieldExtractorTests(bool debug)
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-FieldExtractor::InstPtrType TestBench::makeInst(MavisType & m,
-                                                 uint32_t opc)
+FieldExtractor::InstPtrType TestBench::makeInst(MavisType & m, uint32_t opc)
 {
     FieldExtractor::InstPtrType inst;
 
@@ -98,10 +97,8 @@ FieldExtractor::InstPtrType TestBench::makeInst(MavisType & m,
         if (!inst)
         {
             std::ostringstream ss;
-            ss << "0x" << std::setw(8) << std::setfill('0') << std::hex
-               << opc;
-            msg->emsg("Mavis could not create instruction from "
-                      + ss.str());
+            ss << "0x" << std::setw(8) << std::setfill('0') << std::hex << opc;
+            msg->emsg("Mavis could not create instruction from " + ss.str());
             return nullptr;
         }
     }
@@ -111,13 +108,11 @@ FieldExtractor::InstPtrType TestBench::makeInst(MavisType & m,
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-bool TestBench::testFieldValue(uint32_t id, string name, uint32_t act,
-                                 uint32_t exp)
+bool TestBench::testFieldValue(uint32_t id, string name, uint32_t act, uint32_t exp)
 {
     if (act != exp)
     {
-        msg->emsg("ID:" + ::to_string(id) + ":FIELD:" + name
-                  + ": value mismatch");
+        msg->emsg("ID:" + ::to_string(id) + ":FIELD:" + name + ": value mismatch");
         return false;
     }
 

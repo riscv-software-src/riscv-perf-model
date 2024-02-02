@@ -10,7 +10,7 @@
 
 //! \brief Placeholder for uarch and implementation details
 //!
-//! I have not followed up on the discussion on using 
+//! I have not followed up on the discussion on using
 //! extension.core_extensions from the yaml for this information.
 //! This is future work.
 struct MachineInfo
@@ -53,6 +53,7 @@ struct MachineInfo
 
     //! \brief ...
     void setName(std::string n) { name_ = n; }
+
     //! \brief ...
     std::string name() const { return name_; }
 

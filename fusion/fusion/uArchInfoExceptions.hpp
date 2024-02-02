@@ -10,12 +10,13 @@
 /**
  * Decoder exceptions base class
  */
-class uArchInfoBaseException : public std::exception {
-public:
-  virtual const char *what() const noexcept { return why_.c_str(); }
+class uArchInfoBaseException : public std::exception
+{
+  public:
+    virtual const char* what() const noexcept { return why_.c_str(); }
 
-protected:
-  std::string why_;
+  protected:
+    std::string why_;
 };
 
 /**
@@ -25,18 +26,19 @@ protected:
  * This can happen from a mis-spelling of the unit in the JSON, or from a need
  * to update the uArchInfo's list of supported units
  */
-class uArchInfoUnknownUnit : public uArchInfoBaseException {
-public:
-  uArchInfoUnknownUnit(const std::string &mnemonic,
-                       const std::string &unit_name)
-      : uArchInfoBaseException() {
-    std::stringstream ss;
-    ss << "Instruction '" << mnemonic << "': "
-       << " unit '" << unit_name << "' "
-       << "is not known (uArchInfo object). Could be a mis-spelling in the "
-          "JSON file";
-    why_ = ss.str();
-  }
+class uArchInfoUnknownUnit : public uArchInfoBaseException
+{
+  public:
+    uArchInfoUnknownUnit(const std::string & mnemonic, const std::string & unit_name) :
+        uArchInfoBaseException()
+    {
+        std::stringstream ss;
+        ss << "Instruction '" << mnemonic << "': "
+           << " unit '" << unit_name << "' "
+           << "is not known (uArchInfo object). Could be a mis-spelling in the "
+              "JSON file";
+        why_ = ss.str();
+    }
 };
 
 /**
@@ -46,18 +48,19 @@ public:
  * This can happen from a mis-spelling of the issue target in the JSON, or from
  * a need to update the uArchInfo's list of supported units
  */
-class uArchInfoUnknownIssueTarget : public uArchInfoBaseException {
-public:
-  uArchInfoUnknownIssueTarget(const std::string &mnemonic,
-                              const std::string &target_name)
-      : uArchInfoBaseException() {
-    std::stringstream ss;
-    ss << "Instruction '" << mnemonic << "': "
-       << " issue target '" << target_name << "' "
-       << "is not known (uArchInfo object). Could be a mis-spelling in the "
-          "JSON file";
-    why_ = ss.str();
-  }
+class uArchInfoUnknownIssueTarget : public uArchInfoBaseException
+{
+  public:
+    uArchInfoUnknownIssueTarget(const std::string & mnemonic, const std::string & target_name) :
+        uArchInfoBaseException()
+    {
+        std::stringstream ss;
+        ss << "Instruction '" << mnemonic << "': "
+           << " issue target '" << target_name << "' "
+           << "is not known (uArchInfo object). Could be a mis-spelling in the "
+              "JSON file";
+        why_ = ss.str();
+    }
 };
 
 /**
@@ -71,15 +74,16 @@ public:
  * "rob_group" : ["end"]
  * "rob_group" : ["begin", "end"]
  */
-class uArchInfoROBGroupParseError : public uArchInfoBaseException {
-public:
-  uArchInfoROBGroupParseError(const std::string &mnemonic,
-                              const std::string &bad_string)
-      : uArchInfoBaseException() {
-    std::stringstream ss;
-    ss << "Instruction '" << mnemonic << "': "
-       << " rob_group element '" << bad_string << "'"
-       << " is not valid. Needs to be one of 'begin' or 'end'";
-    why_ = ss.str();
-  }
+class uArchInfoROBGroupParseError : public uArchInfoBaseException
+{
+  public:
+    uArchInfoROBGroupParseError(const std::string & mnemonic, const std::string & bad_string) :
+        uArchInfoBaseException()
+    {
+        std::stringstream ss;
+        ss << "Instruction '" << mnemonic << "': "
+           << " rob_group element '" << bad_string << "'"
+           << " is not valid. Needs to be one of 'begin' or 'end'";
+        why_ = ss.str();
+    }
 };

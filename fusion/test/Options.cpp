@@ -13,17 +13,15 @@ void Options::setupOptions(int ac, char** av)
 {
     notify_error = false;
 
-    po::options_description visibleOpts(
-        "\nFusion API test\n "
-        "Usage:: test [--help|-h|--version|-v] { options }");
+    po::options_description visibleOpts("\nFusion API test\n "
+                                        "Usage:: test [--help|-h|--version|-v] { options }");
 
     po::options_description stdOpts("Standard options");
     buildOptions(stdOpts);
 
     try
     {
-        po::store(po::command_line_parser(ac, av).options(stdOpts).run(),
-                  vm);
+        po::store(po::command_line_parser(ac, av).options(stdOpts).run(), vm);
 
         // Without positional option po::parse_command_line can be used
         // po::store(po::parse_command_line(ac, av, allOpts), vm);
@@ -65,12 +63,12 @@ void Options::buildOptions(po::options_description & stdOpts)
     ("tb_verbose", po::bool_switch(&tb_verbose) ->default_value(false),
          "Test bench message control");
 }
+
 // clang-format on
 // --------------------------------------------------------------------
 // Check sanity on the options, handle --help, --version
 // --------------------------------------------------------------------
-bool Options::checkOptions(po::variables_map & vm,
-                           po::options_description & stdOpts,
+bool Options::checkOptions(po::variables_map & vm, po::options_description & stdOpts,
                            bool firstPass)
 {
     if (firstPass)

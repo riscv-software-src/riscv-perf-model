@@ -29,16 +29,13 @@ struct Options
     void buildOptions(po::options_description &);
 
     //! \brief ...
-    bool checkOptions(po::variables_map &, po::options_description &,bool);
+    bool checkOptions(po::variables_map &, po::options_description &, bool);
 
     //! \brief ...
     void setupOptions(int, char**);
 
     //! \brief ...
-    void usage(po::options_description & o) const
-    {
-        std::cout << o << std::endl;
-    }
+    void usage(po::options_description & o) const { std::cout << o << std::endl; }
 
     //! \brief ...
     void version() const;

@@ -16,6 +16,7 @@
 //! \class ContextDuplicateError
 //! \class FieldExtUnknownField
 //! \class FieldExtUnknownSpecialField
+//! \class FieldExtUnknownFunction
 
 namespace fusion
 {
@@ -45,8 +46,7 @@ namespace fusion
     struct HashDuplicateError : FusionExceptionBase
     {
         //! \brief ...
-        explicit HashDuplicateError(const std::string & name,
-                                    const fusion::HashType & hash)
+        explicit HashDuplicateError(const std::string & name, const fusion::HashType & hash)
         {
             ss << "Duplicated hash detected, '" << name << "'"
                << " 0x" << std::hex << hash;
@@ -60,8 +60,7 @@ namespace fusion
     struct HashIllegalValueError : FusionExceptionBase
     {
         //! \brief ...
-        explicit HashIllegalValueError(const std::string & name,
-                                       const fusion::HashType & hash)
+        explicit HashIllegalValueError(const std::string & name, const fusion::HashType & hash)
         {
             ss << "Illegal hash value detected, '" << name << "'"
                << " 0x" << std::hex << hash;
@@ -84,9 +83,6 @@ namespace fusion
     };
 
     //! \brief field extractor unknown field name
-    //!
-    //! FIXME: should add a field enum to string func,
-    //! convert int to FieldName string
     struct FieldExtUnknownField : FusionExceptionBase
     {
         //! \brief ...
@@ -98,16 +94,23 @@ namespace fusion
     };
 
     //! \brief field extractor unknown special field name
-    //!
-    //! FIXME: should add a field enum to string func,
-    //! convert int to SFieldName string
     struct FieldExtUnknownSpecialField : FusionExceptionBase
     {
         //! \brief ...
-        explicit FieldExtUnknownSpecialField(uint32_t sfn,
-                                             std::string dasm)
+        explicit FieldExtUnknownSpecialField(uint32_t sfn, std::string dasm)
         {
             ss << "Unknown special field: " << sfn << " in " << dasm;
+            why_ = ss.str();
+        }
+    };
+
+    //! \brief field extractor unknown function
+    struct FieldExtUnknownFunction : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit FieldExtUnknownFunction(uint32_t func)
+        {
+            ss << "Unknown function selection: " << func;
             why_ = ss.str();
         }
     };

@@ -3,23 +3,30 @@ project(FusionTest)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# FIXME: hard coded Specify the path to libmavis.a
-set(MAVIS_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../release/mavis")
+find_library(MAVIS_LIBRARY NAMES mavis
+             HINTS "${CMAKE_SOURCE_DIR}/../release/mavis"
+                   "${CMAKE_SOURCE_DIR}/../debug/mavis"
+                   "${CMAKE_SOURCE_DIR}/../fastdebug/mavis"
+                   "${CMAKE_SOURCE_DIR}/../build/mavis")
+
+if(NOT MAVIS_LIBRARY)
+  message(FATAL_ERROR "libmavis.a not found")
+endif()
 
 add_library(mavis STATIC IMPORTED)
-set_target_properties(mavis PROPERTIES IMPORTED_LOCATION 
-             "${MAVIS_LIB_PATH}/libmavis.a")
+
+set_target_properties(mavis PROPERTIES IMPORTED_LOCATION ${MAVIS_LIBRARY})
 
 add_executable(fusiontest
                TestBench.cpp
                TestData.cpp
                TestFieldExtractor.cpp
-#               FslTests.cpp
                main.cpp
                Options.cpp )
 
-#target_link_libraries(fusiontest PRIVATE FusionLib FusionDSL mavis)
-
+target_compile_options(fusiontest PRIVATE -Wall -Wextra
+               -Wno-unused-parameter  # mavis
+              )
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 if(Boost_FOUND)

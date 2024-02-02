@@ -16,18 +16,15 @@
 struct TestBench
 {
     //! \brief save typing
-    using FusionGroupType =
-        fusion::FusionGroup<MachineInfo, FieldExtractor>;
+    using FusionGroupType = fusion::FusionGroup<MachineInfo, FieldExtractor>;
     //! \brief save typing
     using FusionGroupListType = std::vector<FusionGroupType>;
 
     //! \brief save typing
-    using FusionGroupCfgType =
-        fusion::FusionGroupCfg<MachineInfo, FieldExtractor>;
+    using FusionGroupCfgType = fusion::FusionGroupCfg<MachineInfo, FieldExtractor>;
 
     //! \brief save typing
-    using FusionType =
-        fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>;
+    using FusionType = fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>;
 
     //! \brief save typing
     using InstUidListType = fusion::InstUidListType;
@@ -93,22 +90,19 @@ struct TestBench
     FieldExtractor::InstPtrType makeInst(MavisType &, uint32_t);
 
     //! \brief helper for testing field values
-    bool testFieldValue(uint32_t, std::string, uint32_t act,uint32_t exp);
+    bool testFieldValue(uint32_t, std::string, uint32_t act, uint32_t exp);
 
     //! \brief transform funcs
-    static bool f1_constraints(FusionGroupType &, InstPtrListType &,
-                               InstPtrListType &);
+    static bool f1_constraints(FusionGroupType &, InstPtrListType &, InstPtrListType &);
 
     //! \brief assign to InstPtrListType from opcodes
-    void assign(InstPtrListType &, std::vector<Opcode> &,
-                const FileNameListType &);
+    void assign(InstPtrListType &, std::vector<Opcode> &, const FileNameListType &);
     //! \brief info debug function
     void info(InstUidListType &, InstUidListType &, InstPtrListType &);
 
     //! \brief support golden reference hashes
-    void generateExpectHashes(
-        std::unordered_map<std::string, fusion::HashType> &,
-        const FusionType::FusionGroupCfgListType &);
+    void generateExpectHashes(std::unordered_map<std::string, fusion::HashType> &,
+                              const FusionType::FusionGroupCfgListType &);
 
     //! \brief duplicate of hash function found in fusion group
     //!
@@ -165,88 +159,77 @@ struct TestBench
 struct TestBench::cbProxy
 {
     //! \brief ...
-    static bool uf1_func(FusionGroupType &, InstPtrListType &,
-                         InstPtrListType &)
+    static bool uf1_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf1_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf1_1_func(FusionGroupType &, InstPtrListType &,
-                           InstPtrListType &)
+    static bool uf1_1_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf1_1_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf1_2_func(FusionGroupType &, InstPtrListType &,
-                           InstPtrListType &)
+    static bool uf1_2_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf1_2_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf1_3_func(FusionGroupType &, InstPtrListType &,
-                           InstPtrListType &)
+    static bool uf1_3_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf1_3_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf2_func(FusionGroupType &, InstPtrListType &,
-                         InstPtrListType &)
+    static bool uf2_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf2_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf3_func(FusionGroupType &, InstPtrListType &,
-                         InstPtrListType &)
+    static bool uf3_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf3_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf4_func(FusionGroupType &, InstPtrListType &,
-                         InstPtrListType &)
+    static bool uf4_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf4_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf5_func(FusionGroupType &, InstPtrListType &,
-                         InstPtrListType &)
+    static bool uf5_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf5_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf5_1_func(FusionGroupType &, InstPtrListType &,
-                           InstPtrListType &)
+    static bool uf5_1_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf5_1_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf5_2_func(FusionGroupType &, InstPtrListType &,
-                           InstPtrListType &)
+    static bool uf5_2_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf5_2_func called" << endl;
         return true;
     }
 
     //! \brief ...
-    static bool uf5_3_func(FusionGroupType &, InstPtrListType &,
-                           InstPtrListType &)
+    static bool uf5_3_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
         cout << "HERE uf5_3_func called" << endl;
         return true;

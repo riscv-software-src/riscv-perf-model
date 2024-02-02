@@ -34,10 +34,7 @@ struct Msg
     void setWho(std::string _w) { w = _w + ": "; }
 
     //! \brief shared message method
-    void mmsg(std::string p, std::string m) const
-    {
-        std::cout << p << w << m << std::endl;
-    }
+    void mmsg(std::string p, std::string m) const { std::cout << p << w << m << std::endl; }
 
     //! \brief debug messages
     void dmsg(std::string m = "", int v = 4) const
@@ -67,44 +64,13 @@ struct Msg
             mmsg("-W: ", m);
     }
 
-    //! \brief warining messages
-    void mmsg(std::ostream & o, std::string p, std::string m) const
-    {
-        o << p << w << m << std::endl;
-    }
-
-    // ----------------------------------------------------------------
-    //! \brief dmsg should be v level 4
-    void dmsg(std::ostream & o, std::string m = "", int v = 4) const
-    {
-        mmsg(o, "-D: ", m);
-    }
-
-    //! \brief ...
-    void emsg(std::ostream & o, std::string m = "", int v = 1) const
-    {
-        mmsg(o, "-E: ", m);
-    }
-
-    //! \brief ...
-    void imsg(std::ostream & o, std::string m = "", int v = 3) const
-    {
-        mmsg(o, "-I: ", m);
-    }
-
-    //! \brief ...
-    void wmsg(std::ostream & o, std::string m = "", int v = 2) const
-    {
-        mmsg(o, "-W: ", m);
-    }
-
     //! \brief ...
     void msg(std::string m) const { std::cout << m << std::endl; }
 
-    // ----------------------------------------------------------------
     //! \brief helper to show potentially empty strings
     std::string tq(std::string s) const { return "'" + s + "'"; }
 
+    // ----------------------------------------------------------------
     //! \brief ...
     std::string w;
     /**

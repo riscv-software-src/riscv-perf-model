@@ -45,43 +45,34 @@ namespace fusion
     //!
     //! For usage see the testbench.cpp in fusion/test. For the
     //! final PR there will more usage examples.
-    template <typename FusionGroupType, typename MachineInfoType,
-              typename FieldExtractorType,
-              typename FusionGroupTypeAlloc =
-                  fusion::ShrPtrAlloc<FusionGroupType>,
-              typename MachineInfoTypeAlloc =
-                  fusion::ShrPtrAlloc<MachineInfoType>,
-              typename FieldExtractorTypeAlloc =
-                  fusion::ShrPtrAlloc<FieldExtractorType>>
+    template <typename FusionGroupType, typename MachineInfoType, typename FieldExtractorType,
+              typename FusionGroupTypeAlloc = fusion::ShrPtrAlloc<FusionGroupType>,
+              typename MachineInfoTypeAlloc = fusion::ShrPtrAlloc<MachineInfoType>,
+              typename FieldExtractorTypeAlloc = fusion::ShrPtrAlloc<FieldExtractorType>>
     struct Fusion
     {
         //! \brief ...
         using FusionGroupListType = std::vector<FusionGroupType>;
         //! \brief ...
-        using FusionGroupCfgType =
-            fusion::FusionGroupCfg<MachineInfoType, FieldExtractorType>;
+        using FusionGroupCfgType = fusion::FusionGroupCfg<MachineInfoType, FieldExtractorType>;
         //! \brief ...
         using FusionGroupCfgListType = std::vector<FusionGroupCfgType>;
         //! \brief ...
-        using TransformFuncType = bool (*)(FusionGroupType &,
-                                           InstPtrListType &,
-                                           InstPtrListType &);
+        using TransformFuncType = bool (*)(FusionGroupType &, InstPtrListType &, InstPtrListType &);
         //! \brief ...
         using FusionContextType = fusion::FusionContext<FusionGroupType>;
 
         //! \brief ...
-        using FusionFuncType = std::function<void(
-            Fusion &, InstPtrListType &, InstPtrListType &)>;
+        using FusionFuncType = std::function<void(Fusion &, InstPtrListType &, InstPtrListType &)>;
 
         //! \brief main ctor
-        Fusion(const FusionGroupListType & fusiongroup_list,
-               const FusionGroupCfgListType & fusiongroupcfg_list,
-               const FusionGroupTypeAlloc fusiongroup_alloc =
-                   fusion::ShrPtrAlloc<FusionGroupType>(),
-               const MachineInfoTypeAlloc machine_info_alloc =
-                   fusion::ShrPtrAlloc<MachineInfoType>(),
-               const FieldExtractorType field_extractor_alloc =
-                   fusion::ShrPtrAlloc<FieldExtractorType>()) :
+        Fusion(
+            const FusionGroupListType & fusiongroup_list,
+            const FusionGroupCfgListType & fusiongroupcfg_list,
+            const FusionGroupTypeAlloc fusiongroup_alloc = fusion::ShrPtrAlloc<FusionGroupType>(),
+            const MachineInfoTypeAlloc machine_info_alloc = fusion::ShrPtrAlloc<MachineInfoType>(),
+            const FieldExtractorType field_extractor_alloc =
+                fusion::ShrPtrAlloc<FieldExtractorType>()) :
             fusiongroup_alloc_(fusiongroup_alloc),
             machine_info_alloc_(machine_info_alloc),
             fusionOpr(defaultFusionOpr)
@@ -95,15 +86,15 @@ namespace fusion
 
         //! \brief ctor from group list
         Fusion(const FusionGroupListType & fusiongroup_list) :
-            Fusion(fusiongroup_list, {}, FusionGroupTypeAlloc(),
-                   MachineInfoTypeAlloc(), FieldExtractorType())
+            Fusion(fusiongroup_list, {}, FusionGroupTypeAlloc(), MachineInfoTypeAlloc(),
+                   FieldExtractorType())
         {
         }
 
         //! \brief ctor from cfg group list
         Fusion(const FusionGroupCfgListType & fusiongroupcfg_list) :
-            Fusion({}, fusiongroupcfg_list, FusionGroupTypeAlloc(),
-                   MachineInfoTypeAlloc(), FieldExtractorType())
+            Fusion({}, fusiongroupcfg_list, FusionGroupTypeAlloc(), MachineInfoTypeAlloc(),
+                   FieldExtractorType())
         {
         }
 
@@ -127,10 +118,7 @@ namespace fusion
         }
 
         //! \brief alias for context_.insertGroup()
-        void registerGroup(FusionGroupType & grp)
-        {
-            context_.insertGroup(grp);
-        }
+        void registerGroup(FusionGroupType & grp) { context_.insertGroup(grp); }
 
         //! \brief create a single context from a list of fusiongroups
         //!
@@ -138,8 +126,7 @@ namespace fusion
         //! not seen an immediate need for dynamic switching
         //! between multiple fusion contexts in a simulation.
         //! Something to consider for the future.
-        void makeContext(const std::string & name,
-                         const FusionGroupListType & fusiongroup_list)
+        void makeContext(const std::string & name, const FusionGroupListType & fusiongroup_list)
         {
             context_.makeContext(name, fusiongroup_list);
         }
@@ -157,15 +144,11 @@ namespace fusion
         }
 
         //! \brief assign the functor handle with a custom operator
-        void setFusionOpr(FusionFuncType customOpr)
-        {
-            fusionOpr = customOpr;
-        }
+        void setFusionOpr(FusionFuncType customOpr) { fusionOpr = customOpr; }
 
         //! \brief default fusion operator appends in to out and clears
         //! out.
-        static void defaultFusionOpr(Fusion & inst, InstPtrListType & in,
-                                     InstPtrListType & out)
+        static void defaultFusionOpr(Fusion & inst, InstPtrListType & in, InstPtrListType & out)
         {
             out.insert(out.end(), in.begin(), in.end());
             in.clear();

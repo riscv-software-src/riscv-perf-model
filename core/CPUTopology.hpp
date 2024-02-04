@@ -186,6 +186,11 @@ namespace olympia
                                                               "Alias for ExecutionPipes"
                                                               "Defines alias for ExecutionPipe",
                                                               ps));
+            issue_queue_alias_.reset(new IssueQueueTopologyParam("issue_queue_alias",
+                                                                 IssueQueueTopology(),
+                                                                 "Alias for IssueQueues"
+                                                                 "Defines alias for IssueQueue",
+                                                                 ps));
         }
 
       private:
@@ -193,6 +198,7 @@ namespace olympia
         std::unique_ptr<PipeTopologyParam> pipelines_;
         std::unique_ptr<IssueQueueTopologyParam> issue_queue_to_pipe_map_;
         std::unique_ptr<PipeTopologyParam> exe_pipe_alias_;
+        std::unique_ptr<PipeTopologyParam> issue_queue_alias_;
     };
 
     /**

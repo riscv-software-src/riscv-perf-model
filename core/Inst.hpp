@@ -356,19 +356,18 @@ namespace olympia
      */
     class InstPairDef : public sparta::PairDefinition<Inst>
     {
-    public:
-
-        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-        InstPairDef() : PairDefinition<Inst>() {
-            SPARTA_INVOKE_PAIRS(Inst);
-        }
-        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",       &Inst::getUniqueID),  // Used by Argos to color code
-                              SPARTA_ADDPAIR("uid",       &Inst::getUniqueID),
-                              SPARTA_ADDPAIR("mnemonic",  &Inst::getMnemonic),
-                              SPARTA_ADDPAIR("complete",  &Inst::getCompletedStatus),
-                              SPARTA_ADDPAIR("unit",      &Inst::getUnit),
-                              SPARTA_ADDPAIR("latency",   &Inst::getExecuteTime),
-                              SPARTA_ADDPAIR("raddr",     &Inst::getRAdr, std::ios::hex),
+      public:
+        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition
+        // class
+        InstPairDef() : PairDefinition<Inst>() { SPARTA_INVOKE_PAIRS(Inst); }
+        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",
+                                             &Inst::getUniqueID), // Used by Argos to color code
+                              SPARTA_ADDPAIR("uid", &Inst::getUniqueID),
+                              SPARTA_ADDPAIR("mnemonic", &Inst::getMnemonic),
+                              SPARTA_ADDPAIR("complete", &Inst::getCompletedStatus),
+                              SPARTA_ADDPAIR("pipe", &Inst::getPipe),
+                              SPARTA_ADDPAIR("latency", &Inst::getExecuteTime),
+                              SPARTA_ADDPAIR("raddr", &Inst::getRAdr, std::ios::hex),
                               SPARTA_ADDPAIR("tgt_vaddr", &Inst::getTargetVAddr, std::ios::hex))
     };
 
@@ -378,13 +377,13 @@ namespace olympia
      */
     class InstPEventPairs : public sparta::PairDefinition<Inst>
     {
-    public:
+      public:
         using TypeCollected = Inst;
 
         InstPEventPairs() : sparta::PairDefinition<Inst>()
         {
             addPEventsPair("uid", &Inst::getUniqueID);
-            addPEventsPair("pc",  &Inst::getPC, std::ios::hex);
+            addPEventsPair("pc", &Inst::getPC, std::ios::hex);
         }
     };
 

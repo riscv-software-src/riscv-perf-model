@@ -236,7 +236,7 @@ namespace olympia
                 if (target_pipe != InstArchInfo::TargetPipe::LSU)
                 {
                     uint32_t max_credits = 0;
-                    olympia::Dispatcher* best_dispatcher;
+                    olympia::Dispatcher* best_dispatcher = nullptr;
                     // find the dispatcher with the most amount of credits, i.e the issue queue with
                     // the least amount of entries
                     for (auto & dispatcher_iq : dispatchers)
@@ -247,7 +247,7 @@ namespace olympia
                             max_credits = dispatcher_iq->getCredits();
                         }
                     }
-                    if (max_credits != 0)
+                    if (best_dispatcher != nullptr)
                     {
                         best_dispatcher->acceptInst(ex_inst_ptr);
                         ++unit_distribution_[target_pipe];

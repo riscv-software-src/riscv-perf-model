@@ -12,14 +12,30 @@ namespace olympia
     {
         issue_queue_to_pipe_map_ =
             olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_to_pipe_map");
+        const auto issue_queue_alias =
+            olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_alias");
         // create issue queue sparta units
-        for (size_t i = 0; i < issue_queue_to_pipe_map_.size(); ++i)
+        for (size_t iq_idx = 0; iq_idx < issue_queue_to_pipe_map_.size(); ++iq_idx)
         {
-            const std::string issue_queue_name = "iq" + std::to_string(i);
+            const std::string issue_queue_name = "iq" + std::to_string(iq_idx);
             const std::string tgt_name = "Issue_Queue";
-            issue_queues_.emplace_back(
-                new sparta::ResourceTreeNode(node, issue_queue_name, tgt_name, i,
-                                             std::string("Issue_Queue"), &issue_queue_fact_));
+            if (issue_queue_alias.size() > 0)
+            {
+                // create node with alias
+                std::unique_ptr<sparta::ResourceTreeNode> issuequeue =
+                    std::make_unique<sparta::ResourceTreeNode>(issue_queue_name, tgt_name, iq_idx,
+                                                               std::string("Issue_Queue"),
+                                                               &issue_queue_fact_);
+                issuequeue->addAlias(issue_queue_alias[iq_idx][1]);
+                node->addChild(*issuequeue);
+                issue_queues_.emplace_back(std::move(issuequeue));
+            }
+            else
+            {
+                issue_queues_.emplace_back(
+                    new sparta::ResourceTreeNode(node, issue_queue_name, tgt_name, iq_idx,
+                                                 std::string("Issue_Queue"), &issue_queue_fact_));
+            }
         }
 
         std::vector<int> pipe_to_iq_mapping;

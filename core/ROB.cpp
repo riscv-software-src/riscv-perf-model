@@ -145,6 +145,8 @@ namespace olympia
 
                 ILOG("retiring " << ex_inst);
 
+                retire_event_.collect(*ex_inst_ptr);
+
                 // Use the program ID to verify that the program order has been maintained.
                 sparta_assert(ex_inst.getProgramID() == expected_program_id_,
                     "Unexpected program ID when retiring instruction"
@@ -176,7 +178,6 @@ namespace olympia
 
                     FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst_ptr);
                     out_retire_flush_.send(criteria);
-
 
                     ++num_flushes_;
                     break;

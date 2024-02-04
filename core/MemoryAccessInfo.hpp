@@ -16,7 +16,6 @@ namespace olympia
     using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
 
     class MemoryAccessInfoPairDef;
-
     class MemoryAccessInfo;
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
@@ -59,6 +58,11 @@ namespace olympia
             __LAST = NUM_UNITS
         };
 
+        // The modeler needs to alias a type called
+        // "SpartaPairDefinitionType" to the Pair Definition class of
+        // itself
+        using SpartaPairDefinitionType = MemoryAccessInfoPairDef;
+
         MemoryAccessInfo() = delete;
 
         MemoryAccessInfo(const MemoryAccessInfo &rhs) = default;
@@ -82,11 +86,17 @@ namespace olympia
         // and we will use this pointer to query values from functions of Inst class
         const InstPtr & getInstPtr() const { return ldst_inst_ptr_; }
 
+        // Get the mnemonic of the instruction this load/store is
+        // associated.  Will return <unassoc> if not associated
+        std::string getMnemonic() const {
+            return (ldst_inst_ptr_ != nullptr ?
+                    ldst_inst_ptr_->getMnemonic() : "<unassoc>");
+        }
+
         // This is a function which will be added in the SPARTA_ADDPAIRs API.
         uint64_t getInstUniqueID() const
         {
             const InstPtr & inst_ptr = getInstPtr();
-
             return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
         }
 
@@ -256,4 +266,30 @@ namespace olympia
         os << *mem_ptr;
         return os;
     }
+
+    /*!
+     * \class MemoryAccessInfoPairDef
+     * \brief Pair Definition class of the MemoryAccessInfo for pipeout collection
+     *
+     * This is the definition of the PairDefinition class of MemoryAccessInfo.
+     * It's mostly used for pipeline collection (-z option).  This
+     * PairDefinition class could be named anything but it needs to
+     * inherit publicly from sparta::PairDefinition templatized on the
+     * actual class MemoryAccessInfo.
+     */
+    class MemoryAccessInfoPairDef : public sparta::PairDefinition<MemoryAccessInfo>
+    {
+    public:
+
+        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
+        MemoryAccessInfoPairDef() : sparta::PairDefinition<MemoryAccessInfo>() {
+            SPARTA_INVOKE_PAIRS(MemoryAccessInfo);
+        }
+        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",       &MemoryAccessInfo::getInstUniqueID),  // Used by Argos to color code
+                              SPARTA_ADDPAIR("uid",       &MemoryAccessInfo::getInstUniqueID),
+                              SPARTA_ADDPAIR("mnemonic",  &MemoryAccessInfo::getMnemonic),
+                              SPARTA_ADDPAIR("mmu",       &MemoryAccessInfo::getMMUState),
+                              SPARTA_ADDPAIR("dcs",       &MemoryAccessInfo::getCacheState))
+    };
+
 }; // namespace olympia

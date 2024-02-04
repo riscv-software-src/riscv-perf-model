@@ -21,6 +21,9 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/Unit.hpp"
+#include "sparta/collection/Collectable.hpp"
+#include "sparta/resources/Scoreboard.hpp"
+#include "sparta/pevents/PeventCollector.hpp"
 
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
@@ -107,6 +110,11 @@ namespace olympia
 
         // A pipeline collector
         sparta::collection::Collectable<InstPtr> collected_inst_;
+
+        // For correlation activities
+        sparta::pevents::PeventCollector<InstPEventPairs> complete_event_{"COMPLETE",
+            getContainer(),
+            getClock()};
 
         // Counter
         sparta::Counter total_insts_executed_{getStatisticSet(), "total_insts_executed",

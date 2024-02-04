@@ -60,8 +60,10 @@ sparta_named_test(olympia_json_test_fp_transfers olympia
 sparta_named_test(olympia_json_test_pevents olympia
   --workload traces/dhry_riscv.zstf
   --pevents test_pevent.out RETIRE
-  --pevents test_pevent.out COMPLETE
-  --pevents test_pevent.out ALL)
+  --pevents test_pevent.out COMPLETE)
+sparta_named_test(olympia_json_test_pevents olympia
+  --workload traces/dhry_riscv.zstf
+  --pevents test_pevent.out all)
 
 ## Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")

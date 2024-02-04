@@ -60,7 +60,7 @@ sparta_named_test(olympia_json_test_fp_transfers olympia
 sparta_named_test(olympia_json_test_pevents olympia
   --workload traces/dhry_riscv.zstf
   --pevents test_pevent.out RETIRE
-  --pevents test_pevent.out DECODE
+  --pevents test_pevent.out COMPLETE
   --pevents test_pevent.out ALL)
 
 ## Test the arches

@@ -322,19 +322,23 @@ namespace olympia
 
     /*!
      * \class InstPairDef
-     * \brief Pair Definition class of the Example instruction that flows through the example/CoreModel
+     * \brief Pair Definition class of the instruction that flows through the Olympia
+     *
+     * This is the definition of the PairDefinition class of Inst.
+     * It's mostly used for pipeline collection (-z option).  This
+     * PairDefinition class could be named anything but it needs to
+     * inherit publicly from sparta::PairDefinition templatized on the
+     * actual class Inst.
      */
-    // This is the definition of the PairDefinition class of Inst.
-    // This PairDefinition class could be named anything but it needs to
-    // inherit publicly from sparta::PairDefinition templatized on the actual class Inst.
-    class InstPairDef : public sparta::PairDefinition<Inst>{
+    class InstPairDef : public sparta::PairDefinition<Inst>
+    {
     public:
 
         // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
-        InstPairDef() : PairDefinition<Inst>(){
+        InstPairDef() : PairDefinition<Inst>() {
             SPARTA_INVOKE_PAIRS(Inst);
         }
-        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",       &Inst::getUniqueID),
+        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",       &Inst::getUniqueID),  // Used by Argos to color code
                               SPARTA_ADDPAIR("uid",       &Inst::getUniqueID),
                               SPARTA_ADDPAIR("mnemonic",  &Inst::getMnemonic),
                               SPARTA_ADDPAIR("complete",  &Inst::getCompletedStatus),
@@ -342,6 +346,22 @@ namespace olympia
                               SPARTA_ADDPAIR("latency",   &Inst::getExecuteTime),
                               SPARTA_ADDPAIR("raddr",     &Inst::getRAdr, std::ios::hex),
                               SPARTA_ADDPAIR("tgt_vaddr", &Inst::getTargetVAddr, std::ios::hex))
+    };
+
+    /*!
+     * \class PEventPairs
+     * \brief Pair Definitions for pevents
+     */
+    class InstPEventPairs : public sparta::PairDefinition<Inst>
+    {
+    public:
+        using TypeCollected = Inst;
+
+        InstPEventPairs() : sparta::PairDefinition<Inst>()
+        {
+            addPEventsPair("uid", &Inst::getUniqueID);
+            addPEventsPair("pc",  &Inst::getPC, std::ios::hex);
+        }
     };
 
     // Instruction allocators

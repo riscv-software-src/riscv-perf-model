@@ -216,6 +216,7 @@ namespace olympia
     void ExecutePipe::completeInst_(const InstPtr & ex_inst)
     {
         ex_inst->setStatus(Inst::Status::COMPLETED);
+        complete_event_.collect(*ex_inst);
         ILOG("Completing inst: " << ex_inst);
     }
 

@@ -1,5 +1,4 @@
-// <ROB.h> -*- C++ -*-
-
+// <ROB.hpp> -*- C++ -*-
 
 #pragma once
 #include <string>
@@ -10,6 +9,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/log/MessageSource.hpp"
+#include "sparta/pevents/PeventCollector.hpp"
 
 #include "sparta/statistics/Counter.hpp"
 #include "sparta/statistics/StatisticDef.hpp"
@@ -111,6 +111,9 @@ namespace olympia
         // Events used by the ROB
         sparta::UniqueEvent<> ev_retire_ {&unit_event_set_, "retire_insts",
                 CREATE_SPARTA_HANDLER(ROB, retireEvent_)};
+
+        // For correlation activities
+        sparta::pevents::PeventCollector<InstPEventPairs> retire_event_{"RETIRE", getContainer(), getClock()};
 
         // A nice checker to make sure forward progress is being made
         // Note that in the ROB constructor, this event is set as non-continuing

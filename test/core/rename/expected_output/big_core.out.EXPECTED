@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu Feb  1 17:24:52 2024
-#Elapsed:  0.005948s
+#Start:    Monday Mon Feb  5 13:40:26 2024
+#Elapsed:  0.012103s
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: DIViq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq1
@@ -27,8 +27,6 @@
 {0000000000 00000000 top.execute.exe7 info} ExecutePipe: ExecutePipe construct: #7
 {0000000000 00000000 top.execute.exe8 info} ExecutePipe: ExecutePipe construct: #8
 {0000000000 00000000 top.execute.exe9 info} ExecutePipe: ExecutePipe construct: #9
-{0000000000 00000000 top.execute.exe8 info} setBranchRandomMisprediction: Setting enable_random_misprediction for execution pipe
-{0000000000 00000000 top.execute.exe9 info} setBranchRandomMisprediction: Setting enable_random_misprediction for execution pipe
 {0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
 {0000000000 00000000 top.dispatch info} robCredits_: ROB got 30 credits, total: 30
 {0000000000 00000000 top.dispatch info} receiveCredits_: lsu got 10 credits, total: 10

@@ -48,8 +48,11 @@ namespace olympia
                       "Ignore the instruction's execute time, "
                       "use execute_time param instead")
             PARAMETER(uint32_t, execute_time, 1, "Time for execution")
-            HIDDEN_PARAMETER(bool, enable_random_misprediction, false,
-                             "test mode to inject random branch mispredictions")
+            PARAMETER(bool, enable_random_misprediction, false,
+                      "test mode to inject random branch mispredictions")
+            HIDDEN_PARAMETER(bool, contains_branch_unit, false,
+                             "Does this exe pipe contain a branch unit")
+            HIDDEN_PARAMETER(std::string, iq_name, "", "issue queue name for scoreboard view")
         };
 
         /**
@@ -94,9 +97,9 @@ namespace olympia
         // Execution unit's execution time
         const bool ignore_inst_execute_time_ = false;
         const uint32_t execute_time_;
-        bool enable_random_misprediction_;
-
+        const bool enable_random_misprediction_;
         const std::string issue_queue_name_;
+
         // Events used to issue, execute and complete the instruction
         sparta::UniqueEvent<> issue_inst_{
             &unit_event_set_, getName() + "_insert_inst",
@@ -112,9 +115,8 @@ namespace olympia
         sparta::collection::Collectable<InstPtr> collected_inst_;
 
         // For correlation activities
-        sparta::pevents::PeventCollector<InstPEventPairs> complete_event_{"COMPLETE",
-            getContainer(),
-            getClock()};
+        sparta::pevents::PeventCollector<InstPEventPairs> complete_event_{
+            "COMPLETE", getContainer(), getClock()};
 
         // Counter
         sparta::Counter total_insts_executed_{getStatisticSet(), "total_insts_executed",

@@ -58,12 +58,20 @@ namespace olympia
 
         const auto issue_queue_to_pipe_map =
             olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_to_pipe_map");
-
+        const auto issue_queue_rename =
+            olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_rename");
         for (size_t iq_num = 0; iq_num < issue_queue_to_pipe_map.size(); ++iq_num)
         {
             // set port, create dispatcher for issue queue
             const auto iq = issue_queue_to_pipe_map[iq_num];
-            const auto iq_name = "iq" + std::to_string(iq_num);
+            auto iq_name = "iq" + std::to_string(iq_num);
+            if (issue_queue_rename.size() > 0)
+            {
+                sparta_assert(issue_queue_rename[iq_num][0] == iq_name,
+                              "Rename mapping for issue queue is not in order or the original unit "
+                              "name is not equal to the unit name, check spelling!") iq_name =
+                    issue_queue_rename[iq_num][1];
+            }
             auto & in_credit_port = in_credit_ports_.emplace_back(
                 new sparta::DataInPort<uint32_t>(&unit_port_set_, "in_" + iq_name + "_credits"));
             in_credit_port->enableCollection(node);

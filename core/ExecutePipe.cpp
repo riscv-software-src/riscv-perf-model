@@ -13,10 +13,12 @@ namespace olympia
         sparta::Unit(node),
         ignore_inst_execute_time_(p->ignore_inst_execute_time),
         execute_time_(p->execute_time),
-        enable_random_misprediction_(p->enable_random_misprediction),
-        issue_queue_name_(node->getGroup().substr(0, node->getGroup().find("_"))),
+        enable_random_misprediction_(p->enable_random_misprediction && p->contains_branch_unit),
+        issue_queue_name_(p->iq_name),
         collected_inst_(node, node->getName())
     {
+        p->enable_random_misprediction.ignore();
+        p->contains_branch_unit.ignore();
         in_reorder_flush_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
             ExecutePipe, flushInst_, FlushManager::FlushingCriteria));
         // Startup handler for sending initiatl credits
@@ -46,12 +48,6 @@ namespace olympia
                 new sparta::ScoreboardView(issue_queue_name_, core_types::regfile_names[rf],
                                            cpu_node)); // name needs to come from issue_queue
         }
-    }
-
-    void ExecutePipe::setBranchRandomMisprediction(bool is_branch)
-    {
-        enable_random_misprediction_ = enable_random_misprediction_ & is_branch;
-        ILOG("Setting enable_random_misprediction for execution pipe");
     }
 
     // change to insertInst

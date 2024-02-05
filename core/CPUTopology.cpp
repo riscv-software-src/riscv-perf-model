@@ -321,10 +321,21 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
         const auto flushmanager_ports = core_node + ".flushmanager.ports";
         const auto pipelines =
             olympia::coreutils::getPipeTopology(root_node->getChild(core_node), "pipelines");
-
+        const auto exe_pipe_rename =
+            olympia::coreutils::getPipeTopology(root_node->getChild(core_node), "exe_pipe_rename");
+        const auto issue_queue_rename = olympia::coreutils::getPipeTopology(
+            root_node->getChild(core_node), "issue_queue_rename");
         for (size_t pipeidx = 0; pipeidx < pipelines.size(); ++pipeidx)
         {
-            const std::string unit_name = "exe" + std::to_string(pipeidx);
+            std::string unit_name = "exe" + std::to_string(pipeidx);
+            if (exe_pipe_rename.size() > 0)
+            {
+                // rename accordingly
+                sparta_assert(exe_pipe_rename[pipeidx][0] == unit_name,
+                              "Rename mapping for execute pipe is not in order or the original "
+                              "unit name is not equal to the unit name, check spelling!")
+                    unit_name = exe_pipe_rename[pipeidx][1];
+            }
 
             // Bind flushing
             const std::string exe_flush_in =
@@ -347,7 +358,14 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
         for (size_t i = 0; i < issue_queue_to_pipe_map.size(); ++i)
         {
             const auto iq = issue_queue_to_pipe_map[i];
-            const std::string unit_name = "iq" + std::to_string(i);
+            std::string unit_name = "iq" + std::to_string(i);
+            if (issue_queue_rename.size() > 0)
+            {
+                sparta_assert(issue_queue_rename[i][0] == unit_name,
+                              "Rename mapping for issue queue is not in order or the original unit "
+                              "name is not equal to the unit name, check spelling!") unit_name =
+                    issue_queue_rename[i][1];
+            }
             const std::string exe_credits_out =
                 core_node + ".execute." + unit_name + ".ports.out_scheduler_credits";
             const std::string disp_credits_in = dispatch_ports + ".in_" + unit_name + "_credits";
@@ -372,9 +390,17 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             pipe_target_end++;
             for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
             {
-                const std::string exe_pipe_out = core_node + ".execute.exe"
-                                                 + std::to_string(pipe_idx)
-                                                 + ".ports.out_execute_pipe";
+                std::string unit_name = "exe" + std::to_string(pipe_idx);
+                if (exe_pipe_rename.size() > 0)
+                {
+                    // rename accordingly
+                    sparta_assert(exe_pipe_rename[pipe_idx][0] == unit_name,
+                                  "Rename mapping for execute pipe is not in order or the original "
+                                  "unit name is not equal to the unit name, check spelling!")
+                        unit_name = exe_pipe_rename[pipe_idx][1];
+                }
+                const std::string exe_pipe_out =
+                    core_node + ".execute." + unit_name + ".ports.out_execute_pipe";
                 bind_ports(exe_pipe_in, exe_pipe_out);
             }
 

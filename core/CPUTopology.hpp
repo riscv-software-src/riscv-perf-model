@@ -181,14 +181,14 @@ namespace olympia
                                             "Issue Queue Topology"
                                             "Defines Issue Queue to Execution Unit Mapping",
                                             ps));
-            exe_pipe_alias_.reset(new IssueQueueTopologyParam("exe_pipe_alias",
+            exe_pipe_rename_.reset(new IssueQueueTopologyParam("exe_pipe_rename",
                                                               IssueQueueTopology(),
-                                                              "Alias for ExecutionPipes"
+                                                              "Rename for ExecutionPipes"
                                                               "Defines alias for ExecutionPipe",
                                                               ps));
-            issue_queue_alias_.reset(new IssueQueueTopologyParam("issue_queue_alias",
+            issue_queue_rename_.reset(new IssueQueueTopologyParam("issue_queue_rename",
                                                                  IssueQueueTopology(),
-                                                                 "Alias for IssueQueues"
+                                                                 "Rename for IssueQueues"
                                                                  "Defines alias for IssueQueue",
                                                                  ps));
         }
@@ -197,8 +197,8 @@ namespace olympia
         std::unique_ptr<ExecutionTopologyParam> execution_topology_;
         std::unique_ptr<PipeTopologyParam> pipelines_;
         std::unique_ptr<IssueQueueTopologyParam> issue_queue_to_pipe_map_;
-        std::unique_ptr<PipeTopologyParam> exe_pipe_alias_;
-        std::unique_ptr<PipeTopologyParam> issue_queue_alias_;
+        std::unique_ptr<PipeTopologyParam> exe_pipe_rename_;
+        std::unique_ptr<PipeTopologyParam> issue_queue_rename_;
     };
 
     /**

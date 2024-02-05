@@ -49,30 +49,6 @@ top.cpu.core0.extension.core_extensions:
     ["6", "7"], # iq3 -> exe6, exe7
     ["8", "9"]  # iq4 -> exe8, exe9
   ]
-  # optional if you want to set an alias for each exe* unit
-  exe_pipe_alias:
-  [
-    ["exe0", "alu0"],
-    ["exe1", "alu1"],
-    ["exe2", "alu2"],
-    ["exe3", "alu3"],
-    ["exe4", "alu4"],
-    ["exe5", "alu5"],
-    ["exe6", "fpu0"],
-    ["exe7", "fpu1"],
-    ["exe8", "br0"],
-    ["exe9", "br1"],
-  ]
-
-  # optional if you want to set an alias for each iq* unit
-  issue_queue_alias:
-  [
-    ["iq0", "iq0_alu"],
-    ["iq1", "iq1_alu"],
-    ["iq2", "iq2_alu"],
-    ["iq3", "iq3_fpu"],
-    ["iq4", "iq4_br"],
-  ]
 top.cpu.core0.rename.scoreboards:
   # From
   # |

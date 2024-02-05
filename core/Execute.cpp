@@ -12,30 +12,23 @@ namespace olympia
     {
         issue_queue_to_pipe_map_ =
             olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_to_pipe_map");
-        const auto issue_queue_alias =
-            olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_alias");
+        const auto issue_queue_rename =
+            olympia::coreutils::getPipeTopology(node->getParent(), "issue_queue_rename");
         // create issue queue sparta units
         for (size_t iq_idx = 0; iq_idx < issue_queue_to_pipe_map_.size(); ++iq_idx)
         {
-            const std::string issue_queue_name = "iq" + std::to_string(iq_idx);
+            std::string issue_queue_name = "iq" + std::to_string(iq_idx);
+            if (issue_queue_rename.size() > 0)
+            {
+                sparta_assert(issue_queue_rename[iq_idx][0] == issue_queue_name,
+                              "Rename mapping for issue queue is not in order or the original unit "
+                              "name is not equal to the unit name, check spelling!")
+                    issue_queue_name = issue_queue_rename[iq_idx][1];
+            }
             const std::string tgt_name = "Issue_Queue";
-            if (issue_queue_alias.size() > 0)
-            {
-                // create node with alias
-                std::unique_ptr<sparta::ResourceTreeNode> issuequeue =
-                    std::make_unique<sparta::ResourceTreeNode>(issue_queue_name, tgt_name, iq_idx,
-                                                               std::string("Issue_Queue"),
-                                                               &issue_queue_fact_);
-                issuequeue->addAlias(issue_queue_alias[iq_idx][1]);
-                node->addChild(*issuequeue);
-                issue_queues_.emplace_back(std::move(issuequeue));
-            }
-            else
-            {
-                issue_queues_.emplace_back(
-                    new sparta::ResourceTreeNode(node, issue_queue_name, tgt_name, iq_idx,
-                                                 std::string("Issue_Queue"), &issue_queue_fact_));
-            }
+            issue_queues_.emplace_back(
+                new sparta::ResourceTreeNode(node, issue_queue_name, tgt_name, iq_idx,
+                                             std::string("Issue_Queue"), &issue_queue_fact_));
         }
 
         std::vector<int> pipe_to_iq_mapping;
@@ -58,31 +51,41 @@ namespace olympia
                 pipe_to_iq_mapping.push_back(iq_num);
             }
         }
-        const auto exe_pipe_alias =
-            olympia::coreutils::getPipeTopology(node->getParent(), "exe_pipe_alias");
+        const auto exe_pipe_rename =
+            olympia::coreutils::getPipeTopology(node->getParent(), "exe_pipe_rename");
         const auto pipelines = olympia::coreutils::getPipeTopology(node->getParent(), "pipelines");
         for (size_t pipeidx = 0; pipeidx < pipelines.size(); ++pipeidx)
         {
-            const auto tgt_name = "iq" + std::to_string(pipe_to_iq_mapping[pipeidx]) + "_group";
-            const auto unit_name = "exe" + std::to_string(pipeidx);
-            if (exe_pipe_alias.size() > 0)
+            std::string iq_name = "iq" + std::to_string(pipe_to_iq_mapping[pipeidx]);
+            if (issue_queue_rename.size() > 0)
             {
-                // if alias, we have to construct node, add alias then add as a child, because
-                // we can't add an alias if there is a parent already
-                std::unique_ptr<sparta::ResourceTreeNode> exepipe =
-                    std::make_unique<sparta::ResourceTreeNode>(
-                        unit_name, tgt_name, pipeidx, std::string(unit_name + " Execution Pipe"),
-                        &exe_pipe_fact_);
-                exepipe->addAlias(exe_pipe_alias[pipeidx][1]);
-                node->addChild(*exepipe);
-                exe_pipe_tns_.emplace_back(std::move(exepipe));
+                sparta_assert(issue_queue_rename[pipe_to_iq_mapping[pipeidx]][0] == iq_name,
+                              "Rename mapping for issue queue is not in order or the original unit "
+                              "name is not equal to the unit name, check spelling!") iq_name =
+                    issue_queue_rename[pipe_to_iq_mapping[pipeidx]][1];
             }
-            else
+            const std::string tgt_name = iq_name + "_group";
+            std::string unit_name = "exe" + std::to_string(pipeidx);
+            if (exe_pipe_rename.size() > 0)
             {
-                // no alias
-                exe_pipe_tns_.emplace_back(new sparta::ResourceTreeNode(
-                    node, unit_name, tgt_name, pipeidx, std::string(unit_name + " Execution Pipe"),
-                    &exe_pipe_fact_));
+                sparta_assert(exe_pipe_rename[pipeidx][0] == unit_name,
+                              "Rename mapping for execution is not in order or the original unit "
+                              "name is not equal to the unit name, check spelling!") unit_name =
+                    exe_pipe_rename[pipeidx][1];
+            }
+            exe_pipe_tns_.emplace_back(new sparta::ResourceTreeNode(
+                node, unit_name, tgt_name, pipeidx, std::string(unit_name + " Execution Pipe"),
+                &exe_pipe_fact_));
+            exe_pipe_tns_.back()->getParameterSet()->getParameter("iq_name")->setValueFromString(
+                iq_name);
+            // if execution has branch pipe target
+            auto pipe_targets = pipelines[pipeidx];
+            if (std::find(pipe_targets.begin(), pipe_targets.end(), "br") != pipe_targets.end())
+            {
+                exe_pipe_tns_.back()
+                    ->getParameterSet()
+                    ->getParameter("contains_branch_unit")
+                    ->setValueFromString("true");
             }
         }
     }
@@ -99,7 +102,8 @@ namespace olympia
             so when we have an instruction, we can get the target pipe of an instruction and lookup
            available execution units
         */
-
+        const auto exe_pipe_rename =
+            olympia::coreutils::getPipeTopology(node->getParent(), "exe_pipe_rename");
         auto pipelines = olympia::coreutils::getPipeTopology(node->getParent(), "pipelines");
         std::unordered_map<std::string, int> exe_pipe_to_iq_number;
 
@@ -115,7 +119,15 @@ namespace olympia
             pipe_target_end++;
             for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
             {
-                const std::string exe_name = "exe" + std::to_string(pipe_idx);
+                std::string exe_name = "exe" + std::to_string(pipe_idx);
+                if (exe_pipe_rename.size() > 0)
+                {
+                    sparta_assert(exe_pipe_rename[pipe_idx][0] == exe_name,
+                                  "Rename mapping for execution is not in order or the original "
+                                  "unit name is not equal to the unit name, check spelling!")
+                        exe_name = exe_pipe_rename[pipe_idx][1];
+                }
+
                 for (const auto & exe_pipe_tns : exe_pipe_tns_)
                 {
                     olympia::ExecutePipe* exe_pipe =
@@ -124,13 +136,6 @@ namespace olympia
                     // check if the names match, then we have the correct exe_pipe_
                     if (exe_name == exe_pipe_name)
                     {
-                        auto pipe_targets = pipelines[pipe_idx];
-                        // if execution has branch pipe target
-                        if (std::find(pipe_targets.begin(), pipe_targets.end(), "br")
-                            != pipe_targets.end())
-                        {
-                            exe_pipe->setBranchRandomMisprediction(true);
-                        }
                         olympia::IssueQueue* issue_queue =
                             issue_queues_[iq_num]->getResourceAs<olympia::IssueQueue*>();
                         // set in the issue_queue the corresponding exe_pipe
@@ -172,7 +177,16 @@ namespace olympia
                 {
                     const auto pipe_name = pipelines[pipe_idx][pipe_target_idx];
                     const auto tgt_pipe = InstArchInfo::execution_pipe_map.find(pipe_name);
-                    const auto exe_unit_name = "exe" + std::to_string(pipe_idx);
+                    // const auto exe_unit_name = "exe" + std::to_string(pipe_idx);
+                    auto exe_unit_name = "exe" + std::to_string(pipe_idx);
+                    if (exe_pipe_rename.size() > 0)
+                    {
+                        sparta_assert(
+                            exe_pipe_rename[pipe_idx][0] == exe_unit_name,
+                            "Rename mapping for execution is not in order or the original unit "
+                            "name is not equal to the unit name, check spelling!") exe_unit_name =
+                            exe_pipe_rename[pipe_idx][1];
+                    }
                     // iq_num is the issue queue number based on the execution name, as we are
                     // looping through the pipe types for a execution unit, we don't know which
                     // issue queue it maps to, unless we use a map

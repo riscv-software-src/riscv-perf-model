@@ -12,17 +12,27 @@ top.cpu.core0:
     l1_size_kb: 16
 
 top.cpu.core0.extension.core_extensions:
+  # this sets the pipe targets for each execution unit
+  # you can set a multiple or just one:
+  # ["int", "div"] would mean this execution pipe can accept
+  # targets of: "int" and "div"
   pipelines:
-    [
-      ["int", "mul", "i2f", "cmov", "div"],
-      ["float", "faddsub", "fmac", "f2i"], 
-      ["br"]
-    ]
+  [
+      ["int", "mul", "i2f", "cmov", "div"], # exe0
+      ["float", "faddsub", "fmac", "f2i"], # exe1
+      ["br"] # exe2
+  ]
+  # this is used to set how many units per queue
+  # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
+  # if you want just one execution unit to issue queue you can do:
+  # ["0"] which would result in iq0 -> exe0
+  # *note if you change the number of issue queues, 
+  # you need to add it to latency matrix below
   issue_queue_to_pipe_map:
   [ 
-    ["0"],
-    ["1"],
-    ["2"]
+    ["0"], # iq0 -> exe0
+    ["1"], # iq1 -> exe1
+    ["2"]  # iq2 -> exe2
   ]
 
 top.cpu.core0.rename.scoreboards:

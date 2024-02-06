@@ -48,9 +48,15 @@ namespace olympia
 
     void IssueQueue::dumpDebugContent_(std::ostream & output) const
     {
-        output << "IssueQueue Contents" << std::endl;
+        output << "Issue Queue Structure Contents" << std::endl;
 
+        output << "Ready Queue Contents:" << std::endl;
         for (const auto & entry : ready_queue_)
+        {
+            output << '\t' << entry << std::endl;
+        }
+        output << "Issue Queue Contents:" << std::endl;
+        for (const auto & entry : issue_queue_)
         {
             output << '\t' << entry << std::endl;
         }

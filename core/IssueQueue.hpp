@@ -83,7 +83,7 @@ namespace olympia
                                olympia::ExecutePipe* exe_pipe);
         typedef std::unordered_map<std::string, olympia::ExecutePipe*> StringToExePipe;
 
-        StringToExePipe const getExePipes() { return exe_pipes_; };
+        const StringToExePipe & getExePipes() { return exe_pipes_; };
 
       private:
         // Scoreboards

@@ -171,6 +171,14 @@ namespace olympia
                     break;
                 }
 
+                // Is this a misprdicted branch requiring a refetch?
+                if(ex_inst.isMispredicted()) {
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::MISPREDICTION,
+                                                            ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+                    break;
+                }
+
                 // This is rare for the example
                 if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {

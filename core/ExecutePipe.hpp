@@ -84,8 +84,6 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_execute_pipe_{&unit_port_set_, "out_execute_pipe"};
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_{
             &unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
-        sparta::DataOutPort<FlushManager::FlushingCriteria> out_execute_flush_{&unit_port_set_,
-                                                                               "out_execute_flush"};
 
         // Scoreboards
         using ScoreboardViews =

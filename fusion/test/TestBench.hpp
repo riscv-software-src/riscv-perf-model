@@ -3,6 +3,7 @@
 //
 //! \file TestBench.hpp  testbench interface and utils
 #pragma once
+#include "Msg.hpp"
 #include "FieldExtractor.hpp"
 #include "Fusion.hpp"
 #include "FusionGroup.hpp"
@@ -161,77 +162,77 @@ struct TestBench::cbProxy
     //! \brief ...
     static bool uf1_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf1_func called" << endl;
+        msg->imsg("uf1_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf1_1_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf1_1_func called" << endl;
+        msg->imsg("uf1_1_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf1_2_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf1_2_func called" << endl;
+        msg->imsg("uf1_2_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf1_3_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf1_3_func called" << endl;
+        msg->imsg("uf1_3_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf2_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf2_func called" << endl;
+        msg->imsg("uf2_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf3_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf3_func called" << endl;
+        msg->imsg("uf3_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf4_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf4_func called" << endl;
+        msg->imsg("uf4_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf5_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf5_func called" << endl;
+        msg->imsg("uf5_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf5_1_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf5_1_func called" << endl;
+        msg->imsg("uf5_1_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf5_2_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf5_2_func called" << endl;
+        msg->imsg("uf5_2_func called");
         return true;
     }
 
     //! \brief ...
     static bool uf5_3_func(FusionGroupType &, InstPtrListType &, InstPtrListType &)
     {
-        cout << "HERE uf5_3_func called" << endl;
+        msg->imsg("uf5_3_func called");
         return true;
     }
 };

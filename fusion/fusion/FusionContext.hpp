@@ -59,7 +59,7 @@ namespace fusion
             }
         }
 
-        //! \brief insert each group w/ catch
+        //! \brief insert each group in current context w/ catch
         void insertGroup(const FusionGroupType & group)
         {
             fusion::HashType hash = group.hash();
@@ -80,7 +80,7 @@ namespace fusion
         //!
         //! When this is used in (future) multi-context implementations
         //! the name must be unique
-        std::string name_{""};
+        std::string name_{"base_ctx"};
         //! \brief this is an alias for map in this version
         FusionGroupContainerType container_;
         // Future:  LookupType lookup_;

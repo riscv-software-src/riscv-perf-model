@@ -21,6 +21,12 @@ namespace olympia::core_types
         "float"
     };
 
+    static inline const char * const issue_queue_types[] = {
+        "alu",
+        "fpu",
+        "br"
+    };
+
     inline std::ostream & operator<<(std::ostream & os, const RegFile & rf)
     {
         sparta_assert(rf < RegFile::RF_INVALID,

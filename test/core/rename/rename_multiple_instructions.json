@@ -46,18 +46,6 @@
         "rs1": 10,
         "rs2": 15,
         "rd":  20
-    },
-    {
-		"mnemonic" : "fadd.s",
-		"form" : "Rfloat",
-		"stencil" : "0x53"
-	},
-    {
-		"mnemonic" : "beq",
-		"form" : "B",
-		"stencil" : "0x63",
-		"type" : ["branch", "cond"],
-		"l-oper" : "all"
-	}
+    }
 
 ]

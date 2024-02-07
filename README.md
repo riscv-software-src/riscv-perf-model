@@ -257,3 +257,113 @@ diff -y -W 150 report_medium.out report_big.out
 # *** MacOS use pythonw
 python $MAP_BASE/helios/pipeViewer/pipe_view/argos.py -d pipeout_1K -l ../layouts/small_core.alf
 ```
+
+### Issue Queue Modeling
+Olympia has the ability to define issue queue to execution pipe mapping, as well as what pipe targets are available per execution unit. Also, with the implemenation of issue queue, Olympia now has a generic execution unit for all types, so one doesn't have to define `alu0` or `fpu0`, it is purely based off of the pipe targets, instead of unit types as before.
+In the example below:
+```
+top.cpu.core0.extension.core_extensions:
+  # this sets the pipe targets for each execution unit
+  # you can set a multiple or just one:
+  # ["int", "div"] would mean this execution pipe can accept
+  # targets of: "int" and "div"
+  pipelines:
+  [
+    ["int"], # exe0
+    ["int", "div"], # exe1
+    ["int", "mul"], # exe2
+    ["int", "mul", "i2f", "cmov"], # exe3
+    ["int"], # exe4
+    ["int"], # exe5
+    ["float", "faddsub", "fmac"], # exe6
+    ["float", "f2i"], # exe7
+    ["br"], # exe8
+    ["br"] # exe9
+  ]
+  # this is used to set how many units per queue
+  # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
+  # if you want just one execution unit to issue queue you can do:
+  # ["0"] which would result in iq0 -> exe0
+  # *note if you change the number of issue queues, 
+  # you need to add it to latency matrix below
+
+  issue_queue_to_pipe_map:
+  [ 
+    ["0", "1"], # iq0 -> exe0, exe1
+    ["2", "3"], # iq1 -> exe2, exe3
+    ["4", "5"], # iq2 -> exe4, exe5
+    ["6", "7"], # iq3 -> exe6, exe7
+    ["8", "9"]  # iq4 -> exe8, exe9
+  ]
+```
+
+The `pipelines` section defines for each execution unit, what are it's pipe targets. For example, the first row that has `["int"]` defines the first execution unit `exe0` that only handles instructions with pipe targets of `int`. Additionally, the second row defines an execution unit that handles instructions of `int` and `div` and so on.
+
+The `issue_queue_to_pipe_map` defines which execution units map to which issue queues, with the position being the issue queue number. So in the above `["0", "1"]` in the first row is the first issue queue that connects to `exe0` and `exe1`, so do note it's inclusive of the end value. If one wanted to have a one execution unit to issue queue mapping, the above would turn into:
+```
+issue_queue_to_pipe_map:
+  [ 
+    ["0"], # iq0 -> exe0
+    ["1"], # iq1 -> exe1
+    ["2"], # iq2 -> exe2
+    ["3"], # iq3 -> exe3
+    ["4"], # iq4 -> exe4
+    ["5"], # iq5 -> exe5
+    ["6"], # iq6 -> exe6
+    ["7"], # iq7 -> exe7
+    ["8"], # iq8 -> exe8
+    ["9"], # iq9 -> exe9
+  ]
+```
+
+Additionally, one can rename the issue queues and execution units to more descriptive names of their use such as:
+```
+exe_pipe_rename:
+  [
+    ["exe0", "alu0"],
+    ["exe1", "alu1"],
+    ["exe2", "alu2"],
+    ["exe3", "alu3"],
+    ["exe4", "alu4"],
+    ["exe5", "alu5"],
+    ["exe6", "fpu0"],
+    ["exe7", "fpu1"],
+    ["exe8", "br0"],
+    ["exe9", "br1"],
+  ]
+
+  # optional if you want to rename each iq* unit
+  issue_queue_rename:
+  [
+    ["iq0", "iq0_alu"],
+    ["iq1", "iq1_alu"],
+    ["iq2", "iq2_alu"],
+    ["iq3", "iq3_fpu"],
+    ["iq4", "iq4_br"],
+  ]
+```
+The above shows a 1 to 1 mapping of the renaming the execution units and issue queues. Do keep in mind that the order does matter, so you have to rename it exe0, exe1 and in order. Additionally, you have to either rename all execution units or all issue queue units, you cannot do partial. You can rename only the execution units but not the issue queues.
+
+Finally, if you do rename the issue queue names, you will need to update their definition in the scoreboard as so:
+```
+top.cpu.core0.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+      [["",         "lsu",     "iq0_alu", "iq1_alu", "iq2_alu", "iq3_fpu", "iq4_br"],
+      ["lsu",       1,         1,         1,          1,        1,         1],
+      ["iq0_alu",   1,         1,         1,          1,        1,         1],
+      ["iq1_alu",   1,         1,         1,          1,        1,         1],
+      ["iq2_alu",   1,         1,         1,          1,        1,         1],
+      ["iq3_fpu",   1,         1,         1,          1,        1,         1],
+      ["iq4_br",    1,         1,         1,          1,        1,         1]]
+  float.params.latency_matrix: |
+      [["",         "lsu",     "iq0_alu", "iq1_alu", "iq2_alu", "iq3_fpu", "iq4_br"],
+      ["lsu",       1,         1,         1,          1,        1,         1],
+      ["iq0_alu",   1,         1,         1,          1,        1,         1],
+      ["iq1_alu",   1,         1,         1,          1,        1,         1],
+      ["iq2_alu",   1,         1,         1,          1,        1,         1],
+      ["iq3_fpu",   1,         1,         1,          1,        1,         1],
+      ["iq4_br",    1,         1,         1,          1,        1,         1]]
+```

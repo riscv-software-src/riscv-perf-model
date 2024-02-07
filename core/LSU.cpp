@@ -151,10 +151,16 @@ namespace olympia
     {
         // Setup scoreboard view upon register file
         std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
+        // if we ever move to multicore, we only want to have resources look for scoreboard in their cpu
+        // if we're running a test where we only have top.rename or top.issue_queue, then we can just use the root
+        auto cpu_node = getContainer()->findAncestorByName("core.*");
+        if(cpu_node == nullptr){
+            cpu_node = getContainer()->getRoot();
+        }
         for (const auto rf : reg_files)
         {
             scoreboard_views_[rf].reset(new sparta::ScoreboardView(
-                getContainer()->getName(), core_types::regfile_names[rf], getContainer()));
+                getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
         }
     }
 

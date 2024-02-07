@@ -42,6 +42,8 @@ DefaultPrediction SimpleBranchPredictor::getPrediction(const DefaultInput & inpu
         predictTaken = (branch_history_table_[input.FetchPC] > 1);
     } else {
         predictTaken = false;
+        // add a new entry to BHT, biased towards not taken
+        branch_history_table_.insert(std::pair<uint64_t, uint8_t>(input.FetchPC, 1));       
     }
 
     DefaultPrediction prediction;

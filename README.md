@@ -185,7 +185,7 @@ commands are useful in listing/using this functionality.
 ./olympia traces/dhry_riscv.zstf --pevents complete_retire.out RETIRE,COMPLETE -i100
 
 # Generate all pevents
-./olympia traces/dhry_riscv.zstf --pevents complete_retire.out ALL -i100
+./olympia traces/dhry_riscv.zstf --pevents complete_retire.out all -i100
 ```
 
 ### Generate Reports
@@ -238,12 +238,12 @@ python3 ./reports/plot_ts.y my_report_time_series_all.csv
 ./olympia -i1M  ../traces/dhry_riscv.zstf --auto-summary off --report-all report_small.out
 
 # Use the medium sized core
-cat arches/medium_core.yaml  # Example the medium core
+cat arches/medium_core.yaml  # Example of the medium core
 ./olympia -i1M  ../traces/dhry_riscv.zstf --arch medium_core --auto-summary off --report-all report_medium.out
 diff -y -W 150 report_small.out report_medium.out
 
 # Use the big core
-cat arches/big_core.yaml  # Example the medium core
+cat arches/big_core.yaml  # Example of the big core
 ./olympia -i1M  ../traces/dhry_riscv.zstf --arch big_core --auto-summary off --report-all report_big.out
 diff -y -W 150 report_medium.out report_big.out
 

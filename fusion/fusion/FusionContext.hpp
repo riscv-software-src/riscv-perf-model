@@ -46,7 +46,7 @@ namespace fusion
         //! name_ member is assigned in makeContext
         FusionContext(const std::string & name, const FusionGroupListType & groups)
         {
-            makeContext(name_, groups);
+            makeContext(name, groups);
         }
 
         //! \brief insert each group into the (only/current) context

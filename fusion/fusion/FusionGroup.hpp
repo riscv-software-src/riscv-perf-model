@@ -156,7 +156,18 @@ namespace fusion
         //! \brief Method to calculate hash based on UIDs
         //!
         //! In future consider making this a user controlled functor.
-        //! In hardware the adds are not desirable.
+        //! In hardware the adds are not desirable, but they provide
+        //! good properties for exploration and development in the model.
+        //!
+        //! In this case jenkins was chosen because of its simplicity
+        //! while exhibiting good properties of uniform distribution and
+        //! avalanche effect for the intended data set size.
+        //!
+        //! For random (non-adversarial) uint32_t input data, and set
+        //! size of 10K, bucket size of 256:
+        //!
+        //! 0.500   average bit change rate
+        //! 259.5   chi^2 uniformity (256 buckets)
         static HashType jenkins_1aat(const std::vector<UidType> & v)
         {
             HashType hash = 0;

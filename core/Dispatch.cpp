@@ -243,10 +243,10 @@ namespace olympia
                               "Pipe Target: "
                                   << target_pipe
                                   << " doesn't have any execution unit that can handle that target "
-                                     "pipe. Did you define it in the yaml properly?")
-                    // so we have a map here that checks for which valid dispatchers for that
-                    // instruction target pipe map needs to be: "int": [exe0, exe1, exe2]
-                    if (target_pipe != InstArchInfo::TargetPipe::LSU)
+                                     "pipe. Did you define it in the yaml properly?");
+                // so we have a map here that checks for which valid dispatchers for that
+                // instruction target pipe map needs to be: "int": [exe0, exe1, exe2]
+                if (target_pipe != InstArchInfo::TargetPipe::LSU)
                 {
                     uint32_t max_credits = 0;
                     olympia::Dispatcher* best_dispatcher = nullptr;

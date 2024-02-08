@@ -67,6 +67,19 @@ namespace olympia
 
         MemoryAccessInfo(const MemoryAccessInfo &rhs) = default;
 
+        MemoryAccessInfo(const uint64_t addr) :
+            ldst_inst_ptr_(nullptr),
+            phy_addr_ready_(true),
+            mmu_access_state_(MMUState::NO_ACCESS),
+            cache_access_state_(CacheState::NO_ACCESS),
+            cache_data_ready_(false),
+            src_(ArchUnit::NO_ACCESS),
+            dest_(ArchUnit::NO_ACCESS),
+            vaddr_(addr),
+            paddr_(addr)
+        {}
+
+
         MemoryAccessInfo(const InstPtr & inst_ptr) :
             ldst_inst_ptr_(inst_ptr),
             phy_addr_ready_(false),
@@ -76,7 +89,9 @@ namespace olympia
             cache_access_state_(CacheState::NO_ACCESS),
             cache_data_ready_(false),
             src_(ArchUnit::NO_ACCESS),
-            dest_(ArchUnit::NO_ACCESS)
+            dest_(ArchUnit::NO_ACCESS),
+            vaddr_(inst_ptr->getTargetVAddr()),
+            paddr_(inst_ptr->getRAdr())
         {
         }
 
@@ -104,9 +119,9 @@ namespace olympia
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
-        uint64_t getPhyAddr() const { return ldst_inst_ptr_->getRAdr(); }
+        uint64_t getPhyAddr() const { return paddr_; }
 
-        sparta::memory::addr_t getVAddr() const { return ldst_inst_ptr_->getTargetVAddr(); }
+        sparta::memory::addr_t getVAddr() const { return vaddr_; }
 
         void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
 
@@ -153,7 +168,7 @@ namespace olympia
 
       private:
         // load/store instruction pointer
-        InstPtr ldst_inst_ptr_;
+        const InstPtr ldst_inst_ptr_;
 
         // Indicate MMU address translation status
         bool phy_addr_ready_;
@@ -168,6 +183,12 @@ namespace olympia
         // Src and destination unit name for the packet
         ArchUnit src_ = ArchUnit::NO_ACCESS;
         ArchUnit dest_ = ArchUnit::NO_ACCESS;
+
+        // Virtual Address
+        const uint64_t vaddr_;
+
+        // Physical Address
+        const uint64_t paddr_;
 
         // Pointer to next request for DEBUG/TRACK
         // (Note : Currently used only to track request with same cacheline in L2Cache
@@ -256,7 +277,10 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        os << "memptr: " << mem.getInstPtr();
+        os << "memptr: " << std::hex << mem.getPhyAddr() << std::dec;
+        if (mem.getInstPtr() != nullptr) {
+            os << " " << mem.getInstPtr();
+        }
         return os;
     }
 

@@ -27,6 +27,8 @@ namespace olympia_mss
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BIU, sendInitialCredits_));
         ILOG("BIU construct: #" << node->getGroupIdx());
+
+        ev_handle_mss_ack_ >> ev_handle_biu_req_ >> ev_handle_biu_l2cache_ack_;
     }
 
 

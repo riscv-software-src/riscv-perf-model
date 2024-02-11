@@ -57,7 +57,7 @@ namespace olympia_mss
             PARAMETER(bool, l2_always_hit, false, "L2 will always hit")
 
             PARAMETER(uint32_t, l2cache_latency, 10, "Cache Lookup HIT latency")
-            PARAMETER(bool, is_icache_connected, false, "Does this unit have ICache connected to it")
+            PARAMETER(bool, is_icache_connected, true, "Does this unit have ICache connected to it")
             PARAMETER(bool, is_dcache_connected, true, "Does this unit have DCache connected to it")
         };
 

@@ -247,8 +247,9 @@ namespace olympia_mss
 
     // Returning resp to ICache
     void L2Cache::handle_L2Cache_ICache_Ack_() {
-        uint32_t available_slots = icache_req_queue_size_ - icache_req_queue_.size();
-        out_l2cache_icache_ack_.send(available_slots);
+        // uint32_t available_slots = icache_req_queue_size_ - icache_req_queue_.size();
+        // out_l2cache_icache_ack_.send(available_slots);
+        out_l2cache_icache_ack_.send(1);
         ++num_acks_to_icache_;
 
         ILOG("L2Cache->ICache :  Ack is sent.");

@@ -9,6 +9,7 @@
 #include "Fetch.hpp"
 #include "InstGenerator.hpp"
 #include "MavisUnit.hpp"
+#include "OlympiaAllocators.hpp"
 
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
@@ -22,7 +23,10 @@ namespace olympia
         sparta::Unit(node),
         num_insts_to_fetch_(p->num_to_fetch),
         skip_nonuser_mode_(p->skip_nonuser_mode),
-        my_clk_(getClock())
+        my_clk_(getClock()),
+        ibuf_capacity_(32), // buffer up instructions read from trace
+        memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
+                                     ->memory_access_allocator)
     {
         in_fetch_queue_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
@@ -30,8 +34,18 @@ namespace olympia
         in_fetch_flush_redirect_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, FlushManager::FlushingCriteria));
 
-        fetch_inst_event_.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_random",
-                                                                     CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
+        in_icache_fetch_resp_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveCacheResponse_, MemoryAccessInfoPtr));
+
+        in_icache_fetch_credits_.
+            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveCacheCredit_, uint32_t));
+
+        ev_fetch_insts.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_instruction_data",
+                                                                  CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
+
+        ev_drive_insts.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "drive_instructions_out",
+                                                                  CREATE_SPARTA_HANDLER(Fetch, driveInstructions_)));
+
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
 
@@ -49,50 +63,149 @@ namespace olympia
                                                          workload->getValueAsString(),
                                                          skip_nonuser_mode_);
 
-        fetch_inst_event_->schedule(1);
+        ev_fetch_insts->schedule(1);
     }
+
 
     void Fetch::fetchInstruction_()
     {
-        const uint32_t upper = std::min(credits_inst_queue_, num_insts_to_fetch_);
-
-        // Nothing to send.  Don't need to schedule this again.
-        if(upper == 0) { return; }
-
-        InstGroupPtr insts_to_send = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-        for(uint32_t i = 0; i < upper; ++i)
+        // Prefill the ibuf with some instructions read from the tracefile
+        // keeping enough capacity to group them into cache block accesses.
+        for (uint32_t i = ibuf_.size(); i < ibuf_capacity_; ++i)
         {
-            InstPtr ex_inst = inst_generator_->getNextInst(my_clk_);
-            if(SPARTA_EXPECT_TRUE(nullptr != ex_inst))
-            {
-                ex_inst->setSpeculative(speculative_path_);
-                insts_to_send->emplace_back(ex_inst);
-
-                ILOG("Sending: " << ex_inst << " down the pipe");
+            const auto & inst_ptr = inst_generator_->getNextInst(my_clk_);
+            if (SPARTA_EXPECT_TRUE(nullptr != inst_ptr)) {
+                ibuf_.emplace_back(inst_ptr);
             }
             else {
                 break;
             }
         }
 
-        if(false == insts_to_send->empty())
+        if (credits_icache_ == 0 || ibuf_.empty() || fetch_buffer_.size() > fetch_buffer_capacity_) { return; }
+
+        // Gather instructions going to the same cacheblock
+        // TODO this should be a constant related to the ICache
+        const uint32_t icache_block_shift_ = 4; // 16B blocks..
+        // TODO instructions which straddle should be placed into the next group
+        auto different_blocks = [icache_block_shift_](const auto &lhs, const auto &rhs) {
+            return (lhs->getPC() >> icache_block_shift_) != (rhs->getPC() >> icache_block_shift_) ||
+                    lhs->isTakenBranch() ||
+                    rhs->isCoF();
+        };
+
+        auto block_end = std::adjacent_find(ibuf_.begin(), ibuf_.end(), different_blocks);
+        if (block_end != ibuf_.end()) {
+            ++block_end;
+        }
+
+        // Send to ICache
+        auto memory_access_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(memory_access_allocator_,
+                                                                    ibuf_.front()->getPC());
+
+        InstGroupPtr fetch_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+
+        // Place in fetch group for the memory access, and place in fetch buffer for later processing.
+        for (auto iter = ibuf_.begin(); iter != block_end; iter++) {
+            fetch_group_ptr->emplace_back(*iter);
+            fetch_buffer_.emplace_back(*iter);
+        }
+
+        // Set the last in block
+        fetch_buffer_.back()->setLastInFetchBlock(true);
+
+        // Associate the icache transaction with the instructions
+        memory_access_ptr->setFetchGroup(fetch_group_ptr);
+
+        ILOG("requesting: " << fetch_group_ptr);
+
+        out_fetch_icache_req_.send(memory_access_ptr);
+        --credits_icache_;
+
+        // We want to track blocks, not instructions.
+        ++fetch_buffer_occupancy_;
+
+        ibuf_.erase(ibuf_.begin(), block_end);
+        if (!ibuf_.empty() && credits_icache_ > 0 && fetch_buffer_occupancy_ < fetch_buffer_capacity_) {
+            ev_fetch_insts->schedule(1);
+        }
+    }
+
+    // Read instructions from the fetch buffer and send them to decode
+    void Fetch::driveInstructions_()
+    {
+        const uint32_t upper = std::min({credits_inst_queue_, num_insts_to_fetch_,
+                                         static_cast<uint32_t>(fetch_buffer_.size())});
+
+        // Nothing to send.  Don't need to schedule this again.
+        if (upper == 0) { return ; }
+
+        InstGroupPtr insts_to_send = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        for (uint32_t i = 0; i < upper; ++i)
         {
-            out_fetch_queue_write_.send(insts_to_send);
+            const auto entry = fetch_buffer_.front();
 
-            credits_inst_queue_ -= static_cast<uint32_t> (insts_to_send->size());
-
-            if((credits_inst_queue_ > 0) && (false == inst_generator_->isDone())) {
-                fetch_inst_event_->schedule(1);
+            // Can't send instructions that still waiting for ICache data
+            if (entry->getStatus() != Inst::Status::FETCHED) {
+                break;
             }
 
-            if(SPARTA_EXPECT_FALSE(info_logger_)) {
-                info_logger_ << "Fetch: send num_inst=" << insts_to_send->size()
-                             << " instructions, remaining credit=" << credits_inst_queue_;
+            // Don't group instructions where there has been a change of flow
+            if (entry->isCoF() && insts_to_send->size() > 0) {
+                break;
+            }
+
+            // Send instruction to decode
+            entry->setSpeculative(speculative_path_);
+            insts_to_send->emplace_back(entry);
+            ILOG("Sending: " << entry << " down the pipe")
+            fetch_buffer_.pop_front();
+
+            if (entry->isLastInFetchBlock()) {
+                --fetch_buffer_occupancy_;
+            }
+
+            // Only one taken branch per group
+            if (entry->isTakenBranch()) {
+                break;
             }
         }
-        else if(SPARTA_EXPECT_FALSE(info_logger_)) {
-            info_logger_ << "Fetch: no instructions from trace";
+
+        credits_inst_queue_ -= static_cast<uint32_t>(insts_to_send->size());
+        out_fetch_queue_write_.send(insts_to_send);
+
+        if (!fetch_buffer_.empty() && credits_inst_queue_ > 0) {
+            ev_drive_insts->schedule(1);
         }
+
+        ev_fetch_insts->schedule(1);
+
+    }
+
+    void Fetch::receiveCacheResponse_(const MemoryAccessInfoPtr &response)
+    {
+        if (response->getCacheState() == MemoryAccessInfo::CacheState::HIT) {
+            // Mark instructions as fetched
+            auto & fetched_insts = response->getFetchGroup();
+            sparta_assert(fetched_insts != nullptr);
+            for(auto & inst : *fetched_insts) {
+                inst->setStatus(Inst::Status::FETCHED);
+            }
+
+            ev_drive_insts->schedule(sparta::Clock::Cycle(0));
+        }
+    }
+
+    // Called when ICache has room
+    void Fetch::receiveCacheCredit_(const uint32_t &dat)
+    {
+        credits_icache_ += dat;
+
+        ILOG("Fetch: receive num_credits_icache=" << dat
+             << ", total credits_icache=" << credits_icache_);
+
+        // Schedule a fetch event this cycle
+        ev_fetch_insts->schedule(sparta::Clock::Cycle(0));
     }
 
     // Called when decode has room
@@ -103,7 +216,7 @@ namespace olympia
              << ", total decode_credits=" << credits_inst_queue_);
 
         // Schedule a fetch event this cycle
-        fetch_inst_event_->schedule(sparta::Clock::Cycle(0));
+        ev_drive_insts->schedule(sparta::Clock::Cycle(0));
     }
 
     // Called from FlushManager via in_fetch_flush_redirect_port
@@ -126,8 +239,33 @@ namespace olympia
         // Cancel all previously sent instructions on the outport
         out_fetch_queue_write_.cancel();
 
+        // Cancel any ICache request
+        out_fetch_icache_req_.cancel();
+
+        // Clear internal buffers
+        ibuf_.clear();
+        fetch_buffer_.clear();
+
         // No longer speculative
         // speculative_path_ = false;
+    }
+
+    void Fetch::dumpDebugContent_(std::ostream & output) const
+    {
+        output << "Fetch Contents" << std::endl;
+        for (const auto & entry : fetch_buffer_)
+        {
+            output << '\t' << entry << std::endl;
+        }
+    }
+
+    void Fetch::onStartingTeardown_()
+    {
+        // if ((false == rob_stopped_simulation_) && (false == fetch_buffer_.empty()))
+        // {
+        //     dumpDebugContent_(std::cerr);
+        //     sparta_assert(false, "fetch buffer has pending instructions");
+        // }
     }
 
 }

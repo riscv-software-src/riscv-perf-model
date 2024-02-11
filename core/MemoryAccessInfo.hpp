@@ -8,6 +8,7 @@
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "Inst.hpp"
+#include "InstGroup.hpp"
 
 namespace olympia
 {
@@ -149,6 +150,9 @@ namespace olympia
 
         void setDataReady(bool is_ready) { cache_data_ready_ = is_ready; }
 
+        void setFetchGroup(const InstGroupPtr &group) { fetch_group_ = group; }
+        const InstGroupPtr & getFetchGroup() const { return fetch_group_; }
+
         const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
 
         void setIssueQueueIterator(const LoadStoreInstIterator & iter)
@@ -194,6 +198,10 @@ namespace olympia
         // (Note : Currently used only to track request with same cacheline in L2Cache
         // Not for functional/performance purpose)
         MemoryAccessInfoPtr next_req_ = nullptr;
+
+        // Instructions that this memory access is fetching
+        // *USED* only for instruction fetch
+        InstGroupPtr fetch_group_;
 
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;

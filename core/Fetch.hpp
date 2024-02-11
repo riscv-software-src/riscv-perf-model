@@ -19,6 +19,7 @@
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
+#include "MemoryAccessInfo.hpp"
 
 namespace olympia
 {
@@ -88,6 +89,18 @@ namespace olympia
         sparta::DataInPort<FlushManager::FlushingCriteria> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
+        // Instruction Cache Request
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_fetch_icache_req_
+            {&unit_port_set_, "out_fetch_icache_req"};
+
+        // Instruction Cache Response
+        sparta::DataInPort<MemoryAccessInfoPtr> in_icache_fetch_resp_
+            {&unit_port_set_, "in_icache_fetch_resp", sparta::SchedulingPhase::Tick, 1};
+
+        // Instruction Cache Credit
+        sparta::DataInPort<uint32_t> in_icache_fetch_credits_
+            {&unit_port_set_, "in_icache_fetch_credits", sparta::SchedulingPhase::Tick, 0};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
         // Number of instructions to fetch
@@ -99,8 +112,19 @@ namespace olympia
         // Number of credits from decode that fetch has
         uint32_t credits_inst_queue_ = 0;
 
+        uint32_t credits_icache_ = 0;
+
         // Unit's clock
         const sparta::Clock * my_clk_ = nullptr;
+
+        // Size of trace buffer (must be sized >= L1ICache bandwidth / 2B)
+        const uint32_t ibuf_capacity_;
+
+        // allocator for ICache transactions
+        MemoryAccessInfoAllocator & memory_access_allocator_;
+
+        uint32_t fetch_buffer_occupancy_ = 0;
+        const uint32_t fetch_buffer_capacity_ = 16;
 
         // Instruction generation
         std::unique_ptr<InstGenerator> inst_generator_;
@@ -108,7 +132,14 @@ namespace olympia
         // Fetch instruction event, triggered when there are credits
         // from decode.  The callback set is either to fetch random
         // instructions or a perfect IPC set
-        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_fetch_insts;
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_drive_insts;
+
+        // Buffers up instructions read from the tracefile
+        std::deque<InstPtr> ibuf_;
+
+        // Holds fetched instructions from the ICache
+        std::deque<InstPtr> fetch_buffer_;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -122,8 +153,20 @@ namespace olympia
         // Read data from a trace
         void fetchInstruction_();
 
+        // Read instructions from the fetch buffer and send them to decode
+        void driveInstructions_();
+
         // Receive flush from FlushManager
         void flushFetch_(const FlushManager::FlushingCriteria &);
+
+        // Receieve the number of free credits from the instruction cache
+        void receiveCacheCredit_(const uint32_t &);
+
+        // Receive read data from the instruction cache
+        void receiveCacheResponse_(const MemoryAccessInfoPtr &);
+
+        void onStartingTeardown_() override;
+        void dumpDebugContent_(std::ostream&) const override final;
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

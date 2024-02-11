@@ -54,7 +54,7 @@ namespace olympia
         is_condbranch_(opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL)),
         is_call_(isCallInstruction(opcode_info)),
         is_return_(isReturnInstruction(opcode_info)),
-        status_state_(Status::FETCHED)
+        status_state_(Status::BEFORE_FETCH)
     {
         sparta_assert(inst_arch_info_ != nullptr,
                       "Mavis decoded the instruction, but Olympia has no uarch data for it: "

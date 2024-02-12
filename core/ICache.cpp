@@ -27,8 +27,8 @@ namespace olympia {
         in_fetch_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(ICache, getRequestFromFetch_, MemoryAccessInfoPtr));
 
-        in_l2cache_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(ICache, getAckFromL2Cache_, uint32_t));
+        in_l2cache_credits_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(ICache, getCreditsFromL2Cache_, uint32_t));
 
         in_l2cache_resp_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(ICache, getRespFromL2Cache_, MemoryAccessInfoPtr));
@@ -191,7 +191,7 @@ namespace olympia {
         }
     }
 
-    void ICache::getAckFromL2Cache_(const uint32_t &ack)
+    void ICache::getCreditsFromL2Cache_(const uint32_t &ack)
     {
         l2cache_credits_ += ack;
         if (!miss_queue_.empty()) {

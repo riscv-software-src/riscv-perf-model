@@ -65,7 +65,7 @@ namespace olympia
 
         // Callbacks
         void getRequestFromFetch_(const MemoryAccessInfoPtr &);
-        void getAckFromL2Cache_(const uint32_t &);
+        void getCreditsFromL2Cache_(const uint32_t &);
         void getRespFromL2Cache_(const MemoryAccessInfoPtr &);
 
         using L1Handle = CacheFuncModel::Handle;
@@ -92,7 +92,7 @@ namespace olympia
         sparta::DataInPort<MemoryAccessInfoPtr> in_fetch_req_{&unit_port_set_,
                                                              "in_fetch_req", 1};
 
-        sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
+        sparta::DataInPort<uint32_t> in_l2cache_credits_{&unit_port_set_, "in_l2cache_credits", 1};
 
         sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_,
                                                                  "in_l2cache_resp", 1};

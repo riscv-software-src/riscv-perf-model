@@ -81,7 +81,7 @@ private:
                     root_node->getChildAs<sparta::Port>("sink.ports.in_icache_req"));
         sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_l2cache_resp"),
                     root_node->getChildAs<sparta::Port>("sink.ports.out_icache_resp"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_l2cache_ack"),
+        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_l2cache_credits"),
                     root_node->getChildAs<sparta::Port>("sink.ports.out_icache_credit"));
 
         // Bind up checker

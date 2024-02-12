@@ -11,8 +11,8 @@ namespace olympia {
         in_lsu_lookup_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
 
-        in_l2cache_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromL2Cache_, uint32_t));
+        in_l2cache_credits_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getCreditsFromL2Cache_, uint32_t));
 
         in_l2cache_resp_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getRespFromL2Cache_, MemoryAccessInfoPtr));
@@ -99,13 +99,13 @@ namespace olympia {
         busy_ = false;
     }
 
-    void DCache::getAckFromL2Cache_(const uint32_t &ack) {
+    void DCache::getCreditsFromL2Cache_(const uint32_t &ack) {
         // When DCache sends the request to L2Cache for a miss,
         // This bool will be set to false, and Dcache should wait for ack from
         // L2Cache notifying DCache that there is space in it's dcache request buffer
         //
         // Set it to true so that the following misses from DCache can be sent out to L2Cache.
-        dcache_l2cache_credits_ = ack;
+        dcache_l2cache_credits_ += ack;
     }
 
 }

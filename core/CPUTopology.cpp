@@ -233,8 +233,8 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.l2cache.ports.in_dcache_l2cache_req"
         },
         {
-            "cpu.core*.dcache.ports.in_l2cache_ack",
-            "cpu.core*.l2cache.ports.out_l2cache_dcache_ack"
+            "cpu.core*.dcache.ports.in_l2cache_credits",
+            "cpu.core*.l2cache.ports.out_l2cache_dcache_credits"
         },
         {
             "cpu.core*.dcache.ports.in_l2cache_resp",
@@ -245,8 +245,8 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.l2cache.ports.in_icache_l2cache_req"
         },
         {
-            "cpu.core*.icache.ports.in_l2cache_ack",
-            "cpu.core*.l2cache.ports.out_l2cache_icache_ack"
+            "cpu.core*.icache.ports.in_l2cache_credits",
+            "cpu.core*.l2cache.ports.out_l2cache_icache_credits"
         },
         {
             "cpu.core*.icache.ports.in_l2cache_resp",
@@ -257,8 +257,8 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.biu.ports.in_biu_req"
         },
         {
-            "cpu.core*.biu.ports.out_biu_ack",
-            "cpu.core*.l2cache.ports.in_biu_l2cache_ack"
+            "cpu.core*.biu.ports.out_biu_credits",
+            "cpu.core*.l2cache.ports.in_biu_l2cache_credits"
         },
         {
             "cpu.core*.biu.ports.out_biu_resp",

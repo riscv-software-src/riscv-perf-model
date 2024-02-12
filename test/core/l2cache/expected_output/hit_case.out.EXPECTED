@@ -3,43 +3,43 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu Feb  8 10:29:35 2024
-#Elapsed:  0.024913s
+#Start:    Monday Mon Feb 12 14:22:32 2024
+#Elapsed:  0.002725s
 {0000000000 00000000 top.l2cache info} L2Cache: L2Cache construct: #4294967295
 {0000000000 00000000 top.l2cache info} sendInitialCredits_: Sending initial credits to ICache : 8
 {0000000000 00000000 top.l2cache info} sendInitialCredits_: Sending initial credits to DCache : 8
 {0000000000 00000000 top.biu info} sendInitialCredits_: Sending initial credits to L2Cache : 32
-{0000000000 00000000 top.icache info} ReceiveAck_: Ack: '8' Received
-{0000000000 00000000 top.dcache info} ReceiveAck_: Ack: '8' Received
-{0000000000 00000000 top.dcache info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Requested
-{0000000000 00000000 top.icache info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Requested
-{0000000001 00000001 top.l2cache info} getAckFromBIU_: Ack received from BIU on the port : Current BIU credit available = 32
+{0000000000 00000000 top.icache info} ReceiveCredits_: Ack: '8' Received
+{0000000000 00000000 top.dcache info} ReceiveCredits_: Ack: '8' Received
+{0000000000 00000000 top.dcache info} req_inst_: Instruction: 'uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' ' Requested
+{0000000000 00000000 top.icache info} req_inst_: Instruction: 'uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' ' Requested
+{0000000001 00000001 top.l2cache info} getCreditsFromBIU_: Credits received from BIU on the port : Current BIU credit available = 32
 {0000000001 00000001 top.l2cache info} getReqFromDCache_: Request received from DCache on the port
 {0000000001 00000001 top.l2cache info} appendDCacheReqQueue_: Append DCache->L2Cache request queue!
 {0000000001 00000001 top.l2cache info} getReqFromICache_: Request received from ICache on the port
 {0000000001 00000001 top.l2cache info} appendICacheReqQueue_: Append ICache->L2Cache request queue!
 {0000000001 00000001 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - ICache
 {0000000001 00000001 top.l2cache info} create_Req_: ICache request is sent to Pipeline_req_Q!
-{0000000002 00000002 top.icache info} ReceiveAck_: Ack: '8' Received
-{0000000002 00000002 top.l2cache info} handle_L2Cache_ICache_Ack_: L2Cache->ICache :  Ack is sent.
+{0000000001 00000001 top.l2cache info} create_Req_: L2Cache->ICache :  Credit is sent.
+{0000000002 00000002 top.icache info} ReceiveCredits_: Ack: '1' Received
 {0000000002 00000002 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : ICACHE
 {0000000002 00000002 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - DCache
 {0000000002 00000002 top.l2cache info} create_Req_: DCache request is sent to Pipeline_req_Q!
-{0000000003 00000003 top.dcache info} ReceiveAck_: Ack: '8' Received
-{0000000003 00000003 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache->DCache :  Ack is sent.
+{0000000002 00000002 top.l2cache info} create_Req_: L2Cache->DCache :  Credit is sent.
+{0000000003 00000003 top.dcache info} ReceiveCredits_: Ack: '1' Received
 {0000000003 00000003 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : DCACHE
-{0000000011 00000011 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000011 00000011 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000011 00000011 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
-{0000000012 00000012 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000012 00000012 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000012 00000012 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
-{0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
 {0000000012 00000012 top.l2cache info} appendBIUReqQueue_: Append L2Cache->BIU req queue
 {0000000012 00000012 top.l2cache info} handle_L2Cache_BIU_Req_: L2Cache Request sent to BIU : Current BIU credit available = 31
-{0000000013 00000013 top.biu info} sinkInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' sinked
-{0000000013 00000013 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000013 00000013 top.biu info} sinkInst_: Instruction: 'uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' ' sinked
+{0000000013 00000013 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000013 00000013 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
-{0000000024 00000024 top.l2cache info} getAckFromBIU_: Ack received from BIU on the port : Current BIU credit available = 32
+{0000000024 00000024 top.l2cache info} getCreditsFromBIU_: Credits received from BIU on the port : Current BIU credit available = 32
 {0000000034 00000034 top.l2cache info} getRespFromBIU_: Response received from BIU on the port
 {0000000034 00000034 top.l2cache info} appendBIURespQueue_: Append BIU->L2Cache resp queue!
 {0000000034 00000034 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - BIU
@@ -48,44 +48,44 @@
 {0000000035 00000035 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - BIU
 {0000000035 00000035 top.l2cache info} create_Req_: Request found in miss_pending_buffer_ with SrcUnit : DCACHE
 {0000000036 00000036 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : BIU
-{0000000044 00000044 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000044 00000044 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000044 00000044 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
 {0000000044 00000044 top.l2cache info} handleCacheAccessRequest_: Reload Complete: phyAddr=0xdeadbeef
-{0000000045 00000045 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000045 00000045 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000045 00000045 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
-{0000000045 00000045 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000045 00000045 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000045 00000045 top.l2cache info} appendICacheRespQueue_: Append L2Cache->ICache resp queue!
 {0000000045 00000045 top.l2cache info} handle_L2Cache_ICache_Resp_: L2Cache Resp is sent to ICache!
-{0000000046 00000046 top.icache info} ReceiveInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Received
-{0000000046 00000046 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0    FETCHED 0 pid: 1 'sw	3' 
+{0000000046 00000046 top.icache info} ReceiveInst_: Instruction: 'uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' ' Received
+{0000000046 00000046 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' 
 {0000000046 00000046 top.l2cache info} appendDCacheRespQueue_: Append L2Cache->DCache resp queue!
 {0000000046 00000046 top.l2cache info} handle_L2Cache_DCache_Resp_: L2Cache Resp is sent to DCache!
-{0000000047 00000047 top.dcache info} ReceiveInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'sw	3' ' Received
-{0000000050 00000050 top.dcache info} req_inst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Requested
-{0000000050 00000050 top.icache info} req_inst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Requested
+{0000000047 00000047 top.dcache info} ReceiveInst_: Instruction: 'uid: 0 BEFORE_FETCH 0 pid: 1 'sw	3' ' Received
+{0000000050 00000050 top.dcache info} req_inst_: Instruction: 'uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' ' Requested
+{0000000050 00000050 top.icache info} req_inst_: Instruction: 'uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' ' Requested
 {0000000051 00000051 top.l2cache info} getReqFromDCache_: Request received from DCache on the port
 {0000000051 00000051 top.l2cache info} appendDCacheReqQueue_: Append DCache->L2Cache request queue!
 {0000000051 00000051 top.l2cache info} getReqFromICache_: Request received from ICache on the port
 {0000000051 00000051 top.l2cache info} appendICacheReqQueue_: Append ICache->L2Cache request queue!
 {0000000051 00000051 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - ICache
 {0000000051 00000051 top.l2cache info} create_Req_: ICache request is sent to Pipeline_req_Q!
-{0000000052 00000052 top.icache info} ReceiveAck_: Ack: '8' Received
-{0000000052 00000052 top.l2cache info} handle_L2Cache_ICache_Ack_: L2Cache->ICache :  Ack is sent.
+{0000000051 00000051 top.l2cache info} create_Req_: L2Cache->ICache :  Credit is sent.
+{0000000052 00000052 top.icache info} ReceiveCredits_: Ack: '1' Received
 {0000000052 00000052 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : ICACHE
 {0000000052 00000052 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - DCache
 {0000000052 00000052 top.l2cache info} create_Req_: DCache request is sent to Pipeline_req_Q!
-{0000000053 00000053 top.dcache info} ReceiveAck_: Ack: '8' Received
-{0000000053 00000053 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache->DCache :  Ack is sent.
+{0000000052 00000052 top.l2cache info} create_Req_: L2Cache->DCache :  Credit is sent.
+{0000000053 00000053 top.dcache info} ReceiveCredits_: Ack: '1' Received
 {0000000053 00000053 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : DCACHE
-{0000000061 00000061 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000061 00000061 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' 
 {0000000061 00000061 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
-{0000000062 00000062 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000062 00000062 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: deadbeef uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' 
 {0000000062 00000062 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
-{0000000062 00000062 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000062 00000062 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' 
 {0000000062 00000062 top.l2cache info} appendICacheRespQueue_: Append L2Cache->ICache resp queue!
 {0000000062 00000062 top.l2cache info} handle_L2Cache_ICache_Resp_: L2Cache Resp is sent to ICache!
-{0000000063 00000063 top.icache info} ReceiveInst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Received
-{0000000063 00000063 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000063 00000063 top.icache info} ReceiveInst_: Instruction: 'uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' ' Received
+{0000000063 00000063 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: deadbeef uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' 
 {0000000063 00000063 top.l2cache info} appendDCacheRespQueue_: Append L2Cache->DCache resp queue!
 {0000000063 00000063 top.l2cache info} handle_L2Cache_DCache_Resp_: L2Cache Resp is sent to DCache!
-{0000000064 00000064 top.dcache info} ReceiveInst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Received
+{0000000064 00000064 top.dcache info} ReceiveInst_: Instruction: 'uid: 1 BEFORE_FETCH 0 pid: 2 'lw	5,3,4' ' Received

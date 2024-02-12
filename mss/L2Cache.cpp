@@ -96,8 +96,8 @@ namespace olympia_mss
         in_biu_resp_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getRespFromBIU_, olympia::MemoryAccessInfoPtr));
 
-        in_biu_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getAckFromBIU_, uint32_t));
+        in_biu_credits_.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(L2Cache, getCreditsFromBIU_, uint32_t));
 
         // Pipeline collection config
         l2cache_pipeline_.enableCollection(node);
@@ -134,12 +134,12 @@ namespace olympia_mss
     // Sending Initial credits to I/D-Cache
     void L2Cache::sendInitialCredits_() {
         if (is_icache_connected_) {
-            out_l2cache_icache_ack_.send(icache_req_queue_size_);
+            out_l2cache_icache_credits_.send(icache_req_queue_size_);
             ILOG("Sending initial credits to ICache : " << icache_req_queue_size_);
         }
 
         if (is_dcache_connected_) {
-            out_l2cache_dcache_ack_.send(dcache_req_queue_size_);
+            out_l2cache_dcache_credits_.send(dcache_req_queue_size_);
             ILOG("Sending initial credits to DCache : " << dcache_req_queue_size_);
         }
     }
@@ -184,16 +184,16 @@ namespace olympia_mss
         }
     }
 
-    // Handle BIU ack
-    void L2Cache::getAckFromBIU_(const uint32_t & ack) {
+    // Handle BIU Credits
+    void L2Cache::getCreditsFromBIU_(const uint32_t & credits) {
 
         // Update the biu credits
-        l2cache_biu_credits_ = ack;
+        l2cache_biu_credits_ += credits;
 
         // Kickstart the pipeline issueing
         ev_issue_req_.schedule(1);
 
-        ILOG("Ack received from BIU on the port : Current BIU credit available = " << l2cache_biu_credits_);
+        ILOG("Credits received from BIU on the port : Current BIU credit available = " << l2cache_biu_credits_);
     }
 
     // Handle L2Cache request from DCache
@@ -234,25 +234,6 @@ namespace olympia_mss
             // Loop on biu_req_queue_ if the requests are present
             ev_handle_l2cache_biu_req_.schedule(sparta::Clock::Cycle(1));
         }
-    }
-
-    // Returning ack to DCache
-    void L2Cache::handle_L2Cache_DCache_Ack_() {
-        uint32_t available_slots = dcache_req_queue_size_ - dcache_req_queue_.size();
-        out_l2cache_dcache_ack_.send(available_slots);
-        ++num_acks_to_dcache_;
-
-        ILOG("L2Cache->DCache :  Ack is sent.");
-    }
-
-    // Returning resp to ICache
-    void L2Cache::handle_L2Cache_ICache_Ack_() {
-        // uint32_t available_slots = icache_req_queue_size_ - icache_req_queue_.size();
-        // out_l2cache_icache_ack_.send(available_slots);
-        out_l2cache_icache_ack_.send(1);
-        ++num_acks_to_icache_;
-
-        ILOG("L2Cache->ICache :  Ack is sent.");
     }
 
     // Returning resp to DCache
@@ -338,7 +319,10 @@ namespace olympia_mss
             icache_req_queue_.erase(icache_req_queue_.begin());
 
             // Send out the ack to ICache for credit management
-            ev_handle_l2cache_icache_ack_.schedule(sparta::Clock::Cycle(1));
+            out_l2cache_icache_credits_.send(1, 1);
+            ILOG("L2Cache->ICache :  Credit is sent.");
+            ++num_acks_to_icache_;
+
         }
         else if (arbitration_winner == Channel::DCACHE) {
 
@@ -354,7 +338,10 @@ namespace olympia_mss
             dcache_req_queue_.erase(dcache_req_queue_.begin());
 
             // Send out the ack to DCache for credit management
-            ev_handle_l2cache_dcache_ack_.schedule(sparta::Clock::Cycle(1));
+            out_l2cache_dcache_credits_.send(1, 1);
+            ILOG("L2Cache->DCache :  Credit is sent.");
+            ++num_acks_to_dcache_;
+
         }
         else if (arbitration_winner == Channel::NO_ACCESS) {
             // Schedule a ev_create_req_ event again to see if the the new request

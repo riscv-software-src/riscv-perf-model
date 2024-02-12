@@ -6,6 +6,8 @@
 
 top.cpu.core0:
   fetch.params.num_to_fetch:   3
+  icache.params.l1_always_hit: true
+  icache.params.cache_latency: 0
   decode.params.num_to_decode: 3
   rename.params.num_to_rename: 3
   dispatch.params.num_to_dispatch: 3
@@ -19,12 +21,12 @@ top.cpu.core0.extension.core_extensions:
       ["int", "mul", "i2f", "cmov"],
       ["int", "div"],
       ["int"],
-      ["float", "faddsub", "fmac"], 
+      ["float", "faddsub", "fmac"],
       ["float", "f2i"],
       ["br"]
     ]
   issue_queue_to_pipe_map:
-  [ 
+  [
     ["0"],
     ["1", "2"],
     ["3", "4"],

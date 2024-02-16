@@ -11,6 +11,7 @@
 #include "MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 
+#include "sparta/utils/MathUtils.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
@@ -21,10 +22,12 @@ namespace olympia
     Fetch::Fetch(sparta::TreeNode * node,
                  const FetchParameterSet * p) :
         sparta::Unit(node),
+        my_clk_(getClock()),
         num_insts_to_fetch_(p->num_to_fetch),
         skip_nonuser_mode_(p->skip_nonuser_mode),
-        my_clk_(getClock()),
-        ibuf_capacity_(32), // buffer up instructions read from trace
+        icache_block_shift_(sparta::utils::floor_log2(p->block_width.getValue())),
+        ibuf_capacity_(std::ceil(p->block_width / 2)), // buffer up instructions read from trace
+        fetch_buffer_capacity_(p->fetch_buffer_size),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                      ->memory_access_allocator)
     {
@@ -43,11 +46,15 @@ namespace olympia
         ev_fetch_insts.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_instruction_data",
                                                                   CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
 
-        ev_drive_insts.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "drive_instructions_out",
-                                                                  CREATE_SPARTA_HANDLER(Fetch, driveInstructions_)));
+        ev_send_insts.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "send_instructions_out",
+                                                                  CREATE_SPARTA_HANDLER(Fetch, sendInstructions_)));
 
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
+
+        // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
+        node->getParent()->registerForNotification<bool, Fetch, &Fetch::onROBTerminate_>(
+            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
 
     }
 
@@ -85,10 +92,9 @@ namespace olympia
         if (credits_icache_ == 0 || ibuf_.empty() || fetch_buffer_.size() > fetch_buffer_capacity_) { return; }
 
         // Gather instructions going to the same cacheblock
-        // TODO this should be a constant related to the ICache
-        const uint32_t icache_block_shift_ = 4; // 16B blocks..
-        // TODO instructions which straddle should be placed into the next group
-        auto different_blocks = [icache_block_shift_](const auto &lhs, const auto &rhs) {
+        // NOTE: This doesn't deal with instructions straddling the blocks,
+        // they should be placed into the next group
+        auto different_blocks = [this](const auto &lhs, const auto &rhs) {
             return (lhs->getPC() >> icache_block_shift_) != (rhs->getPC() >> icache_block_shift_) ||
                     lhs->isTakenBranch() ||
                     rhs->isCoF();
@@ -132,7 +138,7 @@ namespace olympia
     }
 
     // Read instructions from the fetch buffer and send them to decode
-    void Fetch::driveInstructions_()
+    void Fetch::sendInstructions_()
     {
         const uint32_t upper = std::min({credits_inst_queue_, num_insts_to_fetch_,
                                          static_cast<uint32_t>(fetch_buffer_.size())});
@@ -175,7 +181,7 @@ namespace olympia
         out_fetch_queue_write_.send(insts_to_send);
 
         if (!fetch_buffer_.empty() && credits_inst_queue_ > 0) {
-            ev_drive_insts->schedule(1);
+            ev_send_insts->schedule(1);
         }
 
         ev_fetch_insts->schedule(1);
@@ -184,15 +190,21 @@ namespace olympia
 
     void Fetch::receiveCacheResponse_(const MemoryAccessInfoPtr &response)
     {
+        const auto & fetched_insts = response->getFetchGroup();
+        sparta_assert(fetched_insts != nullptr, "no instructions set for cache request");
         if (response->getCacheState() == MemoryAccessInfo::CacheState::HIT) {
+            ILOG("Cache hit response recieved for insts: " << fetched_insts);
             // Mark instructions as fetched
-            auto & fetched_insts = response->getFetchGroup();
-            sparta_assert(fetched_insts != nullptr);
             for(auto & inst : *fetched_insts) {
                 inst->setStatus(Inst::Status::FETCHED);
             }
+            ev_send_insts->schedule(sparta::Clock::Cycle(0));
+        }
 
-            ev_drive_insts->schedule(sparta::Clock::Cycle(0));
+        // Log misses
+        if (SPARTA_EXPECT_FALSE(info_logger_) &&
+            response->getCacheState() == MemoryAccessInfo::CacheState::MISS) {
+            ILOG("Cache miss on insts: " << fetched_insts);
         }
     }
 
@@ -216,7 +228,7 @@ namespace olympia
              << ", total decode_credits=" << credits_inst_queue_);
 
         // Schedule a fetch event this cycle
-        ev_drive_insts->schedule(sparta::Clock::Cycle(0));
+        ev_send_insts->schedule(sparta::Clock::Cycle(0));
     }
 
     // Called from FlushManager via in_fetch_flush_redirect_port
@@ -250,9 +262,14 @@ namespace olympia
         // speculative_path_ = false;
     }
 
+    void Fetch::onROBTerminate_(const bool & stopped)
+    {
+        rob_stopped_simulation_ = stopped;
+    }
+
     void Fetch::dumpDebugContent_(std::ostream & output) const
     {
-        output << "Fetch Contents" << std::endl;
+        output << "Fetch Buffer Contents" << std::endl;
         for (const auto & entry : fetch_buffer_)
         {
             output << '\t' << entry << std::endl;
@@ -261,11 +278,11 @@ namespace olympia
 
     void Fetch::onStartingTeardown_()
     {
-        // if ((false == rob_stopped_simulation_) && (false == fetch_buffer_.empty()))
-        // {
-        //     dumpDebugContent_(std::cerr);
-        //     sparta_assert(false, "fetch buffer has pending instructions");
-        // }
+        if ((false == rob_stopped_simulation_) && (false == fetch_buffer_.empty()))
+        {
+            dumpDebugContent_(std::cerr);
+            sparta_assert(false, "fetch buffer has pending instructions");
+        }
     }
 
 }

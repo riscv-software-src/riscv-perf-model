@@ -12,7 +12,7 @@
 
 
 namespace olympia {
-    const char ICache::name[] = "instruction_cache";
+    const char ICache::name[] = "icache";
 
     ICache::ICache(sparta::TreeNode *node, const ICacheParameterSet *p) :
         sparta::Unit(node),

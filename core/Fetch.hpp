@@ -57,6 +57,8 @@ namespace olympia
 
             PARAMETER(uint32_t, num_to_fetch,          4, "Number of instructions to fetch")
             PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
+            PARAMETER(uint32_t, block_width,          16, "Block width of memory read requests, in bytes")
+            PARAMETER(uint32_t, fetch_buffer_size,     8, "Size of fetch buffer in blocks")
         };
 
         /**
@@ -103,6 +105,9 @@ namespace olympia
 
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
+
+        // Unit's clock
+        const sparta::Clock * my_clk_ = nullptr;
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
 
@@ -112,34 +117,45 @@ namespace olympia
         // Number of credits from decode that fetch has
         uint32_t credits_inst_queue_ = 0;
 
+        // Number of credits available in the ICache
         uint32_t credits_icache_ = 0;
 
-        // Unit's clock
-        const sparta::Clock * my_clk_ = nullptr;
-
-        // Size of trace buffer (must be sized >= L1ICache bandwidth / 2B)
-        const uint32_t ibuf_capacity_;
-
-        // allocator for ICache transactions
-        MemoryAccessInfoAllocator & memory_access_allocator_;
-
-        uint32_t fetch_buffer_occupancy_ = 0;
-        const uint32_t fetch_buffer_capacity_ = 16;
-
-        // Instruction generation
-        std::unique_ptr<InstGenerator> inst_generator_;
-
-        // Fetch instruction event, triggered when there are credits
-        // from decode.  The callback set is either to fetch random
-        // instructions or a perfect IPC set
-        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_fetch_insts;
-        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_drive_insts;
+        // Amount to left shift an Instructions PC to get the ICache block number
+        const uint32_t icache_block_shift_;
 
         // Buffers up instructions read from the tracefile
         std::deque<InstPtr> ibuf_;
 
-        // Holds fetched instructions from the ICache
+        // Size of trace buffer (must be sized >= L1ICache bandwidth / 2B)
+        const uint32_t ibuf_capacity_;
+
+        // Fetch buffer: Holds a queue of instructions that are either
+        // waiting for an ICache hit response, or they're ready to be
+        // send to decode
         std::deque<InstPtr> fetch_buffer_;
+
+        // Size of fetch buffer, tracked separately as it sized
+        // in terms of icache block requests, not instructions.
+        const uint32_t fetch_buffer_capacity_;
+        uint32_t fetch_buffer_occupancy_ = 0;
+
+        // allocator for ICache transactions
+        MemoryAccessInfoAllocator & memory_access_allocator_;
+
+        // ROB terminated simulation
+        bool rob_stopped_simulation_ {false};
+
+        // Instruction generation
+        std::unique_ptr<InstGenerator> inst_generator_;
+
+        // Fetch instruction event, the callback is set to request
+        // instructions from the instruction cache and place them in the
+        // fetch buffer.
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_fetch_insts;
+
+        // Send instructions event, the callback is set to read instructions
+        // from the fetch buffer and send them to the decode unit
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_send_insts;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -154,7 +170,7 @@ namespace olympia
         void fetchInstruction_();
 
         // Read instructions from the fetch buffer and send them to decode
-        void driveInstructions_();
+        void sendInstructions_();
 
         // Receive flush from FlushManager
         void flushFetch_(const FlushManager::FlushingCriteria &);
@@ -165,6 +181,8 @@ namespace olympia
         // Receive read data from the instruction cache
         void receiveCacheResponse_(const MemoryAccessInfoPtr &);
 
+        // Debug callbacks, used to log fetch buffer contents
+        void onROBTerminate_(const bool&);
         void onStartingTeardown_() override;
         void dumpDebugContent_(std::ostream&) const override final;
 

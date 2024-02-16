@@ -58,11 +58,11 @@ sparta_named_test(olympia_json_test_fp_transfers olympia
 
 # Test PEvent generation
 sparta_named_test(olympia_json_test_pevents olympia
-  --workload traces/dhry_riscv.zstf
+  --workload traces/dhry_riscv.zstf -i100k
   --pevents test_pevent.out RETIRE
   --pevents test_pevent.out COMPLETE)
 sparta_named_test(olympia_json_test_pevents_all olympia
-  --workload traces/dhry_riscv.zstf
+  --workload traces/dhry_riscv.zstf  -i100k
   --pevents test_pevent.out all)
 
 ## Test the arches

@@ -179,6 +179,10 @@ namespace olympia
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
 
+        // Is this branch instruction mispredicted?
+        bool isMispredicted()  const { return is_mispredicted_; }
+        void setMispredicted()       { is_mispredicted_ = true; }
+
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
@@ -285,6 +289,9 @@ namespace olympia
         const bool is_call_;
         const bool is_return_;
         bool is_cof_ = false;  // Is change of flow
+
+        // Did this instruction mispredict?
+        bool is_mispredicted_ = false;
         bool is_taken_branch_ = false;
         bool last_in_fetch_block_ = false; // This is the last instruction in the fetch block
         sparta::Scheduleable* ev_retire_ = nullptr;

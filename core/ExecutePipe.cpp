@@ -83,9 +83,7 @@ namespace olympia
             if (ex_inst->isBranch() && (std::rand() % 20) == 0)
             {
                 ILOG("Randomly injecting a mispredicted branch: " << ex_inst);
-                FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::MISPREDICTION,
-                                                        ex_inst);
-                out_execute_flush_.send(criteria);
+                ex_inst->setMispredicted();
             }
         }
 

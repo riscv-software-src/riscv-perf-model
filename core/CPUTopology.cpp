@@ -375,13 +375,6 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             ;
             const std::string flush_manager = flushmanager_ports + ".out_flush_upper";
             bind_ports(exe_flush_in, flush_manager);
-
-            // Bind flush requests
-            const std::string exe_flush_out =
-                core_node + ".execute." + unit_name + ".ports.out_execute_flush";
-            ;
-            const std::string flush_manager_in = flushmanager_ports + ".in_flush_request";
-            bind_ports(exe_flush_out, flush_manager_in);
         }
 
         const auto issue_queue_to_pipe_map = olympia::coreutils::getPipeTopology(

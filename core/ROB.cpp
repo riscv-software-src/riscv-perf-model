@@ -76,10 +76,6 @@ namespace olympia
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
 
-    void ROB::retireEvent_() {
-        retireInstructions_();
-    }
-
     // An illustration of the use of the callback -- instead of
     // getting a reference, you can pull the data from the port
     // directly, albeit inefficient and superfluous here...
@@ -94,6 +90,10 @@ namespace olympia
 
     void ROB::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
+        sparta_assert(expect_flush_, "Received a flush, but didn't expect one");
+
+        expect_flush_ = false;
+
         uint32_t credits_to_send = 0;
 
         // Clean up internals and send new credit count
@@ -117,6 +117,11 @@ namespace olympia
 
     void ROB::retireInstructions_()
     {
+        // ROB is expecting a flush (back to itself)
+        if(expect_flush_) {
+            return;
+        }
+
         const uint32_t num_to_retire = std::min(reorder_buffer_.size(), num_to_retire_);
 
         ILOG("num to retire: " << num_to_retire);
@@ -168,6 +173,15 @@ namespace olympia
                     rob_stopped_simulation_ = true;
                     rob_stopped_notif_source_->postNotification(true);
                     getScheduler()->stopRunning();
+                    break;
+                }
+
+                // Is this a misprdicted branch requiring a refetch?
+                if(ex_inst.isMispredicted()) {
+                    FlushManager::FlushingCriteria criteria
+                        (FlushManager::FlushCause::MISPREDICTION, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+                    expect_flush_ = true;
                     break;
                 }
 

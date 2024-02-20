@@ -38,6 +38,14 @@ namespace olympia
         std::size_t size() const  { return insts_.size(); }
         bool        empty() const { return insts_.empty(); }
 
+        InstQueue::value_type front() const { return insts_.front(); }
+        InstQueue::value_type back() const { return insts_.back(); }
+
+        void erase(iterator first, iterator last)
+        {
+            insts_.erase(first, last);
+        }
+
     private:
         InstVector insts_;
     };

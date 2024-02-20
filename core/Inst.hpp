@@ -182,9 +182,8 @@ namespace olympia
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
-        // Last instruction within the cache block fetched from the ICache
-        void setLastInFetchBlock(bool last) { last_in_fetch_block_ = last; }
-        bool isLastInFetchBlock() const { return last_in_fetch_block_; }
+        void setPredictedTaken(bool taken) { is_predicted_taken_ = taken; }
+        void setPredictedTarget(sparta::memory::addr_t target) { predicted_target_ = target; }
 
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
@@ -286,7 +285,8 @@ namespace olympia
         const bool is_return_;
         bool is_cof_ = false;  // Is change of flow
         bool is_taken_branch_ = false;
-        bool last_in_fetch_block_ = false; // This is the last instruction in the fetch block
+        bool is_predicted_taken_ = false;
+        sparta::memory::addr_t predicted_target_;
         sparta::Scheduleable* ev_retire_ = nullptr;
         Status status_state_;
 

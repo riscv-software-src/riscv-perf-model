@@ -58,7 +58,8 @@ namespace olympia
             PARAMETER(uint32_t, num_to_fetch,          4, "Number of instructions to fetch")
             PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
             PARAMETER(uint32_t, block_width,          16, "Block width of memory read requests, in bytes")
-            PARAMETER(uint32_t, fetch_buffer_size,     8, "Size of fetch buffer in blocks")
+            PARAMETER(uint32_t, target_queue_size,    16, "Size of the fetch target queue")
+            PARAMETER(uint32_t, fetch_buffer_size,     8, "Size of fetch buffer")
         };
 
         /**
@@ -106,6 +107,8 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
 
+        const bool disabled_bpred_ = true;
+
         // Unit's clock
         const sparta::Clock * my_clk_ = nullptr;
         // Number of instructions to fetch
@@ -129,15 +132,12 @@ namespace olympia
         // Size of trace buffer (must be sized >= L1ICache bandwidth / 2B)
         const uint32_t ibuf_capacity_;
 
+        sparta::Queue<InstGroupPtr> target_buffer_;
+
         // Fetch buffer: Holds a queue of instructions that are either
         // waiting for an ICache hit response, or they're ready to be
         // send to decode
-        std::deque<InstPtr> fetch_buffer_;
-
-        // Size of fetch buffer, tracked separately as it sized
-        // in terms of icache block requests, not instructions.
-        const uint32_t fetch_buffer_capacity_;
-        uint32_t fetch_buffer_occupancy_ = 0;
+        sparta::Queue<InstGroupPtr> fetch_buffer_;
 
         // allocator for ICache transactions
         MemoryAccessInfoAllocator & memory_access_allocator_;
@@ -148,14 +148,16 @@ namespace olympia
         // Instruction generation
         std::unique_ptr<InstGenerator> inst_generator_;
 
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_predict_insts_;
+
         // Fetch instruction event, the callback is set to request
         // instructions from the instruction cache and place them in the
         // fetch buffer.
-        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_fetch_insts;
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_fetch_insts_;
 
         // Send instructions event, the callback is set to read instructions
         // from the fetch buffer and send them to the decode unit
-        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_send_insts;
+        std::unique_ptr<sparta::SingleCycleUniqueEvent<>> ev_send_insts_;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -165,6 +167,8 @@ namespace olympia
 
         // Receive the number of free credits from decode
         void receiveFetchQueueCredits_(const uint32_t &);
+
+        void doBranchPrediction_();
 
         // Read data from a trace
         void fetchInstruction_();

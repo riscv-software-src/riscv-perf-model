@@ -8,27 +8,27 @@ void runTest(int argc, char **argv)
    SimpleBranchPredictor predictor(4); //specify max num insts to fetch
 
    DefaultInput input;
-   input.FetchPC = 0x0;
+   input.fetch_PC = 0x0;
 
    // BTB miss
    DefaultPrediction prediction = predictor.getPrediction(input);
 
    EXPECT_EQUAL(prediction.branch_idx, 4);
-   EXPECT_EQUAL(prediction.predictedPC, 16);
+   EXPECT_EQUAL(prediction.predicted_PC, 16);
 
    // there was a taken branch at the 3rd instruction from fetchPC, with target 0x100
    DefaultUpdate update;
-   update.FetchPC = 0x0;
+   update.fetch_PC = 0x0;
    update.branch_idx = 2;
-   update.correctedPC = 0x100;
-   update.actuallyTaken = true;
+   update.corrected_PC = 0x100;
+   update.actually_taken = true;
    predictor.updatePredictor(update);
 
    // try the same input with fetchPC 0x0 again
    prediction = predictor.getPrediction(input);
    
    EXPECT_EQUAL(prediction.branch_idx, 2);
-   EXPECT_EQUAL(prediction.predictedPC, 0x100);
+   EXPECT_EQUAL(prediction.predicted_PC, 0x100);
 
    // TODO: add more tests
             

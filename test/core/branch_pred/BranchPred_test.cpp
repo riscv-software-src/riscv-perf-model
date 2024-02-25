@@ -5,19 +5,19 @@ TEST_INIT
 
 void runTest(int argc, char **argv)
 {
-   SimpleBranchPredictor predictor(4); //specify max num insts to fetch
+   olympia::SimpleBranchPredictor predictor(4); //specify max num insts to fetch
 
-   DefaultInput input;
+   olympia::DefaultInput input;
    input.fetch_PC = 0x0;
 
    // BTB miss
-   DefaultPrediction prediction = predictor.getPrediction(input);
+   olympia::DefaultPrediction prediction = predictor.getPrediction(input);
 
    EXPECT_EQUAL(prediction.branch_idx, 4);
    EXPECT_EQUAL(prediction.predicted_PC, 16);
 
    // there was a taken branch at the 3rd instruction from fetchPC, with target 0x100
-   DefaultUpdate update;
+   olympia::DefaultUpdate update;
    update.fetch_PC = 0x0;
    update.branch_idx = 2;
    update.corrected_PC = 0x100;

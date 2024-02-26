@@ -78,7 +78,9 @@ namespace olympia {
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
         }else{
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-            // Poll on dcache_l2cache_credits_ > 0 which means
+            // DCache is blocking for now. Busy is set on miss, until the miss is
+            // resolved by the L2.
+            // For NB behaviour: Poll on dcache_l2cache_credits_ > 0 which means
             // that L2Cache can accept requests from DCache.
             // Provide a corresponsing backpressure mechanism up the pipeline.
             if(!busy_) {
@@ -100,11 +102,6 @@ namespace olympia {
     }
 
     void DCache::getCreditsFromL2Cache_(const uint32_t &ack) {
-        // When DCache sends the request to L2Cache for a miss,
-        // This bool will be set to false, and Dcache should wait for ack from
-        // L2Cache notifying DCache that there is space in it's dcache request buffer
-        //
-        // Set it to true so that the following misses from DCache can be sent out to L2Cache.
         dcache_l2cache_credits_ += ack;
     }
 

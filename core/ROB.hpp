@@ -1,5 +1,4 @@
-// <ROB.h> -*- C++ -*-
-
+// <ROB.hpp> -*- C++ -*-
 
 #pragma once
 #include <string>
@@ -10,6 +9,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/log/MessageSource.hpp"
+#include "sparta/pevents/PeventCollector.hpp"
 
 #include "sparta/statistics/Counter.hpp"
 #include "sparta/statistics/StatisticDef.hpp"
@@ -108,9 +108,15 @@ namespace olympia
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_
              {&unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
+        // Is the ROB expecting a flush?
+        bool expect_flush_ = false;
+
         // Events used by the ROB
         sparta::UniqueEvent<> ev_retire_ {&unit_event_set_, "retire_insts",
-                CREATE_SPARTA_HANDLER(ROB, retireEvent_)};
+                CREATE_SPARTA_HANDLER(ROB, retireInstructions_)};
+
+        // For correlation activities
+        sparta::pevents::PeventCollector<InstPEventPairs> retire_event_{"RETIRE", getContainer(), getClock()};
 
         // A nice checker to make sure forward progress is being made
         // Note that in the ROB constructor, this event is set as non-continuing
@@ -121,7 +127,6 @@ namespace olympia
         std::unique_ptr<sparta::NotificationSource<bool>> rob_stopped_notif_source_;
 
         void sendInitialCredits_();
-        void retireEvent_();
         void robAppended_(const InstGroup &);
         void retireInstructions_();
         void checkForwardProgress_();

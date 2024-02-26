@@ -1,5 +1,54 @@
 [
     {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    
+    {
         "mnemonic": "amoadd.w",
         "rs1": 1,
         "rs2": 1,
@@ -22,5 +71,53 @@
         "rs1": 2,
         "rs2": 2,
         "rd": 2
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fsw",
+        "fs2": 3,
+        "rs1": 2,
+        "imm": 4
     }
 ]

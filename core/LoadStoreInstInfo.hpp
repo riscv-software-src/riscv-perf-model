@@ -2,8 +2,18 @@
 
 #include "MemoryAccessInfo.hpp"
 
+#include "sparta/simulation/State.hpp"
+#include "sparta/pairs/SpartaKeyPairs.hpp"
+
+#include <cinttypes>
+#include <string>
+
 namespace olympia
 {
+    // Forward declaration of the Pair Definition class is must as we
+    // are friending it.
+    class LoadStoreInstInfoPair;
+
     class LoadStoreInstInfo
     {
       public:
@@ -31,6 +41,11 @@ namespace olympia
             __LAST = NUM_STATES
         };
 
+        // The modeler needs to alias a type called
+        // "SpartaPairDefinitionType" to the Pair Definition class of
+        // itself
+        using SpartaPairDefinitionType = LoadStoreInstInfoPair;
+
         LoadStoreInstInfo() = delete;
 
         LoadStoreInstInfo(const MemoryAccessInfoPtr & info_ptr) :
@@ -54,6 +69,13 @@ namespace olympia
         {
             const MemoryAccessInfoPtr & mem_access_info_ptr = getMemoryAccessInfoPtr();
             return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUniqueID();
+        }
+
+        // Get the mnemonic of the instruction this load/store is
+        // associated.  Will return <unassoc> if not associated
+        std::string getMnemonic() const {
+            return (mem_access_info_ptr_ != nullptr ?
+                    mem_access_info_ptr_->getMnemonic() : "<unassoc>");
         }
 
         void setPriority(const IssuePriority & rank) { rank_.setValue(rank); }
@@ -184,4 +206,31 @@ namespace olympia
         os << *ls_info;
         return os;
     }
+
+    /*!
+     * \class LoadStoreInstInfoPair
+     * \brief Pair Definition class of the LoadStoreInstInfo for pipeout collection
+     *
+     * This is the definition of the PairDefinition class of LoadStoreInstInfo.
+     * It's mostly used for pipeline collection (-z option).  This
+     * PairDefinition class could be named anything but it needs to
+     * inherit publicly from sparta::PairDefinition templatized on the
+     * actual class LoadStoreInstInfo.
+     */
+    class LoadStoreInstInfoPair : public sparta::PairDefinition<LoadStoreInstInfo>
+    {
+    public:
+
+        // The SPARTA_ADDPAIRs APIs must be called during the construction of the PairDefinition class
+        LoadStoreInstInfoPair() : sparta::PairDefinition<LoadStoreInstInfo>() {
+            SPARTA_INVOKE_PAIRS(LoadStoreInstInfo);
+        }
+        SPARTA_REGISTER_PAIRS(SPARTA_ADDPAIR("DID",       &LoadStoreInstInfo::getInstUniqueID),  // Used by Argos to color code
+                              SPARTA_ADDPAIR("uid",       &LoadStoreInstInfo::getInstUniqueID),
+                              SPARTA_ADDPAIR("mnemonic",  &LoadStoreInstInfo::getMnemonic),
+                              SPARTA_ADDPAIR("pri:",      &LoadStoreInstInfo::getPriority),
+                              SPARTA_ADDPAIR("state",     &LoadStoreInstInfo::getState))
+    };
+
+
 } // namespace olympia

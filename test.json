@@ -1,0 +1,55 @@
+[
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 5,
+        "fs2": 7,
+        "fd": 1
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 2,
+        "fs2": 3,
+        "fd": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 11,
+        "fs2": 21,
+        "fd": 15
+    },
+    
+    {
+        "mnemonic": "ecall"
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 10,
+        "fs2": 17,
+        "fd": 3
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 5,
+        "fs2": 7,
+        "fd": 1
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 2,
+        "fs2": 3,
+        "fd": 4
+    },
+    {
+        "mnemonic": "fadd.d",
+        "fs1": 11,
+        "fs2": 21,
+        "fd": 15
+    }
+    
+]

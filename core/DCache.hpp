@@ -40,7 +40,7 @@ namespace olympia
 
         void getAckFromL2Cache_(const uint32_t & ack);
 
-        void getRespFromL2Cache_(const InstPtr & inst_ptr);
+        void getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
         using L1Handle = CacheFuncModel::Handle;
         L1Handle l1_cache_;
@@ -61,7 +61,8 @@ namespace olympia
 
         sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
 
-        sparta::DataInPort<InstPtr> in_l2cache_resp_{&unit_port_set_, "in_l2cache_resp", 1};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_,
+                                                                 "in_l2cache_resp", 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -74,7 +75,8 @@ namespace olympia
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_{&unit_port_set_,
                                                                      "out_lsu_lookup_req", 1};
 
-        sparta::DataOutPort<InstPtr> out_l2cache_req_{&unit_port_set_, "out_l2cache_req", 0};
+        sparta::DataOutPort<MemoryAccessInfoPtr> out_l2cache_req_{&unit_port_set_,
+                                                                  "out_l2cache_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Events

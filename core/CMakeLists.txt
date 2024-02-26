@@ -13,6 +13,7 @@ add_library(core
   InstArchInfo.cpp
   InstGroup.cpp
   InstGenerator.cpp
+  IssueQueue.cpp
   ROB.cpp
   LSU.cpp
   MMU.cpp

@@ -50,16 +50,35 @@ namespace olympia
             TARGET_MISPREDICTION,
             MISFETCH,
             POST_SYNC,
-            UKNOWN,
+            UNKNOWN,
             __LAST
         };
+
+        static bool determineInclusive(FlushCause cause)
+        {
+            static const std::map<FlushCause, bool> inclusive_flush_map = {
+                {FlushCause::TRAP,                 true},
+                {FlushCause::MISFETCH,             true},
+                {FlushCause::MISPREDICTION,        false},
+                {FlushCause::TARGET_MISPREDICTION, false},
+                {FlushCause::POST_SYNC,            false}
+            };
+
+            if(auto match = inclusive_flush_map.find(cause); match != inclusive_flush_map.end()) {
+                return match->second;
+            }
+            sparta_assert(false, "Unknown flush cause: " << static_cast<uint16_t>(cause));
+            return false;
+        }
 
         class FlushingCriteria
         {
         public:
-            FlushingCriteria(FlushCause cause, InstPtr inst_ptr) :
+            FlushingCriteria(FlushCause cause, const InstPtr & inst_ptr) :
                 cause_(cause),
-                inst_ptr_(inst_ptr) {}
+                is_inclusive_(determineInclusive(cause_)),
+                inst_ptr_(inst_ptr)
+            {}
 
             FlushingCriteria() = default;
             FlushingCriteria(const FlushingCriteria &rhs) = default;
@@ -67,27 +86,8 @@ namespace olympia
 
             FlushCause getCause() const        { return cause_; }
             const InstPtr & getInstPtr() const { return inst_ptr_; }
-
-            bool isInclusiveFlush() const
-            {
-                static const std::map<FlushCause, bool> inclusive_flush_map = {
-                    {FlushCause::TRAP,                 true},
-                    {FlushCause::MISFETCH,             true},
-                    {FlushCause::MISPREDICTION,        false},
-                    {FlushCause::TARGET_MISPREDICTION, false},
-                    {FlushCause::POST_SYNC,            false}
-                };
-                if(auto match = inclusive_flush_map.find(cause_); match != inclusive_flush_map.end()) {
-                    return match->second;
-                }
-                sparta_assert(false, "Unknown flush cause: " << static_cast<uint16_t>(cause_));
-                return true;
-            }
-
-            bool isLowerPipeFlush() const
-            {
-                return cause_ == FlushCause::MISFETCH;
-            }
+            bool isInclusiveFlush() const { return is_inclusive_; }
+            bool isLowerPipeFlush() const { return cause_ == FlushCause::MISFETCH; }
 
             bool includedInFlush(const InstPtr& other) const
             {
@@ -97,10 +97,11 @@ namespace olympia
             }
 
         private:
-            FlushCause cause_ = FlushCause::UKNOWN;
+            // Cannot be const since these are copied into the PLE
+            FlushCause cause_ = FlushCause::UNKNOWN;
+            bool is_inclusive_ = false;
             InstPtr inst_ptr_;
         };
-
 
         static constexpr char name[] = "flushmanager";
 
@@ -202,8 +203,8 @@ namespace olympia
             case FlushManager::FlushCause::POST_SYNC:
                 os << "POST_SYNC";
                 break;
-            case FlushManager::FlushCause::UKNOWN:
-                os << "UKNOWN";
+            case FlushManager::FlushCause::UNKNOWN:
+                os << "UNKNOWN";
                 break;
             case FlushManager::FlushCause::__LAST:
                 throw sparta::SpartaException("__LAST cannot be a valid enum state.");

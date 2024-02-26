@@ -1,217 +1,181 @@
 [
     {
         "mnemonic" : "c.addi4spn",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.fld",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.lw",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.ld",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.fsd",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.sw",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.sd",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.addi",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.addi16sp",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.jr",
-        "dispatch" : ["alu"],
         "pipe" : "br",
         "latency" : 1
     },
     {
         "mnemonic" : "c.addiw",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.jalr",
-        "dispatch" : ["alu"],
         "pipe" : "br",
         "latency" : 1
     },
     {
         "mnemonic" : "c.li",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.lui",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.srli",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.srai",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.andi",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.sub",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.xor",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.or",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.and",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.subw",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.addw",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.j",
-        "dispatch" : ["alu"],
         "pipe" : "br",
         "latency" : 1
     },
     {
         "mnemonic" : "c.beqz",
-        "dispatch" : ["alu"],
         "pipe" : "br",
         "latency" : 1
     },
     {
         "mnemonic" : "c.bnez",
-        "dispatch" : ["alu"],
         "pipe" : "br",
         "latency" : 1
     },
     {
         "mnemonic" : "c.slli",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.fldsp",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.lwsp",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.ldsp",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.mv",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.ebreak",
-        "dispatch" : ["rob"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.add",
-        "dispatch" : ["alu"],
         "pipe" : "int",
         "latency" : 1
     },
     {
         "mnemonic" : "c.fsdsp",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.swsp",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     },
     {
         "mnemonic" : "c.sdsp",
-        "dispatch" : ["lsu"],
         "pipe" : "lsu",
         "latency" : 1
     }

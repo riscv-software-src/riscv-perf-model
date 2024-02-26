@@ -48,11 +48,22 @@ sparta_named_test(olympia_coremark_test_report_html olympia -i 1M
   --report reports/core_report.def
   --workload traces/core_riscv.zstf)
 
+# Test missing opcodes
 sparta_named_test(olympia_json_test_missing_opcodes olympia
   --workload json_tests/missing_opcodes.json)
 
+# Test FP transfers
 sparta_named_test(olympia_json_test_fp_transfers olympia
   --workload json_tests/fp_transfers.json)
+
+# Test PEvent generation
+sparta_named_test(olympia_json_test_pevents olympia
+  --workload traces/dhry_riscv.zstf -i100k
+  --pevents test_pevent.out RETIRE
+  --pevents test_pevent.out COMPLETE)
+sparta_named_test(olympia_json_test_pevents_all olympia
+  --workload traces/dhry_riscv.zstf  -i100k
+  --pevents test_pevent.out all)
 
 ## Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")
@@ -71,7 +82,7 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   sparta_named_test(olympia_arch_${ARCH_NAME}_random_branch_misprediction_test olympia
     -i500K --workload traces/dhry_riscv.zstf
     --arch ${ARCH_NAME}
-    -p top.cpu.core0.execute.br*.params.enable_random_misprediction 1)
+    -p top.cpu.core0.execute.exe*.params.enable_random_misprediction 1)
 endforeach()
 
 set(test_params_list)

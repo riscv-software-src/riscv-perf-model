@@ -1,12 +1,45 @@
-
 #
-# Set up the pipeline for a 2-wide machine
+# Set up the pipeline for a 8-wide machine
 #
-#top.cpu:
-#  dispatch.num_to_dispatch: 2
-
 top.extension.core_extensions:
-  execution_topology:
-    [["alu", "10"],
-     ["fpu", "10"],
-     ["br",  "10"]]
+  pipelines:
+  [
+    ["int"], # alu0
+    ["int", "div"], # alu1
+    ["int", "mul"],
+    ["int", "mul", "i2f", "cmov"],
+    ["int"],
+    ["int"],
+    ["float", "faddsub", "fmac"], 
+    ["float", "f2i"],
+    ["br"],
+    ["br"]
+  ]
+  issue_queue_to_pipe_map:
+  [ 
+    ["0", "1"],
+    ["2", "3"],
+    ["4", "5"],
+    ["6", "7"],
+    ["8", "9"]
+  ]
+top.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]
+  float.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]

@@ -1,4 +1,4 @@
-#include "BranchPred.hpp"
+#include "SimpleBranchPred.hpp"
 
 /*
  * The algorithm used for prediction / update is as follows:
@@ -72,4 +72,5 @@ namespace olympia
 
         return prediction;
     }
+
 } // namespace olympia

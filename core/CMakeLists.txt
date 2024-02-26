@@ -1,7 +1,7 @@
 project (core)
 add_library(core
   Core.cpp
-  BranchPred.cpp
+  SimpleBranchPred.cpp
   Fetch.cpp
   Decode.cpp
   Rename.cpp

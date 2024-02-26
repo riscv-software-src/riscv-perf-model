@@ -1,4 +1,4 @@
-#include "BranchPred.hpp"
+#include "SimpleBranchPred.hpp"
 #include "sparta/utils/SpartaTester.hpp"
 
 TEST_INIT

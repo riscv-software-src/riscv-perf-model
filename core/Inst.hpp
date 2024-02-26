@@ -288,8 +288,8 @@ namespace olympia
         const bool is_condbranch_;
         const bool is_call_;
         const bool is_return_;
-        bool is_cof_ = false;  // Is change of flow
-
+        // Is this instruction a change of flow?
+        bool is_cof_ = false;
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;
         bool is_taken_branch_ = false;

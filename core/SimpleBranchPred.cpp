@@ -24,6 +24,8 @@
  */
 namespace olympia
 {
+namespace BranchPredictor
+{
 
     void SimpleBranchPredictor::updatePredictor(const DefaultUpdate & update) {
 
@@ -73,4 +75,5 @@ namespace olympia
         return prediction;
     }
 
+} // namespace BranchPredictor
 } // namespace olympia

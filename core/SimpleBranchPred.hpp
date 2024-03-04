@@ -20,6 +20,8 @@
 
 namespace olympia
 {
+namespace BranchPredictor
+{
 
     // following class definitions are example inputs & outputs for a very simple branch
     // predictor
@@ -83,4 +85,5 @@ namespace olympia
         std::map <uint64_t, BTBEntry> branch_target_buffer_; // BTB
     };
 
+} // namespace BranchPredictor
 } // namespace olympia

@@ -27,6 +27,8 @@
 
 namespace olympia
 {
+namespace BranchPredictor
+{
 
     template <class PredictionT, class UpdateT, class InputT>
     class BranchPredictorIF
@@ -39,4 +41,5 @@ namespace olympia
         virtual void updatePredictor(const UpdateT &) = 0;
     };
 
+} // namespace BranchPredictor
 } // namespace olympia

@@ -1,4 +1,4 @@
-# Fusion API draft
+# Fusion API
 
 ```
 Contact: Jeff Nye

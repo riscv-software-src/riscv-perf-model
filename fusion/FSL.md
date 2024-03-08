@@ -60,6 +60,7 @@
 | Version |    Date    |  Contact  | Description                           |
 |:-------:|:----------:|:---------:|:--------------------------------------|
 |  x.0    | 2024.03.04 | Jeff Nye  | circulated for comment
+|  x.1    | 2024.03.xx | Jeff Nye  | typos, replace asserts with exceptions, grammar changes
 
 ### TODO
 
@@ -68,6 +69,14 @@ instruction buffers. The goal is to support both without needing it reflected
 in the conversion clause syntax.
 
 - Revisit the single assignment decisions
+
+- Revisit the decision to include instr types
+
+- Revisit the decision on minimal control flow. Is the ternary operator
+sufficient or is if-then-else syntax more clear, are for loops required,
+etc?
+
+- add the BNF or ANTRL/Bison grammar
 
 ----------------------------------------------------------------
 # Introduction to FSL
@@ -90,12 +99,13 @@ with the intent of improving execution attributes. Fracture commonly replaces
 more complex operations with a set of simpler operations, with the 
 same intent of improving execution attributes.
 
-Commonly N-tuple instructions are elements of a standardized ISA and 
-the M-tuple are customizations of the N-tuple set.  Most commonly the 
-M-tuple instructions are internal to the processor. 
+Often N-tuple instructions are elements of a standardized ISA and
+the M-tuple are customizations of the N-tuple set.  The M-tuple
+instructions are the result of transformation and are internal to the
+processor. 
 
-FSL assists the expression of the properties of these transformations and 
-takes advantage of the bounds of the domain to provide an efficient syntax 
+FSL assists the expression of the properties of these transformations and
+takes advantage of the bounds of the domain to provide an efficient syntax
 for these expressions.
 
 ## High Level Operation
@@ -147,9 +157,9 @@ style is shown below.
 
 The three clauses, sequence, constraints and conversion, are preceded by
 the variables which declare the instruction set architecture, 
-the micro-architecture of the processor implementation and a 
+the micro-architecture of the processor and a 
 sequence container reference, ioput. ioput links the transform to the
-performance model decoded instructions containers.
+performance model's decoded instructions containers.
 
 The isa/uarch/ioput are referred to as the 'Prolog' in discussions
 below.
@@ -293,7 +303,7 @@ The list of operators and their support in FSL is listed below. FSL adds
 the range operator to the standard C style operators. The syntax is 
 similar to Verilog.
 
-These operators are nnnecessary in FSL: Divide, modulus, size_of,
+These operators are unnecessary in FSL: Divide, modulus, size_of,
 pointer operations, type conversions cast/implicit/explicit.
 
 The comma operator support is limited to concatentaion expressions, operation
@@ -491,7 +501,7 @@ The isa element name is used by the Fusion API to match an instruction set
 description API to the transform specification. The API looks up the 
 'myIsa' string to find the associated object pointer.
 
-The Fusion API will issue an assert if the named isa element does not have an
+The Fusion API will throw an exception if the named isa element does not have an
 associated object.
 
 The ISA description API is used to validate instruction references in
@@ -510,7 +520,7 @@ parsing.
 The uarch element name is used by the Fusion API to match a micro-architecture
 description class instance to the transform specification.
 
-The Fusion API will issue an assert if the named uarch element does not 
+The Fusion API will throw an exception if the named uarch element does not 
 have an associated object.
 
 The microarchitecture description class is used to validate processor
@@ -534,7 +544,7 @@ During construction the Fusion API maps ioput.input and ioput.output
 to the appropriate model containers. 'input' and 'output' are indexes
 into a map containing references to the model's instruction buffers.
 
-The Fusion API will issue an assert if it can not match the elements in
+The Fusion API will throw an exception if it can not match the elements in
 ioput to STL container objects.  Using Olympia as an example, the Fusion 
 API will attempt to match the specified name, ioput.input, to a 
 Fusion::InstQueue reference.
@@ -582,7 +592,7 @@ sequence seq1(iop1,myISA) {
 ```
 
 The FSL parser uses the Fusion API and access to the isa object to
-validate the instruction sequence. An assert is issued if a problem
+validate the instruction sequence. An exception is thrown if a problem
 is detected.
 
 The specified sequence of instructions is pattern matched against 
@@ -602,10 +612,9 @@ abstracted operands. The choice is based on the constraints.
 The UID list is sufficient if there are no constraints on the operands
 in the list of instructions in the sequence.
 
-For example, these two instructions are a common sequence for zero extending
-the upper bits of a register. The left column is the encoding, the comment
-is the Mavis unique identifier for each instruction which is independent 
-of the operands.
+For example, these two instructions are a frequent sequence in compiled
+C.  The left column is the encoding, the comment is the Mavis unique identifier 
+for each instruction which is independent of the operands.
 
 ```
 0x0512     c.slli x10,4    ; 0xf
@@ -625,9 +634,12 @@ sequence seq1(iop1,rv64g) {
 }
 ```
 
-This method of expression requires that the conversion clause 
-can handle any legal instruction register operands 
-and any legal immediate field values for that operand.
+With the UID sequence expression there are no operand specific 
+constraints and therefore the conversion clause must handle any legal
+combinations of the two rd and two constants.
+
+This results in a transform to a generalized fusion op of a shift left 
+followed by right and not the zero extension expressed by x10,4.
 
 If the constraints clause implements operand contraints the instruction
 sequence should be expressed using the abstract assembly syntax so the
@@ -659,8 +671,11 @@ sequence seq1(iop1,rv64g) {
 }
 ```
 
-Note both the later two case can be made equivalent by construction of
+Note both the later two cases can be made equivalent by construction of
 the equivalent constraints in the clause.
+
+Now in both cases the transformation expresses a fusion operation for
+zero extention of the common rd register by the common constant.
 
 ```
 g1 = g2
@@ -670,8 +685,8 @@ c1 = c2
 In some cases positional constraints can save development time at no 
 expense to performance.
 
-The sequences above have an implied strict ordering. There are sequence pragmas 
-to relax the strictness of sequence matching. 
+The example sequences above have an implied strict ordering. There are 
+sequence pragmas to relax the strictness of sequence matching. 
 
 The required pragma, \_req\_, indicates that an unspecified instruction
 is required in that position. The \_req\_ case does not constrain 
@@ -836,7 +851,7 @@ constraints cons1(seq1,iop1,rv64g,oly1) {
 ```
 
 Being strict with operand declarations is intended to assist 
-development but highlighting unexpected code construction.
+development by highlighting unexpected code construction.
 TODO: is this having the desired effect?
 
 ### Constraints methods
@@ -847,7 +862,7 @@ The constraints clause has a single method.
 .state        This is _pass_ or _fail_ constraints status
 ```
 
-In addition to the .state method, the constraints clauses declarations
+In addition to the .state method, the constraints clause declarations
 are made available without prefix to the conversion clause. This is
 described in the next section.
 
@@ -1050,7 +1065,7 @@ conversion conv2(seq1,iop1,cons1) {
     s20 c1     # 29:10   signed 20b
     gpr g1     # 9:5     gpr 5b
     gpr g2     # 4:0     gpr 5b
-    encode_order(opc,c3,c2,c1,g1,g2)
+    encode_order{opc,c3,c2,c1,g1,g2}
   }
 
   instr fused(encoding=word1)
@@ -1195,3 +1210,7 @@ let b:current_syntax = "fsl"
 ```
 
 1. References
+
+[1] Celio, Christopher, et al. "The renewed case for the reduced instruction
+    set computer: Avoiding isa bloat with macro-op fusion for risc-v." arXiv
+    preprint arXiv:1607.02318 (2016).

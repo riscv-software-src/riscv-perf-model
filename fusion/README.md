@@ -65,7 +65,7 @@ mkdir release; cd release; cmake .. -DCMAKE_BUILD_TYPE=Release
 cd ../fusion
 mkdir -p release; cd release; cmake ..
 make -j32 regress
-make docs
+make fusion_docs
 ```
 
 # C++ API and testbench

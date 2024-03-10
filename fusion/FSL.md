@@ -60,7 +60,8 @@
 | Version |    Date    |  Contact  | Description                           |
 |:-------:|:----------:|:---------:|:--------------------------------------|
 |  x.0    | 2024.03.04 | Jeff Nye  | circulated for comment
-|  x.1    | 2024.03.xx | Jeff Nye  | typos, replace asserts with exceptions, grammar changes
+|  x.1    | 2024.03.08 | Jeff Nye  | typos, replace asserts with exceptions, grammar changes
+|  x.2    | 2024.03.10 | Jeff Nye  | removed operators, div/mod not needed,++/--/extensive assignment operators violate SA
 
 ### TODO
 
@@ -208,7 +209,7 @@ As such many aspects of a programming language are not required by FSL.
 The FSL syntax style is a reduced boilerplate style of C. e.g. braces are 
 used, no semi-colons, indentation is not a syntax element.
 
-There are no user defined function.
+There are no user defined functions.
 
 There are a limited number of data types unique to FSL.
 
@@ -247,7 +248,7 @@ tell if this is practical.
 There is global scope for named tranforms and a local scoping 
 convention.  Variable scoping is lexical.
 
-Annonymous block scoping, { ...scope... }, is not necessary for FSL operation.
+Anonymous block scoping, { ...scope... }, is not necessary for FSL operation.
 
 ## Keywords
 
@@ -318,10 +319,6 @@ Within the supported operators FSL uses conventional operator precedence.
     + (Addition)
     - (Subtraction)
     * (Multiplication)
-    / (Division)
-    % (Modulus - remainder of division)
-    ++ (Increment - increases integer value by one)
-    -- (Decrement - decreases integer value by one)
 ```
 
 ### Range Operators
@@ -350,18 +347,11 @@ Within the supported operators FSL uses conventional operator precedence.
     !   (Logical NOT)
 ```
 
-### Assignment Operators
+
+### Assignment Operator
 
 ```
     =    (Simple assignment)
-    +=   (Add and assign)
-    -=   (Subtract and assign)
-    *=   (Multiply and assign)
-    <<=  (Left shift and assign)
-    >>=  (Right shift and assign)
-    &=   (Bitwise AND and assign)
-    ^=   (Bitwise XOR and assign)
-    |=   (Bitwise OR and assign)
 ```
 
 
@@ -478,7 +468,7 @@ transform <name> {
 ## Prolog Elements
 
 Prolog is not a keyword. The prolog elements provide the necessary 
-context for the fusion operation and they are commonly referred to 
+context for the transform operation and they are commonly referred to 
 as a group.  The common elements are shown:
 
 ```

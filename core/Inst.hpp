@@ -83,8 +83,9 @@ namespace olympia
 
         enum class Status : std::uint16_t
         {
-            FETCHED = 0,
-            __FIRST = FETCHED,
+            BEFORE_FETCH = 0,
+            __FIRST = BEFORE_FETCH,
+            FETCHED,
             DECODED,
             RENAMED,
             DISPATCHED,
@@ -185,6 +186,10 @@ namespace olympia
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
+        // Last instruction within the cache block fetched from the ICache
+        void setLastInFetchBlock(bool last) { last_in_fetch_block_ = last; }
+        bool isLastInFetchBlock() const { return last_in_fetch_block_; }
+
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
 
@@ -224,6 +229,9 @@ namespace olympia
         bool isCall() const { return is_call_; }
 
         bool isReturn() const { return is_return_; }
+
+        void setCoF(const bool &cof) { is_cof_ = cof; }
+        bool isCoF() const { return is_cof_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -280,10 +288,12 @@ namespace olympia
         const bool is_condbranch_;
         const bool is_call_;
         const bool is_return_;
-
+        // Is this instruction a change of flow?
+        bool is_cof_ = false;
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;
         bool is_taken_branch_ = false;
+        bool last_in_fetch_block_ = false; // This is the last instruction in the fetch block
         sparta::Scheduleable* ev_retire_ = nullptr;
         Status status_state_;
 
@@ -307,6 +317,9 @@ namespace olympia
     {
         switch (status)
         {
+        case Inst::Status::BEFORE_FETCH:
+            os << "BEFORE_FETCH";
+            break;
         case Inst::Status::FETCHED:
             os << "FETCHED";
             break;

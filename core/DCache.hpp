@@ -38,7 +38,7 @@ namespace olympia
 
         void getInstsFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
-        void getAckFromL2Cache_(const uint32_t & ack);
+        void getCreditsFromL2Cache_(const uint32_t &);
 
         void getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
@@ -59,7 +59,7 @@ namespace olympia
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_{&unit_port_set_,
                                                                    "in_lsu_lookup_req", 0};
 
-        sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
+        sparta::DataInPort<uint32_t> in_l2cache_credits_{&unit_port_set_, "in_l2cache_credits", 1};
 
         sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_,
                                                                  "in_l2cache_resp", 1};

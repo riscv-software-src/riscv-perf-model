@@ -1,6 +1,7 @@
 project (core)
 add_library(core
   Core.cpp
+  ICache.cpp
   Fetch.cpp
   Decode.cpp
   Rename.cpp

@@ -57,7 +57,7 @@ namespace olympia_mss
             PARAMETER(bool, l2_always_hit, false, "L2 will always hit")
 
             PARAMETER(uint32_t, l2cache_latency, 10, "Cache Lookup HIT latency")
-            PARAMETER(bool, is_icache_connected, false, "Does this unit have ICache connected to it")
+            PARAMETER(bool, is_icache_connected, true, "Does this unit have ICache connected to it")
             PARAMETER(bool, is_dcache_connected, true, "Does this unit have DCache connected to it")
         };
 
@@ -107,8 +107,8 @@ namespace olympia_mss
         sparta::DataInPort<olympia::MemoryAccessInfoPtr> in_biu_resp_
             {&unit_port_set_, "in_biu_l2cache_resp", 1};
 
-        sparta::DataInPort<uint32_t> in_biu_ack_
-            {&unit_port_set_, "in_biu_l2cache_ack", 1};
+        sparta::DataInPort<uint32_t> in_biu_credits_
+            {&unit_port_set_, "in_biu_l2cache_credits", 1};
 
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -124,11 +124,11 @@ namespace olympia_mss
         sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_l2cache_dcache_resp_
             {&unit_port_set_, "out_l2cache_dcache_resp"};
 
-        sparta::DataOutPort<uint32_t> out_l2cache_icache_ack_
-            {&unit_port_set_, "out_l2cache_icache_ack"};
+        sparta::DataOutPort<uint32_t> out_l2cache_icache_credits_
+            {&unit_port_set_, "out_l2cache_icache_credits"};
 
-        sparta::DataOutPort<uint32_t> out_l2cache_dcache_ack_
-            {&unit_port_set_, "out_l2cache_dcache_ack"};
+        sparta::DataOutPort<uint32_t> out_l2cache_dcache_credits_
+            {&unit_port_set_, "out_l2cache_dcache_credits"};
 
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -248,14 +248,6 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_biu_l2cache_resp_
             {&unit_event_set_, "ev_handle_biu_l2cache_resp", CREATE_SPARTA_HANDLER(L2Cache, handle_BIU_L2Cache_Resp_)};
 
-        // Event to handle L2Cache ack for ICache
-        sparta::UniqueEvent<> ev_handle_l2cache_icache_ack_
-            {&unit_event_set_, "ev_handle_l2cache_icache_ack", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_ICache_Ack_)};
-
-        // Event to handle L2Cache ack for DCache
-        sparta::UniqueEvent<> ev_handle_l2cache_dcache_ack_
-            {&unit_event_set_, "ev_handle_l2cache_dcache_ack", CREATE_SPARTA_HANDLER(L2Cache, handle_L2Cache_DCache_Ack_)};
-
         // Event to create request for pipeline and feed it to the pipeline_req_queue_
         sparta::UniqueEvent<sparta::SchedulingPhase::PostTick> ev_create_req_
             {&unit_event_set_, "create_req", CREATE_SPARTA_HANDLER(L2Cache, create_Req_)};
@@ -277,8 +269,8 @@ namespace olympia_mss
         // Receive BIU access Response
         void getRespFromBIU_(const olympia::MemoryAccessInfoPtr &);
 
-        // Receive BIU ack Response
-        void getAckFromBIU_(const uint32_t &);
+        // Receive BIU credits Response
+        void getCreditsFromBIU_(const uint32_t &);
 
         // Handle L2Cache request from DCache
         void handle_DCache_L2Cache_Req_();
@@ -289,17 +281,11 @@ namespace olympia_mss
         // Handle L2Cache request to BIU
         void handle_L2Cache_BIU_Req_();
 
-        // Handle L2Cahe resp for ICache
+        // Handle L2Cache resp for ICache
         void handle_L2Cache_ICache_Resp_();
 
-        // Handle L2Cahe resp for DCache
+        // Handle L2Cache resp for DCache
         void handle_L2Cache_DCache_Resp_();
-
-        // Handle L2Cahe ack for ICache
-        void handle_L2Cache_ICache_Ack_();
-
-        // Handle L2Cahe ack for DCache
-        void handle_L2Cache_DCache_Ack_();
 
         // Handle BIU resp to L2Cache
         void handle_BIU_L2Cache_Resp_();

@@ -134,5 +134,12 @@ namespace olympia
         void dumpDebugContent_(std::ostream& output) const override final;
         void onStartingTeardown_() override final;
 
+        void retireSysInst(InstPtr & );
+
+        void setup_scoreboard_view() ;
+        // Scoreboards
+        using ScoreboardViews =
+            std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
+        ScoreboardViews scoreboard_views_;
     };
 }

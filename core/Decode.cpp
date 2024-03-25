@@ -1,12 +1,15 @@
 // <Decode.cpp> -*- C++ -*-
 
-
-#include <algorithm>
-
 #include "Decode.hpp"
+#include "FusionTypes.hpp"
 
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/utils/LogUtils.hpp"
+
+#include <algorithm>
+#include <iostream>
+
+using namespace std;
 
 namespace olympia
 {
@@ -15,9 +18,46 @@ namespace olympia
     Decode::Decode(sparta::TreeNode * node,
                    const DecodeParameterSet * p) :
         sparta::Unit(node),
-        fetch_queue_("FetchQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
-        num_to_decode_(p->num_to_decode)
+
+        fetch_queue_("FetchQueue", p->fetch_queue_size,
+                     node->getClock(), &unit_stat_set_),
+
+        fusion_num_fuse_instructions_(&unit_stat_set_,
+            "fusion_num_fuse_instructions",
+            "The number of custom instructions created by fusion",
+            sparta::Counter::COUNT_NORMAL),
+
+        fusion_num_ghost_instructions_(&unit_stat_set_,
+            "fusion_num_ghost_instructions",
+            "The number of instructions eliminated by fusion",
+            sparta::Counter::COUNT_NORMAL),
+
+        fusion_num_groups_defined_(&unit_stat_set_,
+            "fusion_num_groups_defined",
+            "Number of fusion groups compiled or read at run time",
+            sparta::Counter::COUNT_LATEST),
+
+        fusion_num_groups_utilized(&unit_stat_set_,
+            "fusion_num_groups_utilized",
+            "Incremented on first use of a fusion group",
+            sparta::Counter::COUNT_LATEST),
+
+        fusion_pred_cycles_saved_(&unit_stat_set_,
+            "fusion_pred_cycles_saved",
+            "Optimistic prediction of the cycles saved by fusion",
+             sparta::Counter::COUNT_NORMAL),
+
+        num_to_decode_(p->num_to_decode),
+        fusion_enable_(p->fusion_enable),
+        fusion_enable_register_(p->fusion_enable_register),
+        fusion_max_latency_(p->fusion_max_latency),
+        fusion_match_max_tries_(p->fusion_match_max_tries),
+        fusion_max_group_size_(p->fusion_max_group_size),
+        fusion_summary_report_(p->fusion_summary_report),
+        fusion_group_definitions_(p->fusion_group_definitions)
     {
+        initializeFusion();
+
         fetch_queue_.enableCollection(node);
 
         fetch_queue_write_in_.
@@ -34,6 +74,20 @@ namespace olympia
     void Decode::sendInitialCredits_()
     {
         fetch_queue_credits_outp_.send(fetch_queue_.capacity());
+    }
+
+    // -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    void Decode::initializeFusion()
+    {
+        if(fusion_enable_) {
+            fuser  = new FusionType(fusion_group_definitions_);
+            hcache = fusion::HCache(FusionGroupType::jenkins_1aat);
+            fusion_num_groups_defined_
+               = fuser->getFusionGroupContainer().size();
+        } else {
+            fuser = nullptr;
+        }
     }
 
     // Receive Uop credits from Dispatch
@@ -76,23 +130,65 @@ namespace olympia
         uint32_t num_decode = std::min(uop_queue_credits_, fetch_queue_.size());
         num_decode = std::min(num_decode, num_to_decode_);
 
+        //buffer to maximize the chances of a group match limited
+        //by max allowed latency, bounded by max group size
+        if(fusion_enable_) {
+          if(num_decode < fusion_max_group_size_
+             && latency_count < fusion_max_latency_)
+          {
+            ++latency_count;
+            return;
+          }
+        }
+
+        latency_count = 0;
+
         if(num_decode > 0)
         {
             InstGroupPtr insts =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+
+            InstUidListType uids;
             // Send instructions on their way to rename
             for(uint32_t i = 0; i < num_decode; ++i) {
                 const auto & inst = fetch_queue_.read(0);
                 insts->emplace_back(inst);
                 inst->setStatus(Inst::Status::DECODED);
 
+                if(fusion_enable_) uids.push_back(inst->getMavisUid());
+
                 ILOG("Decoded: " << inst);
 
                 fetch_queue_.pop();
             }
 
+            if(fusion_enable_) {
+                MatchInfoListType matches;
+                uint32_t max_itrs = 0;
+                FusionGroupContainerType & container
+                        = fuser->getFusionGroupContainer();
+                do {
+                  matchFusionGroups(matches,insts,uids,container);
+                  processMatches(matches,insts,uids);
+                  //Future feature whereIsEgon(insts,numGhosts);
+                  ++max_itrs;
+                } while(matches.size() > 0 && max_itrs < fusion_match_max_tries_);
+
+                if(max_itrs >= fusion_match_max_tries_) {
+                  throw sparta::SpartaException(
+                        "Fusion group match watch dog exceeded.");
+                }
+            }
+
+        //Debug statement
+        if(0 && fusion_enable_)  infoInsts(cout,insts);
             // Send decoded instructions to rename
             uop_queue_outp_.send(insts);
+
+            // TODO: whereisegon() would remove the ghosts, 
+            // Commented out for now, in practice insts 
+            // would be smaller due to the fused ops
+            //uint32_t unfusedInstsSize = insts->size();
 
             // Decrement internal Uop Queue credits
             uop_queue_credits_ -= insts->size();

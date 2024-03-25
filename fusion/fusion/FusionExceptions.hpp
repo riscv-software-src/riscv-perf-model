@@ -10,13 +10,20 @@
 #include <string>
 #include <iomanip>
 
-//! \class FusionExceptionBase
-//! \class HashDuplicateError
-//! \class HashIllegalValueError
 //! \class ContextDuplicateError
 //! \class FieldExtUnknownField
 //! \class FieldExtUnknownSpecialField
-//! \class FieldExtUnknownFunction
+//! \class FileIoError
+//! \class FslRuntimeError
+//! \class FslSyntaxError
+//! \class FusionExceptionBase
+//! \class FusionExceptionBase
+//! \class FusionInitializationError
+//! \class HashDuplicateError
+//! \class HashIllegalValueError
+//! \class JsonRuntimeError
+//! \class JsonSyntaxError
+//! \class JsonUnknownError
 
 namespace fusion
 {
@@ -38,6 +45,21 @@ namespace fusion
         std::stringstream ss;
     };
 
+    //! \brief report any issues during the Fusion context
+    //!
+    //! Fusion is initialized by a call from the Decoder ctor to
+    //! an initialization function. This handles default or
+    //! non-specific initialization failures.
+    struct FusionInitializationError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit FusionInitializationError(const std::string & cause)
+        {
+            ss << "Fusion intialization failed: " << cause;
+            why_ = ss.str();
+        }
+    };
+
     //! \brief hashes within a context can not overlap
     //!
     //! Each fusion group has a hash formed from the uids of the
@@ -46,7 +68,8 @@ namespace fusion
     struct HashDuplicateError : FusionExceptionBase
     {
         //! \brief ...
-        explicit HashDuplicateError(const std::string & name, const fusion::HashType & hash)
+        explicit HashDuplicateError(const std::string & name,
+                                    const fusion::HashType & hash)
         {
             ss << "Duplicated hash detected, '" << name << "'"
                << " 0x" << std::hex << hash;
@@ -60,7 +83,8 @@ namespace fusion
     struct HashIllegalValueError : FusionExceptionBase
     {
         //! \brief ...
-        explicit HashIllegalValueError(const std::string & name, const fusion::HashType & hash)
+        explicit HashIllegalValueError(const std::string & name,
+                                       const fusion::HashType & hash)
         {
             ss << "Illegal hash value detected, '" << name << "'"
                << " 0x" << std::hex << hash;
@@ -82,7 +106,94 @@ namespace fusion
         }
     };
 
+    //! \brief QParser will throw this
+    //!
+    //! Throwing this from the parser has not been implemented
+    //! yet in this draft PR.
+    struct FslSyntaxError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit FslSyntaxError(const std::string & msg,
+                                const int & lineno)
+        {
+            ss << "DSL syntax error '" << msg << "'" << std::endl
+               << "    at line: " << lineno;
+            why_ = ss.str();
+        }
+    };
+
+    //! \brief for errors discovered when using dsl values
+    struct FslRuntimeError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit FslRuntimeError(const std::string & msg)
+        {
+            ss << "FslRuntimeError placeholder: " << msg;
+            why_ = ss.str();
+        }
+    };
+
+    //! \brief catch all from the DSL code
+    struct FslUnknownError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit FslUnknownError(const std::string & msg)
+        {
+            ss << "FslUnknownError placeholder: " << msg;
+            why_ = ss.str();
+        }
+    };
+
+    //! \brief json syntax errors
+    //!
+    //! JSON support is planned but not implemented
+    //!
+    //! FIXME: check if nlohmann bombs out before
+    //! we get here. If so remove this.
+    struct JsonSyntaxError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit JsonSyntaxError(const int & lineno)
+        {
+            ss << "JSON syntax error line: " << lineno;
+            why_ = ss.str();
+        }
+        //! \brief ...
+        explicit JsonSyntaxError()
+        {
+            ss << "JSON syntax error reported by nlohmann";
+            why_ = ss.str();
+        }
+    };
+
+    //! \brief for errors discovered when using json values
+    struct JsonRuntimeError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit JsonRuntimeError(const std::string & msg)
+        {
+            ss << "JsonRuntimeError: " << msg;
+            why_ = ss.str();
+        }
+    };
+
+    //! \brief catch all from the JSON code
+    //!
+    //! JSON support is planned but not implemented
+    struct JsonUnknownError : FusionExceptionBase
+    {
+        //! \brief ...
+        explicit JsonUnknownError(const std::string & msg)
+        {
+            ss << "JsonUnknownError: " << msg;
+            why_ = ss.str();
+        }
+    };
+
     //! \brief field extractor unknown field name
+    //!
+    //! FIXME: should add a field enum to string func,
+    //! convert int to FieldName string
     struct FieldExtUnknownField : FusionExceptionBase
     {
         //! \brief ...
@@ -94,23 +205,29 @@ namespace fusion
     };
 
     //! \brief field extractor unknown special field name
+    //!
+    //! FIXME: should add a field enum to string func,
+    //! convert int to SFieldName string
     struct FieldExtUnknownSpecialField : FusionExceptionBase
     {
         //! \brief ...
-        explicit FieldExtUnknownSpecialField(uint32_t sfn, std::string dasm)
+        explicit FieldExtUnknownSpecialField(uint32_t sfn,
+                                             std::string dasm)
         {
             ss << "Unknown special field: " << sfn << " in " << dasm;
             why_ = ss.str();
         }
     };
 
-    //! \brief field extractor unknown function
-    struct FieldExtUnknownFunction : FusionExceptionBase
+    //! \brief file access exception
+    struct FileIoError : FusionExceptionBase
     {
         //! \brief ...
-        explicit FieldExtUnknownFunction(uint32_t func)
+        explicit FileIoError(std::string action,
+                             std::string fileName)
         {
-            ss << "Unknown function selection: " << func;
+            ss << "File access error on '" << action 
+               << "' for file " << fileName;
             why_ = ss.str();
         }
     };

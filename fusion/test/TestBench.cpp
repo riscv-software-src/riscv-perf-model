@@ -58,6 +58,10 @@ bool TestBench::run()
     if (!fieldExtractorTests(true))
         return false;
 
+    // domain language tests
+    if (!fslTests(true))
+        return false;
+
     return true;
 }
 
@@ -68,7 +72,8 @@ bool TestBench::fusionContextTest(bool debug)
     if (verbose)
         msg->imsg("fusionContextTest BEGIN");
 
-    using FusionGroupType = fusion::FusionGroup<MachineInfo, FieldExtractor>;
+    using FusionGroupType =
+        fusion::FusionGroup<MachineInfo, FieldExtractor>;
     using FusionGroupListType = std::vector<FusionGroupType>;
 
     fusion::FusionContext<FusionGroupType> context_;
@@ -93,6 +98,8 @@ bool TestBench::fusionContextTest(bool debug)
         return false;
     }
 
+    // Future:  fusion::RadixTree *rtrie = context_.getTree();
+
     if (verbose)
         msg->imsg("fusionContextTest END");
     return true;
@@ -106,29 +113,63 @@ bool TestBench::fusionSearchTest(bool debug)
         msg->imsg("fusionSearchTest BEGIN");
     bool ok = true;
 
-    using FusionGroupType = fusion::FusionGroup<MachineInfo, FieldExtractor>;
-    using FusionGroupCfgType = fusion::FusionGroupCfg<MachineInfo, FieldExtractor>;
-    using FusionType = fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>;
+    using FusionGroupType =
+        fusion::FusionGroup<MachineInfo, FieldExtractor>;
+    using FusionGroupCfgType =
+        fusion::FusionGroupCfg<MachineInfo, FieldExtractor>;
+    using FusionType =
+        fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>;
 
-    FusionType::FusionGroupCfgListType testCases = {
+    //This is the struct with transformFunc directly assigned
+    FusionType::FusionGroupCfgListType testCasesFunc = {
         FusionGroupCfgType{.name = {"UF1"},
                            .uids = uf1,
-                           .transformFunc = &TestBench::cbProxy::uf1_func},
+                           .transformFunc =
+                               &TestBench::cbProxy::uf1_func},
         FusionGroupCfgType{.name = {"UF1_1"},
                            .uids = uf1_1,
-                           .transformFunc = &TestBench::cbProxy::uf1_1_func},
+                           .transformFunc =
+                               &TestBench::cbProxy::uf1_1_func},
         FusionGroupCfgType{.name = {"UF1_2"},
                            .uids = uf1_2,
-                           .transformFunc = &TestBench::cbProxy::uf1_2_func},
+                           .transformFunc =
+                               &TestBench::cbProxy::uf1_2_func},
         FusionGroupCfgType{.name = {"UF1_3"},
                            .uids = uf1_3,
-                           .transformFunc = &TestBench::cbProxy::uf1_3_func},
+                           .transformFunc =
+                               &TestBench::cbProxy::uf1_3_func},
         FusionGroupCfgType{.name = {"UF2"},
                            .uids = uf2,
-                           .transformFunc = &TestBench::cbProxy::uf2_func},
+                           .transformFunc =
+                               &TestBench::cbProxy::uf2_func},
         FusionGroupCfgType{.name = {"UF3"},
                            .uids = uf3,
-                           .transformFunc = &TestBench::cbProxy::uf3_func}};
+                           .transformFunc =
+                               &TestBench::cbProxy::uf3_func}};
+
+//FIXME: A test for this needs to be created
+//
+//    //This is the struct with transformFunc to be set through
+//    //a function map
+//    FusionType::FusionGroupCfgListType testCasesName = {
+//        FusionGroupCfgType{.name = {"UF1"},
+//                           .uids = uf1,
+//                           .transformName = "cbProxy::uf1_func"},
+//        FusionGroupCfgType{.name = {"UF1_1"},
+//                           .uids = uf1_1,
+//                           .transformName = "cbProxy::uf1_1_func"},
+//        FusionGroupCfgType{.name = {"UF1_2"},
+//                           .uids = uf1_2,
+//                           .transformName = "cbProxy::uf1_2_func"},
+//        FusionGroupCfgType{.name = {"UF1_3"},
+//                           .uids = uf1_3,
+//                           .transformName = "cbProxy::uf1_3_func"},
+//        FusionGroupCfgType{.name = {"UF2"},
+//                           .uids = uf2,
+//                           .transformName = "cbProxy::uf2_func"},
+//        FusionGroupCfgType{.name = {"UF3"},
+//                           .uids = uf3,
+//                           .transformName = "cbProxy::uf3_func"}};
 
     // Future add specific tests for hash creation
     //   std::unordered_map<string,fusion::HashType> expHashes;
@@ -142,25 +183,26 @@ bool TestBench::fusionSearchTest(bool debug)
     size_t outSize = out.size();
     size_t inSize = in.size();
 
-    FusionType f(testCases);
+    FusionType f(testCasesFunc);
     f.fusionOperator(in, out);
 
-    // The default operator appends in to out and clears in
+    // The default operator changes no machine state
     if (in.size() != 0)
     {
-        msg->emsg("fusionOperator failed to clean input vector");
+        msg->emsg("fusionOperator modified the input vector");
         ok = false;
     }
 
     if (out.size() != (outSize + inSize))
     {
-        msg->emsg("fusionOperator failed to properly append to output vector");
+        msg->emsg(
+            "fusionOperator failed to properly modify the output vector");
         ok = false;
     }
 
     // Test the custom operator as lambda
-    auto customLambda =
-        [](FusionType & inst, fusion::InstPtrListType & in, fusion::InstPtrListType & out)
+    auto customLambda = [](FusionType & inst, fusion::InstPtrListType & in,
+                           fusion::InstPtrListType & out)
     {
         out = in; // in is not cleared
     };
@@ -199,8 +241,9 @@ bool TestBench::fusionSearchTest(bool debug)
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-void TestBench::generateExpectHashes(unordered_map<string, fusion::HashType> & exp,
-                                     const FusionType::FusionGroupCfgListType & in)
+void TestBench::generateExpectHashes(
+    unordered_map<string, fusion::HashType> & exp,
+    const FusionType::FusionGroupCfgListType & in)
 {
     for (size_t i = 0; i < in.size(); ++i)
     {
@@ -218,14 +261,24 @@ bool TestBench::fusionCtorCompileTest(bool debug)
         msg->imsg("fusionCtorCompileTest BEGIN");
     bool ok = true;
 
-    using FusionGroupType = fusion::FusionGroup<MachineInfo, FieldExtractor>;
-    using FusionType = fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>;
+    using FusionGroupType =
+        fusion::FusionGroup<MachineInfo, FieldExtractor>;
+    using FusionType =
+        fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>;
+
+    // compile checks
+    //Removed FusionType f1;
+    //Removed FusionType f2{};
+    //Removed FusionType f3 =
+    //    fusion::Fusion<FusionGroupType, MachineInfo, FieldExtractor>();
 
     const FusionType::FusionGroupListType fusionGroup_list = {};
     const FusionType::FusionGroupCfgListType fusionGroupCfg_list = {};
+    const fusion::FileNameListType txt_file_list = {};
 
     FusionType f4(fusionGroup_list);
     FusionType f5(fusionGroupCfg_list);
+    FusionType f6(txt_file_list);
 
     if (verbose)
         msg->imsg("fusionCtorCompileTest END");
@@ -239,7 +292,7 @@ bool TestBench::basicMavisTest(bool debug)
     if (verbose)
         msg->imsg("basicMavisTest BEGIN");
     InstUidListType goldenUid = uf1; // { 0xb,   0xd,  0x1c,  0xf,   0x13 };
-    OpcodeListType goldenOpc = of1;  // { 0x76e9,0x685,0x8d35,0x1542,0x9141 };
+    OpcodeListType goldenOpc  = of1; // { 0x76e9,0x685,0x8d35,0x1542,0x9141 };
 
     Instruction<uArchInfo>::PtrType inst = nullptr;
 
@@ -263,17 +316,25 @@ bool TestBench::basicMavisTest(bool debug)
     }
 
     InstUidListType uids;
-    for (const auto & inst : instrs)
+    for (const auto inst : instrs)
     {
         uids.emplace_back(inst->getUID());
     }
 
-    if (instrs.size() != goldenUid.size() || instrs.size() != goldenOpc.size()
+    if (instrs.size() != goldenUid.size()
+        || instrs.size() != goldenOpc.size()
         || instrs.size() != uids.size())
     {
         msg->emsg("basicMavisTest size mismatch in inst vector");
         return false;
     }
+
+    // FIXME: There is an unexplained difference in UID creation
+    //     if (goldenUid != uids)
+    //     {
+    //         msg->emsg("basicMavisTest inst to uid  conversion
+    //         failed"); return false;
+    //     }
 
     if (debug)
         info(goldenUid, uids, instrs);
@@ -307,7 +368,8 @@ bool TestBench::fusionGroupAltCtorTest()
     };
 
     // Alternative machineinfo and extractor
-    using AltFusionGroupType = fusion::FusionGroup<OtherMachine, OtherExtractor>;
+    using AltFusionGroupType =
+        fusion::FusionGroup<OtherMachine, OtherExtractor>;
 
     InstUidListType alt_uid = {};
 
@@ -316,7 +378,8 @@ bool TestBench::fusionGroupAltCtorTest()
 
     struct proxy
     {
-        static bool alt_func(AltFusionGroupType &, InstPtrListType &, InstPtrListType &)
+        static bool alt_func(AltFusionGroupType &, InstPtrListType &,
+                             InstPtrListType &)
         {
             return true;
         }
@@ -353,7 +416,8 @@ bool TestBench::fusionGroupCfgCtorTest()
 {
     if (verbose)
         msg->imsg("fusionGroupCfgCtorTest BEGIN");
-    using FusionGroupCfgType = fusion::FusionGroupCfg<MachineInfo, FieldExtractor>;
+    using FusionGroupCfgType =
+        fusion::FusionGroupCfg<MachineInfo, FieldExtractor>;
 
     // ---------------------------------------------------------------
     // Test that hash created from the F1CfgUid matches the hash from a
@@ -371,10 +435,11 @@ bool TestBench::fusionGroupCfgCtorTest()
 
     bool ok = true;
 
-    using FusionGroupType = fusion::FusionGroup<MachineInfo, FieldExtractor>;
+    using FusionGroupType =
+        fusion::FusionGroup<MachineInfo, FieldExtractor>;
     FusionGroupType F1fromF1CfgUid(F1CfgUid);
 
-    F1fromF1CfgUid.info();
+    //F1fromF1CfgUid.info();
 
     if (referenceHash != F1fromF1CfgUid.hash())
     {
@@ -496,7 +561,8 @@ bool TestBench::radixTrieTest(bool)
     bool ok = true;
 
     std::mt19937 generator(std::random_device{}());
-    std::uniform_int_distribution<uint32_t> distribution(0, std::numeric_limits<uint32_t>::max());
+    std::uniform_int_distribution<uint32_t> distribution(
+        0, std::numeric_limits<uint32_t>::max());
 
     auto start = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < num_values; ++i)
@@ -507,7 +573,8 @@ bool TestBench::radixTrieTest(bool)
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> insertDuration = end - start;
-    std::cout << "Time taken for insertion: " << insertDuration.count() << " seconds" << std::endl;
+    std::cout << "Time taken for insertion: " << insertDuration.count()
+              << " seconds" << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < num_values; ++i)
@@ -518,14 +585,18 @@ bool TestBench::radixTrieTest(bool)
 
     end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> searchDuration = end - start;
-    std::cout << "Time taken for searching: " << searchDuration.count() << " seconds" << std::endl;
+    std::cout << "Time taken for searching: " << searchDuration.count()
+              << " seconds" << std::endl;
 
     trie.insert(12345);
     trie.insert(67890);
 
-    std::cout << "Found '12345' " << (trie.search(12345) ? "Yes" : "No") << std::endl;
-    std::cout << "Found '67890' " << (trie.search(67890) ? "Yes" : "No") << std::endl;
-    std::cout << "Found '54321' " << (trie.search(54321) ? "Yes" : "No") << std::endl;
+    std::cout << "Found '12345' " << (trie.search(12345) ? "Yes" : "No")
+              << std::endl;
+    std::cout << "Found '67890' " << (trie.search(67890) ? "Yes" : "No")
+              << std::endl;
+    std::cout << "Found '54321' " << (trie.search(54321) ? "Yes" : "No")
+              << std::endl;
 
     if (trie.search(12345) && trie.search(67890) && !trie.search(54321))
     {
@@ -589,7 +660,8 @@ void TestBench::assign(InstPtrListType & in, OpcodeListType & opcodes,
 //     - rgrp[2].RD  == rgrp[3].RD == rgrp[4].RD
 //     - rgrp[3].IMM == rgrp[4].IMM  getField IMM not implemented
 // ------------------------------------------------------------------------
-bool TestBench::f1_constraints(FusionGroupType & g, InstPtrListType & in, InstPtrListType & out)
+bool TestBench::f1_constraints(FusionGroupType & g, InstPtrListType & in,
+                               InstPtrListType & out)
 {
     // This goup expects at least 5 instruction positions in the input
     if (in.size() < 5)
@@ -608,8 +680,9 @@ bool TestBench::f1_constraints(FusionGroupType & g, InstPtrListType & in, InstPt
 
     // Operand field encodings comparison against constraints
     // The indexes are positions in the group, 0 = 1st instruction
-    if (g.fe().noteq(in, 0, 1, RD) || g.fe().noteq(in, 0, 2, RD, RS2) || g.fe().noteq(in, 2, 3, RD)
-        || g.fe().noteq(in, 2, 4, RD))
+    if (g.fe().noteq(in, 0, 1, RD) || g.fe().noteq(in, 0, 2, RD, RS2)
+        || g.fe().noteq(in, 2, 3, RD) || g.fe().noteq(in, 2, 4, RD))
+    // || g.fe().noteq(in,3,4,IMM)) FIXME: IMM not implemented yet
     {
         return false;
     }
@@ -622,7 +695,8 @@ bool TestBench::f1_constraints(FusionGroupType & g, InstPtrListType & in, InstPt
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-fusion::HashType TestBench::jenkinsOneAtATime(const ::vector<fusion::UidType> & v)
+fusion::HashType
+TestBench::jenkinsOneAtATime(const ::vector<fusion::UidType> & v)
 {
     fusion::HashType hash = 0;
 
@@ -641,7 +715,8 @@ fusion::HashType TestBench::jenkinsOneAtATime(const ::vector<fusion::UidType> & 
 }
 
 // --------------------------------------------------------------------
-void TestBench::info(InstUidListType & aUIDs, InstUidListType & bUIDs, InstPtrListType & instrs)
+void TestBench::info(InstUidListType & aUIDs, InstUidListType & bUIDs,
+                     InstPtrListType & instrs)
 {
     cout << "aUIDs ";
     for (auto uid : aUIDs)
@@ -662,4 +737,49 @@ void TestBench::info(InstUidListType & aUIDs, InstUidListType & bUIDs, InstPtrLi
     {
         cout << pad << inst << endl;
     }
+}
+// --------------------------------------------------------------------
+bool TestBench::compareFiles(const string actual,
+                             const string expect,bool showDiffs)
+{
+    std::ifstream act(actual);
+    std::ifstream exp(expect);
+
+    // Check existence
+    if (!act.is_open() || !exp.is_open()) {
+        msg->emsg("Error opening files");
+        if(!act.is_open()) {
+          msg->emsg("Could not open "+actual);
+        }
+
+        if(!exp.is_open()) {
+          msg->emsg("Could not open "+expect);
+        }
+
+        return false;
+    }
+
+    std::string actLine, expLine;
+    int lineNo = 1;
+
+    // Check lines
+    while (std::getline(act, actLine) && std::getline(exp, expLine)) {
+        if (actLine != expLine) {
+            msg->emsg("Difference found at line "+::to_string(lineNo)+":");
+            if(showDiffs) {
+                msg->emsg("Actual: '"+actLine+"'");
+                msg->emsg("Expect: '"+expLine+"'");
+            }
+            return false;
+        }
+        lineNo++;
+    }
+
+    // Check lengths
+    if (!std::getline(act, actLine) ^ !std::getline(exp, expLine)) {
+        msg->emsg("Files differ in length");
+        return false;
+    }
+
+    return true;
 }

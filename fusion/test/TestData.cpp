@@ -123,3 +123,8 @@ TestBench::OpcodeListType TestBench::of5_3 = {
     0xe014, //  "c.fsw f13, 0(x8)",   0x34
     0x86a2  //  "c.mv x13, x8"        0x17
 };
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// const vector<string> TestBench::std_isa_files = {
+//    "../../../mavis/json/isa_rv64g.json",
+//    "../../../mavis/json/isa_rv64c.json"};

@@ -29,13 +29,16 @@ struct Options
     void buildOptions(po::options_description &);
 
     //! \brief ...
-    bool checkOptions(po::variables_map &, po::options_description &, bool);
+    bool checkOptions(po::variables_map &, po::options_description &,bool);
 
     //! \brief ...
     void setupOptions(int, char**);
 
     //! \brief ...
-    void usage(po::options_description & o) const { std::cout << o << std::endl; }
+    void usage(po::options_description & o) const
+    {
+        std::cout << o << std::endl;
+    }
 
     //! \brief ...
     void version() const;
@@ -47,6 +50,10 @@ struct Options
     std::string output_file{""};
     //! \brief ...
     std::vector<std::string> isa_files;
+    //! \brief ...
+    std::vector<std::string> fsl_files;
+    //! \brief files with contorted style
+    std::vector<std::string> fsl_syntax_files;
     //! \brief enable extra messages from the tb
     bool tb_verbose{false};
     // ----------------------------------------------------------------

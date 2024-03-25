@@ -1,0 +1,74 @@
+top.cpu.core0:
+  fetch.params.num_to_fetch:   8
+  decode:
+    params:
+      num_to_decode: 8
+      fusion_enable: true
+      fusion_enable_register: 0xFFFFFFFF
+      fusion_max_latency:     8
+      fusion_match_max_tries: 1023
+      fusion_max_group_size:  8
+      fusion_summary_report:    fusion_summary.txt
+      fusion_group_definitions: [ arches/fusion/dhrystone.json ]
+
+  rename.params.num_to_rename: 8
+  rename.params.num_integer_renames: 64
+  rename.params.num_float_renames: 64
+  dispatch.params.num_to_dispatch: 8
+  rob.params.num_to_retire:    8
+  dcache.params:
+    l1_size_kb: 64
+
+top.cpu.core0.extension.core_extensions:
+  # this sets the pipe targets for each execution unit
+  # you can set a multiple or just one:
+  # ["int", "div"] would mean this execution pipe can accept
+  # targets of: "int" and "div"
+  pipelines:
+  [
+    ["int"], # exe0
+    ["int", "div"], # exe1
+    ["int", "mul"], # exe2
+    ["int", "mul", "i2f", "cmov"], # exe3
+    ["int"], # exe4
+    ["int"], # exe5
+    ["float", "faddsub", "fmac"], # exe6
+    ["float", "f2i"], # exe7
+    ["br"], # exe8
+    ["br"] # exe9
+  ]
+  # this is used to set how many units per queue
+  # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
+  # if you want just one execution unit to issue queue you can do:
+  # ["0"] which would result in iq0 -> exe0
+  # *note if you change the number of issue queues, 
+  # you need to add it to latency matrix below
+
+  issue_queue_to_pipe_map:
+  [ 
+    ["0", "1"], # iq0 -> exe0, exe1
+    ["2", "3"], # iq1 -> exe2, exe3
+    ["4", "5"], # iq2 -> exe4, exe5
+    ["6", "7"], # iq3 -> exe6, exe7
+    ["8", "9"]  # iq4 -> exe8, exe9
+  ]
+top.cpu.core0.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]
+  float.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]

@@ -60,10 +60,10 @@ set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Include directories
-include_directories (core mss sim mavis/mavis fusion/fusion)
+include_directories (core mss sim)
+include_directories (SYSTEM fusion)
 include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
-include_directories (fusion)
 
 # Mavis, the Core, MSS, the simulator and Fusion
 add_subdirectory (mavis)

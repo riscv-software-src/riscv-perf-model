@@ -3,10 +3,11 @@
 //
 //! \file FusionTypes.hpp marshalled types used by fusion
 #pragma once
-#include "Mavis.h"
+#include "fusion/Instruction.hpp"
+#include "fusion/uArchInfo.hpp"
 #include "mavis/DecoderTypes.h"
-#include "Instruction.hpp"
-#include "uArchInfo.hpp"
+#include "mavis/Mavis.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>

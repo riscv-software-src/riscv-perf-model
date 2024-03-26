@@ -4,13 +4,12 @@
 //! \file Fusion.hpp  top level fusion API
 #pragma once
 #include "json.hpp"
-#include "FieldExtractor.hpp"
-//#include "FslParser.hpp"
-#include "FusionContext.hpp"
-#include "FusionExceptions.hpp"
-#include "FusionGroup.hpp"
-#include "FusionTypes.hpp"
-#include "MachineInfo.hpp"
+#include "fusion/FieldExtractor.hpp"
+#include "fusion/FusionContext.hpp"
+#include "fusion/FusionExceptions.hpp"
+#include "fusion/FusionGroup.hpp"
+#include "fusion/FusionTypes.hpp"
+#include "fusion/MachineInfo.hpp"
 
 #include <filesystem>
 #include <memory>

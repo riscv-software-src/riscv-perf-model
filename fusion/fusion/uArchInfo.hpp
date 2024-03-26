@@ -3,9 +3,9 @@
 //
 #pragma once
 #include "json.hpp"
+#include "fusion/uArchInfoExceptions.hpp"
 #include "mavis/DecoderExceptions.h"
 #include "mavis/DecoderTypes.h"
-#include "uArchInfoExceptions.hpp"
 
 #include <memory>
 #include <ostream>

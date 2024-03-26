@@ -175,10 +175,10 @@ transform fs1 {
   sequence seq1(iop1,rv64g) {
     c.lui    g1, c1
     c.addi   g1, g1, c2
-    _req_
+    _req_ 2
     c.xor    g2, g2, g1
     c.slli   g2, g2, c3
-    _opt_
+    _opt_ 1
     c.srli   g2,     c3
   }
 
@@ -680,10 +680,24 @@ sequence pragmas to relax the strictness of sequence matching.
 
 The required pragma, \_req\_, indicates that an unspecified instruction
 is required in that position. The \_req\_ case does not constrain 
-what instruction can be present in the gap.
+what instruction can be present in the gap. A trailing integer 
+can specify more than one required instruction.
 
 The optional pragma, \_opt\_, indicates that the match will not be 
-rejected if there is an instruction or not in this position.
+rejected if there is an instruction or not in this position. A
+trailing integer can be used to specify up to N optional instructions.
+
+```
+_opt_ 2    indicates 0 - 2 instructions will match
+_req_ 2    indicates there must be 2 instructions in this position
+           in the sequence. 
+```
+
+The trailing integer is optional in the syntax:
+```
+_opt_ and _opt_ 1 are equivalent
+_req_ and _req_ 1 are equivalent
+```
 
 ```
 ioput iop1
@@ -691,10 +705,10 @@ ioput iop1
 sequence seq1(iop1,rv64g) {
   c.lui    g1, c1
   c.addi   g1, g1, c2
-  _req_
+  _req_ 2
   c.xor    g2, g2, g1
   c.slli   g2, g2, c3
-  _opt_
+  _opt_ 2
   c.srli   g2,     c3
 }
 ```

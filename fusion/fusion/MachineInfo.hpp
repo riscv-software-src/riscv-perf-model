@@ -4,9 +4,9 @@
 //! \file MachineInfo.hpp processor implementation details
 #pragma once
 #include <cstdint>
-#include <string>
-#include <ostream>
 #include <iostream>
+#include <ostream>
+#include <string>
 
 //! \brief Placeholder for uarch and implementation details
 //!

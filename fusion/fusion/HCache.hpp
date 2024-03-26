@@ -4,11 +4,11 @@
 #pragma once
 //TODO: do general performance tests for map, uo_map, array etc.
 //TODO: template
-#include <map>
-#include <vector>
-#include <ostream>
-
 #include "fusion/FusionTypes.hpp"
+
+#include <map>
+#include <ostream>
+#include <vector>
 
 namespace fusion
 {

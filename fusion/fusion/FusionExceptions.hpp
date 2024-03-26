@@ -3,12 +3,12 @@
 //
 //! \file FusionExceptions.hpp  fusion defined exceptions
 #pragma once
-#include "FusionTypes.hpp"
+#include "fusion/FusionTypes.hpp"
 
 #include <exception>
+#include <iomanip>
 #include <sstream>
 #include <string>
-#include <iomanip>
 
 //! \class ContextDuplicateError
 //! \class FieldExtUnknownField

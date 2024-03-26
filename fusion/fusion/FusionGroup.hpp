@@ -3,17 +3,17 @@
 //
 //! \file FusionGroup.hpp  holds fusion definitions and transforms
 #pragma once
-#include "FusionTypes.hpp"
-#include "Instruction.hpp"
-#include "Mavis.h"
+#include "fusion/FusionTypes.hpp"
+#include "fusion/Instruction.hpp"
+#include "mavis/Mavis.h"
 
-#include <memory>
-#include <vector>
 #include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <memory>
 #include <optional>
 #include <ostream>
-#include <iostream>
-#include <iomanip>
+#include <vector>
 
 //! \class FusionGroupCfg
 

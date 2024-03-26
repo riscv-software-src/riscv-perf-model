@@ -3,14 +3,15 @@
 //
 //! \file FieldExtractor.hpp  mavis shim, extract fields from encodings
 #pragma once
-#include "FusionExceptions.hpp"
-#include "uArchInfo.hpp"
-#include "Instruction.hpp"
-#include "Mavis.h"
-#include <vector>
+#include "fusion/FusionExceptions.hpp"
+#include "fusion/Instruction.hpp"
+#include "fusion/uArchInfo.hpp"
+#include "mavis/Mavis.h"
+
+#include <iostream>
 #include <optional>
 #include <ostream>
-#include <iostream>
+#include <vector>
 using namespace std;
 
 //! \class FieldExtractor

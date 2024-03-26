@@ -151,4 +151,4 @@ The remainder of the code and support classes are template based.
 ## Domain specific language
 
 A domain specific language is available, the Fusion/Fracture Specification
-Language, FSL, is domcumented in FSL.MD.
+Language, FSL, is documented in FSL.MD.

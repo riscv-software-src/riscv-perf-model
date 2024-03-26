@@ -268,7 +268,7 @@ namespace olympia
     }
 
     // for SYS instr which doesn't have an exe pipe
-    void ROB::setup_scoreboard_view()
+    void ROB::setupScoreboardView_()
     {
         std::string iq_name = "iq0"; // default name
 

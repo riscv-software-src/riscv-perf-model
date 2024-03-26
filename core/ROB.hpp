@@ -136,7 +136,7 @@ namespace olympia
 
         void retireSysInst(InstPtr & );
 
-        void setup_scoreboard_view() ;
+        void setupScoreboardView() ;
         // Scoreboards
         using ScoreboardViews =
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;

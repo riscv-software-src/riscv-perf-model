@@ -275,7 +275,7 @@ namespace olympia
         if (getContainer() != nullptr)
         {
           const auto exe_pipe_rename =
-            olympia::coreutils::getPipeTopology(getContainer()->getRoot(), "exe_pipe_rename");
+            olympia::coreutils::getPipeTopology(getContainer()->getParent(), "exe_pipe_rename");
           if (exe_pipe_rename.size() > 0)
                 iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
         }

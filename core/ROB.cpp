@@ -271,17 +271,21 @@ namespace olympia
     void ROB::setup_scoreboard_view()
     {
         std::string iq_name = "iq0"; // default name
- 
+
+        if (getContainer() != nullptr)
+        {
+          const auto exe_pipe_rename =
+            olympia::coreutils::getPipeTopology(getContainer()->getRoot(), "exe_pipe_rename");
+          if (exe_pipe_rename.size() > 0)
+                iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
+        }
+  
         auto cpu_node = getContainer()->findAncestorByName("core.*");
         if (cpu_node == nullptr)
         {
             cpu_node = getContainer()->getRoot();
         }
         const auto& rf = core_types::RF_INTEGER;
-        const auto exe_pipe_rename =
-            olympia::coreutils::getPipeTopology(cpu_node, "exe_pipe_rename");
-        if (exe_pipe_rename.size() > 0)
-                iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
  
         // alu0, alu1 name is based on exe names, point to issue_queue name instead
         DLOG("setup sb view: " << iq_name );

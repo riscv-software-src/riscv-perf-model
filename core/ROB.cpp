@@ -245,7 +245,7 @@ namespace olympia
     }
 
     // sys instr doesn't have a pipe so we handle special stuff here
-    void ROB::retireSysInst(InstPtr &ex_inst)
+    void ROB::retireSysInst_(InstPtr &ex_inst)
     {
         auto reg_file = ex_inst->getRenameData().getDestination().rf;
         if (reg_file == core_types::RegFile::RF_INVALID)

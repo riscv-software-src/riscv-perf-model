@@ -134,7 +134,7 @@ namespace olympia
         void dumpDebugContent_(std::ostream& output) const override final;
         void onStartingTeardown_() override final;
 
-        void retireSysInst(InstPtr & );
+        void retireSysInst_(InstPtr & );
 
         void setupScoreboardView() ;
         // Scoreboards

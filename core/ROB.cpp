@@ -6,6 +6,7 @@
 
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
+#include "CoreUtils.hpp"
 
 namespace olympia
 {
@@ -269,18 +270,24 @@ namespace olympia
     // for SYS instr which doesn't have an exe pipe
     void ROB::setup_scoreboard_view()
     {
-        const char QNAME[] =  "iq0";
+        std::string iq_name = "iq0"; // default name
+ 
         auto cpu_node = getContainer()->findAncestorByName("core.*");
         if (cpu_node == nullptr)
         {
             cpu_node = getContainer()->getRoot();
         }
         const auto& rf = core_types::RF_INTEGER;
-
+        const auto exe_pipe_rename =
+            olympia::coreutils::getPipeTopology(cpu_node, "exe_pipe_rename");
+        if (exe_pipe_rename.size() > 0)
+                iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
+ 
         // alu0, alu1 name is based on exe names, point to issue_queue name instead
-        DLOG("setup sb view: " << QNAME );
+        DLOG("setup sb view: " << iq_name );
         scoreboard_views_[rf].reset(
-            new sparta::ScoreboardView(QNAME, core_types::regfile_names[rf],
+            new sparta::ScoreboardView(iq_name, core_types::regfile_names[rf],
                                        cpu_node)); // name needs to come from issue_queue
     }
 }
+

@@ -1,5 +1,6 @@
 project (core)
 add_library(core
+  FusionDecode.cpp
   Core.cpp
   SimpleBranchPred.cpp
   Fetch.cpp

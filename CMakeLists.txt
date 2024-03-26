@@ -61,13 +61,15 @@ set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Include directories
 include_directories (core mss sim)
+include_directories (SYSTEM fusion)
 include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
 
-# Mavis, the Core, MSS, and the simulator
+# Mavis, the Core, MSS, the simulator and Fusion
 add_subdirectory (mavis)
 add_subdirectory (core)
 add_subdirectory (mss)
+add_subdirectory (fusion)
 
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})

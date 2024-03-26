@@ -119,12 +119,14 @@ WARN_LOGFILE           =
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = \
+                         ./dsl/FslParser.hpp \
                          ./fusion/FieldExtractor.hpp \
                          ./fusion/Fusion.hpp \
                          ./fusion/FusionContext.hpp \
                          ./fusion/FusionExceptions.hpp \
                          ./fusion/FusionGroup.hpp \
                          ./fusion/FusionTypes.hpp \
+                         ./fusion/HCache.hpp \
                          ./fusion/MachineInfo.hpp \
                          ./fusion/RadixTrie.hpp \
                          ./test/Msg.hpp \

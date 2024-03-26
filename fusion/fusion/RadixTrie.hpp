@@ -67,12 +67,15 @@ template <uint32_t BIT_WIDTH> class RadixTrie
     void insert(uint32_t key) { insertRecursive(root, key, 0); }
 
     //! \brief find...
-    bool search(uint32_t key) const { return searchRecursive(root, key, 0); }
+    bool search(uint32_t key) const
+    {
+        return searchRecursive(root, key, 0);
+    }
 
   private:
     //! \brief ...
-    void insertRecursive(std::unique_ptr<RadixTrieNode<BIT_WIDTH>> & node, uint32_t key,
-                         uint32_t depth)
+    void insertRecursive(std::unique_ptr<RadixTrieNode<BIT_WIDTH>> & node,
+                         uint32_t key, uint32_t depth)
     {
         if (!node)
         {
@@ -85,13 +88,15 @@ template <uint32_t BIT_WIDTH> class RadixTrie
             return;
         }
 
-        uint32_t index = (key >> (BIT_WIDTH * (MAX_DEPTH - depth - 1))) & ((1 << BIT_WIDTH) - 1);
+        uint32_t index = (key >> (BIT_WIDTH * (MAX_DEPTH - depth - 1)))
+                         & ((1 << BIT_WIDTH) - 1);
         insertRecursive(node->children[index], key, depth + 1);
     }
 
     //! \brief ...
-    bool searchRecursive(const std::unique_ptr<RadixTrieNode<BIT_WIDTH>> & node, uint32_t key,
-                         uint32_t depth) const
+    bool
+    searchRecursive(const std::unique_ptr<RadixTrieNode<BIT_WIDTH>> & node,
+                    uint32_t key, uint32_t depth) const
     {
         if (!node)
         {
@@ -101,7 +106,8 @@ template <uint32_t BIT_WIDTH> class RadixTrie
         {
             return node->isEndOfWord;
         }
-        uint32_t index = (key >> (BIT_WIDTH * (MAX_DEPTH - depth - 1))) & ((1 << BIT_WIDTH) - 1);
+        uint32_t index = (key >> (BIT_WIDTH * (MAX_DEPTH - depth - 1)))
+                         & ((1 << BIT_WIDTH) - 1);
         return searchRecursive(node->children[index], key, depth + 1);
     }
 
@@ -109,5 +115,6 @@ template <uint32_t BIT_WIDTH> class RadixTrie
     std::unique_ptr<RadixTrieNode<BIT_WIDTH>> root;
 
     //! \brief keep a limit on depth based on the template parameter
-    static constexpr uint32_t MAX_DEPTH = std::numeric_limits<uint32_t>::digits / BIT_WIDTH;
+    static constexpr uint32_t MAX_DEPTH =
+        std::numeric_limits<uint32_t>::digits / BIT_WIDTH;
 };

@@ -29,6 +29,14 @@ namespace olympia
             insts_.emplace_back(inst);
         }
 
+        iterator erase(iterator first, iterator last) {
+            return insts_.erase(first, last);
+        }
+
+        iterator erase(iterator pos) {
+            return insts_.erase(pos);
+        }
+
         iterator begin() { return insts_.begin(); }
         iterator end()   { return insts_.end(); }
 

@@ -1,9 +1,23 @@
 // <Inst.cpp> -*- C++ -*-
 
 #include "Inst.hpp"
+#include <unordered_map>
 
 namespace olympia
 {
+    const std::unordered_map<Inst::Status,std::string> Inst::status2String = {
+        { Inst::Status::FETCHED,     "FETCHED"      },
+        { Inst::Status::DECODED,     "DECODED"      },
+        { Inst::Status::RENAMED,     "RENAMED"      },
+        { Inst::Status::DISPATCHED,  "DISPATCHED"   },
+        { Inst::Status::SCHEDULED,   "SCHEDULED"    },
+        { Inst::Status::COMPLETED,   "COMPLETED"    },
+        { Inst::Status::RETIRED,     "RETIRED"      },
+        { Inst::Status::FLUSHED,     "FLUSHED"      },
+        { Inst::Status::UNMOD,       "UNMOD"        },
+        { Inst::Status::FUSED,       "FUSED"        },
+        { Inst::Status::FUSION_GHOST,"FUSION_GHOST" }
+    };
 
     bool isCallInstruction(const mavis::OpcodeInfo::PtrType & opcode_info)
     {

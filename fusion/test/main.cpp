@@ -1,6 +1,7 @@
 // HEADER PLACEHOLDER
 // contact Jeff Nye, jeffnye-gh, Condor Computing Corp.
 //
+#include "FslParser.hpp"
 #include "TestBench.hpp"
 #include "Msg.hpp"
 #include "Options.hpp"
@@ -8,6 +9,8 @@
 #include <fstream>
 #include <iostream>
 using namespace std;
+
+FslParser* FP;
 
 Options* Options::instance = 0;
 std::shared_ptr<Options> opts(Options::getInstance());
@@ -18,6 +21,9 @@ std::unique_ptr<Msg> msg(Msg::getInstance());
 //  ------------------------------------------------------------------------
 int main(int ac, char** av)
 {
+    FslParser fp;
+    FP = &fp;
+
     TestBench tb(ac, av);
     ofstream out("PASSFAIL");
     if (!out.is_open())

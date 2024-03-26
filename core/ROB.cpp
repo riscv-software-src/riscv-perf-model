@@ -73,7 +73,7 @@ namespace olympia
 
     void ROB::sendInitialCredits_()
     {
-        setup_scoreboard_view() ;
+        setupScoreboardView_() ;
         out_reorder_buffer_credits_.send(reorder_buffer_.capacity());
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
@@ -190,7 +190,7 @@ namespace olympia
                 // This is rare for the example
                 if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
-                  retireSysInst(ex_inst_ptr);
+                  retireSysInst_(ex_inst_ptr);
                 }
             }
             else {

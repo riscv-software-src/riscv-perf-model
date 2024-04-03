@@ -53,12 +53,13 @@ namespace olympia
         ev_ensure_forward_progress_.setContinuing(false);
 
         // Notify other components when ROB stops the simulation
-        rob_drained_notif_source_.reset(new sparta::NotificationSource<bool>(
+        rob_stopped_notif_source_.reset(new sparta::NotificationSource<bool>(
             this->getContainer(),
-            "rob_notif_channel",
-            "Notification channel for rob",
-            "rob_notif_channel"
+            "rob_stopped_notif_channel",
+            "ROB terminated simulation channel",
+            "rob_stopped_notif_channel"
         ));
+
         // Send initial credits to anyone that cares.  Probably Dispatch.
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ROB, sendInitialCredits_));
     }
@@ -75,10 +76,6 @@ namespace olympia
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
 
-    void ROB::retireEvent_() {
-        retireInstructions_();
-    }
-
     // An illustration of the use of the callback -- instead of
     // getting a reference, you can pull the data from the port
     // directly, albeit inefficient and superfluous here...
@@ -91,15 +88,40 @@ namespace olympia
         ev_retire_.schedule(sparta::Clock::Cycle(0));
     }
 
-    void ROB::handleFlush_(const FlushManager::FlushingCriteria &)
+    void ROB::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
+        sparta_assert(expect_flush_, "Received a flush, but didn't expect one");
+
+        expect_flush_ = false;
+
+        uint32_t credits_to_send = 0;
+
         // Clean up internals and send new credit count
-        out_reorder_buffer_credits_.send(reorder_buffer_.size());
-        reorder_buffer_.clear();
+        while (reorder_buffer_.size())
+        {
+            auto youngest_inst = reorder_buffer_.back();
+            if (criteria.includedInFlush(youngest_inst))
+            {
+                ILOG("flushing " << youngest_inst);
+                youngest_inst->setStatus(Inst::Status::FLUSHED);
+                reorder_buffer_.pop_back();
+                ++credits_to_send;
+            }
+            else
+            {
+                break;
+            }
+        }
+        out_reorder_buffer_credits_.send(credits_to_send);
     }
 
     void ROB::retireInstructions_()
     {
+        // ROB is expecting a flush (back to itself)
+        if(expect_flush_) {
+            return;
+        }
+
         const uint32_t num_to_retire = std::min(reorder_buffer_.size(), num_to_retire_);
 
         ILOG("num to retire: " << num_to_retire);
@@ -128,6 +150,16 @@ namespace olympia
 
                 ILOG("retiring " << ex_inst);
 
+                retire_event_.collect(*ex_inst_ptr);
+
+                // Use the program ID to verify that the program order has been maintained.
+                sparta_assert(ex_inst.getProgramID() == expected_program_id_,
+                    "Unexpected program ID when retiring instruction"
+                    << "(suggests wrong program order)"
+                    << " expected: " << expected_program_id_
+                    << " received: " << ex_inst.getProgramID());
+                ++expected_program_id_;
+
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()
                               << " instructions in " << getClock()->currentCycle()
@@ -139,32 +171,30 @@ namespace olympia
                 // Will be true if the user provides a -i option
                 if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_))) {
                     rob_stopped_simulation_ = true;
-                    rob_drained_notif_source_->postNotification(true);
+                    rob_stopped_notif_source_->postNotification(true);
                     getScheduler()->stopRunning();
                     break;
                 }
 
-                // This is rare for the example
-                if(SPARTA_EXPECT_FALSE(ex_inst.getUnit() == InstArchInfo::TargetUnit::ROB))
-                {
-                    ILOG("Instigating flush... " << ex_inst);
-                    // Signal flush to the system
-                    out_retire_flush_.send(ex_inst.getUniqueID());
-
-                    // Redirect fetch
-                    out_fetch_flush_redirect_.send(ex_inst.getTargetVAddr() + 4);
-
-                    ++num_flushes_;
+                // Is this a misprdicted branch requiring a refetch?
+                if(ex_inst.isMispredicted()) {
+                    FlushManager::FlushingCriteria criteria
+                        (FlushManager::FlushCause::MISPREDICTION, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+                    expect_flush_ = true;
                     break;
                 }
 
-                // Check to see if this is the last instruction of the
-                // trace
-                if(ex_inst.getLast()) {
-                    rob_stopped_simulation_ = true;
-                    rob_drained_notif_source_->postNotification(true);
-                    // No need to stop the scheduler -- let simulation
-                    // drain normally.  Also, don't need to check forward progress
+                // This is rare for the example
+                if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
+                {
+                    ILOG("Instigating flush... " << ex_inst);
+
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst_ptr);
+                    out_retire_flush_.send(criteria);
+
+                    ++num_flushes_;
+                    break;
                 }
             }
             else {

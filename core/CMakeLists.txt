@@ -1,6 +1,7 @@
 project (core)
 add_library(core
   Core.cpp
+  SimpleBranchPred.cpp
   Fetch.cpp
   Decode.cpp
   Rename.cpp
@@ -12,6 +13,7 @@ add_library(core
   InstArchInfo.cpp
   InstGroup.cpp
   InstGenerator.cpp
+  IssueQueue.cpp
   ROB.cpp
   LSU.cpp
   MMU.cpp

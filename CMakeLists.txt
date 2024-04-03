@@ -38,9 +38,10 @@ set (DISABLE_STF_DOXYGEN ON)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)
-  include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
-  setup_stf_linker(false)
 endif()
+include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
+setup_stf_linker(false)
+
 
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)

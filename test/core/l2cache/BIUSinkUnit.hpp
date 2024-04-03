@@ -17,7 +17,7 @@ namespace l2cache_test
     {
         public:
             static constexpr char name[] = "BIUSinkUnit";
-            
+
             class BIUSinkUnitParameters : public sparta::ParameterSet
             {
             public:
@@ -29,12 +29,12 @@ namespace l2cache_test
             };
 
             BIUSinkUnit(sparta::TreeNode * n, const BIUSinkUnitParameters * params) :  sparta::Unit(n) {
-                
+
                 purpose_ = params->purpose;
                 sink_latency_ = params->sink_latency;
 
                 in_biu_req_.registerConsumerHandler
-                        (CREATE_SPARTA_HANDLER_WITH_DATA(BIUSinkUnit, sinkInst_, olympia::InstPtr));
+                        (CREATE_SPARTA_HANDLER_WITH_DATA(BIUSinkUnit, sinkInst_, olympia::MemoryAccessInfoPtr));
 
                 sparta::StartupEvent(n, CREATE_SPARTA_HANDLER(BIUSinkUnit, sendInitialCredits_));
             }
@@ -46,20 +46,20 @@ namespace l2cache_test
                 out_biu_ack_.send(biu_req_queue_size_);
                 ILOG("Sending initial credits to L2Cache : " << biu_req_queue_size_);
             }
-            
-            void sinkInst_(const olympia::InstPtr & instPtr) {
-                ILOG("Instruction: '" << instPtr << "' sinked");
+
+            void sinkInst_(const olympia::MemoryAccessInfoPtr & mem_access_info_ptr) {
+                ILOG("Instruction: '" << mem_access_info_ptr->getInstPtr() << "' sinked");
 
                 uint32_t biu_req_queue_size_ = 32;
 
                 out_biu_ack_.send(biu_req_queue_size_, sink_latency_);
-                out_biu_resp_.send(instPtr, 2*sink_latency_);
+                out_biu_resp_.send(mem_access_info_ptr, 2*sink_latency_);
             }
 
-            sparta::DataInPort<olympia::InstPtr>      in_biu_req_     {&unit_port_set_, "in_biu_req",
-                                                                                sparta::SchedulingPhase::Tick, 1};
-            sparta::DataOutPort<olympia::InstPtr>     out_biu_resp_ {&unit_port_set_, "out_biu_resp"};
-            sparta::DataOutPort<uint32_t>             out_biu_ack_ {&unit_port_set_, "out_biu_ack"};
+            sparta::DataInPort<olympia::MemoryAccessInfoPtr>  in_biu_req_     {&unit_port_set_, "in_biu_req",
+                                                                               sparta::SchedulingPhase::Tick, 1};
+            sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_biu_resp_ {&unit_port_set_, "out_biu_resp"};
+            sparta::DataOutPort<uint32_t>                     out_biu_ack_ {&unit_port_set_, "out_biu_ack"};
 
             std::string purpose_;
             sparta::Clock::Cycle sink_latency_;

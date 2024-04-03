@@ -13,6 +13,10 @@ If `conda` is not already set up or the preference is to have a local
 
 ## Create a New Environment or Update Existing Conda Environment
 
+** If these steps do no work, follow the directions on
+   [Map/Sparta](https://github.com/sparcians/map/tree/master#building-map)
+   instead **
+
 A new environment can be created using `environment.yaml` file as follows:
 
 ```

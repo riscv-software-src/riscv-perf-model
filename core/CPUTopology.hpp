@@ -1,6 +1,5 @@
 // <CPUTopology.h> -*- C++ -*-
 
-
 #pragma once
 
 #include <memory>
@@ -12,7 +11,8 @@
 #include "sparta/simulation/ResourceTreeNode.hpp"
 #include "sparta/simulation/TreeNodeExtensions.hpp"
 
-namespace olympia{
+namespace olympia
+{
 
     /**
      * @file  CPUTopology.h
@@ -26,11 +26,12 @@ namespace olympia{
      * 2. Contain unit structures and port structures to build and bind
      * 3. Allow deriving classes to define a topology
      */
-    class CPUTopology{
-    public:
-
+    class CPUTopology
+    {
+      public:
         //! \brief Structure to represent a resource unit in device tree
-        struct UnitInfo{
+        struct UnitInfo
+        {
 
             //! ResourceTreeNode name
             std::string name;
@@ -56,12 +57,9 @@ namespace olympia{
             /**
              * @brief Constructor for UnitInfo
              */
-            UnitInfo(const std::string& name,
-                     const std::string& parent_name,
-                     const std::string& human_name,
-                     const std::string&  group_name,
-                     const uint32_t group_id,
-                     sparta::ResourceFactoryBase* factory,
+            UnitInfo(const std::string & name, const std::string & parent_name,
+                     const std::string & human_name, const std::string & group_name,
+                     const uint32_t group_id, sparta::ResourceFactoryBase* factory,
                      bool is_private_subtree = false) :
                 name{name},
                 parent_name{parent_name},
@@ -69,11 +67,14 @@ namespace olympia{
                 group_name{group_name},
                 group_id{group_id},
                 factory{factory},
-                is_private_subtree{is_private_subtree}{}
+                is_private_subtree{is_private_subtree}
+            {
+            }
         };
 
         //! \brief Structure to represent a port binding between units in device tree
-        struct PortConnectionInfo{
+        struct PortConnectionInfo
+        {
 
             //! Out port name of unit
             std::string output_port_name;
@@ -84,16 +85,18 @@ namespace olympia{
             /**
              * @brief Constructor for PortConnectionInfo
              */
-            PortConnectionInfo(const std::string& output_port_name,
-                               const std::string& input_port_name) :
+            PortConnectionInfo(const std::string & output_port_name,
+                               const std::string & input_port_name) :
                 output_port_name{output_port_name},
-                input_port_name{input_port_name}{}
+                input_port_name{input_port_name}
+            {
+            }
         };
 
         /**
          * @brief Constructor for CPUTopology
          */
-        CPUTopology() : factories{new CPUFactories()}{}
+        CPUTopology() : factories{new CPUFactories()} {}
 
         //! Virtual destructor
         virtual ~CPUTopology() {}
@@ -101,21 +104,17 @@ namespace olympia{
         /**
          * @brief Set the name for this topoplogy
          */
-        auto setName(const std::string& topology) -> void{
-            topology_name = topology;
-        }
+        auto setName(const std::string & topology) -> void { topology_name = topology; }
 
         /**
          * @brief Set the number of cores in this processor
          */
-        auto setNumCores(const uint32_t num_of_cores) -> void{
-            num_cores = num_of_cores;
-        }
+        auto setNumCores(const uint32_t num_of_cores) -> void { num_cores = num_of_cores; }
 
         /**
          * @brief Static method to allocate memory for topology
          */
-        static std::unique_ptr<CPUTopology> allocateTopology(const std::string& topology);
+        static std::unique_ptr<CPUTopology> allocateTopology(const std::string & topology);
 
         //! Post binding/final setup specific to a topology
         virtual void bindTree(sparta::RootTreeNode* root_node) {}
@@ -142,17 +141,25 @@ namespace olympia{
     //
     class CoreExtensions : public sparta::ExtensionsParamsOnly
     {
-    public:
+      public:
         static constexpr char name[] = "core_extensions";
 
-        using ExecutionTopology      = std::vector<std::vector<std::string>>;
+        using ExecutionTopology = std::vector<std::vector<std::string>>;
         using ExecutionTopologyParam = sparta::Parameter<ExecutionTopology>;
 
+        using PipeTopology = std::vector<std::vector<std::string>>;
+        using PipeTopologyParam = sparta::Parameter<PipeTopology>;
+
+        using IssueQueueTopology = std::vector<std::vector<std::string>>;
+        using IssueQueueTopologyParam = sparta::Parameter<IssueQueueTopology>;
+
         CoreExtensions() : sparta::ExtensionsParamsOnly() {}
+
         virtual ~CoreExtensions() {}
 
-        void postCreate() override {
-            sparta::ParameterSet * ps = getParameters();
+        void postCreate() override
+        {
+            sparta::ParameterSet* ps = getParameters();
 
             //
             // Example of an execution topology:
@@ -160,14 +167,38 @@ namespace olympia{
             //
             //  LSU is its own entity at this time
             //
-            execution_topology_.
-                reset(new ExecutionTopologyParam("execution_topology", ExecutionTopology(),
-                                                 "Topology Post Dispatch -- the execution pipes. "
-                                                 "Expect: [[\"<unit_name>\", \"<count>\"]] ", ps));
+            execution_topology_.reset(
+                new ExecutionTopologyParam("execution_topology", ExecutionTopology(),
+                                           "Topology Post Dispatch -- the execution pipes. "
+                                           "Expect: [[\"<unit_name>\", \"<count>\"]] ",
+                                           ps));
+            pipelines_.reset(new PipeTopologyParam("pipelines", PipeTopology(),
+                                                   "Topology Mapping"
+                                                   "Mapping of Pipe Targets to execution unit",
+                                                   ps));
+            issue_queue_to_pipe_map_.reset(
+                new IssueQueueTopologyParam("issue_queue_to_pipe_map", IssueQueueTopology(),
+                                            "Issue Queue Topology"
+                                            "Defines Issue Queue to Execution Unit Mapping",
+                                            ps));
+            exe_pipe_rename_.reset(new IssueQueueTopologyParam("exe_pipe_rename",
+                                                              IssueQueueTopology(),
+                                                              "Rename for ExecutionPipes"
+                                                              "Defines alias for ExecutionPipe",
+                                                              ps));
+            issue_queue_rename_.reset(new IssueQueueTopologyParam("issue_queue_rename",
+                                                                 IssueQueueTopology(),
+                                                                 "Rename for IssueQueues"
+                                                                 "Defines alias for IssueQueue",
+                                                                 ps));
         }
-    private:
-        std::unique_ptr<ExecutionTopologyParam> execution_topology_;
 
+      private:
+        std::unique_ptr<ExecutionTopologyParam> execution_topology_;
+        std::unique_ptr<PipeTopologyParam> pipelines_;
+        std::unique_ptr<IssueQueueTopologyParam> issue_queue_to_pipe_map_;
+        std::unique_ptr<PipeTopologyParam> exe_pipe_rename_;
+        std::unique_ptr<PipeTopologyParam> issue_queue_rename_;
     };
 
     /**
@@ -175,7 +206,7 @@ namespace olympia{
      */
     class CoreTopologySimple : public CPUTopology
     {
-    public:
+      public:
         /**
          * @brief Constructor for CPUTopology
          */
@@ -185,4 +216,4 @@ namespace olympia{
         void bindTree(sparta::RootTreeNode* root_node) override final;
 
     }; // class CoreTopologySimple
-}  // namespace olympia
+} // namespace olympia

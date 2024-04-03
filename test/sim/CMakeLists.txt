@@ -48,11 +48,22 @@ sparta_named_test(olympia_coremark_test_report_html olympia -i 1M
   --report reports/core_report.def
   --workload traces/core_riscv.zstf)
 
+# Test missing opcodes
 sparta_named_test(olympia_json_test_missing_opcodes olympia
   --workload json_tests/missing_opcodes.json)
 
+# Test FP transfers
 sparta_named_test(olympia_json_test_fp_transfers olympia
   --workload json_tests/fp_transfers.json)
+
+# Test PEvent generation
+sparta_named_test(olympia_json_test_pevents olympia
+  --workload traces/dhry_riscv.zstf -i100k
+  --pevents test_pevent.out RETIRE
+  --pevents test_pevent.out COMPLETE)
+sparta_named_test(olympia_json_test_pevents_all olympia
+  --workload traces/dhry_riscv.zstf  -i100k
+  --pevents test_pevent.out all)
 
 ## Test the arches
 file(GLOB TEST_YAML "${SIM_BASE}/arches/*.yaml")
@@ -64,6 +75,15 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
     --arch ${ARCH_NAME})
 endforeach()
 
+## Test branch misprediction flushes
+foreach(ARCH_FULL_PATH ${TEST_YAML})
+  get_filename_component(ARCH_FILE_NAME ${ARCH_FULL_PATH} NAME)
+  string(REGEX REPLACE ".yaml" "" ARCH_NAME ${ARCH_FILE_NAME})
+  sparta_named_test(olympia_arch_${ARCH_NAME}_random_branch_misprediction_test olympia
+    -i500K --workload traces/dhry_riscv.zstf
+    --arch ${ARCH_NAME}
+    -p top.cpu.core0.execute.exe*.params.enable_random_misprediction 1)
+endforeach()
 
 set(test_params_list)
 list(APPEND test_params_list "top.cpu.core0.lsu.params.mmu_lookup_stage_length 3")

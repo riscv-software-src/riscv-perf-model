@@ -92,7 +92,7 @@ namespace olympia
         std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object
     };
 
-    using MavisFactoy = sparta::ResourceFactory<MavisUnit,
+    using MavisFactory = sparta::ResourceFactory<MavisUnit,
                                                 MavisUnit::MavisParameters>;
 
     MavisType *getMavis(sparta::TreeNode *);

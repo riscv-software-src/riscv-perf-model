@@ -161,7 +161,7 @@ private:
 
     sparta::ResourceFactory<l2cache_test::BIUSinkUnit, l2cache_test::BIUSinkUnit::BIUSinkUnitParameters> biu_fact;
 
-    olympia::MavisFactoy            mavis_fact;
+    olympia::MavisFactory            mavis_fact;
     std::vector<std::unique_ptr<sparta::TreeNode>> tns_to_delete_;
 
     const std::string input_file_;

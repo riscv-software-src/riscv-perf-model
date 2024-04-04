@@ -190,7 +190,7 @@ namespace olympia
                 // This is rare for the example
                 if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
-                  retireSysInst_(ex_inst_ptr);
+                    retireSysInst_(ex_inst_ptr);
                 }
             }
             else {

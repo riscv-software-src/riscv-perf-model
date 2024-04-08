@@ -6,6 +6,7 @@
 
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
+#include "CoreUtils.hpp"
 
 namespace olympia
 {
@@ -72,6 +73,7 @@ namespace olympia
 
     void ROB::sendInitialCredits_()
     {
+        setupScoreboardView_() ;
         out_reorder_buffer_credits_.send(reorder_buffer_.capacity());
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
@@ -188,13 +190,7 @@ namespace olympia
                 // This is rare for the example
                 if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
-                    ILOG("Instigating flush... " << ex_inst);
-
-                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst_ptr);
-                    out_retire_flush_.send(criteria);
-
-                    ++num_flushes_;
-                    break;
+                    retireSysInst_(ex_inst_ptr);
                 }
             }
             else {
@@ -248,4 +244,54 @@ namespace olympia
         }
     }
 
+    // sys instr doesn't have a pipe so we handle special stuff here
+    void ROB::retireSysInst_(InstPtr &ex_inst)
+    {
+        auto reg_file = ex_inst->getRenameData().getDestination().rf;
+        if (reg_file == core_types::RegFile::RF_INVALID)
+        {   // this is the case if dst = x0
+            DLOG("retiring SYS instr ");
+        } else   // this is needed or else destination register is 
+        {        // forever reserved and not ready
+            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
+            scoreboard_views_[reg_file]->setReady(dest_bits);
+            DLOG("retiring SYS inst dest reg bits: " <<  sparta::printBitSet(dest_bits));
+        }
+
+        FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst);
+                    out_retire_flush_.send(criteria);
+                    expect_flush_ = true;
+                    ++num_flushes_;
+                    ILOG("Instigating flush due to SYS instruction... " << *ex_inst);
+
+
+    }
+
+    // for SYS instr which doesn't have an exe pipe
+    void ROB::setupScoreboardView_()
+    {
+        std::string iq_name = "iq0"; // default name
+
+        if (getContainer() != nullptr)
+        {
+          const auto exe_pipe_rename =
+            olympia::coreutils::getPipeTopology(getContainer()->getParent(), "exe_pipe_rename");
+          if (exe_pipe_rename.size() > 0)
+                iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
+        }
+  
+        auto cpu_node = getContainer()->findAncestorByName("core.*");
+        if (cpu_node == nullptr)
+        {
+            cpu_node = getContainer()->getRoot();
+        }
+        const auto& rf = core_types::RF_INTEGER;
+ 
+        // alu0, alu1 name is based on exe names, point to issue_queue name instead
+        DLOG("setup sb view: " << iq_name );
+        scoreboard_views_[rf].reset(
+            new sparta::ScoreboardView(iq_name, core_types::regfile_names[rf],
+                                       cpu_node)); // name needs to come from issue_queue
+    }
 }
+

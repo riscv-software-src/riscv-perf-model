@@ -62,6 +62,8 @@
 |  x.0    | 2024.03.04 | Jeff Nye  | circulated for comment
 |  x.1    | 2024.03.08 | Jeff Nye  | typos, replace asserts with exceptions, grammar changes
 |  x.2    | 2024.03.10 | Jeff Nye  | removed operators, div/mod not needed,++/--/extensive assignment operators violate SA
+|  x.3    | 2024.04.09 | Jeff Nye  | typo fixes, added mnemonic strings to instr and encoding structures
+                             
 
 ### TODO
 
@@ -78,6 +80,12 @@ sufficient or is if-then-else syntax more clear, are for loops required,
 etc?
 
 - add the BNF or ANTRL/Bison grammar
+
+- Future feature: consider elimination of the arguments for the major clauses when
+                  using the encapsulated style
+
+- Future feature: composition syntax for sequence declaration, sequences
+                  built from other sequences with operators for combining.
 
 ----------------------------------------------------------------
 # Introduction to FSL
@@ -215,7 +223,7 @@ There are a limited number of data types unique to FSL.
 
 The standard native types are not in the syntax.
 
-For user defined variables type assignment is done my inference.
+For user defined variables type assignment is done by inference.
 
 This is no need for string or container types.  The typical native
 types such as float, double, and string are not required by FSL and 
@@ -498,6 +506,8 @@ The ISA description API is used to validate instruction references in
 the transform specification.
 
 Mavis is the instruction set description API supported in this release.
+More information on Mavis can be found here [Mavis](https://github.com/sparcians/mavis) 
+and in the Mavis section under Tools and Utilities below.
 
 ### isa Methods
 
@@ -576,7 +586,7 @@ input container. The sequence clause does not modify the ioput containers.
 ```
 ioput iop1
 
-sequence seq1(iop1,myISA) {
+sequence seq1 {
    # sequence of instructions
 }
 ```
@@ -596,8 +606,9 @@ within ioput. The length is the number of instructions, inclusive of the
 starting instruction.
 
 An instruction sequence is expressed as a simple list of Mavis-assigned
-unique identifiers, or as a set of assembly language instructions with
-abstracted operands. The choice is based on the constraints.
+unique identifiers which are independent of operands, or as a set of 
+assembly language instructions with abstracted operands.  The choice is 
+based on the constraints.
 
 The UID list is sufficient if there are no constraints on the operands
 in the list of instructions in the sequence.
@@ -907,7 +918,7 @@ ioput iop1
 conversion conv1(seq1,iop1,cons1) {
   instr newInstr
 
-  newInstr(opc=0x1234,uid=0x3)
+  newInstr(mnemonic="SEQ1",opc=0x1234,uid=0x3)
   newInstr(src={g1},dst={g2},imm={c1,c1})
   newInstr(type="fused")
 
@@ -1057,12 +1068,12 @@ constraints cons1(seq1,iop1,rv64g,oly1) {
 }
 
 conversion conv1(seq1,iop1,cons1) {
-  instr fused(opcode=0x1234)
+  instr fused(mnemonic="SEQ1",opcode=0x1234)
   iop1.input.replace(seq1,fused)
 }
 
 conversion conv2(seq1,iop1,cons1) {
-  encoding word1(seq1,opc=0x1234) {
+  encoding word1(seq1,mnemonic="SEQ1",opc=0x1234) {
     u10 opc    # 57:48   unsigned 10b
     u6  c3     # 47:42   unsigned 6b
     s12 c2     # 41:30   signed 12b

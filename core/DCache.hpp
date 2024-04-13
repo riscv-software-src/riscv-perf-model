@@ -28,7 +28,7 @@ namespace olympia
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
-            PARAMETER(uint32_t, mshr_entries, 8, "Number of MSHR Entries")
+            PARAMETER(uint32_t, mshr_entries, 4, "Number of MSHR Entries")
             PARAMETER(uint32_t, load_miss_queue_size, 8, "Load miss queue size")
         };
 
@@ -96,6 +96,8 @@ namespace olympia
 
         void freePipelineAppend_();
 
+        void mshrRequest_();
+
         bool busy_ = false;
 
         bool pipelineFree_ = true;
@@ -132,7 +134,10 @@ namespace olympia
         // Events
         ////////////////////////////////////////////////////////////////////////////////
         sparta::UniqueEvent<> uev_free_pipeline_{
-            &unit_event_set_, "issue_inst", CREATE_SPARTA_HANDLER(DCache, freePipelineAppend_)};
+            &unit_event_set_, "free_pipeline", CREATE_SPARTA_HANDLER(DCache, freePipelineAppend_)};
+
+        sparta::UniqueEvent<> uev_mshr_request_{
+            &unit_event_set_, "mshr_request", CREATE_SPARTA_HANDLER(DCache, mshrRequest_)};
         ////////////////////////////////////////////////////////////////////////////////
         // Counters
         ////////////////////////////////////////////////////////////////////////////////
@@ -147,7 +152,7 @@ namespace olympia
         sparta::Buffer<MSHREntryInfoPtr> mshr_file_;
         MSHREntryInfoAllocator & mshr_entry_allocator;
         void allocateMSHREntry_(const MemoryAccessInfoPtr & mem_access_info_ptr);
-        MSHREntryIterator mshrLookup_(const uint64_t block_address);
+        void mshrLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr);
         void replyLSU(const MemoryAccessInfoPtr & mem_access_info_ptr);
     };
 

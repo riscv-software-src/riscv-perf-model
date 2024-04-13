@@ -57,7 +57,7 @@ namespace olympia
         // For LSU/MSS
         LoadStoreInstInfoAllocator  load_store_info_allocator{128, 80};
         MemoryAccessInfoAllocator   memory_access_allocator  {128, 80};
-        MSHREntryInfoAllocator      mshr_entry_allocator {128, 80};
+        MSHREntryInfoAllocator      mshr_entry_allocator {300, 150};
 
     };
 }

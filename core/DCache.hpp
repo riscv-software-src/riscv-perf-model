@@ -1,14 +1,16 @@
 #pragma once
 
-#include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
+#include "sparta/resources/Pipeline.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
+#include "sparta/simulation/Unit.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "CacheFuncModel.hpp"
 #include "Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
 #include "MemoryAccessInfo.hpp"
+#include "MSHREntryInfo.hpp"
 
 namespace olympia
 {
@@ -26,15 +28,62 @@ namespace olympia
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
+            PARAMETER(uint32_t, mshr_entries, 8, "Number of MSHR Entries")
+            PARAMETER(uint32_t, load_miss_queue_size, 8, "Load miss queue size")
         };
 
         static const char name[];
         DCache(sparta::TreeNode* n, const CacheParameterSet* p);
 
       private:
+        ////////////////////////////////////////////////////////////////////////////////
+        // L1 Cache Handling
+        ////////////////////////////////////////////////////////////////////////////////
+        using L1Handle = CacheFuncModel::Handle;
+        L1Handle l1_cache_;
+        const bool l1_always_hit_;
+        const uint32_t cache_latency_;
+        const uint64_t cache_line_size_;
+        // Keep track of the instruction that causes current outstanding cache miss
+        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
+
+        const uint32_t num_mshr_entries_;
+        const uint32_t load_miss_queue_size_;
+
+        void setupL1Cache_(const CacheParameterSet* p);
+
         bool dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr);
 
         void reloadCache_(uint64_t phy_addr);
+
+        // To arbitrate between incoming request from LSU and Cache refills from BIU
+        //        bool incoming_cache_refill_ = false;
+        MemoryAccessInfoPtr incoming_cache_refill_ = nullptr;
+
+        using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
+        using MSHREntryIterator = sparta::Buffer<MSHREntryInfoPtr>::iterator;
+        // Ongoing Refill request
+        MSHREntryIterator current_refill_mshr_entry_;
+
+        // Cache Pipeline
+        enum class PipelineStage
+        {
+            LOOKUP = 0,
+            DATA_READ = 1,
+            DEALLOCATE = 2,
+            NUM_STAGES
+        };
+
+        sparta::Pipeline<MemoryAccessInfoPtr> cache_pipeline_{
+            "DCachePipeline", static_cast<uint32_t>(PipelineStage::NUM_STAGES), getClock()};
+
+        void handleLookup_();
+        void handleDataRead_();
+        void handleDeallocate_();
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Handle requests
+        ////////////////////////////////////////////////////////////////////////////////
 
         void getInstsFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
@@ -42,13 +91,11 @@ namespace olympia
 
         void getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
-        using L1Handle = CacheFuncModel::Handle;
-        L1Handle l1_cache_;
-        const bool l1_always_hit_;
+        void freePipelineAppend_();
+
         bool busy_ = false;
-        uint32_t cache_latency_ = 0;
-        // Keep track of the instruction that causes current outstanding cache miss
-        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
+
+        bool pipelineFree_ = true;
 
         // Credit bool for sending miss request to L2Cache
         uint32_t dcache_l2cache_credits_ = 0;
@@ -61,8 +108,8 @@ namespace olympia
 
         sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_,
-                                                                 "in_l2cache_resp", 1};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_, "in_l2cache_resp",
+                                                                 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -81,7 +128,8 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////
-
+        sparta::UniqueEvent<> uev_free_pipeline_{
+            &unit_event_set_, "issue_inst", CREATE_SPARTA_HANDLER(DCache, freePipelineAppend_)};
         ////////////////////////////////////////////////////////////////////////////////
         // Counters
         ////////////////////////////////////////////////////////////////////////////////
@@ -91,6 +139,13 @@ namespace olympia
         sparta::Counter dl1_cache_misses_{getStatisticSet(), "dl1_cache_misses",
                                           "Number of DL1 cache misses",
                                           sparta::Counter::COUNT_NORMAL};
+
+
+        using MSHRFile = sparta::Buffer<MSHREntryInfoPtr>;
+        MSHRFile mshr_file_;
+        MSHREntryInfoAllocator & mshr_entry_allocator;
+        MSHREntryIterator allocateMSHREntry_(uint64_t block_address);
+        MSHREntryIterator mshrLookup_(const uint64_t& block_address);
     };
 
 } // namespace olympia

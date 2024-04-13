@@ -13,6 +13,7 @@
 #include "Inst.hpp"
 #include "LoadStoreInstInfo.hpp"
 #include "MemoryAccessInfo.hpp"
+#include "MSHREntryInfo.hpp"
 
 namespace olympia
 {
@@ -54,8 +55,9 @@ namespace olympia
         InstArchInfoAllocator inst_arch_info_allocator{3000, 2500};
 
         // For LSU/MSS
-        LoadStoreInstInfoAllocator load_store_info_allocator{128, 80};
-        MemoryAccessInfoAllocator       memory_access_allocator  {128, 80};
+        LoadStoreInstInfoAllocator  load_store_info_allocator{128, 80};
+        MemoryAccessInfoAllocator   memory_access_allocator  {128, 80};
+        MSHREntryInfoAllocator      mshr_entry_allocator {128, 80};
 
     };
 }

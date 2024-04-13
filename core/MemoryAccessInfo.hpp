@@ -17,9 +17,11 @@ namespace olympia
 
     class MemoryAccessInfoPairDef;
     class MemoryAccessInfo;
+    class MSHREntryInfo;
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+    using MSHREntryInfoAllocator = sparta::SpartaSharedPointerAllocator<MSHREntryInfo>;
 
     class MemoryAccessInfo
     {

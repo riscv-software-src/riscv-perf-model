@@ -44,8 +44,9 @@ namespace olympia
         const bool l1_always_hit_;
         const uint32_t cache_latency_;
         const uint64_t cache_line_size_;
+        const sparta::cache::AddrDecoderIF* addr_decoder_;
         // Keep track of the instruction that causes current outstanding cache miss
-        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
+        //        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 
         const uint32_t num_mshr_entries_;
         const uint32_t load_miss_queue_size_;
@@ -56,12 +57,14 @@ namespace olympia
 
         void reloadCache_(uint64_t phy_addr);
 
+        uint64_t getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr);
+
         // To arbitrate between incoming request from LSU and Cache refills from BIU
         //        bool incoming_cache_refill_ = false;
         MemoryAccessInfoPtr incoming_cache_refill_ = nullptr;
 
         using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
-        using MSHREntryIterator = sparta::Buffer<MSHREntryInfoPtr>::iterator;
+        using MSHREntryIterator = sparta::Buffer<MSHREntryInfoPtr>::const_iterator;
         // Ongoing Refill request
         MSHREntryIterator current_refill_mshr_entry_;
 
@@ -141,11 +144,11 @@ namespace olympia
                                           sparta::Counter::COUNT_NORMAL};
 
 
-        using MSHRFile = sparta::Buffer<MSHREntryInfoPtr>;
-        MSHRFile mshr_file_;
+        sparta::Buffer<MSHREntryInfoPtr> mshr_file_;
         MSHREntryInfoAllocator & mshr_entry_allocator;
-        MSHREntryIterator allocateMSHREntry_(uint64_t block_address);
-        MSHREntryIterator mshrLookup_(const uint64_t& block_address);
+        void allocateMSHREntry_(const MemoryAccessInfoPtr & mem_access_info_ptr);
+        MSHREntryIterator mshrLookup_(const uint64_t block_address);
+        void replyLSU(const MemoryAccessInfoPtr & mem_access_info_ptr);
     };
 
 } // namespace olympia

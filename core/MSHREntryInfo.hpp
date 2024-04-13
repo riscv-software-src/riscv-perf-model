@@ -2,7 +2,8 @@
 
 #include "CacheFuncModel.hpp"
 
-namespace olympia {
+namespace olympia
+{
     class MSHREntryInfo
     {
       public:
@@ -33,7 +34,7 @@ namespace olympia {
 
         void setDataArrived(bool v) { data_arrived_ = v; }
 
-        const bool & getDataArrived() { return data_arrived_; }
+        bool getDataArrived() { return data_arrived_; }
 
         void enqueueLoad(MemoryAccessInfoPtr mem_access_info_ptr)
         {
@@ -68,4 +69,4 @@ namespace olympia {
         sparta::Queue<MemoryAccessInfoPtr> load_miss_queue_;
         bool data_arrived_ = false;
     };
-}
+} // namespace olympia

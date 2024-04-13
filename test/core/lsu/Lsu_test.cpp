@@ -110,7 +110,7 @@ void runTest(int argc, char **argv)
     cls.runSimulator(&sim, 7);
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
     cls.runSimulator(&sim, 52);
-    lsupipe_tester.test_replay_issue_abort(*my_lsu, 3); // Loads operand dependency meet
+    lsupipe_tester.test_replay_issue_abort(*my_lsu, 4); // Loads operand dependency meet
     cls.runSimulator(&sim);
 }
 

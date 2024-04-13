@@ -21,6 +21,9 @@ namespace olympia
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+
+    using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
+    using MSHREntryInfoIterator = sparta::Buffer<MSHREntryInfoPtr>::const_iterator;
     using MSHREntryInfoAllocator = sparta::SpartaSharedPointerAllocator<MSHREntryInfo>;
 
     class MemoryAccessInfo
@@ -153,6 +156,16 @@ namespace olympia
             replay_queue_iterator_ = iter;
         }
 
+        const MSHREntryInfoIterator & getMSHRInfoIterator() const
+        {
+            return mshr_entry_info_iterator_;
+        }
+
+        void setMSHREntryInfoIterator(const MSHREntryInfoIterator & iter)
+        {
+            mshr_entry_info_iterator_ = iter;
+        }
+
       private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -178,6 +191,7 @@ namespace olympia
 
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
+        MSHREntryInfoIterator mshr_entry_info_iterator_;
     };
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;

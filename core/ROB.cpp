@@ -156,11 +156,17 @@ namespace olympia
 
                 // Use the program ID to verify that the program order has been maintained.
                 sparta_assert(ex_inst.getProgramID() == expected_program_id_,
-                    "Unexpected program ID when retiring instruction"
-                    << "(suggests wrong program order)"
-                    << " expected: " << expected_program_id_
-                    << " received: " << ex_inst.getProgramID());
-                ++expected_program_id_;
+                    "\nUnexpected program ID when retiring instruction"
+                    << "\n(suggests wrong program order)"
+                    << "\n expected: " << expected_program_id_
+                    << "\n received: " << ex_inst.getProgramID()
+                    << "\n UID: " << ex_inst_ptr->getMavisUid()
+                    << "\n incr: " << ex_inst_ptr->getProgramIDIncrement()
+                    << "\n inst "<<ex_inst);
+
+                //The fused op records the number of insts that
+                //were eliminated and adjusts the progID as needed 
+                expected_program_id_ += ex_inst.getProgramIDIncrement();
 
                 if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
                     std::cout << "olympia: Retired " << num_retired_.get()

@@ -1,4 +1,4 @@
-# Fusion API draft
+# Fusion API
 
 ```
 Contact: Jeff Nye
@@ -65,7 +65,7 @@ mkdir release; cd release; cmake .. -DCMAKE_BUILD_TYPE=Release
 cd ../fusion
 mkdir -p release; cd release; cmake ..
 make -j32 regress
-make docs
+make fusion_docs
 ```
 
 # C++ API and testbench
@@ -148,3 +148,7 @@ API definition unobtrusive.
 
 The remainder of the code and support classes are template based. 
 
+## Domain specific language
+
+A domain specific language is available, the Fusion/Fracture Specification
+Language, FSL, is documented in FSL.MD.

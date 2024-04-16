@@ -7,20 +7,13 @@ namespace olympia
     class MSHREntryInfo
     {
       public:
-        MSHREntryInfo(const uint64_t & block_address, const uint64_t & line_size,
-                      const uint32_t load_miss_queue_size, const sparta::Clock* clock) :
-            line_fill_buffer_(line_size),
-            block_address_(block_address),
-            load_miss_queue_("load_miss_queue", load_miss_queue_size, clock)
+        MSHREntryInfo(const uint64_t & line_size, const sparta::Clock* clock) :
+            line_fill_buffer_(line_size)
         {
             line_fill_buffer_.setValid(true);
         }
 
         ~MSHREntryInfo() {}
-
-        const uint64_t & getBlockAddress() const { return block_address_; }
-
-        void setBlockAddress(uint64_t block_address) { block_address_ = block_address; }
 
         SimpleCacheLine & getLineFillBuffer() { return line_fill_buffer_; }
 
@@ -36,37 +29,16 @@ namespace olympia
 
         bool getDataArrived() { return data_arrived_; }
 
-        void enqueueLoad(MemoryAccessInfoPtr mem_access_info_ptr)
+        void setMemRequest(const MemoryAccessInfoPtr & new_memory_access_info)
         {
-            load_miss_queue_.push(mem_access_info_ptr);
+            memory_access_info = new_memory_access_info;
         }
 
-        MemoryAccessInfoPtr dequeueLoad()
-        {
-            if (load_miss_queue_.empty())
-                return nullptr;
-
-            MemoryAccessInfoPtr mem_access_info_ptr = load_miss_queue_.front();
-            load_miss_queue_.pop();
-
-            return mem_access_info_ptr;
-        }
-
-        MemoryAccessInfoPtr peekLoad()
-        {
-            if (load_miss_queue_.empty())
-                return nullptr;
-
-            MemoryAccessInfoPtr mem_access_info_ptr = load_miss_queue_.front();
-            return mem_access_info_ptr;
-        }
-
-        bool isLoadMissQueueFull() const { return (load_miss_queue_.numFree() == 0); }
+        MemoryAccessInfoPtr & getMemRequest() { return memory_access_info; }
 
       private:
         SimpleCacheLine line_fill_buffer_;
-        uint64_t block_address_;
-        sparta::Queue<MemoryAccessInfoPtr> load_miss_queue_;
+        MemoryAccessInfoPtr  memory_access_info;
         bool data_arrived_ = false;
     };
 } // namespace olympia

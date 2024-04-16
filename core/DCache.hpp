@@ -28,8 +28,7 @@ namespace olympia
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
-            PARAMETER(uint32_t, mshr_entries, 4, "Number of MSHR Entries")
-            PARAMETER(uint32_t, load_miss_queue_size, 8, "Load miss queue size")
+            PARAMETER(uint32_t, mshr_entries, 8, "Number of MSHR Entries")
         };
 
         static const char name[];
@@ -49,7 +48,6 @@ namespace olympia
         //        MemoryAccessInfoPtr cache_pending_inst_ = nullptr;
 
         const uint32_t num_mshr_entries_;
-        const uint32_t load_miss_queue_size_;
 
         void setupL1Cache_(const CacheParameterSet* p);
 

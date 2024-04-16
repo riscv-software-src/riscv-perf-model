@@ -11,13 +11,11 @@ namespace olympia
         cache_latency_(p->cache_latency),
         cache_line_size_(p->l1_line_size),
         num_mshr_entries_(p->mshr_entries),
-        load_miss_queue_size_(p->load_miss_queue_size),
         mshr_file_("mshr_file", p->mshr_entries, getClock()),
         mshr_entry_allocator(
             sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->mshr_entry_allocator)
     {
         sparta_assert(num_mshr_entries_ > 0, "There must be atleast 1 MSHR entry");
-        sparta_assert(load_miss_queue_size_ > 0, "There must be atleast 1 LMQ entry");
 
         in_lsu_lookup_req_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
@@ -145,7 +143,7 @@ namespace olympia
 
         if (!mshr_itb.isValid())
         {
-            mshrLookup_(mem_access_info_ptr);
+            //            mshrLookup_(mem_access_info_ptr);
             if (!mem_access_info_ptr->getMSHRInfoIterator().isValid())
             {
                 ILOG("Creating new MSHR Entry " << mem_access_info_ptr);
@@ -169,8 +167,7 @@ namespace olympia
             // Update Line fill buffer only if ST
             ILOG("Write to Line fill buffer (ST), block address:0x" << std::hex << block_addr);
             (*mshr_it)->setModified(true);
-            if (!(*mshr_it)->isLoadMissQueueFull())
-                (*mshr_it)->enqueueLoad(mem_access_info_ptr);
+            (*mshr_it)->setMemRequest(mem_access_info_ptr);
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
             out_lsu_lookup_ack_.send(mem_access_info_ptr);
             return;
@@ -184,19 +181,9 @@ namespace olympia
             return;
         }
 
-        if ((*mshr_it)->isLoadMissQueueFull())
-        {
-            ILOG("Load miss and LMQ full (nack); block address:0x" << std::hex << block_addr);
-            // nack
-            // Temporary: send miss instead of nack
-            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-            out_lsu_lookup_req_.send(mem_access_info_ptr);
-            return;
-        }
-
         // Enqueue Load in LMQ
         ILOG("Load miss inst to LMQ; block address:0x" << std::hex << block_addr);
-        (*mshr_it)->enqueueLoad(mem_access_info_ptr);
+        (*mshr_it)->setMemRequest(mem_access_info_ptr);
         mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
         out_lsu_lookup_req_.send(mem_access_info_ptr);
     }
@@ -250,11 +237,12 @@ namespace olympia
                 if (iter.isValid())
                 {
                     const auto & mshr_entry = *iter;
-                    auto mem_info = mshr_entry->peekLoad();
+                    auto mem_info = mshr_entry->getMemRequest();
                     if (mshr_entry->isValid() && !mshr_entry->getDataArrived() && mem_info)
                     {
                         ILOG("Sending mshr request when not busy " << mem_info);
                         out_l2cache_req_.send(mem_info);
+                        busy_ = true;
                         break;
                     }
                 }
@@ -275,12 +263,8 @@ namespace olympia
             const auto & mshr_it = mem_access_info_ptr->getMSHRInfoIterator();
             if (mshr_it.isValid())
             {
-                MemoryAccessInfoPtr dependant_load_inst = (*mshr_it)->dequeueLoad();
-                while (dependant_load_inst != nullptr)
-                {
-                    out_lsu_lookup_ack_.send(dependant_load_inst);
-                    dependant_load_inst = (*mshr_it)->dequeueLoad();
-                }
+                MemoryAccessInfoPtr dependant_load_inst = (*mshr_it)->getMemRequest();
+                out_lsu_lookup_ack_.send(dependant_load_inst);
 
                 ILOG("Removing mshr entry for " << mem_access_info_ptr);
                 mshr_file_.erase(mem_access_info_ptr->getMSHRInfoIterator());
@@ -335,17 +319,17 @@ namespace olympia
     // MSHR File Lookup
     void DCache::mshrLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
-        const uint64_t block_address = getBlockAddr(mem_access_info_ptr);
-        for (auto it = mshr_file_.begin(); it < mshr_file_.end(); it++)
-        {
-            auto mshr_block_addr = (*it)->getBlockAddress();
-            if (mshr_block_addr == block_address)
-            {
-                // Address match
-                mem_access_info_ptr->setMSHREntryInfoIterator(it);
-                break;
-            }
-        }
+//        const uint64_t block_address = getBlockAddr(mem_access_info_ptr);
+//        for (auto it = mshr_file_.begin(); it < mshr_file_.end(); it++)
+//        {
+//            auto mshr_block_addr = (*it)->getBlockAddress();
+//            if (mshr_block_addr == block_address)
+//            {
+//                // Address match
+//                mem_access_info_ptr->setMSHREntryInfoIterator(it);
+//                break;
+//            }
+//        }
     }
 
     // MSHR Entry allocation in case of miss
@@ -353,10 +337,8 @@ namespace olympia
     {
         sparta_assert(mshr_file_.size() <= num_mshr_entries_, "Appending mshr causes overflows!");
 
-        const uint64_t block_address = getBlockAddr(mem_access_info_ptr);
         MSHREntryInfoPtr mshr_entry = sparta::allocate_sparta_shared_pointer<MSHREntryInfo>(
-            mshr_entry_allocator, block_address, cache_line_size_, load_miss_queue_size_,
-            getClock());
+            mshr_entry_allocator, cache_line_size_, getClock());
 
 
         const auto & it = mshr_file_.push_back(mshr_entry);

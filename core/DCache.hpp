@@ -86,7 +86,7 @@ namespace olympia
         // Handle requests
         ////////////////////////////////////////////////////////////////////////////////
 
-        void getInstsFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void getMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
         void getAckFromL2Cache_(const uint32_t & ack);
 
@@ -96,9 +96,9 @@ namespace olympia
 
         void mshrRequest_();
 
-        bool busy_ = false;
+        bool l2cache_busy_ = false;
 
-        bool pipelineFree_ = true;
+        bool cache_refill_selected_ = true;
 
         // Credit bool for sending miss request to L2Cache
         uint32_t dcache_l2cache_credits_ = 0;

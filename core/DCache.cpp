@@ -18,7 +18,7 @@ namespace olympia
         sparta_assert(num_mshr_entries_ > 0, "There must be atleast 1 MSHR entry");
 
         in_lsu_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getMemReqFromLSU_, MemoryAccessInfoPtr));
 
         in_l2cache_ack_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromL2Cache_, uint32_t));
@@ -213,10 +213,10 @@ namespace olympia
         }
         else
         {
-            if (!busy_)
+            if (!l2cache_busy_)
             {
                 out_l2cache_req_.send(mem_access_info_ptr);
-                busy_ = true;
+                l2cache_busy_ = true;
             }
             else
             {
@@ -228,7 +228,7 @@ namespace olympia
 
     void DCache::mshrRequest_()
     {
-        if (!busy_)
+        if (!l2cache_busy_)
         {
             auto iter = mshr_file_.begin();
             while (iter != mshr_file_.end())
@@ -242,7 +242,7 @@ namespace olympia
                     {
                         ILOG("Sending mshr request when not busy " << mem_info);
                         out_l2cache_req_.send(mem_info);
-                        busy_ = true;
+                        l2cache_busy_ = true;
                         break;
                     }
                 }
@@ -274,29 +274,33 @@ namespace olympia
         ILOG("Deallocating pipeline for " << mem_access_info_ptr);
     }
 
-    void DCache::getInstsFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    void DCache::getMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
 
         ILOG("Got memory access request from LSU " << memory_access_info_ptr);
-        if (!pipelineFree_)
+        if (!cache_refill_selected_)
         {
             ILOG("Arbitration from refill " << memory_access_info_ptr);
+            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
             out_lsu_lookup_ack_.send(memory_access_info_ptr);
             return;
         }
         cache_pipeline_.append(memory_access_info_ptr);
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
         uev_free_pipeline_.schedule(1);
+
+        uev_mshr_request_.schedule(1);
     }
 
     void DCache::getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received cache refill " << memory_access_info_ptr);
+        l2cache_busy_ = false;
         incoming_cache_refill_ = memory_access_info_ptr;
         cache_pipeline_.append(memory_access_info_ptr);
-        busy_ = false;
-        pipelineFree_ = false;
+        cache_refill_selected_ = false;
         uev_free_pipeline_.schedule(1);
+
         uev_mshr_request_.schedule(1);
     }
 
@@ -313,7 +317,7 @@ namespace olympia
     void DCache::freePipelineAppend_()
     {
         ILOG("Pipeline is freed");
-        pipelineFree_ = true;
+        cache_refill_selected_ = true;
     }
 
     // MSHR File Lookup

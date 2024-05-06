@@ -150,14 +150,18 @@ namespace olympia
     void LSU::setupScoreboard_()
     {
         // Setup scoreboard view upon register file
-        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
-        // if we ever move to multicore, we only want to have resources look for scoreboard in their cpu
-        // if we're running a test where we only have top.rename or top.issue_queue, then we can just use the root
+        // std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
+        // core_types::RF_FLOAT, core_types::RF_VECTOR};
+        // if we ever move to multicore, we only want to have resources look for scoreboard in their
+        // cpu if we're running a test where we only have top.rename or top.issue_queue, then we can
+        // just use the root
         auto cpu_node = getContainer()->findAncestorByName("core.*");
-        if(cpu_node == nullptr){
+        if (cpu_node == nullptr)
+        {
             cpu_node = getContainer()->getRoot();
         }
-        for (const auto rf : reg_files)
+        for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES;
+             ++rf) // for (const auto rf : reg_files)
         {
             scoreboard_views_[rf].reset(new sparta::ScoreboardView(
                 getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
@@ -756,9 +760,8 @@ namespace olympia
         flushReadyQueue_(criteria);
 
         // Cancel replay events
-        auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool {
-            return criteria.includedInFlush(ldst_info_ptr->getInstPtr());
-        };
+        auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool
+        { return criteria.includedInFlush(ldst_info_ptr->getInstPtr()); };
         uev_append_ready_.cancelIf(flush);
         uev_replay_ready_.cancelIf(flush);
 
@@ -1175,9 +1178,8 @@ namespace olympia
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
 
-        sparta_assert(
-            inst_ptr->getFlushedStatus() == false,
-            "Attempt to rehandle cache lookup for flushed instruction!");
+        sparta_assert(inst_ptr->getFlushedStatus() == false,
+                      "Attempt to rehandle cache lookup for flushed instruction!");
 
         const LoadStoreInstIterator & iter = mem_access_info_ptr->getIssueQueueIterator();
         sparta_assert(
@@ -1242,17 +1244,20 @@ namespace olympia
         uint32_t credits_to_send = 0;
 
         auto iter = ldst_inst_queue_.begin();
-        while (iter != ldst_inst_queue_.end()) {
+        while (iter != ldst_inst_queue_.end())
+        {
             auto inst_ptr = (*iter)->getInstPtr();
 
             auto delete_iter = iter++;
 
-            if (criteria.includedInFlush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr))
+            {
                 ldst_inst_queue_.erase(delete_iter);
 
                 // Clear any scoreboard callback
-                std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
-                for(const auto rf : reg_files)
+                std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
+                                                              core_types::RF_FLOAT};
+                for (const auto rf : reg_files)
                 {
                     scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
                 }
@@ -1278,18 +1283,21 @@ namespace olympia
     void LSU::flushLSPipeline_(const FlushCriteria & criteria)
     {
         uint32_t stage_id = 0;
-        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++) {
+        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++)
+        {
             // If the pipe stage is already invalid, no need to criteria
-            if (!iter.isValid()) {
+            if (!iter.isValid())
+            {
                 continue;
             }
 
             auto inst_ptr = (*iter)->getInstPtr();
-            if (criteria.includedInFlush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr))
+            {
                 ldst_pipeline_.flushStage(iter);
 
                 ILOG("Flush Pipeline Stage[" << stage_id
-                     << "], Instruction ID: " << inst_ptr->getUniqueID());
+                                             << "], Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
     }
@@ -1297,12 +1305,14 @@ namespace olympia
     void LSU::flushReadyQueue_(const FlushCriteria & criteria)
     {
         auto iter = ready_queue_.begin();
-        while (iter != ready_queue_.end()) {
+        while (iter != ready_queue_.end())
+        {
             auto inst_ptr = (*iter)->getInstPtr();
 
             auto delete_iter = iter++;
 
-            if (criteria.includedInFlush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr))
+            {
                 ready_queue_.erase(delete_iter);
                 ILOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
             }
@@ -1312,12 +1322,14 @@ namespace olympia
     void LSU::flushReplayBuffer_(const FlushCriteria & criteria)
     {
         auto iter = replay_buffer_.begin();
-        while (iter != replay_buffer_.end()) {
+        while (iter != replay_buffer_.end())
+        {
             auto inst_ptr = (*iter)->getInstPtr();
 
             auto delete_iter = iter++;
 
-            if (criteria.includedInFlush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr))
+            {
                 replay_buffer_.erase(delete_iter);
                 ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
             }

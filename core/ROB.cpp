@@ -1,6 +1,5 @@
 // <ROB.cpp> -*- C++ -*-
 
-
 #include <algorithm>
 #include "ROB.hpp"
 
@@ -12,20 +11,14 @@ namespace olympia
 {
     const char ROB::name[] = "rob";
 
-    ROB::ROB(sparta::TreeNode * node,
-             const ROBParameterSet * p) :
+    ROB::ROB(sparta::TreeNode* node, const ROBParameterSet* p) :
         sparta::Unit(node),
-        stat_ipc_(&unit_stat_set_,
-                  "ipc",
-                  "Instructions retired per cycle",
-                  &unit_stat_set_,
+        stat_ipc_(&unit_stat_set_, "ipc", "Instructions retired per cycle", &unit_stat_set_,
                   "total_number_retired/cycles"),
-        num_retired_(&unit_stat_set_,
-                     "total_number_retired",
+        num_retired_(&unit_stat_set_, "total_number_retired",
                      "The total number of instructions retired by this core",
                      sparta::Counter::COUNT_NORMAL),
-        num_flushes_(&unit_stat_set_,
-                     "total_number_of_flushes",
+        num_flushes_(&unit_stat_set_, "total_number_of_flushes",
                      "The total number of flushes performed by the ROB",
                      sparta::Counter::COUNT_NORMAL),
         overall_ipc_si_(&stat_ipc_),
@@ -34,8 +27,7 @@ namespace olympia
         num_to_retire_(p->num_to_retire),
         num_insts_to_retire_(p->num_insts_to_retire),
         retire_heartbeat_(p->retire_heartbeat),
-        reorder_buffer_("ReorderBuffer", p->retire_queue_depth,
-                        node->getClock(), &unit_stat_set_)
+        reorder_buffer_("ReorderBuffer", p->retire_queue_depth, node->getClock(), &unit_stat_set_)
     {
         // Set a cycle delay on the retire, just for kicks
         ev_retire_.setDelay(1);
@@ -43,37 +35,34 @@ namespace olympia
         // Set up the reorder buffer to support pipeline collection.
         reorder_buffer_.enableCollection(node);
 
-        in_reorder_buffer_write_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ROB, robAppended_, InstGroup));
+        in_reorder_buffer_write_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(ROB, robAppended_, InstGroup));
 
-        in_reorder_flush_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(ROB, handleFlush_,
-                                                                  FlushManager::FlushingCriteria));
+        in_reorder_flush_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(ROB, handleFlush_, FlushManager::FlushingCriteria));
 
         // Do not allow this event to keep simulation alive
         ev_ensure_forward_progress_.setContinuing(false);
 
         // Notify other components when ROB stops the simulation
         rob_stopped_notif_source_.reset(new sparta::NotificationSource<bool>(
-            this->getContainer(),
-            "rob_stopped_notif_channel",
-            "ROB terminated simulation channel",
-            "rob_stopped_notif_channel"
-        ));
+            this->getContainer(), "rob_stopped_notif_channel", "ROB terminated simulation channel",
+            "rob_stopped_notif_channel"));
 
         // Send initial credits to anyone that cares.  Probably Dispatch.
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ROB, sendInitialCredits_));
     }
 
     /// Destroy!
-    ROB::~ROB() {
+    ROB::~ROB()
+    {
         // Logging can be done from destructors in the correct simulator setup
         ILOG("ROB is destructing now, but you can still see this message");
     }
 
     void ROB::sendInitialCredits_()
     {
-        setupScoreboardView_() ;
+        setupScoreboardView_();
         out_reorder_buffer_credits_.send(reorder_buffer_.capacity());
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
@@ -81,10 +70,20 @@ namespace olympia
     // An illustration of the use of the callback -- instead of
     // getting a reference, you can pull the data from the port
     // directly, albeit inefficient and superfluous here...
-    void ROB::robAppended_(const InstGroup &) {
-        for(auto & i : *in_reorder_buffer_write_.pullData()) {
-            reorder_buffer_.push(i);
-            ILOG("retire appended: " << i);
+    void ROB::robAppended_(const InstGroup &)
+    {
+        for (auto & i : *in_reorder_buffer_write_.pullData())
+        {
+            if (!i->isUOp())
+            {
+                // rob entries only for main instruction, uops aren't added.
+                reorder_buffer_.push(i);
+                ILOG("retire appended: " << i);
+            }
+            else
+            {
+                ILOG("UOp passed in, not adding to ROB " << i);
+            }
         }
 
         ev_retire_.schedule(sparta::Clock::Cycle(0));
@@ -120,7 +119,8 @@ namespace olympia
     void ROB::retireInstructions_()
     {
         // ROB is expecting a flush (back to itself)
-        if(expect_flush_) {
+        if (expect_flush_)
+        {
             return;
         }
 
@@ -129,18 +129,34 @@ namespace olympia
         ILOG("num to retire: " << num_to_retire);
 
         uint32_t retired_this_cycle = 0;
-        for(uint32_t i = 0; i < num_to_retire; ++i)
+        for (uint32_t i = 0; i < num_to_retire; ++i)
         {
             auto ex_inst_ptr = reorder_buffer_.access(0);
             sparta_assert(nullptr != ex_inst_ptr);
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
-            if(ex_inst.getStatus() == Inst::Status::COMPLETED)
+            bool uops_done = true;
+            if (ex_inst.hasUOps())
+            {
+                // check if UOps are done
+                // for(auto & i : *in_reorder_buffer_write_.pullData()) {
+                for (const auto & inst : ex_inst.getUOpInsts())
+                {
+                    if (inst->getStatus() != Inst::Status::COMPLETED)
+                    {
+                        uops_done = false;
+                        ILOG("UOP: " << inst << " is not done for instruction: " << ex_inst);
+                        break;
+                    }
+                }
+            }
+            if ((ex_inst.getStatus() == Inst::Status::COMPLETED) && uops_done)
             {
                 // UPDATE:
                 ex_inst.setStatus(Inst::Status::RETIRED);
-                if (ex_inst.isStoreInst()) {
+                if (ex_inst.isStoreInst())
+                {
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
                 // sending retired instruction to rename
@@ -156,28 +172,28 @@ namespace olympia
 
                 // Use the program ID to verify that the program order has been maintained.
                 sparta_assert(ex_inst.getProgramID() == expected_program_id_,
-                    "\nUnexpected program ID when retiring instruction"
-                    << "\n(suggests wrong program order)"
-                    << "\n expected: " << expected_program_id_
-                    << "\n received: " << ex_inst.getProgramID()
-                    << "\n UID: " << ex_inst_ptr->getMavisUid()
-                    << "\n incr: " << ex_inst_ptr->getProgramIDIncrement()
-                    << "\n inst "<<ex_inst);
+                              "\nUnexpected program ID when retiring instruction"
+                                  << "\n(suggests wrong program order)"
+                                  << "\n expected: " << expected_program_id_
+                                  << "\n received: " << ex_inst.getProgramID()
+                                  << "\n UID: " << ex_inst_ptr->getMavisUid() << "\n incr: "
+                                  << ex_inst_ptr->getProgramIDIncrement() << "\n inst " << ex_inst);
 
-                //The fused op records the number of insts that
-                //were eliminated and adjusts the progID as needed 
+                // The fused op records the number of insts that
+                // were eliminated and adjusts the progID as needed
                 expected_program_id_ += ex_inst.getProgramIDIncrement();
 
-                if(SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0)) {
-                    std::cout << "olympia: Retired " << num_retired_.get()
-                              << " instructions in " << getClock()->currentCycle()
+                if (SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0))
+                {
+                    std::cout << "olympia: Retired " << num_retired_.get() << " instructions in "
+                              << getClock()->currentCycle()
                               << " cycles.  Period IPC: " << period_ipc_si_.getValue()
-                              << " overall IPC: " << overall_ipc_si_.getValue()
-                              << std::endl;
+                              << " overall IPC: " << overall_ipc_si_.getValue() << std::endl;
                     period_ipc_si_.start();
                 }
                 // Will be true if the user provides a -i option
-                if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_))) {
+                if (SPARTA_EXPECT_FALSE((num_retired_ == num_insts_to_retire_)))
+                {
                     rob_stopped_simulation_ = true;
                     rob_stopped_notif_source_->postNotification(true);
                     getScheduler()->stopRunning();
@@ -185,47 +201,54 @@ namespace olympia
                 }
 
                 // Is this a misprdicted branch requiring a refetch?
-                if(ex_inst.isMispredicted()) {
-                    FlushManager::FlushingCriteria criteria
-                        (FlushManager::FlushCause::MISPREDICTION, ex_inst_ptr);
+                if (ex_inst.isMispredicted())
+                {
+                    FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::MISPREDICTION,
+                                                            ex_inst_ptr);
                     out_retire_flush_.send(criteria);
                     expect_flush_ = true;
                     break;
                 }
 
                 // This is rare for the example
-                if(SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
+                if (SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
                     retireSysInst_(ex_inst_ptr);
                 }
             }
-            else {
+            else
+            {
                 break;
             }
         }
 
-        if(false == reorder_buffer_.empty()) {
+        if (false == reorder_buffer_.empty())
+        {
             const auto & oldest_inst = reorder_buffer_.front();
-            if(oldest_inst->getStatus() == Inst::Status::COMPLETED) {
+            if (oldest_inst->getStatus() == Inst::Status::COMPLETED)
+            {
                 ILOG("oldest is marked completed: " << oldest_inst);
                 ev_retire_.schedule();
             }
-            else if(false == oldest_inst->isMarkedOldest()) {
+            else if (false == oldest_inst->isMarkedOldest())
+            {
                 ILOG("set oldest: " << oldest_inst);
                 oldest_inst->setOldest(true, &ev_retire_);
             }
         }
 
-        if(retired_this_cycle != 0) {
+        if (retired_this_cycle != 0)
+        {
             out_reorder_buffer_credits_.send(retired_this_cycle);
             last_retirement_ = getClock()->currentCycle();
         }
     }
 
-    void ROB::dumpDebugContent_(std::ostream& output) const
+    void ROB::dumpDebugContent_(std::ostream & output) const
     {
         output << "ROB Contents" << std::endl;
-        for(const auto & entry : reorder_buffer_) {
+        for (const auto & entry : reorder_buffer_)
+        {
             output << '\t' << entry << std::endl;
         }
     }
@@ -233,44 +256,48 @@ namespace olympia
     // Make sure the pipeline is making forward progress
     void ROB::checkForwardProgress_()
     {
-        if(getClock()->currentCycle() - last_retirement_ >= retire_timeout_interval_)
+        if (getClock()->currentCycle() - last_retirement_ >= retire_timeout_interval_)
         {
             sparta::SpartaException e;
-            e << "Been a while since we've retired an instruction.  Is the pipe stalled indefinitely?";
-            e << " currentCycle: "  << getClock()->currentCycle();
+            e << "Been a while since we've retired an instruction.  Is the pipe stalled "
+                 "indefinitely?";
+            e << " currentCycle: " << getClock()->currentCycle();
             throw e;
         }
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
 
-    void ROB::onStartingTeardown_() {
-        if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_)) {
-            std::cerr << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?" << std::endl;
+    void ROB::onStartingTeardown_()
+    {
+        if ((reorder_buffer_.size() > 0) && (false == rob_stopped_simulation_))
+        {
+            std::cerr
+                << "WARNING! Simulation is ending, but the ROB didn't stop it.  Lock up situation?"
+                << std::endl;
             dumpDebugContent_(std::cerr);
         }
     }
 
     // sys instr doesn't have a pipe so we handle special stuff here
-    void ROB::retireSysInst_(InstPtr &ex_inst)
+    void ROB::retireSysInst_(InstPtr & ex_inst)
     {
         auto reg_file = ex_inst->getRenameData().getDestination().rf;
         if (reg_file == core_types::RegFile::RF_INVALID)
-        {   // this is the case if dst = x0
+        { // this is the case if dst = x0
             DLOG("retiring SYS instr ");
-        } else   // this is needed or else destination register is 
-        {        // forever reserved and not ready
+        }
+        else // this is needed or else destination register is
+        {    // forever reserved and not ready
             const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
             scoreboard_views_[reg_file]->setReady(dest_bits);
-            DLOG("retiring SYS inst dest reg bits: " <<  sparta::printBitSet(dest_bits));
+            DLOG("retiring SYS inst dest reg bits: " << sparta::printBitSet(dest_bits));
         }
 
         FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst);
-                    out_retire_flush_.send(criteria);
-                    expect_flush_ = true;
-                    ++num_flushes_;
-                    ILOG("Instigating flush due to SYS instruction... " << *ex_inst);
-
-
+        out_retire_flush_.send(criteria);
+        expect_flush_ = true;
+        ++num_flushes_;
+        ILOG("Instigating flush due to SYS instruction... " << *ex_inst);
     }
 
     // for SYS instr which doesn't have an exe pipe
@@ -280,24 +307,23 @@ namespace olympia
 
         if (getContainer() != nullptr)
         {
-          const auto exe_pipe_rename =
-            olympia::coreutils::getPipeTopology(getContainer()->getParent(), "exe_pipe_rename");
-          if (exe_pipe_rename.size() > 0)
+            const auto exe_pipe_rename =
+                olympia::coreutils::getPipeTopology(getContainer()->getParent(), "exe_pipe_rename");
+            if (exe_pipe_rename.size() > 0)
                 iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
         }
-  
+
         auto cpu_node = getContainer()->findAncestorByName("core.*");
         if (cpu_node == nullptr)
         {
             cpu_node = getContainer()->getRoot();
         }
-        const auto& rf = core_types::RF_INTEGER;
- 
+        const auto & rf = core_types::RF_INTEGER;
+
         // alu0, alu1 name is based on exe names, point to issue_queue name instead
-        DLOG("setup sb view: " << iq_name );
+        DLOG("setup sb view: " << iq_name);
         scoreboard_views_[rf].reset(
             new sparta::ScoreboardView(iq_name, core_types::regfile_names[rf],
                                        cpu_node)); // name needs to come from issue_queue
     }
-}
-
+} // namespace olympia

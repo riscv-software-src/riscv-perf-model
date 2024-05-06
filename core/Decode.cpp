@@ -5,7 +5,7 @@
 
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/utils/LogUtils.hpp"
-
+#include "MavisUnit.hpp"
 #include <algorithm>
 #include <iostream>
 
@@ -19,7 +19,7 @@ namespace olympia
         sparta::Unit(node),
 
         fetch_queue_("FetchQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
-
+        temp_queue_("TempQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
         fusion_num_fuse_instructions_(&unit_stat_set_, "fusion_num_fuse_instructions",
                                       "The number of custom instructions created by fusion",
                                       sparta::Counter::COUNT_NORMAL),
@@ -33,8 +33,8 @@ namespace olympia
                                    sparta::Counter::COUNT_LATEST),
 
         fusion_num_groups_utilized_(&unit_stat_set_, "fusion_num_groups_utilized",
-                                   "Incremented on first use of a fusion group",
-                                   sparta::Counter::COUNT_LATEST),
+                                    "Incremented on first use of a fusion group",
+                                    sparta::Counter::COUNT_LATEST),
 
         fusion_pred_cycles_saved_(&unit_stat_set_, "fusion_pred_cycles_saved",
                                   "Optimistic prediction of the cycles saved by fusion",
@@ -48,7 +48,10 @@ namespace olympia
         fusion_match_max_tries_(p->fusion_match_max_tries),
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
-        fusion_group_definitions_(p->fusion_group_definitions)
+        fusion_group_definitions_(p->fusion_group_definitions),
+        lmul_(p->lmul),
+        sew_(p->sew),
+        vl_(p->vl)
     {
         initializeFusion_();
 
@@ -60,6 +63,8 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, receiveUopQueueCredits_, uint32_t));
         in_reorder_flush_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFlush_, FlushManager::FlushingCriteria));
+        in_vset_inst_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(Decode, process_vset_, InstPtr));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
     }
@@ -73,7 +78,7 @@ namespace olympia
     {
         if (fusion_enable_)
         {
-            fuser_  = std::make_unique<FusionType>(fusion_group_definitions_);
+            fuser_ = std::make_unique<FusionType>(fusion_group_definitions_);
             hcache_ = fusion::HCache(FusionGroupType::jenkins_1aat);
             fusion_num_groups_defined_ = fuser_->getFusionGroupContainer().size();
         }
@@ -110,6 +115,16 @@ namespace olympia
         {
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
         }
+    }
+
+    // process vset settings being forward from execution pipe
+    void Decode::process_vset_(const InstPtr & inst)
+    {
+        lmul_ = inst->getLMUL();
+        sew_ = inst->getSEW();
+        waiting_on_vset_ = false;
+        // schedule decode, because we've been stalled on vset
+        ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
     }
 
     // Handle incoming flush
@@ -149,19 +164,87 @@ namespace olympia
             for (uint32_t i = 0; i < num_decode; ++i)
             {
                 const auto & inst = fetch_queue_.read(0);
-                insts->emplace_back(inst);
-                inst->setStatus(Inst::Status::DECODED);
-
-                if (fusion_enable_)
+                if ((!waiting_on_vset_) || (waiting_on_vset_ && !inst->isVector()))
                 {
-                    uids.push_back(inst->getMavisUid());
+                    // if we have a vset, we stall any vector instructions
+                    // so if we have:
+                    // vset scalar scalar vadd
+                    // we process vset, scalar, and scalar, but stall on vadd until we get the vset
+                    if (inst->isVset())
+                    {
+                        waiting_on_vset_ = true;
+                    }
+                    else if (inst->isVector())
+                    {
+                        // set LMUL, VSET, VL
+                        inst->setVCSRs(vl_, sew_, lmul_);
+                    }
+                    if (lmul_ > 1)
+                    {
+                        // lmul > 1, fracture instruction into UOps
+                        inst->setUOp(true); // mark instruction to denote it has UOPs
+                        if (uop_queue_credits_ - i > lmul_)
+                        {
+                            ILOG("Inst: " << inst << " is being split into " << lmul_ << " UOPs");
+                            // we can process the lmul, we subtract from uop_queue_credits_
+                            // because num_decode is min of both fetch queue and uop_queue_credits_
+                            // which doesn't factor in the uop amount per instruction
+                            for (uint32_t j = 1; j < lmul_; ++j)
+                            {
+                                // we create lmul - 1 instructions, because the original instruction
+                                // will also be executed, so we start creating UOPs at vector
+                                // registers + 1 until LMUL
+                                MavisType* mavis_facade_ = getMavis(getContainer());
+                                const std::string mnemonic = inst->getMnemonic();
+                                auto srcs = inst->getSourceOpInfoList();
+                                for (auto & src : srcs)
+                                {
+                                    src.field_value += j;
+                                }
+                                auto dests = inst->getDestOpInfoList();
+                                for (auto & dest : dests)
+                                {
+                                    dest.field_value += j;
+                                }
+                                const auto imm = inst->getImmediate();
+                                mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests,
+                                                                         imm);
+                                InstPtr new_inst =
+                                    mavis_facade_->makeInstDirectly(ex_info, getClock());
+                                InstPtr inst_uop_ptr(new Inst(*new_inst));
+                                inst_uop_ptr->setVCSRs(vl_, sew_, lmul_);
+                                inst_uop_ptr->setUOpID(j);
+                                inst->appendUOp(inst_uop_ptr);
+                                insts->emplace_back(inst_uop_ptr);
+                                inst_uop_ptr->setStatus(Inst::Status::DECODED);
+                            }
+                            i += lmul_; // increment decode number based on lmul
+                        }
+                        else
+                        {
+                            // can't decode this instruction, not enough decode credits
+                            // to support cracking into multiple uops
+                            break;
+                        }
+                    }
+                    insts->emplace_back(inst);
+                    inst->setStatus(Inst::Status::DECODED);
+
+                    if (fusion_enable_)
+                    {
+                        uids.push_back(inst->getMavisUid());
+                    }
+
+                    ILOG("Decoded: " << inst);
+
+                    fetch_queue_.pop();
                 }
-
-                ILOG("Decoded: " << inst);
-
-                fetch_queue_.pop();
+                else
+                {
+                    ILOG("Stalling due to waiting on vset: " << inst);
+                    break;
+                }
             }
-
             if (fusion_enable_)
             {
                 MatchInfoListType matches;
@@ -194,7 +277,7 @@ namespace olympia
 
             // Decrement internal Uop Queue credits
             sparta_assert(uop_queue_credits_ >= insts->size(),
-                 "Attempt to decrement d0q credits below what is available");
+                          "Attempt to decrement d0q credits below what is available");
 
             uop_queue_credits_ -= insts->size();
 

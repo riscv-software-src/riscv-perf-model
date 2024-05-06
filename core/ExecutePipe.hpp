@@ -50,6 +50,10 @@ namespace olympia
             PARAMETER(uint32_t, execute_time, 1, "Time for execution")
             PARAMETER(bool, enable_random_misprediction, false,
                       "test mode to inject random branch mispredictions")
+            PARAMETER(uint32_t, valu_len, 128,
+                      "VALU Length") // lengths in bits, assume we have 8 bit adders that can be
+                                     // combined into N bit length
+            PARAMETER(uint32_t, vfpu_len, 128, "VFPU Length")
             HIDDEN_PARAMETER(bool, contains_branch_unit, false,
                              "Does this exe pipe contain a branch unit")
             HIDDEN_PARAMETER(std::string, iq_name, "", "issue queue name for scoreboard view")
@@ -82,6 +86,7 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_scheduler_credits_{&unit_port_set_,
                                                              "out_scheduler_credits"};
         sparta::DataOutPort<uint32_t> out_execute_pipe_{&unit_port_set_, "out_execute_pipe"};
+        sparta::DataOutPort<InstPtr> out_vset_{&unit_port_set_, "out_vset"};
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_{
             &unit_port_set_, "in_reorder_flush", sparta::SchedulingPhase::Flush, 1};
 
@@ -97,9 +102,12 @@ namespace olympia
         const uint32_t execute_time_;
         const bool enable_random_misprediction_;
         const std::string issue_queue_name_;
-
+        uint32_t valu_len_;
+        uint32_t vfpu_len_;
+        uint32_t num_passes_needed_ = 0;
+        uint32_t curr_num_pass_ = 0;
         // Events used to issue, execute and complete the instruction
-        sparta::UniqueEvent<> issue_inst_{
+        sparta::PayloadEvent<InstPtr> issue_inst_{
             &unit_event_set_, getName() + "_insert_inst",
             CREATE_SPARTA_HANDLER_WITH_DATA(ExecutePipe, insertInst, InstPtr)};
         sparta::PayloadEvent<InstPtr> execute_inst_{

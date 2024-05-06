@@ -48,6 +48,8 @@ namespace olympia
             INT,
             LSU,
             MUL,
+            VINT,
+            VSET,
             SYS,
             UNKNOWN
         };
@@ -73,10 +75,18 @@ namespace olympia
         //! Is this instruction a load/store type?
         bool isLoadStore() const { return is_load_store_; }
 
+        //! Is this instruction a vector type
+        bool isVector() const { return is_vector_; }
+
+        //! Is this instruction a vset instruction type
+        bool isVset() const { return is_vset_; }
+
       private:
         TargetPipe tgt_pipe_ = TargetPipe::UNKNOWN;
         uint32_t execute_time_ = 0;
         bool is_load_store_ = false;
+        bool is_vset_ = false;
+        bool is_vector_ = false;
     };
 
     inline std::ostream & operator<<(std::ostream & os, const InstArchInfo::TargetPipe & pipe)
@@ -115,6 +125,12 @@ namespace olympia
             break;
         case InstArchInfo::TargetPipe::MUL:
             os << "MUL";
+            break;
+        case InstArchInfo::TargetPipe::VINT:
+            os << "VINT";
+            break;
+        case InstArchInfo::TargetPipe::VSET:
+            os << "VINT";
             break;
         case InstArchInfo::TargetPipe::SYS:
             os << "SYS";

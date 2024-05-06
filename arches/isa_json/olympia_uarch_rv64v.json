@@ -1,0 +1,27 @@
+[
+    {
+      "mnemonic": "vadd.vv",
+      "pipe" : "vint",
+      "latency" : 1
+	  },
+    {
+      "mnemonic": "vsub.vv",
+      "pipe" : "vint",
+      "latency" : 1
+	  },
+    {
+      "mnemonic": "vsetvli",
+      "pipe": "vset",
+      "latency": 1
+    },
+    {
+      "mnemonic": "vsetvl",
+      "pipe": "vset",
+      "latency": 1
+    },
+    {
+      "mnemonic": "vsetivli",
+      "pipe": "vset",
+      "latency": 1
+    }
+]

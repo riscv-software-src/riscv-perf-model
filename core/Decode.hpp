@@ -91,8 +91,7 @@ namespace olympia
             //!
             //! \see fusion_enable_register_ for the encoding
             //! in the yaml to choose a transform my name
-            PARAMETER(uint32_t, fusion_enable_register,
-                      std::numeric_limits<uint32_t>::max(),
+            PARAMETER(uint32_t, fusion_enable_register, std::numeric_limits<uint32_t>::max(),
                       "bit-wise fusion group enable")
 
             //! \brief max acceptable latency created by gathering uops
@@ -111,7 +110,7 @@ namespace olympia
             //! Used with fusion_max_latency to gather instructions for
             //! possible fusion. If number of decode is >= fusion group size
             //! there is no need to continue to gather instructions.
-            PARAMETER(uint32_t, fusion_max_group_size, 4, "max fusion group isze")
+            PARAMETER(uint32_t, fusion_max_group_size, 4, "max fusion group size")
 
             //! \brief ...
             PARAMETER(std::string, fusion_summary_report, "fusion_summary.txt",
@@ -120,6 +119,15 @@ namespace olympia
             //! \brief ...
             PARAMETER(FileNameListType, fusion_group_definitions, {},
                       "Lists of fusion group UID json files")
+
+            //! LMUL
+            PARAMETER(uint32_t, lmul, 1, "effective length")
+
+            //! Element width in bits
+            PARAMETER(uint32_t, sew, 8, "element width")
+
+            //! Vector length, in bits
+            PARAMETER(uint32_t, vl, 256, "vector length")
         };
 
         /**
@@ -136,10 +144,13 @@ namespace olympia
       private:
         // The internal instruction queue
         InstQueue fetch_queue_;
+        InstQueue temp_queue_; // temp queue for when we have a vector instruction that is waiting
+                               // on vsetvli
 
         // Port listening to the fetch queue appends - Note the 1 cycle delay
         sparta::DataInPort<InstGroupPtr> fetch_queue_write_in_{&unit_port_set_,
                                                                "in_fetch_queue_write", 1};
+        sparta::DataInPort<InstPtr> in_vset_inst_{&unit_port_set_, "in_vset_inst", 1};
         sparta::DataOutPort<uint32_t> fetch_queue_credits_outp_{&unit_port_set_,
                                                                 "out_fetch_queue_credits"};
 
@@ -313,15 +324,21 @@ namespace olympia
         //! \brief the fusion group definition files, JSON or (future) FSL
         const std::vector<std::string> fusion_group_definitions_;
 
+        // Vector CSRs
+        uint32_t lmul_; // effective length
+        uint32_t sew_;  // set element width
+        uint32_t vl_;   // vector length
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();
         void fetchBufferAppended_(const InstGroupPtr &);
         void receiveUopQueueCredits_(const uint32_t &);
+        void process_vset_(const InstPtr &);
         void decodeInsts_();
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
 
         uint32_t uop_queue_credits_ = 0;
+        bool waiting_on_vset_ = false;
     };
 
     //! \brief the fusion functor/function objects

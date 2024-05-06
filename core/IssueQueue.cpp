@@ -35,8 +35,6 @@ namespace olympia
         {
             cpu_node = getContainer()->getRoot();
         }
-        // std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
-        // core_types::RF_FLOAT, core_types::RF_VECTOR};
         for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)
         {
             scoreboard_views_[rf].reset(new sparta::ScoreboardView(

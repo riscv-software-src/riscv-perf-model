@@ -19,7 +19,6 @@ namespace olympia
         sparta::Unit(node),
 
         fetch_queue_("FetchQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
-        temp_queue_("TempQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
         fusion_num_fuse_instructions_(&unit_stat_set_, "fusion_num_fuse_instructions",
                                       "The number of custom instructions created by fusion",
                                       sparta::Counter::COUNT_NORMAL),

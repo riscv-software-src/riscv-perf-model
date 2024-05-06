@@ -32,8 +32,6 @@ namespace olympia
     void ExecutePipe::setupExecutePipe_()
     {
         // Setup scoreboard view upon register file
-        // std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
-        // core_types::RF_FLOAT, core_types::RF_VECTOR};
         // if we ever move to multicore, we only want to have resources look for
         // scoreboard in their cpu if we're running a test where we only have
         // top.rename or top.issue_queue, then we can just use the root

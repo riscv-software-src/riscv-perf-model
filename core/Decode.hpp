@@ -144,8 +144,6 @@ namespace olympia
       private:
         // The internal instruction queue
         InstQueue fetch_queue_;
-        InstQueue temp_queue_; // temp queue for when we have a vector instruction that is waiting
-                               // on vsetvli
 
         // Port listening to the fetch queue appends - Note the 1 cycle delay
         sparta::DataInPort<InstGroupPtr> fetch_queue_write_in_{&unit_port_set_,

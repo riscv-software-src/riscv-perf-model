@@ -36,7 +36,7 @@ namespace olympia
 
       private:
         ////////////////////////////////////////////////////////////////////////////////
-        // L1 Cache Handling
+        // L1 Data Cache Handling
         ////////////////////////////////////////////////////////////////////////////////
         using L1Handle = CacheFuncModel::Handle;
         L1Handle l1_cache_;
@@ -55,7 +55,7 @@ namespace olympia
 
         void reloadCache_(uint64_t phy_addr);
 
-        uint64_t getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr);
+        uint64_t getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const;
 
         // To arbitrate between incoming request from LSU and Cache refills from BIU
         //        bool incoming_cache_refill_ = false;
@@ -86,11 +86,11 @@ namespace olympia
         // Handle requests
         ////////////////////////////////////////////////////////////////////////////////
 
-        void getMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
-        void getAckFromL2Cache_(const uint32_t & ack);
+        void receiveAckFromL2Cache_(const uint32_t & ack);
 
-        void getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+        void receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
         void freePipelineAppend_();
 
@@ -146,12 +146,10 @@ namespace olympia
                                           "Number of DL1 cache misses",
                                           sparta::Counter::COUNT_NORMAL};
 
-
         sparta::Buffer<MSHREntryInfoPtr> mshr_file_;
-        MSHREntryInfoAllocator & mshr_entry_allocator;
+        MSHREntryInfoAllocator & mshr_entry_allocator_;
         void allocateMSHREntry_(const MemoryAccessInfoPtr & mem_access_info_ptr);
-        void mshrLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr);
-        void replyLSU(const MemoryAccessInfoPtr & mem_access_info_ptr);
+        void replyLSU_(const MemoryAccessInfoPtr & mem_access_info_ptr);
     };
 
 } // namespace olympia

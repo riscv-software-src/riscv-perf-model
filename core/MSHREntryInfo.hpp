@@ -27,18 +27,18 @@ namespace olympia
 
         void setDataArrived(bool v) { data_arrived_ = v; }
 
-        bool getDataArrived() { return data_arrived_; }
+        bool isDataArrived() { return data_arrived_; }
 
         void setMemRequest(const MemoryAccessInfoPtr & new_memory_access_info)
         {
-            memory_access_info = new_memory_access_info;
+            memory_access_info_ = new_memory_access_info;
         }
 
-        MemoryAccessInfoPtr & getMemRequest() { return memory_access_info; }
+        MemoryAccessInfoPtr & getMemRequest() { return memory_access_info_; }
 
       private:
         SimpleCacheLine line_fill_buffer_;
-        MemoryAccessInfoPtr  memory_access_info;
+        MemoryAccessInfoPtr memory_access_info_;
         bool data_arrived_ = false;
     };
 } // namespace olympia

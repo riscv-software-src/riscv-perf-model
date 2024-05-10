@@ -12,19 +12,19 @@ namespace olympia
         cache_line_size_(p->l1_line_size),
         num_mshr_entries_(p->mshr_entries),
         mshr_file_("mshr_file", p->mshr_entries, getClock()),
-        mshr_entry_allocator(
+        mshr_entry_allocator_(
             sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->mshr_entry_allocator)
     {
         sparta_assert(num_mshr_entries_ > 0, "There must be atleast 1 MSHR entry");
 
         in_lsu_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getMemReqFromLSU_, MemoryAccessInfoPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveMemReqFromLSU_, MemoryAccessInfoPtr));
 
         in_l2cache_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromL2Cache_, uint32_t));
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveAckFromL2Cache_, uint32_t));
 
         in_l2cache_resp_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getRespFromL2Cache_, MemoryAccessInfoPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveRespFromL2Cache_, MemoryAccessInfoPtr));
 
         setupL1Cache_(p);
 
@@ -151,14 +151,14 @@ namespace olympia
             }
         }
 
-        replyLSU(mem_access_info_ptr);
+        replyLSU_(mem_access_info_ptr);
     }
 
-    void DCache::replyLSU(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    void DCache::replyLSU_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const auto & mshr_it = mem_access_info_ptr->getMSHRInfoIterator();
         const uint64_t block_addr = getBlockAddr(mem_access_info_ptr);
-        const bool data_arrived = (*mshr_it)->getDataArrived();
+        const bool data_arrived = (*mshr_it)->isDataArrived();
         const bool is_store_inst = mem_access_info_ptr->getInstPtr()->isStoreInst();
 
         // All ST are considered Hit
@@ -188,7 +188,7 @@ namespace olympia
         out_lsu_lookup_req_.send(mem_access_info_ptr);
     }
 
-    uint64_t DCache::getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    uint64_t DCache::getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         const auto & inst_target_addr = inst_ptr->getRAdr();
@@ -238,7 +238,7 @@ namespace olympia
                 {
                     const auto & mshr_entry = *iter;
                     auto mem_info = mshr_entry->getMemRequest();
-                    if (mshr_entry->isValid() && !mshr_entry->getDataArrived() && mem_info)
+                    if (mshr_entry->isValid() && !mshr_entry->isDataArrived() && mem_info)
                     {
                         ILOG("Sending mshr request when not busy " << mem_info);
                         out_l2cache_req_.send(mem_info);
@@ -274,14 +274,14 @@ namespace olympia
         ILOG("Deallocating pipeline for " << mem_access_info_ptr);
     }
 
-    void DCache::getMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    void DCache::receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
 
         ILOG("Got memory access request from LSU " << memory_access_info_ptr);
         if (!cache_refill_selected_)
         {
             ILOG("Arbitration from refill " << memory_access_info_ptr);
-            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::RELOAD);
             out_lsu_lookup_ack_.send(memory_access_info_ptr);
             return;
         }
@@ -292,7 +292,7 @@ namespace olympia
         uev_mshr_request_.schedule(1);
     }
 
-    void DCache::getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    void DCache::receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received cache refill " << memory_access_info_ptr);
         l2cache_busy_ = false;
@@ -304,7 +304,7 @@ namespace olympia
         uev_mshr_request_.schedule(1);
     }
 
-    void DCache::getAckFromL2Cache_(const uint32_t & ack)
+    void DCache::receiveAckFromL2Cache_(const uint32_t & ack)
     {
         // When DCache sends the request to L2Cache for a miss,
         // This bool will be set to false, and Dcache should wait for ack from
@@ -320,30 +320,13 @@ namespace olympia
         cache_refill_selected_ = true;
     }
 
-    // MSHR File Lookup
-    void DCache::mshrLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
-    {
-//        const uint64_t block_address = getBlockAddr(mem_access_info_ptr);
-//        for (auto it = mshr_file_.begin(); it < mshr_file_.end(); it++)
-//        {
-//            auto mshr_block_addr = (*it)->getBlockAddress();
-//            if (mshr_block_addr == block_address)
-//            {
-//                // Address match
-//                mem_access_info_ptr->setMSHREntryInfoIterator(it);
-//                break;
-//            }
-//        }
-    }
-
     // MSHR Entry allocation in case of miss
     void DCache::allocateMSHREntry_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         sparta_assert(mshr_file_.size() <= num_mshr_entries_, "Appending mshr causes overflows!");
 
         MSHREntryInfoPtr mshr_entry = sparta::allocate_sparta_shared_pointer<MSHREntryInfo>(
-            mshr_entry_allocator, cache_line_size_, getClock());
-
+            mshr_entry_allocator_, cache_line_size_, getClock());
 
         const auto & it = mshr_file_.push_back(mshr_entry);
         mem_access_info_ptr->setMSHREntryInfoIterator(it);

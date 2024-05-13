@@ -115,7 +115,8 @@ namespace olympia
         const auto stage_id = static_cast<uint32_t>(PipelineStage::LOOKUP);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         ILOG(mem_access_info_ptr << " in Lookup stage");
-        if (incoming_cache_refill_ == mem_access_info_ptr)
+        // If the mem request is a refill we dont do anything in the lookup stage
+        if (mem_access_info_ptr->isRefill())
         {
             ILOG("Incoming cache refill " << mem_access_info_ptr);
             return;
@@ -201,7 +202,7 @@ namespace olympia
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA_READ);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         ILOG(mem_access_info_ptr << " in read stage");
-        if (incoming_cache_refill_ == mem_access_info_ptr)
+        if (mem_access_info_ptr->isRefill())
         {
             reloadCache_(mem_access_info_ptr->getPhyAddr());
             return;
@@ -256,10 +257,8 @@ namespace olympia
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DEALLOCATE);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         ILOG(mem_access_info_ptr << " in deallocate stage");
-        if (incoming_cache_refill_ == mem_access_info_ptr)
+        if (mem_access_info_ptr->isRefill())
         {
-            ILOG("Refill complete " << incoming_cache_refill_);
-            incoming_cache_refill_.reset();
             const auto & mshr_it = mem_access_info_ptr->getMSHRInfoIterator();
             if (mshr_it.isValid())
             {
@@ -295,8 +294,9 @@ namespace olympia
     void DCache::receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received cache refill " << memory_access_info_ptr);
+        // We mark the mem access to refill, this could be moved to the lower level caches later
+        memory_access_info_ptr->setIsRefill(true);
         l2cache_busy_ = false;
-        incoming_cache_refill_ = memory_access_info_ptr;
         cache_pipeline_.append(memory_access_info_ptr);
         cache_refill_selected_ = false;
         uev_free_pipeline_.schedule(1);

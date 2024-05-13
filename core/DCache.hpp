@@ -57,10 +57,6 @@ namespace olympia
 
         uint64_t getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const;
 
-        // To arbitrate between incoming request from LSU and Cache refills from BIU
-        //        bool incoming_cache_refill_ = false;
-        MemoryAccessInfoPtr incoming_cache_refill_ = nullptr;
-
         using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
         using MSHREntryIterator = sparta::Buffer<MSHREntryInfoPtr>::const_iterator;
         // Ongoing Refill request

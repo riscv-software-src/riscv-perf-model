@@ -80,6 +80,7 @@ namespace olympia
             // Construct the State object here
             cache_access_state_(CacheState::NO_ACCESS),
             cache_data_ready_(false),
+            is_refill_(false),
             src_(ArchUnit::NO_ACCESS),
             dest_(ArchUnit::NO_ACCESS)
         {
@@ -141,6 +142,10 @@ namespace olympia
 
         const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
 
+        bool isRefill() const { return is_refill_; }
+
+        void setIsRefill(bool is_refill) { is_refill_ = is_refill; }
+
         void setIssueQueueIterator(const LoadStoreInstIterator & iter)
         {
             issue_queue_iterator_ = iter;
@@ -180,6 +185,8 @@ namespace olympia
         CacheState cache_access_state_;
 
         bool cache_data_ready_;
+
+        bool is_refill_;
         // Src and destination unit name for the packet
         ArchUnit src_ = ArchUnit::NO_ACCESS;
         ArchUnit dest_ = ArchUnit::NO_ACCESS;

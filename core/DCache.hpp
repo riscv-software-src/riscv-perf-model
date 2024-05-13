@@ -146,6 +146,10 @@ namespace olympia
                                           "Number of DL1 cache misses",
                                           sparta::Counter::COUNT_NORMAL};
 
+        sparta::StatisticDef dl1_hit_miss_ratio_{getStatisticSet(), "dl1_hit_miss_ratio",
+                                                 "DL1 HIT/MISS Ratio", getStatisticSet(),
+                                                 "dl1_cache_hits/dl1_cache_misses"};
+
         sparta::Buffer<MSHREntryInfoPtr> mshr_file_;
         MSHREntryInfoAllocator & mshr_entry_allocator_;
         void allocateMSHREntry_(const MemoryAccessInfoPtr & mem_access_info_ptr);

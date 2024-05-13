@@ -15,8 +15,8 @@ namespace olympia
         execute_time_(p->execute_time),
         enable_random_misprediction_(p->enable_random_misprediction && p->contains_branch_unit),
         issue_queue_name_(p->iq_name),
-        valu_len_(p->valu_len),
-        vfpu_len_(p->vfpu_len),
+        valu_adder_num_(p->valu_adder_num),
+        vfpu_adder_num_(p->vfpu_adder_num),
         collected_inst_(node, node->getName())
     {
         p->enable_random_misprediction.ignore();
@@ -68,14 +68,16 @@ namespace olympia
         uint32_t exe_time = ignore_inst_execute_time_ ? execute_time_ : ex_inst->getExecuteTime();
         if (!ex_inst->isVset() && ex_inst->isVector())
         {
-            // have to factor in vlen, sew, valu/vfpu length to calculate how much time an
-            // instruction will take i.e if vlen = 128, sew = 8, we have 16 elements, but if valu
-            // length is 8, we need 2 passes
+            // have to factor in vlen, sew, valu/vfpu length to calculate how many passes are needed
+            // i.e if VL = 256 and SEW = 8, but our VALU only has 8 64 bit adders, it will take 4 passes to
+            // execute the entire instruction
+            // if we have an 8 bit number, the 64 bit adder will truncate, but we have each adder support
+            // the largest SEW possible
             if (ex_inst->getPipe() == InstArchInfo::TargetPipe::VINT)
             {
                 if (num_passes_needed_ == 0)
                 {
-                    uint32_t num_passes = std::ceil(ex_inst->getVL() / valu_len_);
+                    uint32_t num_passes = std::ceil((ex_inst->getVL()/ex_inst->getSEW()) / valu_adder_num_);
                     if (num_passes > 1)
                     {
                         // only care about cases with multiple passes

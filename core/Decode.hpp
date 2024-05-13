@@ -322,10 +322,7 @@ namespace olympia
         //! \brief the fusion group definition files, JSON or (future) FSL
         const std::vector<std::string> fusion_group_definitions_;
 
-        // Vector CSRs
-        uint32_t lmul_; // effective length
-        uint32_t sew_;  // set element width
-        uint32_t vl_;   // vector length
+        Inst::VCSRs VCSRs_;
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();

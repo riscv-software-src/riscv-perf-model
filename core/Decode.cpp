@@ -48,9 +48,7 @@ namespace olympia
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
         fusion_group_definitions_(p->fusion_group_definitions),
-        lmul_(p->lmul),
-        sew_(p->sew),
-        vl_(p->vl)
+        VCSRs_({p->vl, p->sew, p->lmul})
     {
         initializeFusion_();
 
@@ -117,10 +115,12 @@ namespace olympia
     }
 
     // process vset settings being forward from execution pipe
+    // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
-        lmul_ = inst->getLMUL();
-        sew_ = inst->getSEW();
+        VCSRs_.lmul = inst->getLMUL();
+        VCSRs_.sew = inst->getSEW();
+        VCSRs_.vl = inst->getVL();
         waiting_on_vset_ = false;
         // schedule decode, because we've been stalled on vset
         ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
@@ -163,32 +163,44 @@ namespace olympia
             for (uint32_t i = 0; i < num_decode; ++i)
             {
                 const auto & inst = fetch_queue_.read(0);
+                // if we're waiting on a vset, but it's a scalar instruction
+                // we can process all scalars after the vset until we reach a vset the decode queue
                 if ((!waiting_on_vset_) || (waiting_on_vset_ && !inst->isVector()))
                 {
-                    // if we have a vset, we stall any vector instructions
-                    // so if we have:
-                    // vset scalar scalar vadd
-                    // we process vset, scalar, and scalar, but stall on vadd until we get the vset
-                    if (inst->isVset())
+                    // we only need to stall for vset when it's
+                    // vsetvl or a vset{i}vl{i} that has a vl that is not the default
+                    if(inst->isVset()){
+                        
+                        if(inst->getSourceOpInfoList()[0].field_value != 0){
+                            // vl is being set by register, need to block
+                            waiting_on_vset_ = true;
+                        }
+                        else if(inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0){
+                            // set vl to vlmax, no need to block
+                            VCSRs_.vl = Inst::VLMAX;
+                        }
+                    }
+                    if (inst->getMnemonic() == "vsetvl")
                     {
+                        // vsetvl depends on register values for VTYPE, need to wait till execution
                         waiting_on_vset_ = true;
                     }
                     else if (inst->isVector())
                     {
                         // set LMUL, VSET, VL
-                        inst->setVCSRs(vl_, sew_, lmul_);
+                        inst->setVCSRs(VCSRs_);
                     }
-                    if (lmul_ > 1)
+                    if (VCSRs_.lmul > 1)
                     {
                         // lmul > 1, fracture instruction into UOps
                         inst->setUOp(true); // mark instruction to denote it has UOPs
-                        if (uop_queue_credits_ - i > lmul_)
+                        if (uop_queue_credits_ - i > VCSRs_.lmul)
                         {
-                            ILOG("Inst: " << inst << " is being split into " << lmul_ << " UOPs");
+                            ILOG("Inst: " << inst << " is being split into " << VCSRs_.lmul << " UOPs");
                             // we can process the lmul, we subtract from uop_queue_credits_
                             // because num_decode is min of both fetch queue and uop_queue_credits_
                             // which doesn't factor in the uop amount per instruction
-                            for (uint32_t j = 1; j < lmul_; ++j)
+                            for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
                             {
                                 // we create lmul - 1 instructions, because the original instruction
                                 // will also be executed, so we start creating UOPs at vector
@@ -211,13 +223,13 @@ namespace olympia
                                 InstPtr new_inst =
                                     mavis_facade_->makeInstDirectly(ex_info, getClock());
                                 InstPtr inst_uop_ptr(new Inst(*new_inst));
-                                inst_uop_ptr->setVCSRs(vl_, sew_, lmul_);
+                                inst_uop_ptr->setVCSRs(VCSRs_);
                                 inst_uop_ptr->setUOpID(j);
                                 inst->appendUOp(inst_uop_ptr);
                                 insts->emplace_back(inst_uop_ptr);
                                 inst_uop_ptr->setStatus(Inst::Status::DECODED);
                             }
-                            i += lmul_; // increment decode number based on lmul
+                            i += VCSRs_.lmul; // increment decode number based on lmul
                         }
                         else
                         {

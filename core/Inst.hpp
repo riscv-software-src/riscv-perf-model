@@ -73,7 +73,13 @@ namespace olympia
             RegList src_;
             Reg data_reg_;
         };
-
+        static const uint32_t VLMAX = 512; // vector length max of 512 bits
+        // Vector CSRs
+        struct VCSRs{
+            uint32_t vl = VLMAX;   // vector length
+            uint32_t sew = 8;  // set element width
+            uint32_t lmul = 1; // effective length
+        };
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
 
@@ -224,29 +230,29 @@ namespace olympia
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
 
         // Set lmul from immediate (vsetivli, vsetvli)
-        void setLMUL(uint32_t lmul) { lmul_ = lmul; }
+        void setLMUL(uint32_t lmul) { VCSRs_.lmul = lmul; }
 
         // Set sew from immediate (vsetivli, vsetvli)
-        void setSEW(uint32_t sew) { sew_ = sew; }
+        void setSEW(uint32_t sew) { VCSRs_.sew = sew; }
 
         // Set sew from immediate (vsetivli, vsetvli)
-        void setVL(uint32_t vl) { vl_ = vl; }
+        void setVL(uint32_t vl) { VCSRs_.vl = vl; }
 
-        void setVCSRs(uint32_t vl, uint32_t sew, uint32_t lmul)
+        void setVCSRs(const VCSRs & inputVCSRs)
         {
             // setter if you want to set all 3 vector CSRs at once.
-            lmul_ = lmul;
-            sew_ = sew;
-            vl_ = vl;
+            VCSRs_.lmul = inputVCSRs.lmul;
+            VCSRs_.sew = inputVCSRs.sew;
+            VCSRs_.vl = inputVCSRs.vl;
         }
 
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
-        uint32_t getSEW() const { return sew_; }
+        uint32_t getSEW() const { return VCSRs_.sew; }
 
-        uint32_t getLMUL() const { return lmul_; }
+        uint32_t getLMUL() const { return VCSRs_.lmul; }
 
-        uint32_t getVL() const { return vl_; }
+        uint32_t getVL() const { return VCSRs_.vl; }
 
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
@@ -398,9 +404,7 @@ namespace olympia
         const bool is_return_;
         bool has_uops_;
         std::vector<PtrType> uop_insts_;
-        uint32_t lmul_;
-        uint32_t sew_;
-        uint32_t vl_;
+        VCSRs VCSRs_;
 
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;

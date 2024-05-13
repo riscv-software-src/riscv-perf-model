@@ -136,12 +136,19 @@ namespace olympia
         }
         if (jinst.find("vtype") != jinst.end())
         {
+            // immediate, so decode from hex
             uint64_t vtype = std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
             std::string binaryString = std::bitset<32>(vtype).to_string();
             uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
             uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
             inst->setLMUL(lmul);
             inst->setSEW(sew);
+        }
+
+        if (jinst.find("vl") != jinst.end())
+        {
+            const uint64_t vl = jinst["vl"].get<uint64_t>();
+            inst->setVL(vl);
         }
 
         if (jinst.find("taken") != jinst.end())

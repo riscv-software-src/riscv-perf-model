@@ -20,12 +20,16 @@ namespace olympia
         in_lsu_lookup_req_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveMemReqFromLSU_, MemoryAccessInfoPtr));
 
-        in_l2cache_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveAckFromL2Cache_, uint32_t));
-
         in_l2cache_resp_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveRespFromL2Cache_, MemoryAccessInfoPtr));
 
+        in_l2cache_ack_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveAckFromL2Cache_, uint32_t));
+
+        in_l2cache_resp_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
+        in_lsu_lookup_req_.registerConsumerEvent(in_lsu_lookup_req_receive_event_);
+
+        in_l2_cache_resp_receive_event_ >> in_lsu_lookup_req_receive_event_;
         setupL1Cache_(p);
 
         // Pipeline config
@@ -275,15 +279,15 @@ namespace olympia
 
     void DCache::receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
-
         ILOG("Got memory access request from LSU " << memory_access_info_ptr);
         if (!cache_refill_selected_)
         {
-            ILOG("Arbitration from refill " << memory_access_info_ptr);
+            ILOG("Cache refill was selected ignoring " << memory_access_info_ptr);
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::RELOAD);
             out_lsu_lookup_ack_.send(memory_access_info_ptr);
             return;
         }
+        ILOG("Adding to pipeline " << memory_access_info_ptr);
         cache_pipeline_.append(memory_access_info_ptr);
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
         uev_free_pipeline_.schedule(1);

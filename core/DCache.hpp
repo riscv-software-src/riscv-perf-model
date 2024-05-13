@@ -132,6 +132,17 @@ namespace olympia
 
         sparta::UniqueEvent<> uev_mshr_request_{
             &unit_event_set_, "mshr_request", CREATE_SPARTA_HANDLER(DCache, mshrRequest_)};
+
+        void noOpEventHandler() {}
+
+        sparta::UniqueEvent<> in_l2_cache_resp_receive_event_{
+            &unit_event_set_, "in_l2_cache_resp_receive_event",
+            CREATE_SPARTA_HANDLER(DCache, noOpEventHandler)};
+
+        sparta::UniqueEvent<> in_lsu_lookup_req_receive_event_{
+            &unit_event_set_, "in_lsu_lookup_req_receive_event",
+            CREATE_SPARTA_HANDLER(DCache, noOpEventHandler)};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Counters
         ////////////////////////////////////////////////////////////////////////////////

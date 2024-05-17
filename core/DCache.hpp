@@ -88,13 +88,9 @@ namespace olympia
 
         void receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
-        void freePipelineAppend_();
-
         void mshrRequest_();
 
         bool l2cache_busy_ = false;
-
-        bool cache_refill_selected_ = true;
 
         // Credit bool for sending miss request to L2Cache
         uint32_t dcache_l2cache_credits_ = 0;
@@ -103,7 +99,7 @@ namespace olympia
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_{&unit_port_set_,
-                                                                   "in_lsu_lookup_req", 0};
+                                                                   "in_lsu_lookup_req", 1};
 
         sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
 
@@ -127,21 +123,31 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::UniqueEvent<> uev_free_pipeline_{
-            &unit_event_set_, "free_pipeline", CREATE_SPARTA_HANDLER(DCache, freePipelineAppend_)};
-
         sparta::UniqueEvent<> uev_mshr_request_{
             &unit_event_set_, "mshr_request", CREATE_SPARTA_HANDLER(DCache, mshrRequest_)};
 
-        void noOpEventHandler() {}
 
-        sparta::UniqueEvent<> in_l2_cache_resp_receive_event_{
-            &unit_event_set_, "in_l2_cache_resp_receive_event",
-            CREATE_SPARTA_HANDLER(DCache, noOpEventHandler)};
+        sparta::utils::ValidValue<MemoryAccessInfoPtr> pending_mem_access_info_;
 
-        sparta::UniqueEvent<> in_lsu_lookup_req_receive_event_{
-            &unit_event_set_, "in_lsu_lookup_req_receive_event",
-            CREATE_SPARTA_HANDLER(DCache, noOpEventHandler)};
+        void arbitrate_l2_lsu_req_()
+        {
+            auto flush_data = pending_mem_access_info_.getValue();
+            if (flush_data->isRefill())
+            {
+                ILOG("Received Refill request " << flush_data);
+            }
+            else
+            {
+                ILOG("Received LSU request " << flush_data);
+            }
+            cache_pipeline_.append(flush_data);
+            pending_mem_access_info_.clearValid();
+            uev_mshr_request_.schedule(1);
+        }
+
+        sparta::UniqueEvent<> in_l2_cache_resp_receive_event_{&unit_event_set_,
+                                                              "in_l2_cache_resp_receive_event",
+                                                              CREATE_SPARTA_HANDLER(DCache, arbitrate_l2_lsu_req_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Counters
@@ -160,7 +166,6 @@ namespace olympia
         sparta::Buffer<MSHREntryInfoPtr> mshr_file_;
         MSHREntryInfoAllocator & mshr_entry_allocator_;
         void allocateMSHREntry_(const MemoryAccessInfoPtr & mem_access_info_ptr);
-        void replyLSU_(const MemoryAccessInfoPtr & mem_access_info_ptr);
     };
 
 } // namespace olympia

@@ -26,10 +26,8 @@ namespace olympia
         in_l2cache_ack_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveAckFromL2Cache_, uint32_t));
 
+        in_lsu_lookup_req_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
         in_l2cache_resp_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
-        in_lsu_lookup_req_.registerConsumerEvent(in_lsu_lookup_req_receive_event_);
-
-        in_l2_cache_resp_receive_event_ >> in_lsu_lookup_req_receive_event_;
         setupL1Cache_(p);
 
         // Pipeline config
@@ -116,6 +114,7 @@ namespace olympia
     // The lookup stage
     void DCache::handleLookup_()
     {
+        ILOG("Lookup stage");
         const auto stage_id = static_cast<uint32_t>(PipelineStage::LOOKUP);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         ILOG(mem_access_info_ptr << " in Lookup stage");
@@ -148,7 +147,6 @@ namespace olympia
 
         if (!mshr_itb.isValid())
         {
-            //            mshrLookup_(mem_access_info_ptr);
             if (!mem_access_info_ptr->getMSHRInfoIterator().isValid())
             {
                 ILOG("Creating new MSHR Entry " << mem_access_info_ptr);
@@ -156,11 +154,6 @@ namespace olympia
             }
         }
 
-        replyLSU_(mem_access_info_ptr);
-    }
-
-    void DCache::replyLSU_(const MemoryAccessInfoPtr & mem_access_info_ptr)
-    {
         const auto & mshr_it = mem_access_info_ptr->getMSHRInfoIterator();
         const uint64_t block_addr = getBlockAddr(mem_access_info_ptr);
         const bool data_arrived = (*mshr_it)->isDataArrived();
@@ -174,23 +167,20 @@ namespace olympia
             (*mshr_it)->setModified(true);
             (*mshr_it)->setMemRequest(mem_access_info_ptr);
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
-            return;
         }
-
-        if (data_arrived)
+        else if (data_arrived)
         {
             ILOG("Hit on Line fill buffer (LD), block address:0x" << std::hex << block_addr);
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
-            return;
         }
-
-        // Enqueue Load in LMQ
-        ILOG("Load miss inst to LMQ; block address:0x" << std::hex << block_addr);
-        (*mshr_it)->setMemRequest(mem_access_info_ptr);
-        mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-        out_lsu_lookup_req_.send(mem_access_info_ptr);
+        else
+        {
+            // Enqueue Load in LMQ
+            ILOG("Load miss inst to LMQ; block address:0x" << std::hex << block_addr);
+            (*mshr_it)->setMemRequest(mem_access_info_ptr);
+            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
+        }
+        out_lsu_lookup_ack_.send(mem_access_info_ptr);
     }
 
     uint64_t DCache::getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const
@@ -203,6 +193,7 @@ namespace olympia
     // Data read stage
     void DCache::handleDataRead_()
     {
+        ILOG("Data Read stage");
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DATA_READ);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         ILOG(mem_access_info_ptr << " in read stage");
@@ -233,6 +224,7 @@ namespace olympia
 
     void DCache::mshrRequest_()
     {
+        ILOG("Send mshr req");
         if (!l2cache_busy_)
         {
             auto iter = mshr_file_.begin();
@@ -258,6 +250,7 @@ namespace olympia
 
     void DCache::handleDeallocate_()
     {
+        ILOG("Data Dellocate stage");
         const auto stage_id = static_cast<uint32_t>(PipelineStage::DEALLOCATE);
         const MemoryAccessInfoPtr & mem_access_info_ptr = cache_pipeline_[stage_id];
         ILOG(mem_access_info_ptr << " in deallocate stage");
@@ -279,20 +272,10 @@ namespace olympia
 
     void DCache::receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
-        ILOG("Got memory access request from LSU " << memory_access_info_ptr);
-        if (!cache_refill_selected_)
-        {
-            ILOG("Cache refill was selected ignoring " << memory_access_info_ptr);
-            memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::RELOAD);
-            out_lsu_lookup_ack_.send(memory_access_info_ptr);
-            return;
-        }
-        ILOG("Adding to pipeline " << memory_access_info_ptr);
-        cache_pipeline_.append(memory_access_info_ptr);
+        ILOG("Received memory access request from LSU " << memory_access_info_ptr);
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
-        uev_free_pipeline_.schedule(1);
-
-        uev_mshr_request_.schedule(1);
+        in_l2_cache_resp_receive_event_.schedule();
+        pending_mem_access_info_ = memory_access_info_ptr;
     }
 
     void DCache::receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
@@ -300,12 +283,9 @@ namespace olympia
         ILOG("Received cache refill " << memory_access_info_ptr);
         // We mark the mem access to refill, this could be moved to the lower level caches later
         memory_access_info_ptr->setIsRefill(true);
+        pending_mem_access_info_ = memory_access_info_ptr;
         l2cache_busy_ = false;
-        cache_pipeline_.append(memory_access_info_ptr);
-        cache_refill_selected_ = false;
-        uev_free_pipeline_.schedule(1);
-
-        uev_mshr_request_.schedule(1);
+        in_l2_cache_resp_receive_event_.schedule();
     }
 
     void DCache::receiveAckFromL2Cache_(const uint32_t & ack)
@@ -316,12 +296,6 @@ namespace olympia
         //
         // Set it to true so that the following misses from DCache can be sent out to L2Cache.
         dcache_l2cache_credits_ = ack;
-    }
-
-    void DCache::freePipelineAppend_()
-    {
-        ILOG("Pipeline is freed");
-        cache_refill_selected_ = true;
     }
 
     // MSHR Entry allocation in case of miss

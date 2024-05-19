@@ -250,26 +250,48 @@ namespace olympia
         }
     }
 
+/*
+
+            using RegList = std::vector<Reg>;
+
+            void setOriginalDestination(const Reg & destination) { original_dest_ = destination; }
+
+            void setDestination(const Reg & destination) { dest_ = destination; }
+
+            void setDataReg(const Reg & data_reg) { data_reg_ = data_reg; }
+
+            void setSource(const Reg & source) { src_.emplace_back(source); }
+
+            const RegList & getSourceList() const { return src_; }
+
+            const Reg & getOriginalDestination() const { return original_dest_; }
+
+            const Reg & getDestination() const { return dest_; }
+
+            const Reg & getDataReg() const { return data_reg_; }
+
+          private:
+            Reg original_dest_;
+            Reg dest_;
+            RegList src_;
+            Reg data_reg_;
+        };
+*/
     // sys instr doesn't have a pipe so we handle special stuff here
     void ROB::retireSysInst_(InstPtr &ex_inst)
     {
-        auto reg_file = ex_inst->getRenameData().getDestination().rf;
-        if (reg_file == core_types::RegFile::RF_INVALID)
-        {   // this is the case if dst = x0
-            DLOG("retiring SYS instr ");
-        } else   // this is needed or else destination register is 
-        {        // forever reserved and not ready
-            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
-            scoreboard_views_[reg_file]->setReady(dest_bits);
-            DLOG("retiring SYS inst dest reg bits: " <<  sparta::printBitSet(dest_bits));
-        }
+        auto srclist = ex_inst->getRenameData().getSourceList();
+        if (ex_inst->getMnemonic().substr(0,3)=="csr" && srclist.size()!=0)
+        {   // this is the case if csr instr with src != x0
+            DLOG("retiring SYS wr instr with src reg " << ex_inst->getMnemonic() );
 
-        FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst);
+            FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst);
                     out_retire_flush_.send(criteria);
                     expect_flush_ = true;
                     ++num_flushes_;
                     ILOG("Instigating flush due to SYS instruction... " << *ex_inst);
 
+        }
 
     }
 

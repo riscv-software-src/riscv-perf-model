@@ -223,7 +223,7 @@ namespace olympia
             sparta_assert(target_pipe != InstArchInfo::TargetPipe::UNKNOWN,
                           "Have an instruction that doesn't know where to go: " << ex_inst);
 
-            if (SPARTA_EXPECT_FALSE(target_pipe == InstArchInfo::TargetPipe::SYS))
+            if (0) // SPARTA_EXPECT_FALSE(target_pipe == InstArchInfo::TargetPipe::SYS))
             {
                 ex_inst.setStatus(Inst::Status::COMPLETED);
                 // Indicate that this instruction was dispatched

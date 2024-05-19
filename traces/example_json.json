@@ -18,6 +18,13 @@
         "rd": 5
     },
     {
+        "mnemonic": "csrrw",
+        "rs1": 1,
+        "rs2": 0,
+        "rd": 4,
+        "csr": 9
+    },
+    {
         "mnemonic": "lw",
         "rs1": 4,
         "rs2": 3,

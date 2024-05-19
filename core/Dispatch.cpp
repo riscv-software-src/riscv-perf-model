@@ -223,14 +223,6 @@ namespace olympia
             sparta_assert(target_pipe != InstArchInfo::TargetPipe::UNKNOWN,
                           "Have an instruction that doesn't know where to go: " << ex_inst);
 
-            if (0) // SPARTA_EXPECT_FALSE(target_pipe == InstArchInfo::TargetPipe::SYS))
-            {
-                ex_inst.setStatus(Inst::Status::COMPLETED);
-                // Indicate that this instruction was dispatched
-                // -- it goes right to the ROB
-                dispatched = true;
-            }
-            else
             {
                 // Get the dispatchers used to dispatch the target.
                 // Find a ready-to-go dispatcher

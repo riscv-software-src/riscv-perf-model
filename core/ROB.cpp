@@ -73,7 +73,6 @@ namespace olympia
 
     void ROB::sendInitialCredits_()
     {
-        setupScoreboardView_() ;
         out_reorder_buffer_credits_.send(reorder_buffer_.capacity());
         ev_ensure_forward_progress_.schedule(retire_timeout_interval_);
     }
@@ -250,34 +249,7 @@ namespace olympia
         }
     }
 
-/*
-
-            using RegList = std::vector<Reg>;
-
-            void setOriginalDestination(const Reg & destination) { original_dest_ = destination; }
-
-            void setDestination(const Reg & destination) { dest_ = destination; }
-
-            void setDataReg(const Reg & data_reg) { data_reg_ = data_reg; }
-
-            void setSource(const Reg & source) { src_.emplace_back(source); }
-
-            const RegList & getSourceList() const { return src_; }
-
-            const Reg & getOriginalDestination() const { return original_dest_; }
-
-            const Reg & getDestination() const { return dest_; }
-
-            const Reg & getDataReg() const { return data_reg_; }
-
-          private:
-            Reg original_dest_;
-            Reg dest_;
-            RegList src_;
-            Reg data_reg_;
-        };
-*/
-    // sys instr doesn't have a pipe so we handle special stuff here
+    // sys gets flushed unless it is csr rd
     void ROB::retireSysInst_(InstPtr &ex_inst)
     {
         auto srclist = ex_inst->getRenameData().getSourceList();
@@ -295,31 +267,5 @@ namespace olympia
 
     }
 
-    // for SYS instr which doesn't have an exe pipe
-    void ROB::setupScoreboardView_()
-    {
-        std::string iq_name = "iq0"; // default name
-
-        if (getContainer() != nullptr)
-        {
-          const auto exe_pipe_rename =
-            olympia::coreutils::getPipeTopology(getContainer()->getParent(), "exe_pipe_rename");
-          if (exe_pipe_rename.size() > 0)
-                iq_name = exe_pipe_rename[0][1]; // just grab the first issue queue
-        }
-  
-        auto cpu_node = getContainer()->findAncestorByName("core.*");
-        if (cpu_node == nullptr)
-        {
-            cpu_node = getContainer()->getRoot();
-        }
-        const auto& rf = core_types::RF_INTEGER;
- 
-        // alu0, alu1 name is based on exe names, point to issue_queue name instead
-        DLOG("setup sb view: " << iq_name );
-        scoreboard_views_[rf].reset(
-            new sparta::ScoreboardView(iq_name, core_types::regfile_names[rf],
-                                       cpu_node)); // name needs to come from issue_queue
-    }
 }
 

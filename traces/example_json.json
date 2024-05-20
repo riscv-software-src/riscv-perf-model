@@ -20,7 +20,6 @@
     {
         "mnemonic": "csrrw",
         "rs1": 1,
-        "rs2": 0,
         "rd": 4,
         "csr": 9
     },

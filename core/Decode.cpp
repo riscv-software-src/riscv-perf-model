@@ -19,6 +19,7 @@ namespace olympia
         sparta::Unit(node),
 
         fetch_queue_("FetchQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
+        uop_queue_("UOpQueue", p->uop_queue_size, node->getClock(), &unit_stat_set_),
         fusion_num_fuse_instructions_(&unit_stat_set_, "fusion_num_fuse_instructions",
                                       "The number of custom instructions created by fusion",
                                       sparta::Counter::COUNT_NORMAL),
@@ -121,7 +122,6 @@ namespace olympia
         VCSRs_.lmul = inst->getLMUL();
         VCSRs_.sew = inst->getSEW();
         VCSRs_.vl = inst->getVL();
-        waiting_on_vset_ = false;
         // schedule decode, because we've been stalled on vset
         ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
     }
@@ -137,7 +137,7 @@ namespace olympia
     // Decode instructions
     void Decode::decodeInsts_()
     {
-        uint32_t num_decode = std::min(uop_queue_credits_, fetch_queue_.size());
+        uint32_t num_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size());
         num_decode = std::min(num_decode, num_to_decode_);
 
         // buffer to maximize the chances of a group match limited
@@ -162,98 +162,95 @@ namespace olympia
             // Send instructions on their way to rename
             for (uint32_t i = 0; i < num_decode; ++i)
             {
-                const auto & inst = fetch_queue_.read(0);
-                // if we're waiting on a vset, but it's a scalar instruction
-                // we can process all scalars after the vset until we reach a vset the decode queue
-                if ((!waiting_on_vset_) || (waiting_on_vset_ && !inst->isVector()))
-                {
-                    // we only need to stall for vset when it's
-                    // vsetvl or a vset{i}vl{i} that has a vl that is not the default
-                    if(inst->isVset()){
-                        
-                        if(inst->getSourceOpInfoList()[0].field_value != 0){
-                            // vl is being set by register, need to block
-                            waiting_on_vset_ = true;
-                        }
-                        else if(inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0){
-                            // set vl to vlmax, no need to block
-                            VCSRs_.vl = Inst::VLMAX;
-                        }
+                if(uop_queue_.size() > 0){
+                    const auto & inst = uop_queue_.read(0);
+                    insts->emplace_back(inst);
+                    inst->setStatus(Inst::Status::DECODED);
+                    ILOG("From UOp Queue Decoded: " << inst);
+                    uop_queue_.pop();
+                }
+                else{
+                    const auto & inst = fetch_queue_.read(0);
+                    // if we're waiting on a vset, but it's a scalar instruction
+                    // we can process all scalars after the vset until we reach a vset the decode queue
+                    if(inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0){
+                        // set vl to vlmax, no need to block
+                        VCSRs_.vl = Inst::VLMAX;
                     }
-                    if (inst->getMnemonic() == "vsetvl")
-                    {
-                        // vsetvl depends on register values for VTYPE, need to wait till execution
-                        waiting_on_vset_ = true;
-                    }
-                    else if (inst->isVector())
+                    if (!inst->isVset() && inst->isVector())
                     {
                         // set LMUL, VSET, VL
                         inst->setVCSRs(VCSRs_);
                     }
-                    if (VCSRs_.lmul > 1)
+                    if (inst->getLMUL() > 1 && !inst->isVset())
                     {
                         // lmul > 1, fracture instruction into UOps
                         inst->setUOp(true); // mark instruction to denote it has UOPs
-                        if (uop_queue_credits_ - i > VCSRs_.lmul)
+                        // turn this into a state machine
+                        // send them out based on credit
+                        // state indicating if we're decoding as normal or draining a UOp Queue
+                        ILOG("Inst: " << inst << " is being split into " << VCSRs_.lmul << " UOPs");
+                        // we can process the lmul, we subtract from uop_queue_credits_
+                        // because num_decode is min of both fetch queue and uop_queue_credits_
+                        // which doesn't factor in the uop amount per instruction
+                        insts->emplace_back(inst);
+                        inst->setStatus(Inst::Status::DECODED);
+                        fetch_queue_.pop();
+                        for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
                         {
-                            ILOG("Inst: " << inst << " is being split into " << VCSRs_.lmul << " UOPs");
-                            // we can process the lmul, we subtract from uop_queue_credits_
-                            // because num_decode is min of both fetch queue and uop_queue_credits_
-                            // which doesn't factor in the uop amount per instruction
-                            for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
+                            i++;
+                            // we create lmul - 1 instructions, because the original instruction
+                            // will also be executed, so we start creating UOPs at vector
+                            // registers + 1 until LMUL
+                            MavisType* mavis_facade_ = getMavis(getContainer());
+                            const std::string mnemonic = inst->getMnemonic();
+                            auto srcs = inst->getSourceOpInfoList();
+                            // determine different modes of agnostic vs undistrubed
+                            // parameter in simulator for setting ^
+                            for (auto & src : srcs)
                             {
-                                // we create lmul - 1 instructions, because the original instruction
-                                // will also be executed, so we start creating UOPs at vector
-                                // registers + 1 until LMUL
-                                MavisType* mavis_facade_ = getMavis(getContainer());
-                                const std::string mnemonic = inst->getMnemonic();
-                                auto srcs = inst->getSourceOpInfoList();
-                                for (auto & src : srcs)
-                                {
-                                    src.field_value += j;
-                                }
-                                auto dests = inst->getDestOpInfoList();
-                                for (auto & dest : dests)
-                                {
-                                    dest.field_value += j;
-                                }
-                                const auto imm = inst->getImmediate();
-                                mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests,
-                                                                         imm);
-                                InstPtr new_inst =
-                                    mavis_facade_->makeInstDirectly(ex_info, getClock());
-                                InstPtr inst_uop_ptr(new Inst(*new_inst));
-                                inst_uop_ptr->setVCSRs(VCSRs_);
-                                inst_uop_ptr->setUOpID(j);
-                                inst->appendUOp(inst_uop_ptr);
+                                src.field_value += j;
+                            }
+                            auto dests = inst->getDestOpInfoList();
+                            for (auto & dest : dests)
+                            {
+                                dest.field_value += j;
+                            }
+                            const auto imm = inst->getImmediate();
+                            mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests,
+                                                                        imm);
+                            InstPtr new_inst =
+                                mavis_facade_->makeInstDirectly(ex_info, getClock());
+                            // setting UOp instructions to have the same UID and PID as parent instruction
+                            new_inst->setUniqueID(inst->getUniqueID());
+                            new_inst->setProgramID(inst->getProgramID());
+                            InstPtr inst_uop_ptr(new Inst(*new_inst));
+                            inst_uop_ptr->setVCSRs(VCSRs_);
+                            inst_uop_ptr->setUOpID(j);
+                            inst->appendUOp(inst_uop_ptr);
+                            if(i < num_decode){
                                 insts->emplace_back(inst_uop_ptr);
                                 inst_uop_ptr->setStatus(Inst::Status::DECODED);
                             }
-                            i += VCSRs_.lmul; // increment decode number based on lmul
+                            else{
+                                ILOG("Not enough decode credits to process UOp, appending to uop_queue_ " << inst_uop_ptr);
+                                uop_queue_.push(inst_uop_ptr);
+                            }
                         }
-                        else
+                    }
+                    else{
+                        insts->emplace_back(inst);
+                        inst->setStatus(Inst::Status::DECODED);
+
+                        if (fusion_enable_)
                         {
-                            // can't decode this instruction, not enough decode credits
-                            // to support cracking into multiple uops
-                            break;
+                            uids.push_back(inst->getMavisUid());
                         }
+
+                        ILOG("Decoded: " << inst);
+
+                        fetch_queue_.pop();
                     }
-                    insts->emplace_back(inst);
-                    inst->setStatus(Inst::Status::DECODED);
-
-                    if (fusion_enable_)
-                    {
-                        uids.push_back(inst->getMavisUid());
-                    }
-
-                    ILOG("Decoded: " << inst);
-
-                    fetch_queue_.pop();
-                }
-                else
-                {
-                    ILOG("Stalling due to waiting on vset: " << inst);
-                    break;
                 }
             }
             if (fusion_enable_)

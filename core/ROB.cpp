@@ -141,6 +141,7 @@ namespace olympia
             {
                 // check if UOps are done
                 // for(auto & i : *in_reorder_buffer_write_.pullData()) {
+                // weakptr from child to parent instruction, increment when done
                 for (const auto & inst : ex_inst.getUOpInsts())
                 {
                     if (inst->getStatus() != Inst::Status::COMPLETED)

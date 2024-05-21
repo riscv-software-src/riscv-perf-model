@@ -18,9 +18,6 @@ namespace olympia::core_types
         N_REGFILES = RF_INVALID
     };
 
-    // std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT,
-    // core_types::RF_VECTOR};
-
     static inline const char* const regfile_names[] = {"integer", "float", "vector"};
 
     static inline const char* const issue_queue_types[] = {"alu", "fpu", "br", "vint", "vset"};

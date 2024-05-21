@@ -43,7 +43,7 @@ namespace olympia
             cpu_node = getContainer()->getRoot();
         }
         for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES;
-             ++rf) // for (const auto rf : core_types::reg_files)
+             ++rf)
         {
             // alu0, alu1 name is based on exe names, point to issue_queue name instead
             scoreboard_views_[rf].reset(
@@ -77,7 +77,7 @@ namespace olympia
             {
                 if (num_passes_needed_ == 0)
                 {
-                    uint32_t num_passes = std::ceil((ex_inst->getVL()/ex_inst->getSEW()) / valu_adder_num_);
+                    const uint32_t num_passes = std::ceil((ex_inst->getVL()/ex_inst->getSEW()) / valu_adder_num_);
                     if (num_passes > 1)
                     {
                         // only care about cases with multiple passes
@@ -120,6 +120,7 @@ namespace olympia
         {
             if (num_passes_needed_ != 0)
             {
+                // reseting counters once vector instruction needing more than 1 pass
                 curr_num_pass_ = 0;
                 num_passes_needed_ = 0;
             }

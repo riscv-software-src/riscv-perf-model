@@ -75,6 +75,9 @@ namespace olympia
             //! \brief depth of the input instruction buffer
             PARAMETER(uint32_t, fetch_queue_size, 10, "Size of the fetch queue")
 
+            //! \brief depth of UOp Queue
+            PARAMETER(uint32_t, uop_queue_size, 8, "Size of the UOp queue")
+
             //! \brief enable fusion operations
             //!
             //! master enable, when false fusion_* parmeters have no effect
@@ -144,6 +147,7 @@ namespace olympia
       private:
         // The internal instruction queue
         InstQueue fetch_queue_;
+        InstQueue uop_queue_;
 
         // Port listening to the fetch queue appends - Note the 1 cycle delay
         sparta::DataInPort<InstGroupPtr> fetch_queue_write_in_{&unit_port_set_,
@@ -333,7 +337,6 @@ namespace olympia
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
 
         uint32_t uop_queue_credits_ = 0;
-        bool waiting_on_vset_ = false;
     };
 
     //! \brief the fusion functor/function objects

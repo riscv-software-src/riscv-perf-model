@@ -7,7 +7,7 @@ include: medium_core.yaml
 
 top.cpu.core0:
   fetch.params.num_to_fetch:   8
-  decode.params.num_to_decode: 8
+  decode.params.num_to_decode: 3
   rename.params.num_to_rename: 8
   rename.params.num_integer_renames: 64
   rename.params.num_float_renames: 64

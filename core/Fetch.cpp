@@ -22,7 +22,8 @@ namespace olympia
         sparta::Unit(node),
         num_insts_to_fetch_(p->num_to_fetch),
         skip_nonuser_mode_(p->skip_nonuser_mode),
-        my_clk_(getClock())
+        my_clk_(getClock()),
+        fetched_queue_("FetchedQueue", p->fetched_queue_size, node->getClock(), &unit_stat_set_)
     {
         in_fetch_queue_credits_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
@@ -32,6 +33,8 @@ namespace olympia
 
         fetch_inst_event_.reset(new sparta::SingleCycleUniqueEvent<>(&unit_event_set_, "fetch_random",
                                                                      CREATE_SPARTA_HANDLER(Fetch, fetchInstruction_)));
+        in_vset_inst_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, process_vset_, InstPtr));
         // Schedule a single event to start reading from a trace file
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Fetch, initialize_));
 
@@ -51,7 +54,7 @@ namespace olympia
 
         fetch_inst_event_->schedule(1);
     }
-
+    
     void Fetch::fetchInstruction_()
     {
         const uint32_t upper = std::min(credits_inst_queue_, num_insts_to_fetch_);
@@ -62,16 +65,48 @@ namespace olympia
         InstGroupPtr insts_to_send = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         for(uint32_t i = 0; i < upper; ++i)
         {
-            InstPtr ex_inst = inst_generator_->getNextInst(my_clk_);
-            if(SPARTA_EXPECT_TRUE(nullptr != ex_inst))
-            {
-                ex_inst->setSpeculative(speculative_path_);
-                insts_to_send->emplace_back(ex_inst);
+            if(!waiting_on_vset_ || fetched_queue_.size() < fetched_queue_.capacity()){
+                // Note -> should we change this to block after the first vector instruction after
+                // a vset is detected
+                InstPtr ex_inst = nullptr;
+                if(fetched_queue_.size() > 0){
+                    // if we have already fetched instructions, we should process those first
+                    ex_inst = fetched_queue_.read(0);
+                    fetched_queue_.pop();
+                }
+                else{
+                    ex_inst = inst_generator_->getNextInst(my_clk_);
+                }
+                if(SPARTA_EXPECT_TRUE(nullptr != ex_inst)){
+                    if ((!waiting_on_vset_) || (waiting_on_vset_ && !ex_inst->isVector()))
+                    {
+                        // we only need to stall for vset when it's
+                        // vsetvl or a vset{i}vl{i} that has a vl that is not the default
+                        // any imms can be decoded here and we don't have to stall vset
+                        // check if indirect vset
+                        // move stalling check to fetch, fetch has to break it up, once one direct vset is detected
+                        if(ex_inst->isVset()){
+                            if(ex_inst->getSourceOpInfoList()[0].field_value != 0 || ex_inst->getOpCodeInfo()->getInstructionUniqueID() == 315){
+                                // vl is being set by register, need to block
+                                // vsetvl in mavis -> give it a mavis id, if mavisid == vsetvl number
+                                waiting_on_vset_ = true;
+                            }
+                        }
+                        ex_inst->setSpeculative(speculative_path_);
+                        insts_to_send->emplace_back(ex_inst);
 
-                ILOG("Sending: " << ex_inst << " down the pipe");
-            }
-            else {
-                break;
+                        ILOG("Sending: " << ex_inst << " down the pipe");
+                    }
+                    else{
+                        // store fetched instruction in queue
+                        fetched_queue_.push((ex_inst));
+                        break;
+                    }
+                }
+                else{
+                    ILOG("Stalling due to waiting on vset");
+                    break;
+                }
             }
         }
 
@@ -95,6 +130,13 @@ namespace olympia
         }
     }
 
+    void Fetch::process_vset_(const InstPtr & inst)
+    {
+        waiting_on_vset_ = false;
+        ILOG("Recieved VSET from ExecutePipe, resuming fetching");
+        // schedule fetch, because we've been stalled on vset
+        fetch_inst_event_->schedule(sparta::Clock::Cycle(0));
+    }
     // Called when decode has room
     void Fetch::receiveFetchQueueCredits_(const uint32_t & dat) {
         credits_inst_queue_ += dat;

@@ -201,10 +201,6 @@ namespace olympia
         // UOpIDs start at 1, because we use 0 as default UOpID on initialization
         bool isUOp() const { return uopid_ > 0; }
 
-        void appendUOp(PtrType & inst) { uop_insts_.emplace_back(inst); }
-
-        std::vector<PtrType> getUOpInsts() { return uop_insts_; }
-
         // Set the instruction's Program ID.  This ID is specific to
         // an instruction's retire pointer.  The same instruction in a
         // trace will have the same program ID (as compared to
@@ -246,6 +242,16 @@ namespace olympia
             VCSRs_.vl = inputVCSRs.vl;
         }
 
+        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent){
+            uop_parent_ = uop_parent;
+        }
+
+        void setUOpCount(uint64_t uop_count){
+            uop_count_ = uop_count;
+        }
+
+        void incrementUOpDoneCount(){ uop_done_count_++; }
+
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
         uint32_t getSEW() const { return VCSRs_.sew; }
@@ -254,6 +260,11 @@ namespace olympia
 
         uint32_t getVL() const { return VCSRs_.vl; }
 
+        uint64_t getUOpDoneCount(){ return uop_done_count_; }
+
+        sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return uop_parent_; }
+
+        uint64_t getUOpCount() const { return uop_count_; }
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
 
@@ -403,9 +414,11 @@ namespace olympia
         const bool is_call_;
         const bool is_return_;
         bool has_uops_;
-        std::vector<PtrType> uop_insts_;
+        uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction
+        uint64_t uop_count_ = 0;
         VCSRs VCSRs_;
 
+        sparta::SpartaWeakPointer<olympia::Inst> uop_parent_;
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;
         bool is_taken_branch_ = false;

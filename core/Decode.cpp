@@ -170,7 +170,7 @@ namespace olympia
                     uop_queue_.pop();
                 }
                 else{
-                    const auto & inst = fetch_queue_.read(0);
+                     auto & inst = fetch_queue_.read(0);
                     // if we're waiting on a vset, but it's a scalar instruction
                     // we can process all scalars after the vset until we reach a vset the decode queue
                     if(inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0){
@@ -184,6 +184,9 @@ namespace olympia
                     }
                     if (inst->getLMUL() > 1 && !inst->isVset())
                     {
+                        // update num_decode based on UOp count as well
+                        num_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size() + inst->getLMUL()-1);
+                        num_decode = std::min(num_decode, num_to_decode_);
                         // lmul > 1, fracture instruction into UOps
                         inst->setUOp(true); // mark instruction to denote it has UOPs
                         // turn this into a state machine
@@ -195,6 +198,7 @@ namespace olympia
                         // which doesn't factor in the uop amount per instruction
                         insts->emplace_back(inst);
                         inst->setStatus(Inst::Status::DECODED);
+                        inst->setUOpCount(VCSRs_.lmul);
                         fetch_queue_.pop();
                         for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
                         {
@@ -227,7 +231,8 @@ namespace olympia
                             InstPtr inst_uop_ptr(new Inst(*new_inst));
                             inst_uop_ptr->setVCSRs(VCSRs_);
                             inst_uop_ptr->setUOpID(j);
-                            inst->appendUOp(inst_uop_ptr);
+                            sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = inst;
+                            inst_uop_ptr->setUOpParent(weak_ptr_inst);
                             if(i < num_decode){
                                 insts->emplace_back(inst_uop_ptr);
                                 inst_uop_ptr->setStatus(Inst::Status::DECODED);
@@ -295,7 +300,7 @@ namespace olympia
 
         // If we still have credits to send instructions as well as
         // instructions in the queue, schedule another decode session
-        if (uop_queue_credits_ > 0 && fetch_queue_.size() > 0)
+        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + uop_queue_.size()) > 0)
         {
             ev_decode_insts_event_.schedule(1);
         }

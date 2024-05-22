@@ -98,13 +98,13 @@ namespace olympia
                         ILOG("Sending: " << ex_inst << " down the pipe");
                     }
                     else{
+                        ILOG("Stalling due to waiting on vset");
                         // store fetched instruction in queue
                         fetched_queue_.push((ex_inst));
                         break;
                     }
                 }
                 else{
-                    ILOG("Stalling due to waiting on vset");
                     break;
                 }
             }

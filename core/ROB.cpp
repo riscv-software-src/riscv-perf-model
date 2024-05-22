@@ -137,20 +137,13 @@ namespace olympia
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
             bool uops_done = true;
-            if (ex_inst.hasUOps())
+
+            if (ex_inst_ptr->hasUOps() && ex_inst_ptr->getUOpDoneCount() < ex_inst_ptr->getUOpCount())
             {
-                // check if UOps are done
-                // for(auto & i : *in_reorder_buffer_write_.pullData()) {
-                // weakptr from child to parent instruction, increment when done
-                for (const auto & inst : ex_inst.getUOpInsts())
-                {
-                    if (inst->getStatus() != Inst::Status::COMPLETED)
-                    {
-                        uops_done = false;
-                        ILOG("UOP: " << inst << " is not done for instruction: " << ex_inst);
-                        break;
-                    }
-                }
+                // if UOps are all done, you can retire parent
+                uops_done = false;
+                ILOG("UOP: " << ex_inst << " is not done for instruction: " << ex_inst);
+                break;
             }
             if ((ex_inst.getStatus() == Inst::Status::COMPLETED) && uops_done)
             {

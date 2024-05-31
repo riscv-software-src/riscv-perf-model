@@ -12,7 +12,8 @@ namespace olympia
         {"i2f", InstArchInfo::TargetPipe::I2F},     {"f2i", InstArchInfo::TargetPipe::F2I},
         {"int", InstArchInfo::TargetPipe::INT},     {"lsu", InstArchInfo::TargetPipe::LSU},
         {"mul", InstArchInfo::TargetPipe::MUL},     {"vint", InstArchInfo::TargetPipe::VINT},
-        {"vset", InstArchInfo::TargetPipe::VSET},   {"sys", InstArchInfo::TargetPipe::SYS}};
+        {"vset", InstArchInfo::TargetPipe::VSET},   {"vmul", InstArchInfo::TargetPipe::VMUL},
+        {"vdiv", InstArchInfo::TargetPipe::VDIV},   {"sys", InstArchInfo::TargetPipe::SYS}};
 
     void InstArchInfo::update(const nlohmann::json & jobj)
     {
@@ -38,7 +39,7 @@ namespace olympia
         is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);
         is_vset_ = {tgt_pipe_ == TargetPipe::VSET};
 
-        is_vector_ = {tgt_pipe_ == TargetPipe::VSET || tgt_pipe_ == TargetPipe::VINT};
+        is_vector_ = {tgt_pipe_ == TargetPipe::VSET || tgt_pipe_ == TargetPipe::VINT || tgt_pipe_ == InstArchInfo::TargetPipe::VDIV || tgt_pipe_ == InstArchInfo::TargetPipe::VMUL};
     }
 
 } // namespace olympia

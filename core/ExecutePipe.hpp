@@ -52,7 +52,6 @@ namespace olympia
                       "test mode to inject random branch mispredictions")
             PARAMETER(uint32_t, valu_adder_num, 8,
                       "VALU Number of Adders") // # of 64 bit adders, so 8 64 bit adders = 512 bits
-            PARAMETER(uint32_t, vfpu_adder_num, 8, "VFPU Number of Adders")
             HIDDEN_PARAMETER(bool, contains_branch_unit, false,
                              "Does this exe pipe contain a branch unit")
             HIDDEN_PARAMETER(std::string, iq_name, "", "issue queue name for scoreboard view")
@@ -102,7 +101,6 @@ namespace olympia
         const bool enable_random_misprediction_;
         const std::string issue_queue_name_;
         uint32_t valu_adder_num_;
-        uint32_t vfpu_adder_num_;
         uint32_t num_passes_needed_ = 0;
         uint32_t curr_num_pass_ = 0;
         // Events used to issue, execute and complete the instruction

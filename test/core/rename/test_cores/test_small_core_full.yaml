@@ -20,13 +20,15 @@ top.cpu.core0.extension.core_extensions:
     [
       ["int", "mul", "i2f", "cmov", "div"],
       ["float", "faddsub", "fmac", "f2i"], 
-      ["br"]
+      ["br"],
+      ["vint", "vset", "vdiv", "vmul"]
     ]
   issue_queue_to_pipe_map:
   [ 
     ["0"],
     ["1"],
-    ["2"]
+    ["2"],
+    ["3"]
   ]
 
 top.cpu.core0.rename.scoreboards:
@@ -34,14 +36,23 @@ top.cpu.core0.rename.scoreboards:
   # |
   # V
   integer.params.latency_matrix: |
-      [["",      "lsu", "iq0", "iq1", "iq2"],
-      ["lsu",    1,     1,     1,     1],
-      ["iq0",    1,     1,     1,     1],
-      ["iq1",    1,     1,     1,     1],
-      ["iq2",    1,     1,     1,     1]]
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]
   float.params.latency_matrix: |
-      [["",      "lsu", "iq0", "iq1", "iq2"],
-      ["lsu",    1,     1,     1,     1],
-      ["iq0",    1,     1,     1,     1],
-      ["iq1",    1,     1,     1,     1],
-      ["iq2",    1,     1,     1,     1]]
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]
+  vector.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]

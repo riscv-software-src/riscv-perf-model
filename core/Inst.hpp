@@ -73,12 +73,13 @@ namespace olympia
             RegList src_;
             Reg data_reg_;
         };
-        static const uint32_t VLMAX = 512; // vector length max of 512 bits
+        static const uint32_t VLMAX = 1024; // vector length max of 1024 bits
         // Vector CSRs
         struct VCSRs{
             uint32_t vl = VLMAX;   // vector length
             uint32_t sew = 8;  // set element width
             uint32_t lmul = 1; // effective length
+            bool vta = false; // vector tail agnostic, false = undisturbed, true = agnostic
         };
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
@@ -201,6 +202,10 @@ namespace olympia
         // UOpIDs start at 1, because we use 0 as default UOpID on initialization
         bool isUOp() const { return uopid_ > 0; }
 
+        void setBlockingVSET(bool is_blocking_vset){ is_blocking_vset_ = is_blocking_vset; }
+
+        bool isBlockingVSET() const { return is_blocking_vset_; }
+
         // Set the instruction's Program ID.  This ID is specific to
         // an instruction's retire pointer.  The same instruction in a
         // trace will have the same program ID (as compared to
@@ -225,14 +230,19 @@ namespace olympia
         // Set the instruction's target PC (branch target or load/store target)
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
 
-        // Set lmul from immediate (vsetivli, vsetvli)
+        // Set lmul from vset (vsetivli, vsetvli)
         void setLMUL(uint32_t lmul) { VCSRs_.lmul = lmul; }
 
-        // Set sew from immediate (vsetivli, vsetvli)
+        // Set sew from vset (vsetivli, vsetvli)
         void setSEW(uint32_t sew) { VCSRs_.sew = sew; }
 
-        // Set sew from immediate (vsetivli, vsetvli)
+        // Set VL from vset (vsetivli, vsetvli)
         void setVL(uint32_t vl) { VCSRs_.vl = vl; }
+
+        // Set VTA (vector tail agnostic)
+        // vta = true means agnostic, set destination values to 1's or maintain original
+        // vta = false means undisturbed, maintain original destination values
+        void setVTA(bool vta) { VCSRs_.vta = vta; }
 
         void setVCSRs(const VCSRs & inputVCSRs)
         {
@@ -240,6 +250,7 @@ namespace olympia
             VCSRs_.lmul = inputVCSRs.lmul;
             VCSRs_.sew = inputVCSRs.sew;
             VCSRs_.vl = inputVCSRs.vl;
+            VCSRs_.vta = inputVCSRs.vta;
         }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent){
@@ -259,6 +270,8 @@ namespace olympia
         uint32_t getLMUL() const { return VCSRs_.lmul; }
 
         uint32_t getVL() const { return VCSRs_.vl; }
+
+        uint32_t getVTA() const { return VCSRs_.vta; }
 
         uint64_t getUOpDoneCount(){ return uop_done_count_; }
 
@@ -417,6 +430,8 @@ namespace olympia
         uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction
         uint64_t uop_count_ = 0;
         VCSRs VCSRs_;
+
+        bool is_blocking_vset_ = false;
 
         sparta::SpartaWeakPointer<olympia::Inst> uop_parent_;
         // Did this instruction mispredict?

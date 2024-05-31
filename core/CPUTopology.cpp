@@ -383,8 +383,6 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             pipe_target_end++;
             const std::string vset_in_decode =
                 core_node + ".decode." + "ports.in_vset_inst";
-            const std::string vset_in_fetch =
-                core_node + ".fetch." + "ports.in_vset_inst";
             for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
             {
                 std::string unit_name = "exe" + std::to_string(pipe_idx);
@@ -406,7 +404,6 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                         const std::string exe_vset_out =
                             core_node + ".execute." + unit_name + ".ports.out_vset";
                         bind_ports(vset_in_decode, exe_vset_out);
-                        bind_ports(vset_in_fetch, exe_vset_out);
                         break; // break after because there should only be one vset per issue queue
                     }
                 }

@@ -49,6 +49,8 @@ namespace olympia
             LSU,
             MUL,
             VINT,
+            VMUL,
+            VDIV,
             VSET,
             SYS,
             UNKNOWN
@@ -128,6 +130,12 @@ namespace olympia
             break;
         case InstArchInfo::TargetPipe::VINT:
             os << "VINT";
+            break;
+        case InstArchInfo::TargetPipe::VMUL:
+            os << "VMUL";
+            break;
+        case InstArchInfo::TargetPipe::VDIV:
+            os << "VDIV";
             break;
         case InstArchInfo::TargetPipe::VSET:
             os << "VINT";

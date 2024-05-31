@@ -122,6 +122,8 @@ namespace olympia
         VCSRs_.lmul = inst->getLMUL();
         VCSRs_.sew = inst->getSEW();
         VCSRs_.vl = inst->getVL();
+        VCSRs_.vta = inst->getVTA();
+        waiting_on_vset_ = false;
         // schedule decode, because we've been stalled on vset
         ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
     }
@@ -153,7 +155,7 @@ namespace olympia
 
         latency_count_ = 0;
 
-        if (num_decode > 0)
+        if (num_decode > 0 && !waiting_on_vset_)
         {
             InstGroupPtr insts =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
@@ -170,47 +172,66 @@ namespace olympia
                     uop_queue_.pop();
                 }
                 else{
-                     auto & inst = fetch_queue_.read(0);
-                    // if we're waiting on a vset, but it's a scalar instruction
-                    // we can process all scalars after the vset until we reach a vset the decode queue
-                    if(inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0){
-                        // set vl to vlmax, no need to block
-                        VCSRs_.vl = Inst::VLMAX;
+                    auto & inst = fetch_queue_.read(0);
+                    
+                    // for vector instructions, we block on vset and do not allow any other processing of instructions until the vset is resolved
+                    // optimizations could be to allow scalar operations to move forward until a subsequent vector instruction is detected
+                    // or do vset prediction
+
+                    // mavis_id 214 -> vsetvl
+                    // mavis_id 216 -> vsetivli
+                    if(inst->getOpCodeInfo()->getInstructionUniqueID() == 216){
+                        // vsetivli with immediates, we can set at decode and continue to process instruction group, no vset stall
+                        VCSRs_.lmul = inst->getLMUL();
+                        VCSRs_.vl = inst->getVL();
+                        VCSRs_.vta = inst->getVTA();
+                        VCSRs_.sew = inst->getSEW();
                     }
-                    if (!inst->isVset() && inst->isVector())
+                    else if(inst->isVset() && (inst->getSourceOpInfoList()[0].field_value != 0 || inst->getOpCodeInfo()->getInstructionUniqueID() == 214))
                     {
-                        // set LMUL, VSET, VL
-                        inst->setVCSRs(VCSRs_);
+                        // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
+                        waiting_on_vset_ = true;
+                        // need to indicate we want a signal sent back at execute
+                        inst->setBlockingVSET(true);
+                        ILOG("Decode stall due to vset dependency: "<< inst);
                     }
-                    if (inst->getLMUL() > 1 && !inst->isVset())
+                    else{
+                        if(inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0)
+                        {
+                            // set vl to vlmax, no need to block, vsetvli when rs1 is 0
+                            VCSRs_.vl = Inst::VLMAX;
+                            VCSRs_.vta = inst->getVTA();
+                            VCSRs_.sew = inst->getSEW();
+                            VCSRs_.lmul = inst->getLMUL();
+                        }
+                        if (!inst->isVset() && inst->isVector())
+                        {
+                            // set LMUL, VSET, VL, VTA for any other vector instructions
+                            inst->setVCSRs(VCSRs_);
+                        }
+                    }
+                    if (inst->getLMUL() > 1 && !inst->isVset() && inst->isVector())
                     {
                         // update num_decode based on UOp count as well
                         num_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size() + inst->getLMUL()-1);
                         num_decode = std::min(num_decode, num_to_decode_);
                         // lmul > 1, fracture instruction into UOps
                         inst->setUOp(true); // mark instruction to denote it has UOPs
-                        // turn this into a state machine
-                        // send them out based on credit
-                        // state indicating if we're decoding as normal or draining a UOp Queue
                         ILOG("Inst: " << inst << " is being split into " << VCSRs_.lmul << " UOPs");
-                        // we can process the lmul, we subtract from uop_queue_credits_
-                        // because num_decode is min of both fetch queue and uop_queue_credits_
-                        // which doesn't factor in the uop amount per instruction
+
                         insts->emplace_back(inst);
                         inst->setStatus(Inst::Status::DECODED);
                         inst->setUOpCount(VCSRs_.lmul);
                         fetch_queue_.pop();
                         for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
                         {
-                            i++;
+                            i++; // increment decode count to account for UOps
                             // we create lmul - 1 instructions, because the original instruction
                             // will also be executed, so we start creating UOPs at vector
                             // registers + 1 until LMUL
                             MavisType* mavis_facade_ = getMavis(getContainer());
                             const std::string mnemonic = inst->getMnemonic();
                             auto srcs = inst->getSourceOpInfoList();
-                            // determine different modes of agnostic vs undistrubed
-                            // parameter in simulator for setting ^
                             for (auto & src : srcs)
                             {
                                 src.field_value += j;
@@ -255,6 +276,10 @@ namespace olympia
                         ILOG("Decoded: " << inst);
 
                         fetch_queue_.pop();
+                        if(waiting_on_vset_){
+                            // if we have a waiting on vset followed by more instructions, we decode vset and stall anything else
+                            break;
+                        }
                     }
                 }
             }
@@ -296,6 +321,11 @@ namespace olympia
 
             // Send credits back to Fetch to get more instructions
             fetch_queue_credits_outp_.send(insts->size());
+        }
+        else{
+            if(waiting_on_vset_){
+                ILOG("Waiting on vset that has register dependency")
+            }
         }
 
         // If we still have credits to send instructions as well as

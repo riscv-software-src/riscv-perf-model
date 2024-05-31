@@ -16,7 +16,6 @@ namespace olympia
         enable_random_misprediction_(p->enable_random_misprediction && p->contains_branch_unit),
         issue_queue_name_(p->iq_name),
         valu_adder_num_(p->valu_adder_num),
-        vfpu_adder_num_(p->vfpu_adder_num),
         collected_inst_(node, node->getName())
     {
         p->enable_random_misprediction.ignore();
@@ -68,7 +67,7 @@ namespace olympia
         uint32_t exe_time = ignore_inst_execute_time_ ? execute_time_ : ex_inst->getExecuteTime();
         if (!ex_inst->isVset() && ex_inst->isVector())
         {
-            // have to factor in vlen, sew, valu/vfpu length to calculate how many passes are needed
+            // have to factor in vlen, sew, valu length to calculate how many passes are needed
             // i.e if VL = 256 and SEW = 8, but our VALU only has 8 64 bit adders, it will take 4 passes to
             // execute the entire instruction
             // if we have an 8 bit number, the 64 bit adder will truncate, but we have each adder support
@@ -125,11 +124,12 @@ namespace olympia
                 num_passes_needed_ = 0;
             }
             ILOG("Executed inst: " << ex_inst);
-            if (ex_inst->isVset())
+            if (ex_inst->isVset() && ex_inst->isBlockingVSET())
             {
                 // sending back VSET CSRs
                 ILOG("Forwarding VSET CSRs back to decode, LMUL: " << ex_inst->getLMUL() << " SEW: "
-                                                                   << ex_inst->getSEW());
+                                                                   << ex_inst->getSEW() << " VTA: " << ex_inst->getVTA()
+                                                                   << " VL: " << ex_inst->getVL());
                 out_vset_.send(ex_inst);
             }
             auto reg_file = ex_inst->getRenameData().getDestination().rf;

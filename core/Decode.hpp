@@ -327,6 +327,8 @@ namespace olympia
         const std::vector<std::string> fusion_group_definitions_;
 
         Inst::VCSRs VCSRs_;
+
+        bool waiting_on_vset_;
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();
@@ -337,7 +339,9 @@ namespace olympia
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
 
         uint32_t uop_queue_credits_ = 0;
+        friend class DecodeTester;
     };
+    class DecodeTester;
 
     //! \brief the fusion functor/function objects
     //!
@@ -354,5 +358,4 @@ namespace olympia
             return false;
         }
     };
-
 } // namespace olympia

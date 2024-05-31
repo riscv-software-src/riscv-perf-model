@@ -145,6 +145,12 @@ namespace olympia
             inst->setSEW(sew);
         }
 
+        if (jinst.find("vta") != jinst.end())
+        {
+            const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
+            inst->setVTA(vta);
+        }
+
         if (jinst.find("vl") != jinst.end())
         {
             const uint64_t vl = jinst["vl"].get<uint64_t>();

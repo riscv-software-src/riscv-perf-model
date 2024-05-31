@@ -56,7 +56,6 @@ namespace olympia
 
             PARAMETER(uint32_t, num_to_fetch,          4, "Number of instructions to fetch")
             PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
-            PARAMETER(uint32_t, fetched_queue_size, 8, "Size of the fetched queue for holding instructions we have to wait on vset for")
         };
 
         /**
@@ -89,8 +88,6 @@ namespace olympia
         sparta::DataInPort<FlushManager::FlushingCriteria> in_fetch_flush_redirect_
             {&unit_port_set_, "in_fetch_flush_redirect", sparta::SchedulingPhase::Flush, 1};
 
-        // Incoming vset
-        sparta::DataInPort<InstPtr> in_vset_inst_{&unit_port_set_, "in_vset_inst", 1};
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch
         // Number of instructions to fetch
@@ -113,8 +110,6 @@ namespace olympia
         // instructions or a perfect IPC set
         std::unique_ptr<sparta::SingleCycleUniqueEvent<>> fetch_inst_event_;
 
-        // waiting on vset flag
-        bool waiting_on_vset_ = false;
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
 
@@ -135,12 +130,6 @@ namespace olympia
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
-
-        // queue to hold fetched instructions that have to be stalled due to vset
-        // this is not to hold all fetched instructions!!!
-        // we have to hold because we generate instructions using getNextInst()
-        // and if we're waiting on vset, we have to hold the instructions until the vset is processed
-        InstQueue fetched_queue_;
     };
 
 }

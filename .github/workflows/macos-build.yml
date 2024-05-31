@@ -50,7 +50,7 @@ jobs:
       - name: Cache conda deps
         uses: actions/cache@v3
         with:
-          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-conda-${{ hashFiles('conda/environment.yml') }}
+          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-conda-${{ hashFiles('.github/workflows/conda/macos_env.yml') }}
           path: /usr/share/miniconda/envs/riscv_perf_model # Default path for conda
 
       # Setup CCache to cache builds

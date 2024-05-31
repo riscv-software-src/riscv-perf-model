@@ -7,6 +7,7 @@ dependencies:
   - hdf5=1.10
   - sqlite=3.36
   - boost=1.76
+  - boost-cpp=1.76
   - xz
   - yaml-cpp=0.7
   - rapidjson=1.1

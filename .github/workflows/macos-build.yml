@@ -68,7 +68,6 @@ jobs:
           $CONDA/bin/conda config --set channel_priority strict
           $CONDA/bin/conda env update --file  ${{ github.workspace }}/.github/workflows/conda/macos_env.yml
           $CONDA/bin/conda init bash
-          brew link --force boost@1.76
 
       # Build
       - name: Build & Regress

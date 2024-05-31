@@ -5,6 +5,11 @@ set -x
 source "/usr/share/miniconda/etc/profile.d/conda.sh"
 conda activate riscv_perf_model
 
+if [[ ${$RUNNER_OS} == *"macos"* ]]; then
+    brew install boost@1.76
+    brew link --force boost@1.76
+if
+
 echo "Starting Build Entry"
 echo "HOME:" $HOME
 echo "GITHUB_WORKSPACE:" $GITHUB_WORKSPACE

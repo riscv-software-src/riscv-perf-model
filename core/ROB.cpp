@@ -256,7 +256,7 @@ namespace olympia
         // if SYS instr is not a csr instruction flush
         // if SYS instr is a csr but src1 is not x0, flush
         // otherwise it is a csr read, therefore don't flush
-        if (ex_inst->getMnemonic().substr(0,3)!="csr" || srclist.size()!=0)
+        if (ex_inst->isCSR())
         {   // this is the case if csr instr with src != x0
             DLOG("retiring SYS wr instr with src reg " << ex_inst->getMnemonic() );
 

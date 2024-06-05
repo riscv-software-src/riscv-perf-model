@@ -64,19 +64,12 @@ jobs:
 
       - name: Setup Conda Environment
         uses: conda-incubator/setup-miniconda@v2
-	with:
-	  miniforge-variant: Mambaforge
-	  channels: conda-forge,defaults
-	  channel-priority: true
-	  activate-environment: riscv_perf_model
-	  environment-file: .github/workflows/conda/macos_env.yml
-
-#      - name: Setup Conda Environment
-#        run: |
-#          # $CONDA is an environment variable pointing to the root of the miniconda directory
-#          $CONDA/bin/conda config --set channel_priority strict
-#          $CONDA/bin/conda env update --file  ${{ github.workspace }}/.github/workflows/conda/macos_env.yml
-#          $CONDA/bin/conda init bash
+        with:
+          miniforge-variant: Mambaforge
+          channels: conda-forge,defaults
+          channel-priority: true
+          activate-environment: riscv_perf_model
+          environment-file: .github/workflows/conda/macos_env.yml
 
       # Build
       - name: Build & Regress

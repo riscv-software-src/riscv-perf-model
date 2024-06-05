@@ -2,7 +2,7 @@
 
 set -x
 
-source "/usr/share/miniconda/etc/profile.d/conda.sh"
+source $CONDA/etc/profile.d/conda.sh
 conda activate riscv_perf_model
 
 echo "Starting Build Entry"
@@ -23,7 +23,7 @@ echo "Building Sparta Infra"
 cd ${GITHUB_WORKSPACE}/map/sparta
 mkdir -p release
 cd release
-CC=$COMPILER CXX=$CXX_COMPILER cmake .. -DCMAKE_BUILD_TYPE=$OLYMPIA_BUILD_TYPE -DGEN_DEBUG_INFO=OFF -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+CC=$COMPILER CXX=$CXX_COMPILER cmake .. -DCMAKE_BUILD_TYPE=Release -DGEN_DEBUG_INFO=OFF -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
 if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1

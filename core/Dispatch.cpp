@@ -223,89 +223,79 @@ namespace olympia
             sparta_assert(target_pipe != InstArchInfo::TargetPipe::UNKNOWN,
                           "Have an instruction that doesn't know where to go: " << ex_inst);
 
-            if (SPARTA_EXPECT_FALSE(target_pipe == InstArchInfo::TargetPipe::SYS))
+            // Get the dispatchers used to dispatch the target.
+            // Find a ready-to-go dispatcher
+            sparta_assert(static_cast<size_t>(target_pipe) < InstArchInfo::N_TARGET_PIPES,
+                          "Target pipe: " << target_pipe
+                                          << " not found in dispatchers, make sure pipe is "
+                                             "defined and has an assigned dispatcher");
+            auto & dispatchers = dispatchers_[static_cast<size_t>(target_pipe)];
+            sparta_assert(dispatchers.size() > 0,
+                          "Pipe Target: "
+                              << target_pipe
+                              << " doesn't have any execution unit that can handle that target "
+                                 "pipe. Did you define it in the yaml properly?");
+            // so we have a map here that checks for which valid dispatchers for that
+            // instruction target pipe map needs to be: "int": [exe0, exe1, exe2]
+            if (target_pipe != InstArchInfo::TargetPipe::LSU)
             {
-                ex_inst.setStatus(Inst::Status::COMPLETED);
-                // Indicate that this instruction was dispatched
-                // -- it goes right to the ROB
-                dispatched = true;
+                uint32_t max_credits = 0;
+                olympia::Dispatcher* best_dispatcher = nullptr;
+                // find the dispatcher with the most amount of credits, i.e the issue queue with
+                // the least amount of entries
+                for (auto & dispatcher_iq : dispatchers)
+                {
+                    if (dispatcher_iq->canAccept() && dispatcher_iq->getCredits() > max_credits)
+                    {
+                        best_dispatcher = dispatcher_iq.get();
+                        max_credits = dispatcher_iq->getCredits();
+                    }
+                }
+                if (best_dispatcher != nullptr)
+                {
+                    best_dispatcher->acceptInst(ex_inst_ptr);
+                    ++unit_distribution_[target_pipe];
+                    ++unit_distribution_context_.context(target_pipe);
+                    ++weighted_unit_distribution_context_.context(target_pipe);
+
+                    ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
+                    ILOG("Sending instruction: " << ex_inst_ptr << " to "
+                                                 << best_dispatcher->getName()
+                                                 << " of target type: " << target_pipe);
+                    dispatched = true;
+                }
             }
             else
             {
-                // Get the dispatchers used to dispatch the target.
-                // Find a ready-to-go dispatcher
-                sparta_assert(static_cast<size_t>(target_pipe) < InstArchInfo::N_TARGET_PIPES,
-                              "Target pipe: " << target_pipe
-                                              << " not found in dispatchers, make sure pipe is "
-                                                 "defined and has an assigned dispatcher");
-                auto & dispatchers = dispatchers_[static_cast<size_t>(target_pipe)];
-                sparta_assert(dispatchers.size() > 0,
-                              "Pipe Target: "
-                                  << target_pipe
-                                  << " doesn't have any execution unit that can handle that target "
-                                     "pipe. Did you define it in the yaml properly?");
-                // so we have a map here that checks for which valid dispatchers for that
-                // instruction target pipe map needs to be: "int": [exe0, exe1, exe2]
-                if (target_pipe != InstArchInfo::TargetPipe::LSU)
+                for (auto & disp : dispatchers)
                 {
-                    uint32_t max_credits = 0;
-                    olympia::Dispatcher* best_dispatcher = nullptr;
-                    // find the dispatcher with the most amount of credits, i.e the issue queue with
-                    // the least amount of entries
-                    for (auto & dispatcher_iq : dispatchers)
+                    if (disp->canAccept())
                     {
-                        if (dispatcher_iq->canAccept() && dispatcher_iq->getCredits() > max_credits)
-                        {
-                            best_dispatcher = dispatcher_iq.get();
-                            max_credits = dispatcher_iq->getCredits();
-                        }
-                    }
-                    if (best_dispatcher != nullptr)
-                    {
-                        best_dispatcher->acceptInst(ex_inst_ptr);
+                        disp->acceptInst(ex_inst_ptr);
                         ++unit_distribution_[target_pipe];
-                        ++unit_distribution_context_.context(target_pipe);
-                        ++weighted_unit_distribution_context_.context(target_pipe);
+                        ++(unit_distribution_context_.context(target_pipe));
+                        ++(weighted_unit_distribution_context_.context(target_pipe));
 
                         ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
                         ILOG("Sending instruction: " << ex_inst_ptr << " to "
-                                                     << best_dispatcher->getName()
-                                                     << " of target type: " << target_pipe);
+                                                     << disp->getName());
                         dispatched = true;
+
+                        break;
                     }
-                }
-                else
-                {
-                    for (auto & disp : dispatchers)
+                    else
                     {
-                        if (disp->canAccept())
-                        {
-                            disp->acceptInst(ex_inst_ptr);
-                            ++unit_distribution_[target_pipe];
-                            ++(unit_distribution_context_.context(target_pipe));
-                            ++(weighted_unit_distribution_context_.context(target_pipe));
-
-                            ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
-                            ILOG("Sending instruction: " << ex_inst_ptr << " to "
-                                                         << disp->getName());
-                            dispatched = true;
-
-                            break;
-                        }
-                        else
-                        {
-                            ILOG(disp->getName() << " cannot accept inst: " << ex_inst_ptr);
-                            blocking_dispatcher_ = target_pipe;
-                        }
+                        ILOG(disp->getName() << " cannot accept inst: " << ex_inst_ptr);
+                        blocking_dispatcher_ = target_pipe;
                     }
-                }
-                if (false == dispatched)
-                {
-                    current_stall_ = static_cast<StallReason>(target_pipe);
-                    keep_dispatching = false;
                 }
             }
-
+            if (false == dispatched)
+            {
+                current_stall_ = static_cast<StallReason>(target_pipe);
+                keep_dispatching = false;
+            }
+         
             if (dispatched)
             {
                 insts_dispatched->emplace_back(ex_inst_ptr);

@@ -280,6 +280,8 @@ namespace olympia
 
         bool isCall() const { return is_call_; }
 
+        bool isCSR() const { return is_csr_; }
+
         bool isReturn() const { return is_return_; }
 
         // Rename information
@@ -369,6 +371,7 @@ namespace olympia
         const bool is_branch_;
         const bool is_condbranch_;
         const bool is_call_;
+        const bool is_csr_;
         const bool is_return_;
 
         // Did this instruction mispredict?

@@ -24,6 +24,8 @@ add_library(core
   CPU.cpp
   CPUFactory.cpp
   CPUTopology.cpp
+  NextLinePrefetchEngine.cpp
+  DataPrefetcher.cpp
 )
 get_property(SPARTA_INCLUDE_PROP TARGET SPARTA::sparta PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(core SYSTEM PRIVATE ${SPARTA_INCLUDE_PROP})

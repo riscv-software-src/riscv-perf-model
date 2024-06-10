@@ -24,7 +24,7 @@ top.cpu.core0.extension.core_extensions:
   # targets of: "int" and "div"
   pipelines:
   [
-    ["int"], # exe0
+    ["sys"], # exe0
     ["int", "div"], # exe1
     ["int", "mul"], # exe2
     ["int", "mul", "i2f", "cmov"], # exe3

@@ -329,6 +329,8 @@ namespace olympia
 
         bool isCall() const { return is_call_; }
 
+        bool isCSR() const { return is_csr_; }
+
         bool isReturn() const { return is_return_; }
 
         bool isVset() const { return inst_arch_info_->isVset(); }
@@ -425,6 +427,7 @@ namespace olympia
         const bool is_branch_;
         const bool is_condbranch_;
         const bool is_call_;
+        const bool is_csr_;
         const bool is_return_;
         bool has_uops_;
         uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction

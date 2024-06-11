@@ -38,8 +38,6 @@ namespace olympia
 
         is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);
         is_vset_ = {tgt_pipe_ == TargetPipe::VSET};
-
-        is_vector_ = {tgt_pipe_ == TargetPipe::VSET || tgt_pipe_ == TargetPipe::VINT || tgt_pipe_ == InstArchInfo::TargetPipe::VDIV || tgt_pipe_ == InstArchInfo::TargetPipe::VMUL};
     }
 
 } // namespace olympia

@@ -5,6 +5,7 @@
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "InstGroup.hpp"
+#include "MavisUnit.hpp"
 
 #include "fusion/FieldExtractor.hpp"
 #include "fusion/Fusion.hpp"
@@ -327,6 +328,11 @@ namespace olympia
         const std::vector<std::string> fusion_group_definitions_;
 
         Inst::VCSRs VCSRs_;
+        
+        MavisType* mavis_facade_;
+
+        uint32_t mavis_vsetvl_uid_;
+        uint32_t mavis_vsetivli_uid_;
 
         bool waiting_on_vset_;
         //////////////////////////////////////////////////////////////////////

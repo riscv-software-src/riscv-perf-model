@@ -335,7 +335,7 @@ namespace olympia
 
         bool isVset() const { return inst_arch_info_->isVset(); }
 
-        bool isVector() const { return inst_arch_info_->isVector(); }
+        bool isVector() const { return is_vector_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -428,6 +428,7 @@ namespace olympia
         const bool is_condbranch_;
         const bool is_call_;
         const bool is_csr_;
+        const bool is_vector_;
         const bool is_return_;
         bool has_uops_;
         uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction

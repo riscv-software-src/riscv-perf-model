@@ -68,7 +68,15 @@ namespace olympia
     }
 
     // Send fetch the initial credit count
-    void Decode::sendInitialCredits_() { fetch_queue_credits_outp_.send(fetch_queue_.capacity()); }
+    void Decode::sendInitialCredits_()
+    { 
+        fetch_queue_credits_outp_.send(fetch_queue_.capacity()); 
+
+        // setting MavisIDs for vsetvl and vsetivli
+        mavis_facade_ = getMavis(getContainer());
+        mavis_vsetvl_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvl");
+        mavis_vsetivli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetivli");
+    }
 
     // -------------------------------------------------------------------
     // -------------------------------------------------------------------
@@ -180,14 +188,15 @@ namespace olympia
 
                     // mavis_id 214 -> vsetvl
                     // mavis_id 216 -> vsetivli
-                    if(inst->getOpCodeInfo()->getInstructionUniqueID() == 216){
+                    // TODO: change back from getMnemonic() to getInstructionUniqueID() where the ID doesn't change
+                    if(inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_){
                         // vsetivli with immediates, we can set at decode and continue to process instruction group, no vset stall
                         VCSRs_.lmul = inst->getLMUL();
                         VCSRs_.vl = inst->getVL();
                         VCSRs_.vta = inst->getVTA();
                         VCSRs_.sew = inst->getSEW();
                     }
-                    else if(inst->isVset() && (inst->getSourceOpInfoList()[0].field_value != 0 || inst->getOpCodeInfo()->getInstructionUniqueID() == 214))
+                    else if(inst->isVset() && (inst->getSourceOpInfoList()[0].field_value != 0 || inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_))
                     {
                         // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                         waiting_on_vset_ = true;
@@ -229,7 +238,6 @@ namespace olympia
                             // we create lmul - 1 instructions, because the original instruction
                             // will also be executed, so we start creating UOPs at vector
                             // registers + 1 until LMUL
-                            MavisType* mavis_facade_ = getMavis(getContainer());
                             const std::string mnemonic = inst->getMnemonic();
                             auto srcs = inst->getSourceOpInfoList();
                             for (auto & src : srcs)

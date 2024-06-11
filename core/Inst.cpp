@@ -68,6 +68,7 @@ namespace olympia
         is_condbranch_(opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL)),
         is_call_(isCallInstruction(opcode_info)),
         is_csr_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::CSR)),
+        is_vector_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::VECTOR)),
         is_return_(isReturnInstruction(opcode_info)),
         status_state_(Status::FETCHED)
     {

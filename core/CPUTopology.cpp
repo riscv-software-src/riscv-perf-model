@@ -385,6 +385,11 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                 core_node + ".decode." + "ports.in_vset_inst";
             for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
             {
+                // check to ensure no duplicate pipe definitions
+                std::set<std::string> unique_pipe_def_check(pipelines[pipe_idx].begin(), pipelines[pipe_idx].end());
+                sparta_assert(unique_pipe_def_check.size() == pipelines[pipe_idx].size(), 
+                              "Duplicate pipe definitions, double check yaml file")
+
                 std::string unit_name = "exe" + std::to_string(pipe_idx);
                 if (exe_pipe_rename.size() > 0)
                 {
@@ -404,7 +409,7 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                         const std::string exe_vset_out =
                             core_node + ".execute." + unit_name + ".ports.out_vset";
                         bind_ports(vset_in_decode, exe_vset_out);
-                        break; // break after because there should only be one vset per issue queue
+                        break; // break after we find a vset in pipeline def
                     }
                 }
             }

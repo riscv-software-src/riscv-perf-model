@@ -41,8 +41,7 @@ namespace olympia
         {
             cpu_node = getContainer()->getRoot();
         }
-        for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES;
-             ++rf)
+        for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)
         {
             // alu0, alu1 name is based on exe names, point to issue_queue name instead
             scoreboard_views_[rf].reset(
@@ -68,15 +67,15 @@ namespace olympia
         if (!ex_inst->isVset() && ex_inst->isVector())
         {
             // have to factor in vlen, sew, valu length to calculate how many passes are needed
-            // i.e if VL = 256 and SEW = 8, but our VALU only has 8 64 bit adders, it will take 4 passes to
-            // execute the entire instruction
-            // if we have an 8 bit number, the 64 bit adder will truncate, but we have each adder support
-            // the largest SEW possible
+            // i.e if VL = 256 and SEW = 8, but our VALU only has 8 64 bit adders, it will take 4
+            // passes to execute the entire instruction if we have an 8 bit number, the 64 bit adder
+            // will truncate, but we have each adder support the largest SEW possible
             if (ex_inst->getPipe() == InstArchInfo::TargetPipe::VINT)
             {
                 if (num_passes_needed_ == 0)
                 {
-                    const uint32_t num_passes = std::ceil((ex_inst->getVL()/ex_inst->getSEW()) / valu_adder_num_);
+                    const uint32_t num_passes =
+                        std::ceil((ex_inst->getVL() / ex_inst->getSEW()) / valu_adder_num_);
                     if (num_passes > 1)
                     {
                         // only care about cases with multiple passes
@@ -127,9 +126,9 @@ namespace olympia
             if (ex_inst->isVset() && ex_inst->isBlockingVSET())
             {
                 // sending back VSET CSRs
-                ILOG("Forwarding VSET CSRs back to decode, LMUL: " << ex_inst->getLMUL() << " SEW: "
-                                                                   << ex_inst->getSEW() << " VTA: " << ex_inst->getVTA()
-                                                                   << " VL: " << ex_inst->getVL());
+                ILOG("Forwarding VSET CSRs back to decode, LMUL: "
+                     << ex_inst->getLMUL() << " SEW: " << ex_inst->getSEW()
+                     << " VTA: " << ex_inst->getVTA() << " VL: " << ex_inst->getVL());
                 out_vset_.send(ex_inst);
             }
             auto reg_file = ex_inst->getRenameData().getDestination().rf;
@@ -165,8 +164,10 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
         complete_event_.collect(*ex_inst);
         ILOG("Completing inst: " << ex_inst);
-        if(ex_inst->isUOp()){
-            sparta_assert(!ex_inst->getUOpParent().expired(), "UOp instruction parent shared pointer is expired");
+        if (ex_inst->isUOp())
+        {
+            sparta_assert(!ex_inst->getUOpParent().expired(),
+                          "UOp instruction parent shared pointer is expired");
             auto shared_ex_inst = ex_inst->getUOpParent().lock();
             shared_ex_inst->incrementUOpDoneCount();
         }

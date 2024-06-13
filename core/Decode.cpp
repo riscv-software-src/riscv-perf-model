@@ -69,8 +69,8 @@ namespace olympia
 
     // Send fetch the initial credit count
     void Decode::sendInitialCredits_()
-    { 
-        fetch_queue_credits_outp_.send(fetch_queue_.capacity()); 
+    {
+        fetch_queue_credits_outp_.send(fetch_queue_.capacity());
 
         // setting MavisIDs for vsetvl and vsetivli
         mavis_facade_ = getMavis(getContainer());
@@ -172,40 +172,51 @@ namespace olympia
             // Send instructions on their way to rename
             for (uint32_t i = 0; i < num_decode; ++i)
             {
-                if(uop_queue_.size() > 0){
+                if (uop_queue_.size() > 0)
+                {
                     const auto & inst = uop_queue_.read(0);
                     insts->emplace_back(inst);
                     inst->setStatus(Inst::Status::DECODED);
                     ILOG("From UOp Queue Decoded: " << inst);
                     uop_queue_.pop();
                 }
-                else{
+                else
+                {
                     auto & inst = fetch_queue_.read(0);
-                    
-                    // for vector instructions, we block on vset and do not allow any other processing of instructions until the vset is resolved
-                    // optimizations could be to allow scalar operations to move forward until a subsequent vector instruction is detected
-                    // or do vset prediction
+
+                    // for vector instructions, we block on vset and do not allow any other
+                    // processing of instructions until the vset is resolved optimizations could be
+                    // to allow scalar operations to move forward until a subsequent vector
+                    // instruction is detected or do vset prediction
 
                     // mavis_id 214 -> vsetvl
                     // mavis_id 216 -> vsetivli
-                    // TODO: change back from getMnemonic() to getInstructionUniqueID() where the ID doesn't change
-                    if(inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_){
-                        // vsetivli with immediates, we can set at decode and continue to process instruction group, no vset stall
+                    // TODO: change back from getMnemonic() to getInstructionUniqueID() where the ID
+                    // doesn't change
+                    if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_)
+                    {
+                        // vsetivli with immediates, we can set at decode and continue to process
+                        // instruction group, no vset stall
                         VCSRs_.lmul = inst->getLMUL();
                         VCSRs_.vl = inst->getVL();
                         VCSRs_.vta = inst->getVTA();
                         VCSRs_.sew = inst->getSEW();
                     }
-                    else if(inst->isVset() && (inst->getSourceOpInfoList()[0].field_value != 0 || inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_))
+                    else if (inst->isVset()
+                             && (inst->getSourceOpInfoList()[0].field_value != 0
+                                 || inst->getOpCodeInfo()->getInstructionUniqueID()
+                                        == mavis_vsetvl_uid_))
                     {
                         // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                         waiting_on_vset_ = true;
                         // need to indicate we want a signal sent back at execute
                         inst->setBlockingVSET(true);
-                        ILOG("Decode stall due to vset dependency: "<< inst);
+                        ILOG("Decode stall due to vset dependency: " << inst);
                     }
-                    else{
-                        if(inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0 && inst->getDestOpInfoList()[0].field_value != 0)
+                    else
+                    {
+                        if (inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0
+                            && inst->getDestOpInfoList()[0].field_value != 0)
                         {
                             // set vl to vlmax, no need to block, vsetvli when rs1 is 0
                             VCSRs_.vl = Inst::VLMAX;
@@ -222,7 +233,9 @@ namespace olympia
                     if (inst->getLMUL() > 1 && !inst->isVset() && inst->isVector())
                     {
                         // update num_decode based on UOp count as well
-                        num_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size() + inst->getLMUL()-1);
+                        num_decode =
+                            std::min(uop_queue_credits_,
+                                     fetch_queue_.size() + uop_queue_.size() + inst->getLMUL() - 1);
                         num_decode = std::min(num_decode, num_to_decode_);
                         // lmul > 1, fracture instruction into UOps
                         inst->setUOp(true); // mark instruction to denote it has UOPs
@@ -250,11 +263,10 @@ namespace olympia
                                 dest.field_value += j;
                             }
                             const auto imm = inst->getImmediate();
-                            mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests,
-                                                                        imm);
-                            InstPtr new_inst =
-                                mavis_facade_->makeInstDirectly(ex_info, getClock());
-                            // setting UOp instructions to have the same UID and PID as parent instruction
+                            mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
+                            InstPtr new_inst = mavis_facade_->makeInstDirectly(ex_info, getClock());
+                            // setting UOp instructions to have the same UID and PID as parent
+                            // instruction
                             new_inst->setUniqueID(inst->getUniqueID());
                             new_inst->setProgramID(inst->getProgramID());
                             InstPtr inst_uop_ptr(new Inst(*new_inst));
@@ -262,17 +274,22 @@ namespace olympia
                             inst_uop_ptr->setUOpID(j);
                             sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = inst;
                             inst_uop_ptr->setUOpParent(weak_ptr_inst);
-                            if(i < num_decode){
+                            if (i < num_decode)
+                            {
                                 insts->emplace_back(inst_uop_ptr);
                                 inst_uop_ptr->setStatus(Inst::Status::DECODED);
                             }
-                            else{
-                                ILOG("Not enough decode credits to process UOp, appending to uop_queue_ " << inst_uop_ptr);
+                            else
+                            {
+                                ILOG("Not enough decode credits to process UOp, appending to "
+                                     "uop_queue_ "
+                                     << inst_uop_ptr);
                                 uop_queue_.push(inst_uop_ptr);
                             }
                         }
                     }
-                    else{
+                    else
+                    {
                         insts->emplace_back(inst);
                         inst->setStatus(Inst::Status::DECODED);
 
@@ -284,8 +301,10 @@ namespace olympia
                         ILOG("Decoded: " << inst);
 
                         fetch_queue_.pop();
-                        if(waiting_on_vset_){
-                            // if we have a waiting on vset followed by more instructions, we decode vset and stall anything else
+                        if (waiting_on_vset_)
+                        {
+                            // if we have a waiting on vset followed by more instructions, we decode
+                            // vset and stall anything else
                             break;
                         }
                     }
@@ -330,8 +349,10 @@ namespace olympia
             // Send credits back to Fetch to get more instructions
             fetch_queue_credits_outp_.send(insts->size());
         }
-        else{
-            if(waiting_on_vset_){
+        else
+        {
+            if (waiting_on_vset_)
+            {
                 ILOG("Waiting on vset that has register dependency")
             }
         }

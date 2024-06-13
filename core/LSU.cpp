@@ -516,7 +516,34 @@ namespace olympia
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
-    void LSU::getAckFromCache_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr) {}
+    void LSU::getAckFromCache_(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    {
+        const LoadStoreInstIterator & iter = mem_access_info_ptr->getIssueQueueIterator();
+        if (!iter.isValid())
+        {
+            return;
+        }
+
+        // Is its a cache miss we dont need to rechedule the instruction
+        if (!mem_access_info_ptr->isCacheHit())
+        {
+            return;
+        }
+
+        const LoadStoreInstInfoPtr & inst_info_ptr = *(iter);
+
+        // Update issue priority for this outstanding cache miss
+        if (inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+        {
+            inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+        }
+
+        inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
+        if (!inst_info_ptr->isInReadyQueue())
+        {
+            uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
+        }
+    }
 
     void LSU::handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {

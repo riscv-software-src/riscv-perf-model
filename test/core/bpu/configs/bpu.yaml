@@ -1,0 +1,53 @@
+# --------------------------------------------------------------------------
+# These setting are extracted from the GEM5 python configuration files
+# --------------------------------------------------------------------------
+# For LTAGE use these parameters
+# --------------------------------------------------------------------------
+# LTAGE parameters
+#    nHistoryTables = 12
+#    minHist = 4
+#    maxHist = 640
+#    tagTableTagWidths = [0, 7, 7, 8, 8, 9, 10, 11, 12, 12, 13, 14, 15]
+#    logTagTableSizes  = [14, 10, 10, 11, 11, 11, 11, 10, 10, 10, 10, 9, 9]
+#    logUResetPeriod   = 19
+# --------------------------------------------------------------------------
+top:
+    gem5tage:
+        params:
+            pred_enable:                true
+            numThreads:                 1
+            instShiftAmt:               2
+            nHistoryTables:             7
+            minHist:                    5
+            maxHist:                    130
+            tagTableTagWidths:          [ 0, 9, 9, 10, 10, 11, 11, 12]
+            logTagTableSizes:           [13, 9, 9,  9,  9,  9,  9,  9]
+            logRatioBiModalHystEntries: 2
+            tagTableCounterBits:        3
+            tagTableUBits:              2
+            histBufferSize:             2097152
+            numUseAltOnNa:              1
+            initialTCounterValue:       0x20000
+            useAltOnNaBits:             4
+            noSkip:                     [ ]
+            pathHistBits:               16
+            logUResetPeriod:            18
+            speculativeHistUpdate:      true
+            maxNumAlloc:                1
+
+    simplebtb:
+        params:
+            pred_enable:       false
+            num_entries:       1024
+            tag_bits:          18
+            inst_shift_amount: 2
+            num_threads:       1
+
+    mavis:
+        params:
+            isa_file_path: mavis_isa_files
+            uarch_file_path: arches/isa_json
+            pseudo_file_path: ""
+            uarch_overrides_json: ""
+            uarch_overrides: []
+

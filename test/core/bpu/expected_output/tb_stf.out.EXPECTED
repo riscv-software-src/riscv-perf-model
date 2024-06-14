@@ -1,0 +1,225 @@
+#Name:     
+#Cmdline:  
+#Exe:      
+#SimulatorVersion:
+#Repro:    
+#Start:    Friday Fri Jun 14 09:08:19 2024
+#Elapsed:  0.011772s
+{0000000000 00000000 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000000 00000000 top.src info} inCredits: Got credits from dut: 10
+{0000000000 00000000 top.src info} Sending group: 0x80002aa6 UID(0)  PID(1)  csrrwi
+{0000000001 00000001 top.dut info} inputQueueAppended_: Received: uid: 0    FETCHED 80002aa6 pid: 1 'csrrwi	x0, IMM=0x0, CSR=0x3a0' 
+{0000000001 00000001 top.dut info} processInsts_: Dut: uid: 0    RENAMED 80002aa6 pid: 1 'csrrwi	x0, IMM=0x0, CSR=0x3a0' 
+{0000000001 00000001 top.src info} inCredits: Got credits from dut: 1
+{0000000001 00000001 top.src info} Sending group: 0x80002aaa UID(1)  PID(2)  c.li
+{0000000002 00000002 top.dut info} inputQueueAppended_: Received: uid: 1    FETCHED 80002aaa pid: 2 'c.li	x15, x0, +0xffffffffffffffff' 
+{0000000002 00000002 top.sink info} sinkInst_: Instruction: 'uid: 0    RENAMED 80002aa6 pid: 1 'csrrwi	x0, IMM=0x0, CSR=0x3a0' ' sinked
+{0000000002 00000002 top.dut info} processInsts_: Dut: uid: 1    RENAMED 80002aaa pid: 2 'c.li	x15, x0, +0xffffffffffffffff' 
+{0000000002 00000002 top.src info} inCredits: Got credits from dut: 1
+{0000000002 00000002 top.src info} Sending group: 0x80002aac UID(2)  PID(3)  csrrw
+{0000000003 00000003 top.dut info} inputQueueAppended_: Received: uid: 2    FETCHED 80002aac pid: 3 'csrrw	x0,x15, CSR=0x3b0' 
+{0000000003 00000003 top.sink info} sinkInst_: Instruction: 'uid: 1    RENAMED 80002aaa pid: 2 'c.li	x15, x0, +0xffffffffffffffff' ' sinked
+{0000000003 00000003 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000003 00000003 top.dut info} processInsts_: Dut: uid: 2    RENAMED 80002aac pid: 3 'csrrw	x0,x15, CSR=0x3b0' 
+{0000000003 00000003 top.src info} inCredits: Got credits from dut: 1
+{0000000003 00000003 top.src info} Sending group: 0x80002ab0 UID(3)  PID(4)  csrrs
+{0000000004 00000004 top.dut info} inputQueueAppended_: Received: uid: 3    FETCHED 80002ab0 pid: 4 'csrrs	x12,x0, CSR=0x3b0' 
+{0000000004 00000004 top.sink info} sinkInst_: Instruction: 'uid: 2    RENAMED 80002aac pid: 3 'csrrw	x0,x15, CSR=0x3b0' ' sinked
+{0000000004 00000004 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000004 00000004 top.dut info} processInsts_: Dut: uid: 3    RENAMED 80002ab0 pid: 4 'csrrs	x12,x0, CSR=0x3b0' 
+{0000000004 00000004 top.src info} inCredits: Got credits from dut: 1
+{0000000004 00000004 top.src info} Sending group: 0x80002ab4 UID(4)  PID(5)  andi
+{0000000005 00000005 top.dut info} inputQueueAppended_: Received: uid: 4    FETCHED 80002ab4 pid: 5 'andi	x15,x12, +0x1' 
+{0000000005 00000005 top.sink info} sinkInst_: Instruction: 'uid: 3    RENAMED 80002ab0 pid: 4 'csrrs	x12,x0, CSR=0x3b0' ' sinked
+{0000000005 00000005 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000005 00000005 top.dut info} processInsts_: Dut: uid: 4    RENAMED 80002ab4 pid: 5 'andi	x15,x12, +0x1' 
+{0000000005 00000005 top.src info} inCredits: Got credits from dut: 1
+{0000000005 00000005 top.src info} Sending group: 0x80002ab8 UID(5)  PID(6)  c.bnez
+{0000000006 00000006 top.dut info} inputQueueAppended_: Received: uid: 5    FETCHED 80002ab8 pid: 6 'c.bnez	x15, x0, +0xc8' 
+{0000000006 00000006 top.sink info} sinkInst_: Instruction: 'uid: 4    RENAMED 80002ab4 pid: 5 'andi	x15,x12, +0x1' ' sinked
+{0000000006 00000006 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000006 00000006 top.dut info} processInsts_: Dut: uid: 5    RENAMED 80002ab8 pid: 6 'c.bnez	x15, x0, +0xc8' 
+{0000000006 00000006 top.src info} inCredits: Got credits from dut: 1
+{0000000006 00000006 top.src info} Sending group: 0x80002b80 UID(6)  PID(7)  c.li
+{0000000007 00000007 top.dut info} inputQueueAppended_: Received: uid: 6    FETCHED 80002b80 pid: 7 'c.li	x15, x0, +0x2' 
+{0000000007 00000007 top.sink info} sinkInst_: Instruction: 'uid: 5    RENAMED 80002ab8 pid: 6 'c.bnez	x15, x0, +0xc8' ' sinked
+{0000000007 00000007 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000007 00000007 top.dut info} processInsts_: Dut: uid: 6    RENAMED 80002b80 pid: 7 'c.li	x15, x0, +0x2' 
+{0000000007 00000007 top.src info} inCredits: Got credits from dut: 1
+{0000000007 00000007 top.src info} Sending group: 0x80002b82 UID(7)  PID(8)  c.j
+{0000000008 00000008 top.dut info} inputQueueAppended_: Received: uid: 7    FETCHED 80002b82 pid: 8 'c.j	x0, +0xffffffffffffff4e' 
+{0000000008 00000008 top.sink info} sinkInst_: Instruction: 'uid: 6    RENAMED 80002b80 pid: 7 'c.li	x15, x0, +0x2' ' sinked
+{0000000008 00000008 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000008 00000008 top.dut info} processInsts_: Dut: uid: 7    RENAMED 80002b82 pid: 8 'c.j	x0, +0xffffffffffffff4e' 
+{0000000008 00000008 top.src info} inCredits: Got credits from dut: 1
+{0000000008 00000008 top.src info} Sending group: 0x80002ad0 UID(8)  PID(9)  auipc
+{0000000009 00000009 top.dut info} inputQueueAppended_: Received: uid: 8    FETCHED 80002ad0 pid: 9 'auipc	x14, +0x4000' 
+{0000000009 00000009 top.sink info} sinkInst_: Instruction: 'uid: 7    RENAMED 80002b82 pid: 8 'c.j	x0, +0xffffffffffffff4e' ' sinked
+{0000000009 00000009 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000009 00000009 top.dut info} processInsts_: Dut: uid: 8    RENAMED 80002ad0 pid: 9 'auipc	x14, +0x4000' 
+{0000000009 00000009 top.src info} inCredits: Got credits from dut: 1
+{0000000009 00000009 top.src info} Sending group: 0x80002ad4 UID(9)  PID(10)  addi
+{0000000010 00000010 top.dut info} inputQueueAppended_: Received: uid: 9    FETCHED 80002ad4 pid: 10 'addi	x14,x14, +0x530' 
+{0000000010 00000010 top.sink info} sinkInst_: Instruction: 'uid: 8    RENAMED 80002ad0 pid: 9 'auipc	x14, +0x4000' ' sinked
+{0000000010 00000010 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000010 00000010 top.dut info} processInsts_: Dut: uid: 9    RENAMED 80002ad4 pid: 10 'addi	x14,x14, +0x530' 
+{0000000010 00000010 top.src info} inCredits: Got credits from dut: 1
+{0000000010 00000010 top.src info} Sending group: 0x80002ad8 UID(10)  PID(11)  c.srli
+{0000000011 00000011 top.dut info} inputQueueAppended_: Received: uid: 10    FETCHED 80002ad8 pid: 11 'c.srli	x14, IMM=0xc' 
+{0000000011 00000011 top.sink info} sinkInst_: Instruction: 'uid: 9    RENAMED 80002ad4 pid: 10 'addi	x14,x14, +0x530' ' sinked
+{0000000011 00000011 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000011 00000011 top.dut info} processInsts_: Dut: uid: 10    RENAMED 80002ad8 pid: 11 'c.srli	x14, IMM=0xc' 
+{0000000011 00000011 top.src info} inCredits: Got credits from dut: 1
+{0000000011 00000011 top.src info} Sending group: 0x80002ada UID(11)  PID(12)  auipc
+{0000000012 00000012 top.dut info} inputQueueAppended_: Received: uid: 11    FETCHED 80002ada pid: 12 'auipc	x10, +0x2000' 
+{0000000012 00000012 top.sink info} sinkInst_: Instruction: 'uid: 10    RENAMED 80002ad8 pid: 11 'c.srli	x14, IMM=0xc' ' sinked
+{0000000012 00000012 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000012 00000012 top.dut info} processInsts_: Dut: uid: 11    RENAMED 80002ada pid: 12 'auipc	x10, +0x2000' 
+{0000000012 00000012 top.src info} inCredits: Got credits from dut: 1
+{0000000012 00000012 top.src info} Sending group: 0x80002ade UID(12)  PID(13)  addi
+{0000000013 00000013 top.dut info} inputQueueAppended_: Received: uid: 12    FETCHED 80002ade pid: 13 'addi	x10,x10, +0x526' 
+{0000000013 00000013 top.sink info} sinkInst_: Instruction: 'uid: 11    RENAMED 80002ada pid: 12 'auipc	x10, +0x2000' ' sinked
+{0000000013 00000013 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000013 00000013 top.dut info} processInsts_: Dut: uid: 12    RENAMED 80002ade pid: 13 'addi	x10,x10, +0x526' 
+{0000000013 00000013 top.src info} inCredits: Got credits from dut: 1
+{0000000013 00000013 top.src info} Sending group: 0x80002ae2 UID(13)  PID(14)  auipc
+{0000000014 00000014 top.dut info} inputQueueAppended_: Received: uid: 13    FETCHED 80002ae2 pid: 14 'auipc	x16, +0x1000' 
+{0000000014 00000014 top.sink info} sinkInst_: Instruction: 'uid: 12    RENAMED 80002ade pid: 13 'addi	x10,x10, +0x526' ' sinked
+{0000000014 00000014 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000014 00000014 top.dut info} processInsts_: Dut: uid: 13    RENAMED 80002ae2 pid: 14 'auipc	x16, +0x1000' 
+{0000000014 00000014 top.src info} inCredits: Got credits from dut: 1
+{0000000014 00000014 top.src info} Sending group: 0x80002ae6 UID(14)  PID(15)  addi
+{0000000015 00000015 top.dut info} inputQueueAppended_: Received: uid: 14    FETCHED 80002ae6 pid: 15 'addi	x16,x16, +0x51e' 
+{0000000015 00000015 top.sink info} sinkInst_: Instruction: 'uid: 13    RENAMED 80002ae2 pid: 14 'auipc	x16, +0x1000' ' sinked
+{0000000015 00000015 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000015 00000015 top.dut info} processInsts_: Dut: uid: 14    RENAMED 80002ae6 pid: 15 'addi	x16,x16, +0x51e' 
+{0000000015 00000015 top.src info} inCredits: Got credits from dut: 1
+{0000000015 00000015 top.src info} Sending group: 0x80002aea UID(15)  PID(16)  c.slli
+{0000000016 00000016 top.dut info} inputQueueAppended_: Received: uid: 15    FETCHED 80002aea pid: 16 'c.slli	x14,x14, IMM=0xa' 
+{0000000016 00000016 top.sink info} sinkInst_: Instruction: 'uid: 14    RENAMED 80002ae6 pid: 15 'addi	x16,x16, +0x51e' ' sinked
+{0000000016 00000016 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000016 00000016 top.dut info} processInsts_: Dut: uid: 15    RENAMED 80002aea pid: 16 'c.slli	x14,x14, IMM=0xa' 
+{0000000016 00000016 top.src info} inCredits: Got credits from dut: 1
+{0000000016 00000016 top.src info} Sending group: 0x80002aec UID(16)  PID(17)  c.li
+{0000000017 00000017 top.dut info} inputQueueAppended_: Received: uid: 16    FETCHED 80002aec pid: 17 'c.li	x11, x0, +0x1' 
+{0000000017 00000017 top.sink info} sinkInst_: Instruction: 'uid: 15    RENAMED 80002aea pid: 16 'c.slli	x14,x14, IMM=0xa' ' sinked
+{0000000017 00000017 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000017 00000017 top.dut info} processInsts_: Dut: uid: 16    RENAMED 80002aec pid: 17 'c.li	x11, x0, +0x1' 
+{0000000017 00000017 top.src info} inCredits: Got credits from dut: 1
+{0000000017 00000017 top.src info} Sending group: 0x80002aee UID(17)  PID(18)  sll
+{0000000018 00000018 top.dut info} inputQueueAppended_: Received: uid: 17    FETCHED 80002aee pid: 18 'sll	x11,x11,x15' 
+{0000000018 00000018 top.sink info} sinkInst_: Instruction: 'uid: 16    RENAMED 80002aec pid: 17 'c.li	x11, x0, +0x1' ' sinked
+{0000000018 00000018 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000018 00000018 top.dut info} processInsts_: Dut: uid: 17    RENAMED 80002aee pid: 18 'sll	x11,x11,x15' 
+{0000000018 00000018 top.src info} inCredits: Got credits from dut: 1
+{0000000018 00000018 top.src info} Sending group: 0x80002af2 UID(18)  PID(19)  srli
+{0000000019 00000019 top.dut info} inputQueueAppended_: Received: uid: 18    FETCHED 80002af2 pid: 19 'srli	x12,x10, SHAMT=0xc' 
+{0000000019 00000019 top.sink info} sinkInst_: Instruction: 'uid: 17    RENAMED 80002aee pid: 18 'sll	x11,x11,x15' ' sinked
+{0000000019 00000019 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000019 00000019 top.dut info} processInsts_: Dut: uid: 18    RENAMED 80002af2 pid: 19 'srli	x12,x10, SHAMT=0xc' 
+{0000000019 00000019 top.src info} inCredits: Got credits from dut: 1
+{0000000019 00000019 top.src info} Sending group: 0x80002af6 UID(19)  PID(20)  ori
+{0000000020 00000020 top.dut info} inputQueueAppended_: Received: uid: 19    FETCHED 80002af6 pid: 20 'ori	x15,x14, +0xc7' 
+{0000000020 00000020 top.sink info} sinkInst_: Instruction: 'uid: 18    RENAMED 80002af2 pid: 19 'srli	x12,x10, SHAMT=0xc' ' sinked
+{0000000020 00000020 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000020 00000020 top.dut info} processInsts_: Dut: uid: 19    RENAMED 80002af6 pid: 20 'ori	x15,x14, +0xc7' 
+{0000000020 00000020 top.src info} inCredits: Got credits from dut: 1
+{0000000020 00000020 top.src info} Sending group: 0x80002afa UID(20)  PID(21)  srli
+{0000000021 00000021 top.dut info} inputQueueAppended_: Received: uid: 20    FETCHED 80002afa pid: 21 'srli	x13,x16, SHAMT=0xc' 
+{0000000021 00000021 top.sink info} sinkInst_: Instruction: 'uid: 19    RENAMED 80002af6 pid: 20 'ori	x15,x14, +0xc7' ' sinked
+{0000000021 00000021 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000021 00000021 top.dut info} processInsts_: Dut: uid: 20    RENAMED 80002afa pid: 21 'srli	x13,x16, SHAMT=0xc' 
+{0000000021 00000021 top.src info} inCredits: Got credits from dut: 1
+{0000000021 00000021 top.src info} Sending group: 0x80002afe UID(21)  PID(22)  auipc
+{0000000022 00000022 top.dut info} inputQueueAppended_: Received: uid: 21    FETCHED 80002afe pid: 22 'auipc	x17, +0x3000' 
+{0000000022 00000022 top.sink info} sinkInst_: Instruction: 'uid: 20    RENAMED 80002afa pid: 21 'srli	x13,x16, SHAMT=0xc' ' sinked
+{0000000022 00000022 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000022 00000022 top.dut info} processInsts_: Dut: uid: 21    RENAMED 80002afe pid: 22 'auipc	x17, +0x3000' 
+{0000000022 00000022 top.src info} inCredits: Got credits from dut: 1
+{0000000022 00000022 top.src info} Sending group: 0x80002b02 UID(22)  PID(23)  addi
+{0000000023 00000023 top.dut info} inputQueueAppended_: Received: uid: 22    FETCHED 80002b02 pid: 23 'addi	x17,x17, +0x502' 
+{0000000023 00000023 top.sink info} sinkInst_: Instruction: 'uid: 21    RENAMED 80002afe pid: 22 'auipc	x17, +0x3000' ' sinked
+{0000000023 00000023 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000023 00000023 top.dut info} processInsts_: Dut: uid: 22    RENAMED 80002b02 pid: 23 'addi	x17,x17, +0x502' 
+{0000000023 00000023 top.src info} inCredits: Got credits from dut: 1
+{0000000023 00000023 top.src info} Sending group: 0x80002b06 UID(23)  PID(24)  c.slli
+{0000000024 00000024 top.dut info} inputQueueAppended_: Received: uid: 23    FETCHED 80002b06 pid: 24 'c.slli	x13,x13, IMM=0xa' 
+{0000000024 00000024 top.sink info} sinkInst_: Instruction: 'uid: 22    RENAMED 80002b02 pid: 23 'addi	x17,x17, +0x502' ' sinked
+{0000000024 00000024 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000024 00000024 top.dut info} processInsts_: Dut: uid: 23    RENAMED 80002b06 pid: 24 'c.slli	x13,x13, IMM=0xa' 
+{0000000024 00000024 top.src info} inCredits: Got credits from dut: 1
+{0000000024 00000024 top.src info} Sending group: 0x80002b08 UID(24)  PID(25)  sd
+{0000000025 00000025 top.dut info} inputQueueAppended_: Received: uid: 24    FETCHED 80002b08 pid: 25 'sd	x15,x16, +0x8' 
+{0000000025 00000025 top.sink info} sinkInst_: Instruction: 'uid: 23    RENAMED 80002b06 pid: 24 'c.slli	x13,x13, IMM=0xa' ' sinked
+{0000000025 00000025 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000025 00000025 top.dut info} processInsts_: Dut: uid: 24    RENAMED 80002b08 pid: 25 'sd	x15,x16, +0x8' 
+{0000000025 00000025 top.src info} inCredits: Got credits from dut: 1
+{0000000025 00000025 top.src info} Sending group: 0x80002b0c UID(25)  PID(26)  c.slli
+{0000000026 00000026 top.dut info} inputQueueAppended_: Received: uid: 25    FETCHED 80002b0c pid: 26 'c.slli	x12,x12, IMM=0xa' 
+{0000000026 00000026 top.sink info} sinkInst_: Instruction: 'uid: 24    RENAMED 80002b08 pid: 25 'sd	x15,x16, +0x8' ' sinked
+{0000000026 00000026 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000026 00000026 top.dut info} processInsts_: Dut: uid: 25    RENAMED 80002b0c pid: 26 'c.slli	x12,x12, IMM=0xa' 
+{0000000026 00000026 top.src info} inCredits: Got credits from dut: 1
+{0000000026 00000026 top.src info} Sending group: 0x80002b0e UID(26)  PID(27)  c.li
+{0000000027 00000027 top.dut info} inputQueueAppended_: Received: uid: 26    FETCHED 80002b0e pid: 27 'c.li	x15, x0, +0xffffffffffffffff' 
+{0000000027 00000027 top.sink info} sinkInst_: Instruction: 'uid: 25    RENAMED 80002b0c pid: 26 'c.slli	x12,x12, IMM=0xa' ' sinked
+{0000000027 00000027 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000027 00000027 top.dut info} processInsts_: Dut: uid: 26    RENAMED 80002b0e pid: 27 'c.li	x15, x0, +0xffffffffffffffff' 
+{0000000027 00000027 top.src info} inCredits: Got credits from dut: 1
+{0000000027 00000027 top.src info} Sending group: 0x80002b10 UID(27)  PID(28)  ori
+{0000000028 00000028 top.dut info} inputQueueAppended_: Received: uid: 27    FETCHED 80002b10 pid: 28 'ori	x14,x13, +0x1' 
+{0000000028 00000028 top.sink info} sinkInst_: Instruction: 'uid: 26    RENAMED 80002b0e pid: 27 'c.li	x15, x0, +0xffffffffffffffff' ' sinked
+{0000000028 00000028 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000028 00000028 top.dut info} processInsts_: Dut: uid: 27    RENAMED 80002b10 pid: 28 'ori	x14,x13, +0x1' 
+{0000000028 00000028 top.src info} inCredits: Got credits from dut: 1
+{0000000028 00000028 top.src info} Sending group: 0x80002b14 UID(28)  PID(29)  ori
+{0000000029 00000029 top.dut info} inputQueueAppended_: Received: uid: 28    FETCHED 80002b14 pid: 29 'ori	x12,x12, +0x1' 
+{0000000029 00000029 top.sink info} sinkInst_: Instruction: 'uid: 27    RENAMED 80002b10 pid: 28 'ori	x14,x13, +0x1' ' sinked
+{0000000029 00000029 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000029 00000029 top.dut info} processInsts_: Dut: uid: 28    RENAMED 80002b14 pid: 29 'ori	x12,x12, +0x1' 
+{0000000029 00000029 top.src info} inCredits: Got credits from dut: 1
+{0000000029 00000029 top.src info} Sending group: 0x80002b18 UID(29)  PID(30)  srli
+{0000000030 00000030 top.dut info} inputQueueAppended_: Received: uid: 29    FETCHED 80002b18 pid: 30 'srli	x13,x17, SHAMT=0xc' 
+{0000000030 00000030 top.sink info} sinkInst_: Instruction: 'uid: 28    RENAMED 80002b14 pid: 29 'ori	x12,x12, +0x1' ' sinked
+{0000000030 00000030 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000030 00000030 top.dut info} processInsts_: Dut: uid: 29    RENAMED 80002b18 pid: 30 'srli	x13,x17, SHAMT=0xc' 
+{0000000030 00000030 top.src info} inCredits: Got credits from dut: 1
+{0000000030 00000030 top.src info} Sending group: 0x80002b1c UID(30)  PID(31)  c.slli
+{0000000031 00000031 top.dut info} inputQueueAppended_: Received: uid: 30    FETCHED 80002b1c pid: 31 'c.slli	x15,x15, IMM=0x3f' 
+{0000000031 00000031 top.sink info} sinkInst_: Instruction: 'uid: 29    RENAMED 80002b18 pid: 30 'srli	x13,x17, SHAMT=0xc' ' sinked
+{0000000031 00000031 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000031 00000031 top.dut info} processInsts_: Dut: uid: 30    RENAMED 80002b1c pid: 31 'c.slli	x15,x15, IMM=0x3f' 
+{0000000031 00000031 top.src info} inCredits: Got credits from dut: 1
+{0000000031 00000031 top.src info} Sending group: 0x80002b1e UID(31)  PID(32)  auipc
+{0000000032 00000032 top.dut info} inputQueueAppended_: Received: uid: 31    FETCHED 80002b1e pid: 32 'auipc	x6, +0x0' 
+{0000000032 00000032 top.sink info} sinkInst_: Instruction: 'uid: 30    RENAMED 80002b1c pid: 31 'c.slli	x15,x15, IMM=0x3f' ' sinked
+{0000000032 00000032 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000032 00000032 top.dut info} processInsts_: Dut: uid: 31    RENAMED 80002b1e pid: 32 'auipc	x6, +0x0' 
+{0000000032 00000032 top.src info} inCredits: Got credits from dut: 1
+{0000000032 00000032 top.src info} Sending group: 0x80002b22 UID(32)  PID(33)  sw
+{0000000033 00000033 top.dut info} inputQueueAppended_: Received: uid: 32    FETCHED 80002b22 pid: 33 'sw	x11,x6, +0x20e' 
+{0000000033 00000033 top.sink info} sinkInst_: Instruction: 'uid: 31    RENAMED 80002b1e pid: 32 'auipc	x6, +0x0' ' sinked
+{0000000033 00000033 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000033 00000033 top.dut info} processInsts_: Dut: uid: 32    RENAMED 80002b22 pid: 33 'sw	x11,x6, +0x20e' 
+{0000000033 00000033 top.src info} inCredits: Got credits from dut: 1
+{0000000033 00000033 top.src info} Sending group: 0x80002b26 UID(33)  PID(34)  sd
+{0000000034 00000034 top.dut info} inputQueueAppended_: Received: uid: 33    FETCHED 80002b26 pid: 34 'sd	x12,x17, +0x0' 
+{0000000034 00000034 top.sink info} sinkInst_: Instruction: 'uid: 32    RENAMED 80002b22 pid: 33 'sw	x11,x6, +0x20e' ' sinked
+{0000000034 00000034 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000034 00000034 top.dut info} processInsts_: Dut: uid: 33    RENAMED 80002b26 pid: 34 'sd	x12,x17, +0x0' 
+{0000000034 00000034 top.src info} inCredits: Got credits from dut: 1
+{0000000034 00000034 top.src info} Sending group: 0x80002b2a UID(34)  PID(35)  c.sd
+{0000000035 00000035 top.dut info} inputQueueAppended_: Received: uid: 34    FETCHED 80002b2a pid: 35 'c.sd	x14,x10, +0x0' 
+{0000000035 00000035 top.sink info} sinkInst_: Instruction: 'uid: 33    RENAMED 80002b26 pid: 34 'sd	x12,x17, +0x0' ' sinked
+{0000000035 00000035 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000035 00000035 top.dut info} processInsts_: Dut: uid: 34    RENAMED 80002b2a pid: 35 'c.sd	x14,x10, +0x0' 
+{0000000035 00000035 top.src info} inCredits: Got credits from dut: 1
+{0000000035 00000035 top.src info} Sending group: 0x80002b2c UID(35)  PID(36)  c.or
+{0000000036 00000036 top.dut info} inputQueueAppended_: Received: uid: 35    FETCHED 80002b2c pid: 36 'c.or	x15,x15,x13' 
+{0000000036 00000036 top.sink info} sinkInst_: Instruction: 'uid: 34    RENAMED 80002b2a pid: 35 'c.sd	x14,x10, +0x0' ' sinked
+{0000000036 00000036 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000036 00000036 top.dut info} processInsts_: Dut: uid: 35    RENAMED 80002b2c pid: 36 'c.or	x15,x15,x13' 
+{0000000036 00000036 top.src info} inCredits: Got credits from dut: 1
+{0000000037 00000037 top.sink info} sinkInst_: Instruction: 'uid: 35    RENAMED 80002b2c pid: 36 'c.or	x15,x15,x13' ' sinked
+{0000000037 00000037 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000038 00000038 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}

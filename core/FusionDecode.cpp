@@ -1,6 +1,7 @@
 // TODO: add Condor header - this is a new file
 // contact jeff at condor
-#include "fusion/FusionTypes.hpp"
+//#include "fusion/FusionTypes.hpp"
+#include "fsl_api/FusionTypes.h"
 #include "Decode.hpp"
 
 #include "sparta/events/StartupEvent.hpp"

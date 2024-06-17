@@ -5,6 +5,9 @@ using ThreadID = uint32_t;
 //    using PtrType = sparta::SpartaSharedPointer<Inst>;
 //    using InstPtr = Inst::PtrType;
 
+namespace olympia
+{
+
 enum BpuCommand
 {
     NONE,
@@ -35,3 +38,5 @@ struct BpuResponseInfo
     bool ack{false};        // for non-prediction commands
     friend std::ostream& operator<<(std::ostream&,const BpuResponseInfo&);
 };
+
+}

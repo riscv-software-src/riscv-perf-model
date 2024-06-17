@@ -2,6 +2,8 @@
 // These are working examples, add additional fields as needed
 
 //! \brief BpuRequestInfo stream overload
+namespace olympia
+{
 std::ostream& operator<<(std::ostream& os, const BpuRequestInfo& req) {
     os << "BPU request("<<req.reqId<<")";
     return os;
@@ -12,3 +14,4 @@ std::ostream& operator<<(std::ostream& os, const BpuResponseInfo& resp) {
     return os;
 }
 
+}

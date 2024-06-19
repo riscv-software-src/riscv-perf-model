@@ -71,10 +71,10 @@ public:
   }
 
   void test_vl_max(olympia::Decode &decode){
-    EXPECT_TRUE(decode.VCSRs_.vl == 1024);
+    EXPECT_TRUE(decode.VCSRs_.vl == 512);
     EXPECT_TRUE(decode.VCSRs_.lmul == 8);
     EXPECT_TRUE(decode.VCSRs_.vta == 1);
-    EXPECT_TRUE(decode.VCSRs_.sew == 64);
+    EXPECT_TRUE(decode.VCSRs_.sew == 16);
   }
 
   void test_VCSRs_mul_vset(olympia::Decode &decode){
@@ -100,6 +100,14 @@ public:
   void no_inst_issued(olympia::IssueQueue &issuequeue) {
     EXPECT_TRUE(issuequeue.total_insts_issued_ == 0);
   }
+};
+
+class olympia::RenameTester{
+  public:
+    void test_hastail(olympia::Rename &rename){
+      const auto & renaming_inst = rename.uop_queue_.read(0);
+      EXPECT_TRUE(renaming_inst->hasTail() == true);
+    }
 };
 void runIQTest(int argc, char **argv) {
   DEFAULTS.auto_summary_default = "off";
@@ -226,6 +234,16 @@ void runIQTest(int argc, char **argv) {
     olympia::IssueQueueTester issue_queue_tester;
     // vmul.vx relies on scalar add, should not process until it's done RAW hazard
     issue_queue_tester.no_inst_issued(*my_issuequeue);
+  }
+  else if(input_file.find("undisturbed_checking.json") != std::string::npos){
+    sparta::RootTreeNode *root_node = sim.getRoot();
+    cls.populateSimulation(&sim);
+    cls.runSimulator(&sim, 9);
+    olympia::Rename *my_rename = root_node->getChild("cpu.core0.rename")
+                                     ->getResourceAs<olympia::Rename *>();
+    olympia::RenameTester rename_tester;
+    rename_tester.test_hastail(*my_rename);
+    
   }
 }
 

@@ -205,13 +205,16 @@ namespace olympia
                 sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
                               "ROB and rename inst_queue out of sync");
             }
-            if(inst_ptr->hasUOps()){
+            if (inst_ptr->hasUOps())
+            {
                 // pop all UOps from inst_queue_ to relaign ROB and rename inst_queue
-                for(uint32_t i = 0; i < inst_ptr->getLMUL(); i++){
+                for (uint32_t i = 0; i < inst_ptr->getLMUL(); i++)
+                {
                     inst_queue_.pop_front();
                 }
             }
-            else{
+            else
+            {
                 inst_queue_.pop_front();
             }
         }
@@ -500,14 +503,21 @@ namespace olympia
                     }
                     else
                     {
-                        if(renaming_inst->isVector() && !renaming_inst->isVset() && !renaming_inst->getVTA()){
-                            // if vector instruction is undisturbed and has a mask, so vta = false, we need to set the original destination as a source as well
-                            // need to set before destination rename, because we need the original destination
+                        if (renaming_inst->isVector() && !renaming_inst->isVset()
+                            && !renaming_inst->getVTA() && renaming_inst->hasTail())
+                        {
+                            // if vector instruction is undisturbed and has a mask or tail, so vta =
+                            // false, we need to set the original destination as a source as well
+                            // need to set before destination rename, because we need the original
+                            // destination
 
-                            // TODO: Once we implement masks, add logic to check if vta is false and mask is being applied, then we need the original destination
-                            // because if we always add 3rd source for undisturbed, then we're adding extra dependency, slowing the pipeline down
+                            // TODO: Once we implement masks, add logic to check if vta is false and
+                            // mask is being applied, then we need the original destination because
+                            // if we always add 3rd source for undisturbed, then we're adding extra
+                            // dependency, slowing the pipeline down
 
-                            // we set for source bitmask because we need to wait for previous destination to be written to before reading (RAW) hazard
+                            // we set for source bitmask because we need to wait for previous
+                            // destination to be written to before reading (RAW) hazard
                             auto & bitmask = renaming_inst->getSrcRegisterBitMask(rf);
                             const uint32_t prf = map_table_[rf][num];
                             reference_counter_[rf][prf]++;
@@ -515,7 +525,8 @@ namespace olympia
                             bitmask.set(prf);
 
                             ILOG("\tsetup vector undisturbed source register bit mask "
-                             << sparta::printBitSet(bitmask) << " for '" << rf << "' scoreboard");
+                                 << sparta::printBitSet(bitmask) << " for '" << rf
+                                 << "' scoreboard");
                         }
                         auto & bitmask = renaming_inst->getDestRegisterBitMask(rf);
                         const uint32_t prf = freelist_[rf].front();
@@ -535,7 +546,6 @@ namespace olympia
                         scoreboards_[rf]->clearBits(bitmask);
                         ILOG("\tsetup destination register bit mask "
                              << sparta::printBitSet(bitmask) << " for '" << rf << "' scoreboard");
-                        
                     }
                 }
                 // Remove it from uop queue

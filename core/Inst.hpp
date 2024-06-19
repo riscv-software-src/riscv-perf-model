@@ -73,13 +73,14 @@ namespace olympia
             RegList src_;
             Reg data_reg_;
         };
-        static const uint32_t VLMAX = 1024; // vector length max of 1024 bits
+        static const uint32_t VLEN = 1024; // vector length max of 1024 bits
         // Vector CSRs
         struct VCSRs{
-            uint32_t vl = VLMAX;   // vector length
-            uint32_t sew = 8;  // set element width
-            uint32_t lmul = 1; // effective length
-            bool vta = false; // vector tail agnostic, false = undisturbed, true = agnostic
+            uint32_t vl = VLEN; // vector length
+            uint32_t sew = 8;   // set element width
+            uint32_t lmul = 1;  // effective length
+            bool vta = false;   // vector tail agnostic, false = undisturbed, true = agnostic
+            uint32_t vlmax = (VLEN/sew) * lmul;
         };
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
@@ -244,6 +245,8 @@ namespace olympia
         // vta = false means undisturbed, maintain original destination values
         void setVTA(bool vta) { VCSRs_.vta = vta; }
 
+        void setTail(bool has_tail) { has_tail_ = has_tail; }
+
         void setVCSRs(const VCSRs & inputVCSRs)
         {
             // setter if you want to set all 3 vector CSRs at once.
@@ -336,6 +339,8 @@ namespace olympia
         bool isVset() const { return inst_arch_info_->isVset(); }
 
         bool isVector() const { return is_vector_; }
+
+        bool hasTail() const { return has_tail_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -431,6 +436,7 @@ namespace olympia
         const bool is_vector_;
         const bool is_return_;
         bool has_uops_;
+        bool has_tail_; // Does this vector instruction have a tail?
         uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction
         uint64_t uop_count_ = 0;
         VCSRs VCSRs_;

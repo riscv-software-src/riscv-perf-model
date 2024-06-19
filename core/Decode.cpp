@@ -131,6 +131,7 @@ namespace olympia
         VCSRs_.sew = inst->getSEW();
         VCSRs_.vl = inst->getVL();
         VCSRs_.vta = inst->getVTA();
+        VCSRs_.vlmax = (Inst::VLEN / VCSRs_.sew) * VCSRs_.lmul;
         waiting_on_vset_ = false;
         // schedule decode, because we've been stalled on vset
         ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
@@ -201,6 +202,7 @@ namespace olympia
                         VCSRs_.vl = inst->getVL();
                         VCSRs_.vta = inst->getVTA();
                         VCSRs_.sew = inst->getSEW();
+                        VCSRs_.vlmax = (Inst::VLEN / VCSRs_.sew) * VCSRs_.lmul;
                     }
                     else if (inst->isVset()
                              && (inst->getSourceOpInfoList()[0].field_value != 0
@@ -219,10 +221,12 @@ namespace olympia
                             && inst->getDestOpInfoList()[0].field_value != 0)
                         {
                             // set vl to vlmax, no need to block, vsetvli when rs1 is 0
-                            VCSRs_.vl = Inst::VLMAX;
+                            // VLMAX = (VLEN/SEW) * LMUL
                             VCSRs_.vta = inst->getVTA();
                             VCSRs_.sew = inst->getSEW();
                             VCSRs_.lmul = inst->getLMUL();
+                            VCSRs_.vlmax = (Inst::VLEN / VCSRs_.sew) * VCSRs_.lmul;
+                            VCSRs_.vl = VCSRs_.vlmax;
                         }
                         if (!inst->isVset() && inst->isVector())
                         {
@@ -276,6 +280,8 @@ namespace olympia
                             inst_uop_ptr->setUOpParent(weak_ptr_inst);
                             if (i < num_decode)
                             {
+                                inst_uop_ptr->setTail(VCSRs_.vl / VCSRs_.sew < std::max(
+                                                          Inst::VLEN / VCSRs_.sew, VCSRs_.vlmax));
                                 insts->emplace_back(inst_uop_ptr);
                                 inst_uop_ptr->setStatus(Inst::Status::DECODED);
                             }
@@ -290,6 +296,8 @@ namespace olympia
                     }
                     else
                     {
+                        inst->setTail(VCSRs_.vl / VCSRs_.sew
+                                      < std::max(Inst::VLEN / VCSRs_.sew, VCSRs_.vlmax));
                         insts->emplace_back(inst);
                         inst->setStatus(Inst::Status::DECODED);
 

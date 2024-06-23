@@ -48,8 +48,7 @@ namespace olympia
         fusion_match_max_tries_(p->fusion_match_max_tries),
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
-        fusion_group_definitions_(p->fusion_group_definitions),
-        VCSRs_({p->vl, p->sew, p->lmul})
+        fusion_group_definitions_(p->fusion_group_definitions)
     {
         initializeFusion_();
 
@@ -65,6 +64,8 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, process_vset_, InstPtr));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
+
+        VCSRs_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
     }
 
     // Send fetch the initial credit count
@@ -76,6 +77,7 @@ namespace olympia
         mavis_facade_ = getMavis(getContainer());
         mavis_vsetvl_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvl");
         mavis_vsetivli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetivli");
+        mavis_vsetvli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvli");
     }
 
     // -------------------------------------------------------------------
@@ -127,14 +129,22 @@ namespace olympia
     // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
-        VCSRs_.lmul = inst->getLMUL();
-        VCSRs_.sew = inst->getSEW();
-        VCSRs_.vl = inst->getVL();
-        VCSRs_.vta = inst->getVTA();
-        VCSRs_.vlmax = (Inst::VLEN / VCSRs_.sew) * VCSRs_.lmul;
-        waiting_on_vset_ = false;
-        // schedule decode, because we've been stalled on vset
-        ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
+        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
+        // AVL setting to VLMAX if rs1 = 0 and rd != 0
+        if (inst->getSourceOpInfoList()[0].field_value == 0
+            && inst->getDestOpInfoList()[0].field_value != 0)
+        {
+            // set vl to vlmax, no need to block, vsetvli when rs1 is 0
+            // so we set VL to 0 on setVCSRs_()
+            VCSRs_.vl = VCSRs_.vlmax;
+        }
+        // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
+        if (waiting_on_vset_)
+        {
+            // schedule decode, because we've been stalled on vset
+            waiting_on_vset_ = false;
+            ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
+        }
     }
 
     // Handle incoming flush
@@ -190,24 +200,21 @@ namespace olympia
                     // to allow scalar operations to move forward until a subsequent vector
                     // instruction is detected or do vset prediction
 
-                    // mavis_id 214 -> vsetvl
-                    // mavis_id 216 -> vsetivli
-                    // TODO: change back from getMnemonic() to getInstructionUniqueID() where the ID
-                    // doesn't change
+                    // the only two vset instructions that block are vsetvl or vsetvli,
+                    // because both depend on register value
                     if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_)
                     {
                         // vsetivli with immediates, we can set at decode and continue to process
                         // instruction group, no vset stall
-                        VCSRs_.lmul = inst->getLMUL();
-                        VCSRs_.vl = inst->getVL();
-                        VCSRs_.vta = inst->getVTA();
-                        VCSRs_.sew = inst->getSEW();
-                        VCSRs_.vlmax = (Inst::VLEN / VCSRs_.sew) * VCSRs_.lmul;
+                        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(),
+                                        inst->getVTA());
+                        ILOG("Setting vset from VSETIVLI, LMUL: " << VCSRs_.lmul << " SEW: " << VCSRs_.sew
+                                                       << " VTA: " << VCSRs_.vta
+                                                       << " VL: " << VCSRs_.vl);
                     }
-                    else if (inst->isVset()
-                             && (inst->getSourceOpInfoList()[0].field_value != 0
-                                 || inst->getOpCodeInfo()->getInstructionUniqueID()
-                                        == mavis_vsetvl_uid_))
+                    else if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_
+                             || inst->getOpCodeInfo()->getInstructionUniqueID()
+                                    == mavis_vsetvli_uid_)
                     {
                         // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                         waiting_on_vset_ = true;
@@ -217,17 +224,6 @@ namespace olympia
                     }
                     else
                     {
-                        if (inst->isVset() && inst->getSourceOpInfoList()[0].field_value == 0
-                            && inst->getDestOpInfoList()[0].field_value != 0)
-                        {
-                            // set vl to vlmax, no need to block, vsetvli when rs1 is 0
-                            // VLMAX = (VLEN/SEW) * LMUL
-                            VCSRs_.vta = inst->getVTA();
-                            VCSRs_.sew = inst->getSEW();
-                            VCSRs_.lmul = inst->getLMUL();
-                            VCSRs_.vlmax = (Inst::VLEN / VCSRs_.sew) * VCSRs_.lmul;
-                            VCSRs_.vl = VCSRs_.vlmax;
-                        }
                         if (!inst->isVset() && inst->isVector())
                         {
                             // set LMUL, VSET, VL, VTA for any other vector instructions
@@ -242,7 +238,7 @@ namespace olympia
                                      fetch_queue_.size() + uop_queue_.size() + inst->getLMUL() - 1);
                         num_decode = std::min(num_decode, num_to_decode_);
                         // lmul > 1, fracture instruction into UOps
-                        inst->setUOp(true); // mark instruction to denote it has UOPs
+                        inst->setUOpID(0); // set UOpID()
                         ILOG("Inst: " << inst << " is being split into " << VCSRs_.lmul << " UOPs");
 
                         insts->emplace_back(inst);

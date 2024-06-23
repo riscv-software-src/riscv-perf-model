@@ -74,8 +74,13 @@ namespace olympia
             {
                 if (num_passes_needed_ == 0)
                 {
-                    const uint32_t num_passes =
-                        std::ceil((ex_inst->getVL() / ex_inst->getSEW()) / valu_adder_num_);
+                    // number of elements we operate on is dependent on either the AVL or current
+                    // VLMAX we divide VLMAX by LMUL, because we UOp fracture, so we divide by LMUL
+                    // for current instruction VL
+                    uint32_t vl = ex_inst->getVL() < ex_inst->getVLMAX() / ex_inst->getLMUL()
+                                      ? ex_inst->getVL()
+                                      : ex_inst->getVLMAX() / ex_inst->getLMUL();
+                    const uint32_t num_passes = std::ceil(vl / valu_adder_num_);
                     if (num_passes > 1)
                     {
                         // only care about cases with multiple passes

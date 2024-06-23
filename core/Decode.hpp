@@ -125,13 +125,16 @@ namespace olympia
                       "Lists of fusion group UID json files")
 
             //! LMUL
-            PARAMETER(uint32_t, lmul, 1, "effective length")
+            PARAMETER(uint32_t, init_lmul, 1, "effective length")
 
             //! Element width in bits
-            PARAMETER(uint32_t, sew, 8, "element width")
+            PARAMETER(uint32_t, init_sew, 8, "element width")
 
-            //! Vector length, in bits
-            PARAMETER(uint32_t, vl, 256, "vector length")
+            //! Vector length, number of elements
+            PARAMETER(uint32_t, init_vl, 128, "vector length")
+
+            //! Vector tail agnostic, default is undisturbed
+            PARAMETER(bool, init_vta, 0, "vector tail agnostic")
         };
 
         /**
@@ -333,6 +336,7 @@ namespace olympia
 
         uint32_t mavis_vsetvl_uid_;
         uint32_t mavis_vsetivli_uid_;
+        uint32_t mavis_vsetvli_uid_;
 
         bool waiting_on_vset_;
         //////////////////////////////////////////////////////////////////////

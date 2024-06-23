@@ -73,15 +73,32 @@ namespace olympia
             RegList src_;
             Reg data_reg_;
         };
-        static const uint32_t VLEN = 1024; // vector length max of 1024 bits
+
+        static const uint32_t VLEN = 1024; // vector register default bit size
+
         // Vector CSRs
-        struct VCSRs{
-            uint32_t vl = VLEN; // vector length
-            uint32_t sew = 8;   // set element width
-            uint32_t lmul = 1;  // effective length
-            bool vta = false;   // vector tail agnostic, false = undisturbed, true = agnostic
-            uint32_t vlmax = (VLEN/sew) * lmul;
+        struct VCSRs
+        {
+            uint32_t sew = 8;  // set element width
+            uint32_t lmul = 1; // effective length
+            uint32_t vl = 128;
+            bool vta = false; // vector tail agnostic, false = undisturbed, true = agnostic
+
+            uint32_t vlmax_formula() { return (VLEN / sew) * lmul; }
+
+            void setVCSRs(uint32_t input_vl, uint32_t input_sew, uint32_t input_lmul,
+                          uint32_t input_vta)
+            {
+                vl = input_vl;
+                sew = input_sew;
+                lmul = input_lmul;
+                vta = input_vta;
+                vlmax = vlmax_formula();
+            }
+
+            uint32_t vlmax = vlmax_formula();
         };
+
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
 
@@ -191,19 +208,17 @@ namespace olympia
         // UID, but different UOp IDs.
         void setUOpID(uint64_t uopid) { uopid_ = uopid; }
 
-        uint64_t getUOpID() const { return uopid_; }
-
         // Set the instruction's UOp ID. This ID is incremented based
         // off of number of Uops. The UOp instructions will all have the same
         // UID, but different UOp IDs.
-        void setUOp(bool has_uops) { has_uops_ = has_uops; }
+        uint64_t getUOpID() const { return uopid_.isValid() ? uopid_.getValue() : 0; }
 
-        bool hasUOps() const { return has_uops_; }
+        bool hasUOps() const { return uopid_.isValid() && uopid_.getValue() == 0; }
 
         // UOpIDs start at 1, because we use 0 as default UOpID on initialization
-        bool isUOp() const { return uopid_ > 0; }
+        bool isUOp() const { return uopid_.isValid() && uopid_ > 0; }
 
-        void setBlockingVSET(bool is_blocking_vset){ is_blocking_vset_ = is_blocking_vset; }
+        void setBlockingVSET(bool is_blocking_vset) { is_blocking_vset_ = is_blocking_vset; }
 
         bool isBlockingVSET() const { return is_blocking_vset_; }
 
@@ -249,22 +264,17 @@ namespace olympia
 
         void setVCSRs(const VCSRs & inputVCSRs)
         {
-            // setter if you want to set all 3 vector CSRs at once.
-            VCSRs_.lmul = inputVCSRs.lmul;
-            VCSRs_.sew = inputVCSRs.sew;
-            VCSRs_.vl = inputVCSRs.vl;
-            VCSRs_.vta = inputVCSRs.vta;
+            VCSRs_.setVCSRs(inputVCSRs.vl, inputVCSRs.sew, inputVCSRs.lmul, inputVCSRs.vta);
         }
 
-        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent){
+        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent)
+        {
             uop_parent_ = uop_parent;
         }
 
-        void setUOpCount(uint64_t uop_count){
-            uop_count_ = uop_count;
-        }
+        void setUOpCount(uint64_t uop_count) { uop_count_ = uop_count; }
 
-        void incrementUOpDoneCount(){ uop_done_count_++; }
+        void incrementUOpDoneCount() { uop_done_count_++; }
 
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
@@ -276,11 +286,14 @@ namespace olympia
 
         uint32_t getVTA() const { return VCSRs_.vta; }
 
-        uint64_t getUOpDoneCount(){ return uop_done_count_; }
+        uint32_t getVLMAX() const { return VCSRs_.vlmax; }
+
+        uint64_t getUOpDoneCount() { return uop_done_count_; }
 
         sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return uop_parent_; }
 
         uint64_t getUOpCount() const { return uop_count_; }
+
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
 
@@ -341,6 +354,8 @@ namespace olympia
         bool isVector() const { return is_vector_; }
 
         bool hasTail() const { return has_tail_; }
+
+        // bool isVX() const {} // checking if instruction is a vector-scalar
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -424,7 +439,7 @@ namespace olympia
         bool is_oldest_ = false;
         uint64_t unique_id_ = 0;  // Supplied by Fetch
         uint64_t program_id_ = 0; // Supplied by a trace Reader or execution backend
-        uint64_t uopid_ = 0;      // Set in decode
+        sparta::utils::ValidValue<uint64_t> uopid_; // Set in decode
         uint64_t program_id_increment_ = 1;
         bool is_speculative_ = false; // Is this instruction soon to be flushed?
         const bool is_store_;
@@ -435,12 +450,14 @@ namespace olympia
         const bool is_csr_;
         const bool is_vector_;
         const bool is_return_;
-        bool has_uops_;
         bool has_tail_; // Does this vector instruction have a tail?
-        uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction
+        uint64_t uop_done_count_ =
+            1; // start at 1 because the uop count includes the parent instruction
         uint64_t uop_count_ = 0;
         VCSRs VCSRs_;
 
+        // blocking vset is a vset that needs to read a value from a register value. A blocking vset
+        // can't be resolved until after execution, so we need to block on it due to UOp fracturing
         bool is_blocking_vset_ = false;
 
         sparta::SpartaWeakPointer<olympia::Inst> uop_parent_;

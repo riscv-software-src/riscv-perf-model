@@ -82,6 +82,9 @@ namespace olympia
             else
             {
                 ILOG("UOp passed in, not adding to ROB " << i);
+                // checking that the UOp instruction's parent is the youngest element in
+                // the ROB, ensuring the order is still correct
+                sparta_assert(i->getUOpParent().lock()->getUniqueID() == reorder_buffer_.back()->getUniqueID());
             }
         }
 

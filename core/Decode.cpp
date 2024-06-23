@@ -244,6 +244,7 @@ namespace olympia
                         insts->emplace_back(inst);
                         inst->setStatus(Inst::Status::DECODED);
                         inst->setUOpCount(VCSRs_.lmul);
+                        inst->setLMUL(1); // setting LMUL to 1 due to UOp fracture
                         fetch_queue_.pop();
                         for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
                         {
@@ -272,6 +273,7 @@ namespace olympia
                             InstPtr inst_uop_ptr(new Inst(*new_inst));
                             inst_uop_ptr->setVCSRs(VCSRs_);
                             inst_uop_ptr->setUOpID(j);
+                            inst_uop_ptr->setLMUL(1); // setting LMUL to 1 due to UOp fracture
                             sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = inst;
                             inst_uop_ptr->setUOpParent(weak_ptr_inst);
                             if (i < num_decode)

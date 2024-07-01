@@ -15,6 +15,7 @@ namespace olympia
         execute_time_(p->execute_time),
         enable_random_misprediction_(p->enable_random_misprediction && p->contains_branch_unit),
         issue_queue_name_(p->iq_name),
+        valu_adder_num_(p->valu_adder_num),
         collected_inst_(node, node->getName())
     {
         p->enable_random_misprediction.ignore();
@@ -30,7 +31,6 @@ namespace olympia
     void ExecutePipe::setupExecutePipe_()
     {
         // Setup scoreboard view upon register file
-        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
         // if we ever move to multicore, we only want to have resources look for
         // scoreboard in their cpu if we're running a test where we only have
         // top.rename or top.issue_queue, then we can just use the root
@@ -41,7 +41,7 @@ namespace olympia
         {
             cpu_node = getContainer()->getRoot();
         }
-        for (const auto rf : reg_files)
+        for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)
         {
             // alu0, alu1 name is based on exe names, point to issue_queue name instead
             scoreboard_views_[rf].reset(
@@ -53,12 +53,57 @@ namespace olympia
     // change to insertInst
     void ExecutePipe::insertInst(const InstPtr & ex_inst)
     {
-        sparta_assert_context(
-            unit_busy_ == false,
-            "ExecutePipe is receiving a new instruction when it's already busy!!");
-        ex_inst->setStatus(Inst::Status::SCHEDULED);
-        const uint32_t exe_time =
-            ignore_inst_execute_time_ ? execute_time_ : ex_inst->getExecuteTime();
+        if (num_passes_needed_ == 0)
+        {
+            ex_inst->setStatus(Inst::Status::SCHEDULED);
+            // we only need to check if unit_busy_ if instruction doesn't have multiple passes
+            // if it does need multiple passes, we need to keep unit_busy_ blocked so no instruction
+            // can get dispatched before the next pass begins
+            sparta_assert_context(
+                unit_busy_ == false,
+                "ExecutePipe is receiving a new instruction when it's already busy!!");
+        }
+        uint32_t exe_time = ignore_inst_execute_time_ ? execute_time_ : ex_inst->getExecuteTime();
+        if (!ex_inst->isVset() && ex_inst->isVector())
+        {
+            // have to factor in vlen, sew, valu length to calculate how many passes are needed
+            // i.e if VL = 256 and SEW = 8, but our VALU only has 8 64 bit adders, it will take 4
+            // passes to execute the entire instruction if we have an 8 bit number, the 64 bit adder
+            // will truncate, but we have each adder support the largest SEW possible
+            if (ex_inst->getPipe() == InstArchInfo::TargetPipe::VINT)
+            {
+                if (num_passes_needed_ == 0)
+                {
+                    // number of elements we operate on is dependent on either the AVL or current
+                    // VLMAX we divide VLMAX by LMUL, because we UOp fracture, so we divide by LMUL
+                    // for current instruction VL
+                    uint32_t vl = ex_inst->getVL() < ex_inst->getVLMAX() / ex_inst->getLMUL()
+                                      ? ex_inst->getVL()
+                                      : ex_inst->getVLMAX() / ex_inst->getLMUL();
+                    const uint32_t num_passes = std::ceil(vl / valu_adder_num_);
+                    if (num_passes > 1)
+                    {
+                        // only care about cases with multiple passes
+                        num_passes_needed_ = num_passes;
+                        curr_num_pass_ = 1;
+                        ILOG("Inst " << ex_inst << " needs " << num_passes_needed_
+                                     << " before completing the instruction, beginning pass: "
+                                     << curr_num_pass_);
+                    }
+                }
+                else
+                {
+                    curr_num_pass_++;
+                    sparta_assert(curr_num_pass_ <= num_passes_needed_,
+                                  "Instruction with multiple passes incremented for more than the "
+                                  "total number of passes needed for instruction: "
+                                      << ex_inst)
+                        ILOG("Inst: "
+                             << ex_inst << " beginning it's pass number: " << curr_num_pass_
+                             << " of the total required passes needed: " << num_passes_needed_);
+                }
+            }
+        }
         collected_inst_.collectWithDuration(ex_inst, exe_time);
         ILOG("Executing: " << ex_inst << " for " << exe_time + getClock()->currentCycle());
         sparta_assert(exe_time != 0);
@@ -70,31 +115,52 @@ namespace olympia
     // Called by the scheduler, scheduled by complete_inst_.
     void ExecutePipe::executeInst_(const InstPtr & ex_inst)
     {
-        ILOG("Executed inst: " << ex_inst);
-        auto reg_file = ex_inst->getRenameData().getDestination().rf;
-        if (reg_file != core_types::RegFile::RF_INVALID)
+        if (num_passes_needed_ != 0 && curr_num_pass_ < num_passes_needed_)
         {
-            const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
-            scoreboard_views_[reg_file]->setReady(dest_bits);
+            issue_inst_.preparePayload(ex_inst)->schedule(sparta::Clock::Cycle(0));
         }
-
-        if (enable_random_misprediction_)
+        else
         {
-            if (ex_inst->isBranch() && (std::rand() % 20) == 0)
+            if (num_passes_needed_ != 0)
             {
-                ILOG("Randomly injecting a mispredicted branch: " << ex_inst);
-                ex_inst->setMispredicted();
+                // reseting counters once vector instruction needing more than 1 pass
+                curr_num_pass_ = 0;
+                num_passes_needed_ = 0;
             }
+            ILOG("Executed inst: " << ex_inst);
+            if (ex_inst->isVset() && ex_inst->isBlockingVSET())
+            {
+                // sending back VSET CSRs
+                ILOG("Forwarding VSET CSRs back to decode, LMUL: "
+                     << ex_inst->getLMUL() << " SEW: " << ex_inst->getSEW()
+                     << " VTA: " << ex_inst->getVTA() << " VL: " << ex_inst->getVL());
+                out_vset_.send(ex_inst);
+            }
+            auto reg_file = ex_inst->getRenameData().getDestination().rf;
+            if (reg_file != core_types::RegFile::RF_INVALID)
+            {
+                const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
+                scoreboard_views_[reg_file]->setReady(dest_bits);
+            }
+
+            if (enable_random_misprediction_)
+            {
+                if (ex_inst->isBranch() && (std::rand() % 20) == 0)
+                {
+                    ILOG("Randomly injecting a mispredicted branch: " << ex_inst);
+                    ex_inst->setMispredicted();
+                }
+            }
+
+            // We're not busy anymore
+            unit_busy_ = false;
+
+            // Count the instruction as completely executed
+            ++total_insts_executed_;
+
+            // Schedule completion
+            complete_inst_.preparePayload(ex_inst)->schedule(1);
         }
-
-        // We're not busy anymore
-        unit_busy_ = false;
-
-        // Count the instruction as completely executed
-        ++total_insts_executed_;
-
-        // Schedule completion
-        complete_inst_.preparePayload(ex_inst)->schedule(1);
     }
 
     // Called by the scheduler, scheduled by complete_inst_.
@@ -103,6 +169,13 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
         complete_event_.collect(*ex_inst);
         ILOG("Completing inst: " << ex_inst);
+        if (ex_inst->isUOp())
+        {
+            sparta_assert(!ex_inst->getUOpParent().expired(),
+                          "UOp instruction parent shared pointer is expired");
+            auto shared_ex_inst = ex_inst->getUOpParent().lock();
+            shared_ex_inst->incrementUOpDoneCount();
+        }
         out_execute_pipe_.send(1);
     }
 

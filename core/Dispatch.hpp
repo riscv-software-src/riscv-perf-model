@@ -146,7 +146,11 @@ namespace olympia
             MUL_BUSY =
                 InstArchInfo::TargetPipe::MUL, // Could not send any or all instructions -- MUL busy
             BR_BUSY =
-                InstArchInfo::TargetPipe::BR, // Could not send any or all instructions -- MUL busy
+                InstArchInfo::TargetPipe::BR, // Could not send any or all instructions -- BR busy
+            VINT_BUSY = InstArchInfo::TargetPipe::VINT,
+            VMUL_BUSY = InstArchInfo::TargetPipe::VMUL,
+            VDIV_BUSY = InstArchInfo::TargetPipe::VDIV,
+            VSET_BUSY = InstArchInfo::TargetPipe::VSET,
             NO_ROB_CREDITS = InstArchInfo::TargetPipe::SYS, // No credits from the ROB
             NOT_STALLED, // Made forward progress (dispatched all instructions or no instructions)
             N_STALL_REASONS
@@ -180,6 +184,14 @@ namespace olympia
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_br_busy", "BR busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_vint_busy", "VINT busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_vmul_busy", "VMUL busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_vdiv_busy", "VDIV busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_vset_busy", "VSET busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_sys_busy", "No credits from ROB",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
@@ -208,6 +220,14 @@ namespace olympia
              sparta::Counter(getStatisticSet(), "count_mul_insts", "Total MUL insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_br_insts", "Total BR insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_vint_insts", "Total VINT insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_vmul_insts", "Total VMUL insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_vdiv_insts", "Total VDIV insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_vset_insts", "Total VSET insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_sys_insts", "Total SYS insts",
                              sparta::Counter::COUNT_NORMAL)}};
@@ -302,6 +322,18 @@ namespace olympia
             break;
         case Dispatch::StallReason::BR_BUSY:
             os << "BR_BUSY";
+            break;
+        case Dispatch::StallReason::VINT_BUSY:
+            os << "VINT_BUSY";
+            break;
+        case Dispatch::StallReason::VMUL_BUSY:
+            os << "VMUL_BUSY";
+            break;
+        case Dispatch::StallReason::VDIV_BUSY:
+            os << "VDIV_BUSY";
+            break;
+        case Dispatch::StallReason::VSET_BUSY:
+            os << "VSET_BUSY";
             break;
         case Dispatch::StallReason::N_STALL_REASONS:
             sparta_assert(false, "How'd we get here?");

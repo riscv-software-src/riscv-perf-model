@@ -1,45 +1,52 @@
 
 #include "InstGenerator.hpp"
-#include "json.hpp"  // From Mavis
+#include "json.hpp" // From Mavis
 #include "mavis/Mavis.h"
 
 namespace olympia
 {
-    std::unique_ptr<InstGenerator> InstGenerator::createGenerator(MavisType * mavis_facade,
+    std::unique_ptr<InstGenerator> InstGenerator::createGenerator(MavisType* mavis_facade,
                                                                   const std::string & filename,
                                                                   const bool skip_nonuser_mode)
     {
         const std::string json_ext = "json";
-        if((filename.size() > json_ext.size()) && filename.substr(filename.size()-json_ext.size()) == json_ext) {
+        if ((filename.size() > json_ext.size())
+            && filename.substr(filename.size() - json_ext.size()) == json_ext)
+        {
             std::cout << "olympia: JSON file input detected" << std::endl;
             return std::unique_ptr<InstGenerator>(new JSONInstGenerator(mavis_facade, filename));
         }
 
-        const std::string stf_ext = "stf";  // Should cover both zstf and stf
-        if((filename.size() > stf_ext.size()) && filename.substr(filename.size()-stf_ext.size()) == stf_ext) {
+        const std::string stf_ext = "stf"; // Should cover both zstf and stf
+        if ((filename.size() > stf_ext.size())
+            && filename.substr(filename.size() - stf_ext.size()) == stf_ext)
+        {
             std::cout << "olympia: STF file input detected" << std::endl;
-            return std::unique_ptr<InstGenerator>(new TraceInstGenerator(mavis_facade, filename, skip_nonuser_mode));
+            return std::unique_ptr<InstGenerator>(
+                new TraceInstGenerator(mavis_facade, filename, skip_nonuser_mode));
         }
 
         // Dunno what it is...
         sparta_assert(false, "Unknown file extension for '" << filename
-                      << "'.  Expected .json or .[z]stf");
+                                                            << "'.  Expected .json or .[z]stf");
         return nullptr;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // JSON Inst Generator
-    JSONInstGenerator::JSONInstGenerator(MavisType * mavis_facade,
-                                         const std::string & filename) :
+    JSONInstGenerator::JSONInstGenerator(MavisType* mavis_facade, const std::string & filename) :
         InstGenerator(mavis_facade)
     {
         std::ifstream fs;
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
         fs.exceptions(exceptionMask);
 
-        try {
+        try
+        {
             fs.open(filename);
-        } catch (const std::ifstream::failure &e) {
+        }
+        catch (const std::ifstream::failure & e)
+        {
             throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
 
@@ -48,9 +55,7 @@ namespace olympia
         n_insts_ = jobj_->size();
     }
 
-    bool JSONInstGenerator::isDone() const {
-        return (curr_inst_index_ >= n_insts_);
-    }
+    bool JSONInstGenerator::isDone() const { return (curr_inst_index_ >= n_insts_); }
 
     void JSONInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
@@ -63,58 +68,97 @@ namespace olympia
         }
     }
 
-    InstPtr JSONInstGenerator::getNextInst(const sparta::Clock * clk)
+    InstPtr JSONInstGenerator::getNextInst(const sparta::Clock* clk)
     {
-        if(SPARTA_EXPECT_FALSE(isDone())) {
+        if (SPARTA_EXPECT_FALSE(isDone()))
+        {
             return nullptr;
         }
 
         // Get the JSON record at the current index
         nlohmann::json jinst = jobj_->at(curr_inst_index_);
 
-        if (jinst.find("mnemonic") == jinst.end()) {
+        if (jinst.find("mnemonic") == jinst.end())
+        {
             throw sparta::SpartaException() << "Missing mnemonic at " << curr_inst_index_;
         }
         const std::string mnemonic = jinst["mnemonic"];
 
-        auto addElement =  [&jinst] (mavis::OperandInfo & operands,
-                                     const std::string & key,
-                                     const mavis::InstMetaData::OperandFieldID operand_field_id,
-                                     const mavis::InstMetaData::OperandTypes operand_type) {
-                               if(jinst.find(key) != jinst.end()) {
-                                   operands.addElement(operand_field_id,
-                                                       operand_type,
-                                                       jinst[key].get<uint64_t>());
-                               }
-                           };
+        auto addElement = [&jinst](mavis::OperandInfo & operands, const std::string & key,
+                                   const mavis::InstMetaData::OperandFieldID operand_field_id,
+                                   const mavis::InstMetaData::OperandTypes operand_type)
+        {
+            if (jinst.find(key) != jinst.end())
+            {
+                operands.addElement(operand_field_id, operand_type, jinst[key].get<uint64_t>());
+            }
+        };
 
         mavis::OperandInfo srcs;
-        addElement(srcs, "rs1", mavis::InstMetaData::OperandFieldID::RS1, mavis::InstMetaData::OperandTypes::LONG);
-        addElement(srcs, "fs1", mavis::InstMetaData::OperandFieldID::RS1, mavis::InstMetaData::OperandTypes::DOUBLE);
-        addElement(srcs, "rs2", mavis::InstMetaData::OperandFieldID::RS2, mavis::InstMetaData::OperandTypes::LONG);
-        addElement(srcs, "fs2", mavis::InstMetaData::OperandFieldID::RS2, mavis::InstMetaData::OperandTypes::DOUBLE);
+        addElement(srcs, "rs1", mavis::InstMetaData::OperandFieldID::RS1,
+                   mavis::InstMetaData::OperandTypes::LONG);
+        addElement(srcs, "fs1", mavis::InstMetaData::OperandFieldID::RS1,
+                   mavis::InstMetaData::OperandTypes::DOUBLE);
+        addElement(srcs, "rs2", mavis::InstMetaData::OperandFieldID::RS2,
+                   mavis::InstMetaData::OperandTypes::LONG);
+        addElement(srcs, "fs2", mavis::InstMetaData::OperandFieldID::RS2,
+                   mavis::InstMetaData::OperandTypes::DOUBLE);
+        addElement(srcs, "vs1", mavis::InstMetaData::OperandFieldID::RS1,
+                   mavis::InstMetaData::OperandTypes::VECTOR);
+        addElement(srcs, "vs2", mavis::InstMetaData::OperandFieldID::RS2,
+                   mavis::InstMetaData::OperandTypes::VECTOR);
 
         mavis::OperandInfo dests;
-        addElement(dests, "rd", mavis::InstMetaData::OperandFieldID::RD, mavis::InstMetaData::OperandTypes::LONG);
-        addElement(dests, "fd", mavis::InstMetaData::OperandFieldID::RD, mavis::InstMetaData::OperandTypes::DOUBLE);
+        addElement(dests, "rd", mavis::InstMetaData::OperandFieldID::RD,
+                   mavis::InstMetaData::OperandTypes::LONG);
+        addElement(dests, "fd", mavis::InstMetaData::OperandFieldID::RD,
+                   mavis::InstMetaData::OperandTypes::DOUBLE);
+        addElement(dests, "vd", mavis::InstMetaData::OperandFieldID::RD,
+                   mavis::InstMetaData::OperandTypes::VECTOR);
 
         InstPtr inst;
-        if(jinst.find("imm") != jinst.end()) {
+        if (jinst.find("imm") != jinst.end())
+        {
             const uint64_t imm = jinst["imm"].get<uint64_t>();
             mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
             inst = mavis_facade_->makeInstDirectly(ex_info, clk);
         }
-        else {
+        else
+        {
             mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
             inst = mavis_facade_->makeInstDirectly(ex_info, clk);
         }
 
-        if (jinst.find("vaddr") != jinst.end()) {
+        if (jinst.find("vaddr") != jinst.end())
+        {
             uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
             inst->setTargetVAddr(vaddr);
         }
+        if (jinst.find("vtype") != jinst.end())
+        {
+            // immediate, so decode from hex
+            uint64_t vtype = std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
+            std::string binaryString = std::bitset<32>(vtype).to_string();
+            uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
+            uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
+            inst->setLMUL(lmul);
+            inst->setSEW(sew);
+        }
 
-        if (jinst.find("taken") != jinst.end()) {
+        if (jinst.find("vta") != jinst.end())
+        {
+            const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
+            inst->setVTA(vta);
+        }
+
+        if (jinst.find("vl") != jinst.end())
+        {
+            const uint64_t vl = jinst["vl"].get<uint64_t>();
+            inst->setVL(vl);
+        }
+
+        if (jinst.find("taken") != jinst.end())
+        {
             const bool taken = jinst["taken"].get<bool>();
             inst->setTakenBranch(taken);
         }
@@ -124,13 +168,11 @@ namespace olympia
         inst->setProgramID(program_id_++);
         ++curr_inst_index_;
         return inst;
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // STF Inst Generator
-    TraceInstGenerator::TraceInstGenerator(MavisType * mavis_facade,
-                                           const std::string & filename,
+    TraceInstGenerator::TraceInstGenerator(MavisType* mavis_facade, const std::string & filename,
                                            const bool skip_nonuser_mode) :
         InstGenerator(mavis_facade)
     {
@@ -138,9 +180,12 @@ namespace olympia
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
         fs.exceptions(exceptionMask);
 
-        try {
+        try
+        {
             fs.open(filename);
-        } catch (const std::ifstream::failure &e) {
+        }
+        catch (const std::ifstream::failure & e)
+        {
             throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
 
@@ -151,19 +196,14 @@ namespace olympia
         // value. Required for traces that stay in machine mode the entire
         // time
         constexpr bool FILTER_MODE_CHANGE_EVENTS = true;
-        constexpr size_t BUFFER_SIZE             = 4096;
-        reader_.reset(new stf::STFInstReader(filename,
-                                             skip_nonuser_mode,
-                                             CHECK_FOR_STF_PTE,
-                                             FILTER_MODE_CHANGE_EVENTS,
-                                             BUFFER_SIZE));
+        constexpr size_t BUFFER_SIZE = 4096;
+        reader_.reset(new stf::STFInstReader(filename, skip_nonuser_mode, CHECK_FOR_STF_PTE,
+                                             FILTER_MODE_CHANGE_EVENTS, BUFFER_SIZE));
 
         next_it_ = reader_->begin();
     }
 
-    bool TraceInstGenerator::isDone() const {
-        return next_it_ == reader_->end();
-    }
+    bool TraceInstGenerator::isDone() const { return next_it_ == reader_->end(); }
 
     void TraceInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
@@ -176,32 +216,32 @@ namespace olympia
         }
     }
 
-    InstPtr TraceInstGenerator::getNextInst(const sparta::Clock * clk)
+    InstPtr TraceInstGenerator::getNextInst(const sparta::Clock* clk)
     {
-        if(SPARTA_EXPECT_FALSE(isDone())) {
+        if (SPARTA_EXPECT_FALSE(isDone()))
+        {
             return nullptr;
         }
 
         mavis::Opcode opcode = next_it_->opcode();
 
-        try {
+        try
+        {
             InstPtr inst = mavis_facade_->makeInst(opcode, clk);
             inst->setPC(next_it_->pc());
             inst->setUniqueID(++unique_id_);
             inst->setProgramID(program_id_++);
             inst->setRewindIterator<stf::STFInstReader::iterator>(next_it_);
-            if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
+            if (const auto & mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
             {
                 using VectorAddrType = std::vector<sparta::memory::addr_t>;
                 VectorAddrType addrs;
                 std::for_each(next_it_->getMemoryAccesses().begin(),
                               next_it_->getMemoryAccesses().end(),
-                              [&addrs] (const auto & ma) {
-                                  addrs.emplace_back(ma.getAddress());
-                              });
+                              [&addrs](const auto & ma) { addrs.emplace_back(ma.getAddress()); });
                 inst->setTargetVAddr(addrs.front());
-                //For misaligns, more than 1 address is provided
-                //inst->setVAddrVector(std::move(addrs));
+                // For misaligns, more than 1 address is provided
+                // inst->setVAddrVector(std::move(addrs));
             }
             if (next_it_->isBranch())
             {
@@ -211,15 +251,14 @@ namespace olympia
             ++next_it_;
             return inst;
         }
-        catch(std::exception & excpt) {
-            std::cerr << "ERROR: Mavis failed decoding: 0x"
-                      << std::hex << opcode << " for STF It PC: 0x"
-                      << next_it_->pc() << " STFID: " << std::dec
-                      << next_it_->index() << " err: "
-                      << excpt.what() << std::endl;
+        catch (std::exception & excpt)
+        {
+            std::cerr << "ERROR: Mavis failed decoding: 0x" << std::hex << opcode
+                      << " for STF It PC: 0x" << next_it_->pc() << " STFID: " << std::dec
+                      << next_it_->index() << " err: " << excpt.what() << std::endl;
             throw;
         }
         return nullptr;
     }
 
-}
+} // namespace olympia

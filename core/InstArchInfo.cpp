@@ -11,7 +11,9 @@ namespace olympia
         {"float", InstArchInfo::TargetPipe::FLOAT}, {"fmac", InstArchInfo::TargetPipe::FMAC},
         {"i2f", InstArchInfo::TargetPipe::I2F},     {"f2i", InstArchInfo::TargetPipe::F2I},
         {"int", InstArchInfo::TargetPipe::INT},     {"lsu", InstArchInfo::TargetPipe::LSU},
-        {"mul", InstArchInfo::TargetPipe::MUL},     {"sys", InstArchInfo::TargetPipe::SYS}};
+        {"mul", InstArchInfo::TargetPipe::MUL},     {"vint", InstArchInfo::TargetPipe::VINT},
+        {"vset", InstArchInfo::TargetPipe::VSET},   {"vmul", InstArchInfo::TargetPipe::VMUL},
+        {"vdiv", InstArchInfo::TargetPipe::VDIV},   {"sys", InstArchInfo::TargetPipe::SYS}};
 
     void InstArchInfo::update(const nlohmann::json & jobj)
     {
@@ -35,6 +37,7 @@ namespace olympia
                                               << jobj["mnemonic"].get<std::string>());
 
         is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);
+        is_vset_ = {tgt_pipe_ == TargetPipe::VSET};
     }
 
 } // namespace olympia

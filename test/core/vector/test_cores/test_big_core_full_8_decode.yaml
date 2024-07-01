@@ -1,6 +1,17 @@
 #
 # Set up the pipeline for a 8-wide machine
 #
+top.cpu.core0:
+  fetch.params.num_to_fetch:   8
+  decode.params.num_to_decode: 8
+  rename.params.num_integer_renames: 64
+  rename.params.num_float_renames: 64
+  rename.params.num_vector_renames: 64
+  dispatch.params.num_to_dispatch: 8
+  rob.params.num_to_retire:    8
+  dcache.params:
+    l1_size_kb: 64
+  
 top.cpu.core0.extension.core_extensions:
   pipelines:
   [

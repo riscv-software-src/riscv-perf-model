@@ -1,13 +1,38 @@
 [
     {
-        "mnemonic": "vadd.vv",
-        "pipe" : "vint",
-        "latency" : 1
-	  },
+        "mnemonic": "vaadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
     {
-        "mnemonic": "vadd.vx",
-        "pipe": "vint",
-        "latency": 1
+        "mnemonic": "vaadd.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vaaddu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vaaddu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vadc.vim",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vadc.vvm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vadc.vxm",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
         "mnemonic": "vadd.vi",
@@ -15,39 +40,1029 @@
         "latency": 1
     },
     {
-        "mnemonic": "vsub.vv",
-        "pipe" : "vint",
-        "latency" : 1
-	  },
-    {
-        "mnemonic": "vsub.vx",
-        "pipe" : "vint",
-        "latency" : 1
-    },
-    {
-        "mnemonic": "vrsub.vi",
-        "pipe" : "vint",
-        "latency" : 1
-    },
-    {
-        "mnemonic": "vrsub.vx",
-        "pipe" : "vint",
-        "latency" : 1
-    },
-    {
-        "mnemonic": "vsetvli",
-        "pipe": "vset",
+        "mnemonic": "vadd.vv",
+        "pipe": "vint",
         "latency": 1
     },
     {
-        "mnemonic": "vsetvl",
-        "pipe": "vset",
+        "mnemonic": "vadd.vx",
+        "pipe": "vint",
         "latency": 1
     },
     {
-        "mnemonic": "vsetivli",
-        "pipe": "vset",
-        "latency": 1
+        "mnemonic": "vand.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vand.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vand.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vasub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vasub.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vasubu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vasubu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vcompress.vm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vdiv.vv",
+        "pipe": "vdiv",
+        "latency": 23
+    },
+    {
+        "mnemonic": "vdiv.vx",
+        "pipe": "vdiv",
+        "latency": 23
+    },
+    {
+        "mnemonic": "vdivu.vv",
+        "pipe": "vdiv",
+        "latency": 23
+    },
+    {
+        "mnemonic": "vdivu.vx",
+        "pipe": "vdiv",
+        "latency": 23
+    },
+    {
+        "mnemonic": "vfadd.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfclass.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfcvt.f.x.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfcvt.f.xu.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfcvt.rtz.x.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfcvt.rtz.xu.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfcvt.x.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfcvt.xu.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfdiv.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfdiv.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfdot.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfirst.m",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmacc.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmacc.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmadd.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmax.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmax.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmerge.vfm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmin.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmin.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmsac.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmsac.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmsub.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmsub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmul.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmul.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmv.f.s",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmv.s.f",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfmv.v.f",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.f.f.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.f.x.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.f.xu.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.rod.f.f.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.rtz.x.f.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.rtz.xu.f.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.x.f.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfncvt.xu.f.w",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmacc.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmacc.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmadd.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmsac.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmsac.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmsub.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfnmsub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfrdiv.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfrec7.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfredmax.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfredmin.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfredosum.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfredusum.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfrsqrt7.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfrsub.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsgnj.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsgnj.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsgnjn.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsgnjn.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsgnjx.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsgnjx.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfslide1down.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfslide1up.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsqrt.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsub.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfsub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwadd.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwadd.wf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwadd.wv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.f.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.f.x.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.f.xu.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.rtz.x.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.rtz.xu.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.x.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwcvt.xu.f.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwmacc.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwmacc.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwmsac.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwmsac.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwmul.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwmul.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwnmacc.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwnmacc.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwnmsac.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwnmsac.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwredosum.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwredusum.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwsub.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwsub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwsub.wf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vfwsub.wv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vid.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "viota.m",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl1re16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl1re32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl1re64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl1re8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl2re16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl2re32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl2re64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl2re8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl4re16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl4re32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl4re64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl4re8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl8re16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl8re32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl8re64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vl8re8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle16ff.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle32ff.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle64ff.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vle8ff.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vlm.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vloxei16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vloxei32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vloxei64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vloxei8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vlse16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vlse32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vlse64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vlse8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vluxei16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vluxei32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vluxei64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vluxei8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmacc.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmacc.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmadc.vim",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmadc.vvm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmadc.vxm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmadd.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmand.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmandn.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmax.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmax.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmaxu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmaxu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmerge.vim",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmerge.vvm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmerge.vxm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfeq.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfeq.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfge.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfgt.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfle.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfle.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmflt.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmflt.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfne.vf",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmfne.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmin.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmin.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vminu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vminu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmnand.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmnor.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmor.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmorn.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsbc.vvm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsbc.vxm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsbf.m",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmseq.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmseq.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmseq.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsgt.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsgt.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsgtu.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsgtu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsif.m",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsle.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsle.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsle.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsleu.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsleu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsleu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmslt.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmslt.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsltu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsltu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsne.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsne.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsne.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmsof.m",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
         "mnemonic": "vmul.vv",
@@ -55,17 +1070,7 @@
         "latency": 3
     },
     {
-      "mnemonic": "vmul.vx",
-      "pipe": "vmul",
-      "latency": 3
-  },
-    {
-        "mnemonic": "vmulhu.vx",
-        "pipe": "vmul",
-        "latency": 3
-    },
-    {
-        "mnemonic": "vmulhu.vv",
+        "mnemonic": "vmul.vx",
         "pipe": "vmul",
         "latency": 3
     },
@@ -90,22 +1095,217 @@
         "latency": 3
     },
     {
-        "mnemonic": "vdiv.vv",
-        "pipe": "vdiv",
-        "latency": 23
+        "mnemonic": "vmulhu.vv",
+        "pipe": "vmul",
+        "latency": 3
     },
-      {
-        "mnemonic": "vdiv.vx",
+    {
+        "mnemonic": "vmulhu.vx",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vmv.s.x",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv.v.i",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv.v.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv.v.x",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv.x.s",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv1r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv2r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv4r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmv8r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmxnor.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vmxor.mm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnclip.wi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnclip.wv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnclip.wx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnclipu.wi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnclipu.wv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnclipu.wx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnmsac.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnmsac.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnmsub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnmsub.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnsra.wi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnsra.wv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnsra.wx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnsrl.wi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnsrl.wv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vnsrl.wx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vor.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vor.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vor.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vpopc.m",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredand.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredmax.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredmaxu.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredmin.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredminu.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredor.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredsum.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vredxor.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vrem.vv",
         "pipe": "vdiv",
         "latency": 23
     },
     {
-        "mnemonic": "vdivu.vv",
-        "pipe": "vdiv",
-        "latency": 23
-    },
-    {
-        "mnemonic": "vdivu.vx",
+        "mnemonic": "vrem.vx",
         "pipe": "vdiv",
         "latency": 23
     },
@@ -120,64 +1320,354 @@
         "latency": 23
     },
     {
-        "mnemonic": "vrem.vv",
-        "pipe": "vdiv",
-        "latency": 23
+        "mnemonic": "vrgather.vi",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
-        "mnemonic": "vrem.vx",
-        "pipe": "vdiv",
-        "latency": 23
+        "mnemonic": "vrgather.vv",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
-        "mnemonic": "vwmul.vv",
-        "pipe": "vmul",
-        "latency": 3
+        "mnemonic": "vrgather.vx",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
-        "mnemonic": "vwmul.vx",
-        "pipe": "vmul",
-        "latency": 3
+        "mnemonic": "vrgatherei16.vv",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
-        "mnemonic": "vwmulu.vv",
-        "pipe": "vmul",
-        "latency": 3
-    },
-    {
-        "mnemonic": "vwmulu.vx",
-        "pipe": "vmul",
-        "latency": 3
-    },
-    {
-        "mnemonic": "vwmulsu.vv",
-        "pipe": "vmul",
-        "latency": 3
-    },
-    {
-        "mnemonic": "vwmulsu.vx",
-        "pipe": "vmul",
-        "latency": 3
-    },
-    {
-        "mnemonic": "vwaddu.vv",
+        "mnemonic": "vrsub.vi",
         "pipe": "vint",
         "latency": 1
     },
     {
-        "mnemonic": "vwaddu.vx",
+        "mnemonic": "vrsub.vx",
         "pipe": "vint",
         "latency": 1
     },
     {
-        "mnemonic": "vwsubu.vv",
+        "mnemonic": "vs1r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vs2r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vs4r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vs8r.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsadd.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsadd.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsadd.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsaddu.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsaddu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsaddu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsbc.vvm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsbc.vxm",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vse16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vse32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vse64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vse8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsetivli",
+        "pipe": "vset",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vsetvl",
+        "pipe": "vset",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vsetvli",
+        "pipe": "vset",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vsext.vf2",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsext.vf4",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsext.vf8",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vslide1down.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vslide1up.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vslidedown.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vslidedown.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vslideup.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vslideup.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsll.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsll.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsll.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsm.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsmul.vv",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vsmul.vx",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vsoxei16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsoxei32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsoxei64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsoxei8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsra.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsra.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsra.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsrl.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsrl.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsrl.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsse16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsse32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsse64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsse8.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssra.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssra.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssra.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssrl.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssrl.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssrl.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssub.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssub.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssubu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vssubu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsub.vv",
         "pipe": "vint",
         "latency": 1
     },
     {
-        "mnemonic": "vwsubu.vx",
+        "mnemonic": "vsub.vx",
         "pipe": "vint",
         "latency": 1
+    },
+    {
+        "mnemonic": "vsuxei16.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsuxei32.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsuxei64.v",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vsuxei8.v",
+        "pipe": "unsupported",
+        "latency": 0
     },
     {
         "mnemonic": "vwadd.vv",
@@ -186,36 +1676,6 @@
     },
     {
         "mnemonic": "vwadd.vx",
-        "pipe": "vint",
-        "latency": 1
-    },
-    {
-        "mnemonic": "vwsub.vv",
-        "pipe": "vint",
-        "latency": 1
-    },
-    {
-        "mnemonic": "vwsub.vx",
-        "pipe": "vint",
-        "latency": 1
-    },
-    {
-        "mnemonic": "vwaddu.wv",
-        "pipe": "vint",
-        "latency": 1
-    },
-    {
-        "mnemonic": "vwaddu.wx",
-        "pipe": "vint",
-        "latency": 1
-    },
-    {
-        "mnemonic": "vwsubu.wv",
-        "pipe": "vint",
-        "latency": 1
-    },
-    {
-        "mnemonic": "vwsubu.wx",
         "pipe": "vint",
         "latency": 1
     },
@@ -230,6 +1690,111 @@
         "latency": 1
     },
     {
+        "mnemonic": "vwaddu.vv",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwaddu.vx",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwaddu.wv",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwaddu.wx",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwmacc.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmacc.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmaccsu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmaccsu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmaccu.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmaccu.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmaccus.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwmul.vv",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vwmul.vx",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vwmulsu.vv",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vwmulsu.vx",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vwmulu.vv",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vwmulu.vx",
+        "pipe": "vmul",
+        "latency": 3
+    },
+    {
+        "mnemonic": "vwredsum.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwredsumu.vs",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vwsub.vv",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwsub.vx",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
         "mnemonic": "vwsub.wv",
         "pipe": "vint",
         "latency": 1
@@ -240,15 +1805,53 @@
         "latency": 1
     },
     {
-        "mnemonic": "vsmul.vx",
-        "pipe": "vmul",
-        "latency": 3
+        "mnemonic": "vwsubu.vv",
+        "pipe": "vint",
+        "latency": 1
     },
     {
-        "mnemonic": "vsmul.vv",
-        "pipe": "vmul",
-        "latency": 3
+        "mnemonic": "vwsubu.vx",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwsubu.wv",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vwsubu.wx",
+        "pipe": "vint",
+        "latency": 1
+    },
+    {
+        "mnemonic": "vxor.vi",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vxor.vv",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vxor.vx",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vzext.vf2",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vzext.vf4",
+        "pipe": "unsupported",
+        "latency": 0
+    },
+    {
+        "mnemonic": "vzext.vf8",
+        "pipe": "unsupported",
+        "latency": 0
     }
-    
-
 ]

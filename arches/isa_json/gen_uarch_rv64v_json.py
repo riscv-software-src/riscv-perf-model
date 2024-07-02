@@ -75,7 +75,7 @@ for opcode in mavis_rv64v_json:
     # Assume inst is unsupported
     opcode_entry = {
         "mnemonic" : mnemonic,
-        "pipe" : "unsupported",
+        "pipe" : "?",
         "latency" : 0
     }
 

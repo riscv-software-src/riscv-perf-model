@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import json
 
@@ -89,5 +91,6 @@ for opcode in mavis_rv64v_json:
 
 # Write the json to the file
 with open(JSON, "w") as f:
+    print("Writing rv64v uarch json to "+JSON)
     json.dump(uarch_json, f, indent=4)
 

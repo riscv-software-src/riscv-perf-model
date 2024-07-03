@@ -18,8 +18,9 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/undisturbed_checking.json  ${CMAKE_
 
 
 
-sparta_named_test(Vector_test_vsetivli_lmul_4  Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vadd_lmul_4.json)
-sparta_named_test(Vector_test_vsetvl_vadd  Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vadd.json)
-sparta_named_test(Vector_test_vsetvli_vadd_sew_32  Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vadd_sew_32.json)
-sparta_named_test(Vector_test_vsetvli_vl_max_setting  Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vl_max_setting.json)
-sparta_named_test(Vector_undisturbed_test  Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file undisturbed_checking.json)
+sparta_named_test(Vector_test_vsetivli_lmul_4        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vadd_lmul_4.json)
+sparta_named_test(Vector_test_vsetvl_vadd            Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vadd.json)
+sparta_named_test(Vector_test_vsetvli_vadd_sew_32    Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vadd_sew_32.json)
+sparta_named_test(Vector_test_vsetvli_vl_max_setting Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vl_max_setting.json)
+sparta_named_test(Vector_undisturbed_test            Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file undisturbed_checking.json)
+sparta_named_test(Vector_unsupported_test            Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file vrgather.json)

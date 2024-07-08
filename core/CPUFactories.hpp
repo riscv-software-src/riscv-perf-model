@@ -7,6 +7,7 @@
 #include "Core.hpp"
 #include "Fetch.hpp"
 #include "Decode.hpp"
+#include "VectorUopGenerator.hpp"
 #include "Rename.hpp"
 #include "Dispatch.hpp"
 #include "Execute.hpp"
@@ -47,6 +48,10 @@ namespace olympia{
         sparta::ResourceFactory<olympia::Decode,
                                 olympia::Decode::DecodeParameterSet> decode_rf;
 
+        //! \brief Resource Factory to build a VectorUopGenerator
+        sparta::ResourceFactory<olympia::VectorUopGenerator,
+                                olympia::VectorUopGenerator::VectorUopGeneratorParameterSet> vec_uop_gen_rf;
+
         //! \brief Resource Factory to build a Rename Unit
         RenameFactory rename_rf;
 
@@ -55,7 +60,6 @@ namespace olympia{
 
         //! \brief Resource Factory to build a Execute Unit
         ExecuteFactory  execute_rf;
-
 
         //! \brief Resource Factory to build a MMU Unit
         sparta::ResourceFactory<olympia::DCache,

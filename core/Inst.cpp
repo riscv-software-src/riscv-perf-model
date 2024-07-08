@@ -75,5 +75,11 @@ namespace olympia
         sparta_assert(inst_arch_info_ != nullptr,
                       "Mavis decoded the instruction, but Olympia has no uarch data for it: "
                           << getDisasm() << " " << std::hex << " opc: 0x" << getOpCode());
+
+        // Check that instruction is supported
+        sparta_assert(getPipe() != InstArchInfo::TargetPipe::UNKNOWN,
+            "Unknown target pipe (execution) for " << getMnemonic());
+        sparta_assert(getExecuteTime() != 0,
+            "Unknown execution time (latency) for " << getMnemonic());
     }
 } // namespace olympia

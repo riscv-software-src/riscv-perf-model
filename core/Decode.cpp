@@ -1,11 +1,11 @@
 // <Decode.cpp> -*- C++ -*-
 
 #include "Decode.hpp"
+#include "VectorUopGenerator.hpp"
 #include "fusion/FusionTypes.hpp"
 
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/utils/LogUtils.hpp"
-#include "MavisUnit.hpp"
 #include <algorithm>
 #include <iostream>
 
@@ -78,6 +78,12 @@ namespace olympia
         mavis_vsetvl_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvl");
         mavis_vsetivli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetivli");
         mavis_vsetvli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvli");
+
+        // Get pointer to the vector uop generator
+        sparta::TreeNode * root_node = getContainer()->getRoot();
+        vec_uop_gen_ = \
+            root_node->getChild("cpu.core0.decode.vec_uop_gen")->getResourceAs<olympia::VectorUopGenerator*>();
+        vec_uop_gen_->setMavis(mavis_facade_);
     }
 
     // -------------------------------------------------------------------
@@ -181,7 +187,7 @@ namespace olympia
 
             InstUidListType uids;
             // Send instructions on their way to rename
-            for (uint32_t i = 0; i < num_decode; ++i)
+            for (uint32_t num_insts_decoded = 0; num_insts_decoded < num_decode; ++num_insts_decoded)
             {
                 if (uop_queue_.size() > 0)
                 {
@@ -212,9 +218,8 @@ namespace olympia
                                                        << " VTA: " << VCSRs_.vta
                                                        << " VL: " << VCSRs_.vl);
                     }
-                    else if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_
-                             || inst->getOpCodeInfo()->getInstructionUniqueID()
-                                    == mavis_vsetvli_uid_)
+                    else if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_ ||
+                             inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvli_uid_)
                     {
                         // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                         waiting_on_vset_ = true;
@@ -227,95 +232,64 @@ namespace olympia
                         if (!inst->isVset() && inst->isVector())
                         {
                             // set LMUL, VSET, VL, VTA for any other vector instructions
-                            inst->setVCSRs(VCSRs_);
+                            inst->setVCSRs(&VCSRs_);
                         }
                     }
-                    if (inst->getLMUL() > 1 && !inst->isVset() && inst->isVector())
+
+                    ILOG("Decoded: " << inst);
+                    insts->emplace_back(inst);
+                    inst->setStatus(Inst::Status::DECODED);
+
+                    // Handle vector uop generation
+                    if (inst->isVector() && !inst->isVset())
                     {
                         // update num_decode based on UOp count as well
-                        num_decode =
-                            std::min(uop_queue_credits_,
-                                     fetch_queue_.size() + uop_queue_.size() + inst->getLMUL() - 1);
+                        num_decode = std::min(uop_queue_credits_,
+                            fetch_queue_.size() + uop_queue_.size() + inst->getLMUL() - 1);
                         num_decode = std::min(num_decode, num_to_decode_);
-                        // lmul > 1, fracture instruction into UOps
-                        inst->setUOpID(0); // set UOpID()
-                        ILOG("Inst: " << inst << " is being split into " << VCSRs_.lmul << " UOPs");
 
-                        insts->emplace_back(inst);
-                        inst->setStatus(Inst::Status::DECODED);
-                        inst->setUOpCount(VCSRs_.lmul);
+                        // If LMUL > 1, fracture instruction into UOps
+                        vec_uop_gen_->setInst(inst);
+
+                        // Original instruction will act as the first UOp
+                        inst->setUOpID(0); // set UOpID()
                         inst->setLMUL(1); // setting LMUL to 1 due to UOp fracture
-                        fetch_queue_.pop();
-                        for (uint32_t j = 1; j < VCSRs_.lmul; ++j)
+
+                        while(vec_uop_gen_->keepGoing())
                         {
-                            i++; // increment decode count to account for UOps
-                            // we create lmul - 1 instructions, because the original instruction
-                            // will also be executed, so we start creating UOPs at vector
-                            // registers + 1 until LMUL
-                            const std::string mnemonic = inst->getMnemonic();
-                            auto srcs = inst->getSourceOpInfoList();
-                            for (auto & src : srcs)
+                            const InstPtr uop = vec_uop_gen_->genUop();
+                            if (num_insts_decoded < num_decode)
                             {
-                                src.field_value += j;
-                            }
-                            auto dests = inst->getDestOpInfoList();
-                            for (auto & dest : dests)
-                            {
-                                dest.field_value += j;
-                            }
-                            const auto imm = inst->getImmediate();
-                            mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
-                            InstPtr new_inst = mavis_facade_->makeInstDirectly(ex_info, getClock());
-                            // setting UOp instructions to have the same UID and PID as parent
-                            // instruction
-                            new_inst->setUniqueID(inst->getUniqueID());
-                            new_inst->setProgramID(inst->getProgramID());
-                            InstPtr inst_uop_ptr(new Inst(*new_inst));
-                            inst_uop_ptr->setVCSRs(VCSRs_);
-                            inst_uop_ptr->setUOpID(j);
-                            inst_uop_ptr->setLMUL(1); // setting LMUL to 1 due to UOp fracture
-                            sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = inst;
-                            inst_uop_ptr->setUOpParent(weak_ptr_inst);
-                            if (i < num_decode)
-                            {
-                                inst_uop_ptr->setTail(VCSRs_.vl / VCSRs_.sew < std::max(
-                                                          Inst::VLEN / VCSRs_.sew, VCSRs_.vlmax));
-                                insts->emplace_back(inst_uop_ptr);
-                                inst_uop_ptr->setStatus(Inst::Status::DECODED);
+                                insts->emplace_back(uop);
+                                uop->setStatus(Inst::Status::DECODED);
                             }
                             else
                             {
-                                ILOG("Not enough decode credits to process UOp, appending to "
-                                     "uop_queue_ "
-                                     << inst_uop_ptr);
-                                uop_queue_.push(inst_uop_ptr);
+                                ILOG("Not enough decode credits to process UOp, "
+                                     "appending to the uop queue: " << uop);
+                                uop_queue_.push(uop);
                             }
+                            ++num_insts_decoded;
                         }
                     }
-                    else
+
+                    if (fusion_enable_)
                     {
-                        inst->setTail(VCSRs_.vl / VCSRs_.sew
-                                      < std::max(Inst::VLEN / VCSRs_.sew, VCSRs_.vlmax));
-                        insts->emplace_back(inst);
-                        inst->setStatus(Inst::Status::DECODED);
+                        uids.push_back(inst->getMavisUid());
+                    }
 
-                        if (fusion_enable_)
-                        {
-                            uids.push_back(inst->getMavisUid());
-                        }
+                    // Remove from Fetch Queue
+                    fetch_queue_.pop();
 
-                        ILOG("Decoded: " << inst);
-
-                        fetch_queue_.pop();
-                        if (waiting_on_vset_)
-                        {
-                            // if we have a waiting on vset followed by more instructions, we decode
-                            // vset and stall anything else
-                            break;
-                        }
+                    if (waiting_on_vset_)
+                    {
+                        // if we have a waiting on vset followed by more instructions, we decode
+                        // vset and stall anything else
+                        break;
                     }
                 }
             }
+
             if (fusion_enable_)
             {
                 MatchInfoListType matches;
@@ -337,7 +311,10 @@ namespace olympia
 
             // Debug statement
             if (fusion_debug_ && fusion_enable_)
+            {
                 infoInsts_(cout, insts);
+            }
+
             // Send decoded instructions to rename
             uop_queue_outp_.send(insts);
 

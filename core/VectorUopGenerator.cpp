@@ -23,7 +23,7 @@ namespace olympia
             num_uops_to_generate_ = current_inst_->getLMUL() - 1;
             current_inst_->setUOpCount(num_uops_to_generate_);
 
-            ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
+            ILOG("Inst: " << current_inst_ << " is being split into " << (num_uops_to_generate_ + 1) << " UOPs");
         }
         else
         {

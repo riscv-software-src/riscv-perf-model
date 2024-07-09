@@ -262,10 +262,12 @@ namespace olympia
 
         void setTail(bool has_tail) { has_tail_ = has_tail; }
 
-        void setVCSRs(const VCSRs & inputVCSRs)
+        void setVCSRs(const VCSRs * inputVCSRs)
         {
-            VCSRs_.setVCSRs(inputVCSRs.vl, inputVCSRs.sew, inputVCSRs.lmul, inputVCSRs.vta);
+            VCSRs_.setVCSRs(inputVCSRs->vl, inputVCSRs->sew, inputVCSRs->lmul, inputVCSRs->vta);
         }
+
+        const VCSRs * getVCSRs() const { return &VCSRs_; }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent)
         {

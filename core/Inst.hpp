@@ -249,10 +249,18 @@ namespace olympia
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
 
         // Set lmul from vset (vsetivli, vsetvli)
-        void setLMUL(uint32_t lmul) { VCSRs_.lmul = lmul; }
+        void setLMUL(uint32_t lmul)
+        {
+            VCSRs_.lmul = lmul;
+            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+        }
 
         // Set sew from vset (vsetivli, vsetvli)
-        void setSEW(uint32_t sew) { VCSRs_.sew = sew; }
+        void setSEW(uint32_t sew)
+        {
+            VCSRs_.sew = sew;
+            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+        }
 
         // Set VL from vset (vsetivli, vsetvli)
         void setVL(uint32_t vl) { VCSRs_.vl = vl; }

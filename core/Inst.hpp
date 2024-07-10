@@ -336,6 +336,24 @@ namespace olympia
 
         const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
 
+	bool hasZeroRegSource() const
+	{
+	    return std::any_of(getSourceOpInfoList().begin(), getSourceOpInfoList().end(),
+	        [](const mavis::OperandInfo::Element & elem)
+		{
+		    return elem.field_value == 0;
+		});
+	}
+
+	bool hasZeroRegDest() const
+	{
+	    return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
+	        [](const mavis::OperandInfo::Element & elem)
+		{
+		    return elem.field_value == 0;
+		});
+	}
+
         // Static instruction information
         bool isStoreInst() const { return is_store_; }
 

@@ -131,24 +131,39 @@ namespace olympia
         }
     }
 
+    void Decode::updateVcsrs_(const InstPtr & inst)
+    {
+        uint64_t vl = inst->getVL();
+        const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
+        if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
+        {
+            // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
+            // If rs1 is x0 and rd is not x0 then vl is set to vlmax
+            vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax) : VCSRs_.vlmax;
+        }
+
+        VCSRs_.setVCSRs(vl, inst->getSEW(), inst->getLMUL(), inst->getVTA());
+
+        ILOG("Processing vset{i}vl{i} instruction: " << inst);
+        ILOG("  LMUL: " << VCSRs_.lmul);
+        ILOG("   SEW: " << VCSRs_.sew);
+        ILOG("   VTA: " << VCSRs_.vta);
+        ILOG(" VLMAX: " << VCSRs_.vlmax);
+        ILOG("    VL: " << VCSRs_.vl);
+
+        // Check validity of vector config
+        sparta_assert(VCSRs_.lmul <= 8,
+            "LMUL (" << VCSRs_.lmul << ") cannot be greater than " << 8);
+        sparta_assert(VCSRs_.vl <= VCSRs_.vlmax,
+            "VL (" << VCSRs_.vl << ") cannot be greater than VLMAX ("<< VCSRs_.vlmax << ")");
+    }
+
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
-        // Check validity of vector config
-        sparta_assert(inst->getLMUL() <= 8,
-            "LMUL (" << inst->getLMUL() << ") cannot be greater than " << 8);
-        sparta_assert(inst->getVL() <= inst->getVLMAX(),
-            "VL (" << inst->getVL() << ") cannot be greater than VLMAX ("<< inst->getVLMAX() << ")");
-        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
-        // AVL setting to VLMAX if rs1 = 0 and rd != 0
-        if (inst->getSourceOpInfoList()[0].field_value == 0
-            && inst->getDestOpInfoList()[0].field_value != 0)
-        {
-            // set vl to vlmax, no need to block, vsetvli when rs1 is 0
-            // so we set VL to 0 on setVCSRs_()
-            VCSRs_.vl = VCSRs_.vlmax;
-        }
+        updateVcsrs_(inst);
+
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
         {
@@ -214,22 +229,16 @@ namespace olympia
                 // to allow scalar operations to move forward until a subsequent vector
                 // instruction is detected or do vset prediction
 
-                // the only two vset instructions that block are vsetvl or vsetvli,
-                // because both depend on register value
-                if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_)
+                // vsetvl always block
+                // vsetvli only blocks if rs1 is not x0
+                // vsetivli never blocks
+                const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
+                if ((uid == mavis_vsetivli_uid_) ||
+                   ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource()))
                 {
-                    // vsetivli with immediates, we can set at decode and continue to process
-                    // instruction group, no vset stall
-                    VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(),
-                                    inst->getVTA());
-                    ILOG("Setting vset from VSETIVLI,"
-                         " LMUL: " << VCSRs_.lmul <<
-                         " SEW: " << VCSRs_.sew <<
-                         " VTA: " << VCSRs_.vta <<
-                         " VL: " << VCSRs_.vl);
+                    updateVcsrs_(inst);
                 }
-                else if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_ ||
-                         inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvli_uid_)
+                else if (uid == mavis_vsetvli_uid_ || uid == mavis_vsetvl_uid_)
                 {
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                     waiting_on_vset_ = true;

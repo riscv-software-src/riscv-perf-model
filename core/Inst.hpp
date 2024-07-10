@@ -79,14 +79,16 @@ namespace olympia
         // Vector CSRs
         struct VCSRs
         {
+            uint32_t vl = 16;  // vector length
             uint32_t sew = 8;  // set element width
             uint32_t lmul = 1; // effective length
-            uint32_t vl = 128;
-            bool vta = false; // vector tail agnostic, false = undisturbed, true = agnostic
+            bool vta = false;  // vector tail agnostic, false = undisturbed, true = agnostic
 
             uint32_t vlmax_formula() { return (VLEN / sew) * lmul; }
 
-            void setVCSRs(uint32_t input_vl, uint32_t input_sew, uint32_t input_lmul,
+            void setVCSRs(uint32_t input_vl,
+                          uint32_t input_sew,
+                          uint32_t input_lmul,
                           uint32_t input_vta)
             {
                 vl = input_vl;

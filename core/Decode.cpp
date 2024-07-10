@@ -164,14 +164,14 @@ namespace olympia
     // Decode instructions
     void Decode::decodeInsts_()
     {
-        uint32_t num_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size());
-        num_decode = std::min(num_decode, num_to_decode_);
+        uint32_t num_to_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size());
+        num_to_decode = std::min(num_to_decode, num_to_decode_);
 
         // buffer to maximize the chances of a group match limited
         // by max allowed latency, bounded by max group size
         if (fusion_enable_)
         {
-            if (num_decode < fusion_max_group_size_ && latency_count_ < fusion_max_latency_)
+            if (num_to_decode < fusion_max_group_size_ && latency_count_ < fusion_max_latency_)
             {
                 ++latency_count_;
                 return;
@@ -180,165 +180,155 @@ namespace olympia
 
         latency_count_ = 0;
 
-        if (num_decode > 0 && !waiting_on_vset_)
-        {
-            InstGroupPtr insts =
-                sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        // For fusion
+        InstUidListType uids;
 
-            InstUidListType uids;
-            // Send instructions on their way to rename
-            for (uint32_t num_insts_decoded = 0; num_insts_decoded < num_decode; ++num_insts_decoded)
+        // Send instructions on their way to rename
+        InstGroupPtr insts =
+            sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        // if we have a waiting on vset followed by more instructions, we decode
+        // vset and stall anything else
+        while ((insts->size() < num_to_decode) && !waiting_on_vset_)
+        {
+            if (uop_queue_.size() > 0)
             {
-                if (uop_queue_.size() > 0)
+                const auto & inst = uop_queue_.read(0);
+                insts->emplace_back(inst);
+                inst->setStatus(Inst::Status::DECODED);
+                ILOG("From UOp Queue Decoded: " << inst);
+                uop_queue_.pop();
+            }
+            else if (fetch_queue_.size() > 0)
+            {
+                sparta_assert(fetch_queue_.size() > 0,
+                     "Cannot read from the fetch queue because it is empty!");
+                auto & inst = fetch_queue_.read(0);
+
+                // for vector instructions, we block on vset and do not allow any other
+                // processing of instructions until the vset is resolved optimizations could be
+                // to allow scalar operations to move forward until a subsequent vector
+                // instruction is detected or do vset prediction
+
+                // the only two vset instructions that block are vsetvl or vsetvli,
+                // because both depend on register value
+                if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_)
                 {
-                    const auto & inst = uop_queue_.read(0);
-                    insts->emplace_back(inst);
-                    inst->setStatus(Inst::Status::DECODED);
-                    ILOG("From UOp Queue Decoded: " << inst);
-                    uop_queue_.pop();
+                    // vsetivli with immediates, we can set at decode and continue to process
+                    // instruction group, no vset stall
+                    VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(),
+                                    inst->getVTA());
+                    ILOG("Setting vset from VSETIVLI,"
+                         " LMUL: " << VCSRs_.lmul <<
+                         " SEW: " << VCSRs_.sew <<
+                         " VTA: " << VCSRs_.vta <<
+                         " VL: " << VCSRs_.vl);
+                }
+                else if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_ ||
+                         inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvli_uid_)
+                {
+                    // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
+                    waiting_on_vset_ = true;
+                    // need to indicate we want a signal sent back at execute
+                    inst->setBlockingVSET(true);
+                    ILOG("Decode stalled, Waiting on vset that has register dependency: " << inst)
                 }
                 else
                 {
-                    auto & inst = fetch_queue_.read(0);
-
-                    // for vector instructions, we block on vset and do not allow any other
-                    // processing of instructions until the vset is resolved optimizations could be
-                    // to allow scalar operations to move forward until a subsequent vector
-                    // instruction is detected or do vset prediction
-
-                    // the only two vset instructions that block are vsetvl or vsetvli,
-                    // because both depend on register value
-                    if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetivli_uid_)
+                    if (!inst->isVset() && inst->isVector())
                     {
-                        // vsetivli with immediates, we can set at decode and continue to process
-                        // instruction group, no vset stall
-                        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(),
-                                        inst->getVTA());
-                        ILOG("Setting vset from VSETIVLI, LMUL: " << VCSRs_.lmul << " SEW: " << VCSRs_.sew
-                                                       << " VTA: " << VCSRs_.vta
-                                                       << " VL: " << VCSRs_.vl);
-                    }
-                    else if (inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvl_uid_ ||
-                             inst->getOpCodeInfo()->getInstructionUniqueID() == mavis_vsetvli_uid_)
-                    {
-                        // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
-                        waiting_on_vset_ = true;
-                        // need to indicate we want a signal sent back at execute
-                        inst->setBlockingVSET(true);
-                        ILOG("Decode stall due to vset dependency: " << inst);
-                    }
-                    else
-                    {
-                        if (!inst->isVset() && inst->isVector())
-                        {
-                            // set LMUL, VSET, VL, VTA for any other vector instructions
-                            inst->setVCSRs(&VCSRs_);
-                        }
-                    }
-
-                    ILOG("Decoded: " << inst);
-                    insts->emplace_back(inst);
-                    inst->setStatus(Inst::Status::DECODED);
-
-                    // Handle vector uop generation
-                    if (inst->isVector() && !inst->isVset())
-                    {
-                        // update num_decode based on UOp count as well
-                        num_decode = std::min(uop_queue_credits_,
-                            fetch_queue_.size() + uop_queue_.size() + inst->getLMUL() - 1);
-                        num_decode = std::min(num_decode, num_to_decode_);
-
-                        // If LMUL > 1, fracture instruction into UOps
-                        vec_uop_gen_->setInst(inst);
-
-                        // Original instruction will act as the first UOp
-                        inst->setUOpID(0); // set UOpID()
-                        inst->setLMUL(1); // setting LMUL to 1 due to UOp fracture
-
-                        while(vec_uop_gen_->keepGoing())
-                        {
-                            const InstPtr uop = vec_uop_gen_->genUop();
-                            if (num_insts_decoded < num_decode)
-                            {
-                                insts->emplace_back(uop);
-                                uop->setStatus(Inst::Status::DECODED);
-                            }
-                            else
-                            {
-                                ILOG("Not enough decode credits to process UOp, "
-                                     "appending to the uop queue: " << uop);
-                                uop_queue_.push(uop);
-                            }
-                            ++num_insts_decoded;
-                        }
-                    }
-
-                    if (fusion_enable_)
-                    {
-                        uids.push_back(inst->getMavisUid());
-                    }
-
-                    // Remove from Fetch Queue
-                    fetch_queue_.pop();
-
-                    if (waiting_on_vset_)
-                    {
-                        // if we have a waiting on vset followed by more instructions, we decode
-                        // vset and stall anything else
-                        break;
+                        // set LMUL, VSET, VL, VTA for any other vector instructions
+                        inst->setVCSRs(&VCSRs_);
                     }
                 }
+
+                ILOG("Decoded: " << inst);
+                insts->emplace_back(inst);
+                inst->setStatus(Inst::Status::DECODED);
+
+                // Handle vector uop generation
+                if (inst->isVector() && !inst->isVset())
+                {
+                    // If LMUL > 1, fracture instruction into UOps
+                    ILOG("Vector uop gen: " << inst);
+                    vec_uop_gen_->setInst(inst);
+
+                    // Original instruction will act as the first UOp
+                    inst->setUOpID(0); // set UOpID()
+
+                    while(vec_uop_gen_->keepGoing())
+                    {
+                        const InstPtr uop = vec_uop_gen_->genUop();
+                        if (insts->size() < num_to_decode_)
+                        {
+                            insts->emplace_back(uop);
+                            uop->setStatus(Inst::Status::DECODED);
+                        }
+                        else
+                        {
+                            ILOG("Not enough decode credits to process UOp, "
+                                 "appending to the uop queue: " << uop);
+                            uop_queue_.push(uop);
+                        }
+                    }
+                }
+
+                if (fusion_enable_)
+                {
+                    uids.push_back(inst->getMavisUid());
+                }
+
+                // Remove from Fetch Queue
+                fetch_queue_.pop();
             }
-
-            if (fusion_enable_)
+            else
             {
-                MatchInfoListType matches;
-                uint32_t max_itrs = 0;
-                FusionGroupContainerType & container = fuser_->getFusionGroupContainer();
-                do
-                {
-                    matchFusionGroups_(matches, insts, uids, container);
-                    processMatches_(matches, insts, uids);
-                    // Future feature whereIsEgon(insts,numGhosts);
-                    ++max_itrs;
-                } while (matches.size() > 0 && max_itrs < fusion_match_max_tries_);
+                // Uop queue and fetch queue are both empty, nothing left to decode
+                break;
+            }
+        }
 
-                if (max_itrs >= fusion_match_max_tries_)
-                {
-                    throw sparta::SpartaException("Fusion group match watch dog exceeded.");
-                }
+        if (fusion_enable_)
+        {
+            MatchInfoListType matches;
+            uint32_t max_itrs = 0;
+            FusionGroupContainerType & container = fuser_->getFusionGroupContainer();
+            do
+            {
+                matchFusionGroups_(matches, insts, uids, container);
+                processMatches_(matches, insts, uids);
+                // Future feature whereIsEgon(insts,numGhosts);
+                ++max_itrs;
+            } while (matches.size() > 0 && max_itrs < fusion_match_max_tries_);
+
+            if (max_itrs >= fusion_match_max_tries_)
+            {
+                throw sparta::SpartaException("Fusion group match watch dog exceeded.");
             }
 
             // Debug statement
-            if (fusion_debug_ && fusion_enable_)
+            if (fusion_debug_)
             {
                 infoInsts_(cout, insts);
             }
-
-            // Send decoded instructions to rename
-            uop_queue_outp_.send(insts);
-
-            // TODO: whereisegon() would remove the ghosts,
-            // Commented out for now, in practice insts
-            // would be smaller due to the fused ops
-            // uint32_t unfusedInstsSize = insts->size();
-
-            // Decrement internal Uop Queue credits
-            sparta_assert(uop_queue_credits_ >= insts->size(),
-                          "Attempt to decrement d0q credits below what is available");
-
-            uop_queue_credits_ -= insts->size();
-
-            // Send credits back to Fetch to get more instructions
-            fetch_queue_credits_outp_.send(insts->size());
         }
-        else
-        {
-            if (waiting_on_vset_)
-            {
-                ILOG("Waiting on vset that has register dependency")
-            }
-        }
+
+        // Send decoded instructions to rename
+        sparta_assert(insts->size() <= num_to_decode_,
+            "Instruction group grew too large! " << insts);
+        uop_queue_outp_.send(insts);
+
+        // TODO: whereisegon() would remove the ghosts,
+        // Commented out for now, in practice insts
+        // would be smaller due to the fused ops
+        // uint32_t unfusedInstsSize = insts->size();
+
+        // Decrement internal Uop Queue credits
+        sparta_assert(uop_queue_credits_ >= insts->size(),
+            "Attempt to decrement d0q credits below what is available");
+        uop_queue_credits_ -= insts->size();
+
+        // Send credits back to Fetch to get more instructions
+        fetch_queue_credits_outp_.send(insts->size());
 
         // If we still have credits to send instructions as well as
         // instructions in the queue, schedule another decode session

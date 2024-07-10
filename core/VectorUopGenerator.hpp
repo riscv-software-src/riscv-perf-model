@@ -43,7 +43,7 @@ namespace olympia
 
         const InstPtr genUop();
 
-        bool keepGoing() const { return num_uops_to_generate_ != 0; }
+        bool keepGoing() const { return num_uops_to_generate_ > 1; }
 
     private:
         MavisType * mavis_facade_;

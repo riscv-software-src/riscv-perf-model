@@ -16,20 +16,22 @@ namespace olympia
             "Cannot start generating uops for a new vector instruction, "
             "current instruction has not finished: " << current_inst_);
 
-        if(inst->getLMUL() > 1)
+        // Number of vector elements processed by each uop
+        const Inst::VCSRs * current_VCSRs = inst->getVCSRs();
+        const uint64_t num_elems_per_uop = Inst::VLEN / current_VCSRs->sew;
+        num_uops_to_generate_ = std::ceil(current_VCSRs->vl / num_elems_per_uop);
+
+        if(num_uops_to_generate_ > 1)
         {
             current_inst_ = inst;
-
-            num_uops_to_generate_ = current_inst_->getLMUL() - 1;
             current_inst_->setUOpCount(num_uops_to_generate_);
-
-            ILOG("Inst: " << current_inst_ << " is being split into " << (num_uops_to_generate_ + 1) << " UOPs");
+            ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
         }
         else
         {
-            const Inst::VCSRs * current_VCSRs = current_inst_->getVCSRs();
             const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
             inst->setTail(num_elems < current_VCSRs->vlmax);
+            ILOG("Inst: " << inst << " does not need to generate uops");
         }
     }
 
@@ -64,7 +66,6 @@ namespace olympia
         const Inst::VCSRs * current_VCSRs = current_inst_->getVCSRs();
         uop->setVCSRs(current_VCSRs);
         uop->setUOpID(num_uops_generated_);
-        uop->setLMUL(1); // setting LMUL to 1 due to UOp fracture
 
         // Set weak pointer to parent vector instruction (first uop)
         sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = current_inst_;

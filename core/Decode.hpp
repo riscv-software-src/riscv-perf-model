@@ -342,6 +342,10 @@ namespace olympia
         uint32_t mavis_vsetvli_uid_;
 
         bool waiting_on_vset_;
+
+        // Helper method to update VCSRs
+        void updateVcsrs_(const InstPtr &);
+
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();

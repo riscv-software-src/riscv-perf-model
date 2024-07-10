@@ -66,7 +66,7 @@ public:
     void test_VCSRs_sew_32(olympia::Decode &decode) {
         // test VCSRs
         EXPECT_TRUE(decode.VCSRs_.lmul == 1);
-        EXPECT_TRUE(decode.VCSRs_.vl == 512);
+        EXPECT_TRUE(decode.VCSRs_.vl == 32);
         EXPECT_TRUE(decode.VCSRs_.vta == 1);
         EXPECT_TRUE(decode.VCSRs_.sew == 32);
     }

@@ -135,6 +135,11 @@ namespace olympia
     // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
+        // Check validity of vector config
+        sparta_assert(inst->getLMUL() <= 8,
+            "LMUL (" << inst->getLMUL() << ") cannot be greater than " << 8);
+        sparta_assert(inst->getVL() <= inst->getVLMAX(),
+            "VL (" << inst->getVL() << ") cannot be greater than VLMAX ("<< inst->getVLMAX() << ")");
         VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
         // AVL setting to VLMAX if rs1 = 0 and rd != 0
         if (inst->getSourceOpInfoList()[0].field_value == 0

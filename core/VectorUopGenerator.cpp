@@ -19,18 +19,23 @@ namespace olympia
         // Number of vector elements processed by each uop
         const Inst::VCSRs * current_VCSRs = inst->getVCSRs();
         const uint64_t num_elems_per_uop = Inst::VLEN / current_VCSRs->sew;
-        num_uops_to_generate_ = std::ceil(current_VCSRs->vl / num_elems_per_uop);
+        // TODO: For now, generate uops for all elements even if there is a tail
+        num_uops_to_generate_ = std::ceil(current_VCSRs->vlmax / num_elems_per_uop);
+
+        // Does the instruction have tail elements?
+        const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
+        inst->setTail(num_elems < current_VCSRs->vlmax);
 
         if(num_uops_to_generate_ > 1)
         {
             current_inst_ = inst;
             current_inst_->setUOpCount(num_uops_to_generate_);
             ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
+            // Inst counts as the first uop
+            --num_uops_to_generate_;
         }
         else
         {
-            const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
-            inst->setTail(num_elems < current_VCSRs->vlmax);
             ILOG("Inst: " << inst << " does not need to generate uops");
         }
     }

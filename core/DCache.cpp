@@ -8,7 +8,6 @@ namespace olympia
     DCache::DCache(sparta::TreeNode* n, const CacheParameterSet* p) :
         sparta::Unit(n),
         l1_always_hit_(p->l1_always_hit),
-        cache_latency_(p->cache_latency),
         cache_line_size_(p->l1_line_size),
         num_mshr_entries_(p->mshr_entries),
         mshr_file_("mshr_file", p->mshr_entries, getClock()),

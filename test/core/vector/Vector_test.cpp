@@ -103,14 +103,18 @@ public:
     }
 };
 
-class olympia::RenameTester{
-    public:
-        void test_hastail(olympia::Rename &rename){
-            const auto & renaming_inst = rename.uop_queue_.read(0);
-            EXPECT_TRUE(renaming_inst->hasTail() == true);
-        }
+class olympia::ROBTester
+{
+public:
+    void test_hastail(olympia::ROB &rob)
+    {
+        sparta_assert(rob.last_inst_retired_ != nullptr,
+            "AHHHH");
+        EXPECT_TRUE(rob.last_inst_retired_->hasTail() == true);
+    }
 };
-void runIQTest(int argc, char **argv) {
+
+void runTests(int argc, char **argv) {
     DEFAULTS.auto_summary_default = "off";
     std::vector<std::string> datafiles;
     std::string input_file;
@@ -133,18 +137,16 @@ void runIQTest(int argc, char **argv) {
             "Enable the experimental vector pipelines");
 
     po::positional_options_description &pos_opts = cls.getPositionalOptions();
-    pos_opts.add("output_file",
-                             -1); // example, look for the <data file> at the end
+    pos_opts.add("output_file", -1); // example, look for the <data file> at the end
 
     int err_code = 0;
     if (!cls.parse(argc, argv, err_code)) {
-        sparta_assert(
-                false,
-                "Command line parsing failed"); // Any errors already printed to cerr
+        sparta_assert(false,
+            "Command line parsing failed"); // Any errors already printed to cerr
     }
 
     sparta_assert(false == datafiles.empty(),
-                                "Need an output file as the last argument of the test");
+        "Need an output file as the last argument of the test");
 
     uint64_t ilimit = 0;
     uint32_t num_cores = 1;
@@ -234,13 +236,13 @@ void runIQTest(int argc, char **argv) {
         issue_queue_tester.no_inst_issued(*my_issuequeue);
     }
     else if(input_file.find("undisturbed_checking.json") != std::string::npos){
-        cls.runSimulator(&sim, 9);
+        cls.runSimulator(&sim, 150);
 
-        // Test Rename
-        olympia::Rename *my_rename = \
-            root_node->getChild("cpu.core0.rename")->getResourceAs<olympia::Rename *>();
-        olympia::RenameTester rename_tester;
-        rename_tester.test_hastail(*my_rename);
+        // Test Retire
+        olympia::ROB *my_rob = \
+            root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB *>();
+        olympia::ROBTester rob_tester;
+        rob_tester.test_hastail(*my_rob);
     }
     else if(input_file.find("vrgather.json") != std::string::npos)
     {
@@ -256,7 +258,7 @@ void runIQTest(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    runIQTest(argc, argv);
+    runTests(argc, argv);
 
     REPORT_ERROR;
     return (int)ERROR_CODE;

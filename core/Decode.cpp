@@ -135,12 +135,12 @@ namespace olympia
     {
         VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
 
-	const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
+        const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
         if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
         {
             // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
             VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
-	                                       : VCSRs_.vlmax;
+                                               : VCSRs_.vlmax;
         }
 
         ILOG("Processing vset{i}vl{i} instruction: " << inst);

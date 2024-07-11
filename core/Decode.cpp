@@ -139,7 +139,6 @@ namespace olympia
         if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
         {
             // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
-            // If rs1 is x0 and rd is not x0 then vl is set to vlmax
             VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
 	                                       : VCSRs_.vlmax;
         }

@@ -178,6 +178,9 @@ namespace olympia
         ILOG("Got a flush call for " << criteria);
         fetch_queue_credits_outp_.send(fetch_queue_.size());
         fetch_queue_.clear();
+
+        // Reset the vector uop generator
+        vec_uop_gen_->handleFlush(criteria);
     }
 
     // Decode instructions
@@ -268,9 +271,9 @@ namespace olympia
                     // Original instruction will act as the first UOp
                     inst->setUOpID(0); // set UOpID()
 
-                    while(vec_uop_gen_->keepGoing())
+                    while(vec_uop_gen_->getNumUopsRemaining() > 0)
                     {
-                        const InstPtr uop = vec_uop_gen_->genUop();
+                        const InstPtr uop = vec_uop_gen_->generateUop();
                         if (insts->size() < num_to_decode_)
                         {
                             insts->emplace_back(uop);

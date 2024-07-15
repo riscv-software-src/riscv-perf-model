@@ -40,7 +40,7 @@ namespace olympia
         }
     }
 
-    const InstPtr VectorUopGenerator::genUop()
+    const InstPtr VectorUopGenerator::generateUop()
     {
         ++num_uops_generated_;
 
@@ -82,13 +82,18 @@ namespace olympia
             const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
             uop->setTail(num_elems < current_VCSRs->vlmax);
 
-            // Reset
-            current_inst_ = nullptr;
-            num_uops_generated_ = 0;
-            num_uops_to_generate_ = 0;
+            reset_();
         }
 
         ILOG("Generated uop: " << uop);
         return uop;
+    }
+
+    void VectorUopGenerator::handleFlush(const FlushManager::FlushingCriteria & flush_criteria)
+    {
+        if(current_inst_ && flush_criteria.includedInFlush(current_inst_))
+        {
+            reset_();
+        }
     }
 } // namespace olympia

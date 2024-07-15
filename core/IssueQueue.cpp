@@ -99,7 +99,7 @@ namespace olympia
     {
         const auto srcs = ex_inst->getRenameData().getSourceList();
         uint32_t ready = 0;
-        for(auto src : srcs)
+        for(const auto & src : srcs)
         {
             // vector-scalar operations have 1 vector src and 1 scalar src that
             // need to be checked, so can't assume the register files are the

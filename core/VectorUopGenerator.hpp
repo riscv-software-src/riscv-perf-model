@@ -7,6 +7,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 
 #include "Inst.hpp"
+#include "FlushManager.hpp"
 #include "MavisUnit.hpp"
 
 namespace olympia
@@ -41,9 +42,11 @@ namespace olympia
 
         void setInst(const InstPtr & inst);
 
-        const InstPtr genUop();
+        const InstPtr generateUop();
 
-        bool keepGoing() const { return num_uops_to_generate_ > 1; }
+        uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }
+
+        void handleFlush(const FlushManager::FlushingCriteria &);
 
     private:
         MavisType * mavis_facade_;
@@ -53,5 +56,12 @@ namespace olympia
 
         uint64_t num_uops_generated_ = 0;
         uint64_t num_uops_to_generate_ = 0;
+
+        void reset_()
+        {
+            current_inst_ = nullptr;
+            num_uops_generated_ = 0;
+            num_uops_to_generate_ = 0;
+        }
     };
 } // namespace olympia

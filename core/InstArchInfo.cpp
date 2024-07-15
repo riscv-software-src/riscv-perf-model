@@ -6,15 +6,46 @@
 namespace olympia
 {
     const InstArchInfo::TargetPipeMap InstArchInfo::execution_pipe_map = {
-        {"br",    InstArchInfo::TargetPipe::BR},    {"cmov",    InstArchInfo::TargetPipe::CMOV},
-        {"div",   InstArchInfo::TargetPipe::DIV},   {"faddsub", InstArchInfo::TargetPipe::FADDSUB},
-        {"float", InstArchInfo::TargetPipe::FLOAT}, {"fmac",    InstArchInfo::TargetPipe::FMAC},
-        {"i2f",   InstArchInfo::TargetPipe::I2F},   {"f2i",     InstArchInfo::TargetPipe::F2I},
-        {"int",   InstArchInfo::TargetPipe::INT},   {"lsu",     InstArchInfo::TargetPipe::LSU},
-        {"mul",   InstArchInfo::TargetPipe::MUL},   {"vint",    InstArchInfo::TargetPipe::VINT},
-        {"vset",  InstArchInfo::TargetPipe::VSET},  {"vmul",    InstArchInfo::TargetPipe::VMUL},
-        {"vdiv",  InstArchInfo::TargetPipe::VDIV},  {"sys",     InstArchInfo::TargetPipe::SYS},
-        {"?",     InstArchInfo::TargetPipe::UNKNOWN}};
+        {"br",      InstArchInfo::TargetPipe::BR},
+        {"cmov",    InstArchInfo::TargetPipe::CMOV},
+        {"div",     InstArchInfo::TargetPipe::DIV},
+        {"faddsub", InstArchInfo::TargetPipe::FADDSUB},
+        {"float",   InstArchInfo::TargetPipe::FLOAT},
+        {"fmac",    InstArchInfo::TargetPipe::FMAC},
+        {"i2f",     InstArchInfo::TargetPipe::I2F},
+        {"f2i",     InstArchInfo::TargetPipe::F2I},
+        {"int",     InstArchInfo::TargetPipe::INT},
+        {"lsu",     InstArchInfo::TargetPipe::LSU},
+        {"mul",     InstArchInfo::TargetPipe::MUL},
+        {"vint",    InstArchInfo::TargetPipe::VINT},
+        {"vmask",   InstArchInfo::TargetPipe::VMASK},
+        {"vset",    InstArchInfo::TargetPipe::VSET},
+        {"vmul",    InstArchInfo::TargetPipe::VMUL},
+        {"vdiv",    InstArchInfo::TargetPipe::VDIV},
+        {"sys",     InstArchInfo::TargetPipe::SYS},
+        {"?",       InstArchInfo::TargetPipe::UNKNOWN}
+    };
+
+    const InstArchInfo::TargetPipeStringMap InstArchInfo::execution_pipe_string_map = {
+        {InstArchInfo::TargetPipe::BR,      "BR"},
+        {InstArchInfo::TargetPipe::CMOV,    "CMOV"},
+        {InstArchInfo::TargetPipe::DIV,     "DIV"},
+        {InstArchInfo::TargetPipe::FADDSUB, "FADDSUB"},
+        {InstArchInfo::TargetPipe::FLOAT,   "FLOAT"},
+        {InstArchInfo::TargetPipe::FMAC,    "FMAC"},
+        {InstArchInfo::TargetPipe::I2F,     "I2F"},
+        {InstArchInfo::TargetPipe::F2I,     "F2I"},
+        {InstArchInfo::TargetPipe::INT,     "INT"},
+        {InstArchInfo::TargetPipe::LSU,     "LSU"},
+        {InstArchInfo::TargetPipe::MUL,     "MUL"},
+        {InstArchInfo::TargetPipe::VINT,    "VINT"},
+        {InstArchInfo::TargetPipe::VMASK,   "VMASK"},
+        {InstArchInfo::TargetPipe::VSET,    "VSET"},
+        {InstArchInfo::TargetPipe::VMUL,    "VMUL"},
+        {InstArchInfo::TargetPipe::VDIV,    "VDIV"},
+        {InstArchInfo::TargetPipe::SYS,     "SYS"},
+        {InstArchInfo::TargetPipe::UNKNOWN, "?"}
+    };
 
     void InstArchInfo::update(const nlohmann::json & jobj)
     {

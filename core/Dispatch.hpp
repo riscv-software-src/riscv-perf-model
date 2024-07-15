@@ -123,34 +123,24 @@ namespace olympia
 
         ///////////////////////////////////////////////////////////////////////
         // Stall counters
-        enum StallReason
+        enum StallReason : uint16_t
         {
-            CMOV_BUSY = InstArchInfo::TargetPipe::CMOV, // Could not send any or all instructions --
-                                                        // CMOV busy
-            DIV_BUSY =
-                InstArchInfo::TargetPipe::DIV, // Could not send any or all instructions -- DIV busy
-            FADDSUB_BUSY = InstArchInfo::TargetPipe::FADDSUB, // Could not send any or all
-                                                              // instructions -- FADDSUB busy
-            FLOAT_BUSY = InstArchInfo::TargetPipe::FLOAT, // Could not send any or all instructions
-                                                          // -- FLOAT busy
-            FMAC_BUSY = InstArchInfo::TargetPipe::FMAC, // Could not send any or all instructions --
-                                                        // FMAC busy
-            I2F_BUSY =
-                InstArchInfo::TargetPipe::I2F, // Could not send any or all instructions -- I2F busy
-            F2I_BUSY =
-                InstArchInfo::TargetPipe::F2I, // Could not send any or all instructions -- F2I busy
-            INT_BUSY =
-                InstArchInfo::TargetPipe::INT, // Could not send any or all instructions -- INT busy
-            LSU_BUSY =
-                InstArchInfo::TargetPipe::LSU, // Could not send any or all instructions -- LSU busy
-            MUL_BUSY =
-                InstArchInfo::TargetPipe::MUL, // Could not send any or all instructions -- MUL busy
-            BR_BUSY =
-                InstArchInfo::TargetPipe::BR, // Could not send any or all instructions -- BR busy
-            VINT_BUSY = InstArchInfo::TargetPipe::VINT,
-            VMUL_BUSY = InstArchInfo::TargetPipe::VMUL,
-            VDIV_BUSY = InstArchInfo::TargetPipe::VDIV,
-            VSET_BUSY = InstArchInfo::TargetPipe::VSET,
+            BR_BUSY =        InstArchInfo::TargetPipe::BR,
+            CMOV_BUSY =      InstArchInfo::TargetPipe::CMOV,
+            DIV_BUSY =       InstArchInfo::TargetPipe::DIV,
+            FADDSUB_BUSY =   InstArchInfo::TargetPipe::FADDSUB,
+            FLOAT_BUSY =     InstArchInfo::TargetPipe::FLOAT,
+            FMAC_BUSY =      InstArchInfo::TargetPipe::FMAC,
+            I2F_BUSY =       InstArchInfo::TargetPipe::I2F,
+            F2I_BUSY =       InstArchInfo::TargetPipe::F2I,
+            INT_BUSY =       InstArchInfo::TargetPipe::INT,
+            LSU_BUSY =       InstArchInfo::TargetPipe::LSU,
+            MUL_BUSY =       InstArchInfo::TargetPipe::MUL,
+            VINT_BUSY =      InstArchInfo::TargetPipe::VINT,
+            VMASK_BUSY =     InstArchInfo::TargetPipe::VMASK,
+            VMUL_BUSY =      InstArchInfo::TargetPipe::VMUL,
+            VDIV_BUSY =      InstArchInfo::TargetPipe::VDIV,
+            VSET_BUSY =      InstArchInfo::TargetPipe::VSET,
             NO_ROB_CREDITS = InstArchInfo::TargetPipe::SYS, // No credits from the ROB
             NOT_STALLED, // Made forward progress (dispatched all instructions or no instructions)
             N_STALL_REASONS
@@ -185,6 +175,8 @@ namespace olympia
              sparta::CycleCounter(getStatisticSet(), "stall_br_busy", "BR busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_vint_busy", "VINT busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_vmask_busy", "VMASK busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_vmul_busy", "VMUL busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
@@ -222,6 +214,8 @@ namespace olympia
              sparta::Counter(getStatisticSet(), "count_br_insts", "Total BR insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_vint_insts", "Total VINT insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_vmask_insts", "Total VMASK insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_vmul_insts", "Total VMUL insts",
                              sparta::Counter::COUNT_NORMAL),
@@ -282,60 +276,20 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const Dispatch::StallReason & stall)
     {
-        switch (stall)
+        if (stall == Dispatch::StallReason::NOT_STALLED)
         {
-        case Dispatch::StallReason::NOT_STALLED:
             os << "NOT_STALLED";
-            break;
-        case Dispatch::StallReason::NO_ROB_CREDITS:
+        }
+        else if (stall == Dispatch::StallReason::NO_ROB_CREDITS)
+        {
             os << "NO_ROB_CREDITS";
-            break;
-        case Dispatch::StallReason::LSU_BUSY:
-            os << "LSU_BUSY";
-            break;
-        case Dispatch::StallReason::CMOV_BUSY:
-            os << "CMOV_BUSY";
-            break;
-        case Dispatch::StallReason::DIV_BUSY:
-            os << "DIV_BUSY";
-            break;
-        case Dispatch::StallReason::FADDSUB_BUSY:
-            os << "FADDSUB_BUSY";
-            break;
-        case Dispatch::StallReason::FLOAT_BUSY:
-            os << "FLOAT_BUSY";
-            break;
-        case Dispatch::StallReason::FMAC_BUSY:
-            os << "FMAC_BUSY";
-            break;
-        case Dispatch::StallReason::I2F_BUSY:
-            os << "I2F_BUSY";
-            break;
-        case Dispatch::StallReason::F2I_BUSY:
-            os << "F2I_BUSY";
-            break;
-        case Dispatch::StallReason::INT_BUSY:
-            os << "INT_BUSY";
-            break;
-        case Dispatch::StallReason::MUL_BUSY:
-            os << "MUL_BUSY";
-            break;
-        case Dispatch::StallReason::BR_BUSY:
-            os << "BR_BUSY";
-            break;
-        case Dispatch::StallReason::VINT_BUSY:
-            os << "VINT_BUSY";
-            break;
-        case Dispatch::StallReason::VMUL_BUSY:
-            os << "VMUL_BUSY";
-            break;
-        case Dispatch::StallReason::VDIV_BUSY:
-            os << "VDIV_BUSY";
-            break;
-        case Dispatch::StallReason::VSET_BUSY:
-            os << "VSET_BUSY";
-            break;
-        case Dispatch::StallReason::N_STALL_REASONS:
+        }
+        else if (stall != Dispatch::StallReason::N_STALL_REASONS)
+        {
+            os << InstArchInfo::execution_pipe_string_map.at((InstArchInfo::TargetPipe)stall) << "_BUSY";
+        }
+        else
+        {
             sparta_assert(false, "How'd we get here?");
         }
 

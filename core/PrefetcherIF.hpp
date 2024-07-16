@@ -53,13 +53,13 @@ namespace olympia
          * \param Sparta Unit this prefetcher belongs to
          */
         PrefetcherIF(sparta::Unit* unit) :
-            in_req_{unit_->getPortSet(), "n_req", 0},
-            prefetcher_outp_{unit_->getPortSet(), "out_prefetcher_write"},
-            in_reorder_flush_{unit_->getPortSet(), "in_reorder_flush",
+            in_req_{unit->getPortSet(), "n_req", 0},
+            prefetcher_outp_{unit->getPortSet(), "out_prefetcher_write"},
+            in_reorder_flush_{unit->getPortSet(), "in_reorder_flush",
                               sparta::SchedulingPhase::Flush, 1},
-            cnt_req_rcvd_{unit_->getStatisticSet(), "cnt_req_rcvd",
+            cnt_req_rcvd_{unit->getStatisticSet(), "cnt_req_rcvd",
                           "Number of memory requests recieved", sparta::Counter::COUNT_NORMAL},
-            cnt_prefetch_snd_{unit_->getStatisticSet(), "cnt_prefetch_sent",
+            cnt_prefetch_snd_{unit->getStatisticSet(), "cnt_prefetch_sent",
                               "Number of prefetch requests sent", sparta::Counter::COUNT_NORMAL},
             unit_(unit)
         {
@@ -200,14 +200,10 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
 
         //! Count of requests received
-        sparta::Counter cnt_req_rcvd_{unit_->getStatisticSet(), "cnt_req_rcvd",
-                                      "Number of memory requests recieved",
-                                      sparta::Counter::COUNT_NORMAL};
+        sparta::Counter cnt_req_rcvd_;
 
         //! Count of prefetches generated
-        sparta::Counter cnt_prefetch_snd_{unit_->getStatisticSet(), "cnt_prefetch_sent",
-                                          "Number of prefetch requests sent",
-                                          sparta::Counter::COUNT_NORMAL};
+        sparta::Counter cnt_prefetch_snd_;
 
         //! Sparta unit to use to house ports and stats
         sparta::Unit* unit_;

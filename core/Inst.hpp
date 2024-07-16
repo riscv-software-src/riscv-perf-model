@@ -79,14 +79,16 @@ namespace olympia
         // Vector CSRs
         struct VCSRs
         {
+            uint32_t vl = 16;  // vector length
             uint32_t sew = 8;  // set element width
             uint32_t lmul = 1; // effective length
-            uint32_t vl = 128;
-            bool vta = false; // vector tail agnostic, false = undisturbed, true = agnostic
+            bool vta = false;  // vector tail agnostic, false = undisturbed, true = agnostic
 
             uint32_t vlmax_formula() { return (VLEN / sew) * lmul; }
 
-            void setVCSRs(uint32_t input_vl, uint32_t input_sew, uint32_t input_lmul,
+            void setVCSRs(uint32_t input_vl,
+                          uint32_t input_sew,
+                          uint32_t input_lmul,
                           uint32_t input_vta)
             {
                 vl = input_vl;
@@ -247,10 +249,18 @@ namespace olympia
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
 
         // Set lmul from vset (vsetivli, vsetvli)
-        void setLMUL(uint32_t lmul) { VCSRs_.lmul = lmul; }
+        void setLMUL(uint32_t lmul)
+        {
+            VCSRs_.lmul = lmul;
+            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+        }
 
         // Set sew from vset (vsetivli, vsetvli)
-        void setSEW(uint32_t sew) { VCSRs_.sew = sew; }
+        void setSEW(uint32_t sew)
+        {
+            VCSRs_.sew = sew;
+            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+        }
 
         // Set VL from vset (vsetivli, vsetvli)
         void setVL(uint32_t vl) { VCSRs_.vl = vl; }
@@ -262,10 +272,12 @@ namespace olympia
 
         void setTail(bool has_tail) { has_tail_ = has_tail; }
 
-        void setVCSRs(const VCSRs & inputVCSRs)
+        void setVCSRs(const VCSRs * inputVCSRs)
         {
-            VCSRs_.setVCSRs(inputVCSRs.vl, inputVCSRs.sew, inputVCSRs.lmul, inputVCSRs.vta);
+            VCSRs_.setVCSRs(inputVCSRs->vl, inputVCSRs->sew, inputVCSRs->lmul, inputVCSRs->vta);
         }
+
+        const VCSRs * getVCSRs() const { return &VCSRs_; }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent)
         {
@@ -323,6 +335,24 @@ namespace olympia
         uint64_t getImmediate() const { return opcode_info_->getImmediate(); }
 
         const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
+
+        bool hasZeroRegSource() const
+        {
+            return std::any_of(getSourceOpInfoList().begin(), getSourceOpInfoList().end(),
+                [](const mavis::OperandInfo::Element & elem)
+                {
+                    return elem.field_value == 0;
+                });
+        }
+
+        bool hasZeroRegDest() const
+        {
+            return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
+                [](const mavis::OperandInfo::Element & elem)
+                {
+                    return elem.field_value == 0;
+                });
+        }
 
         // Static instruction information
         bool isStoreInst() const { return is_store_; }

@@ -118,6 +118,9 @@ namespace olympia
         // For correlation activities
         sparta::pevents::PeventCollector<InstPEventPairs> retire_event_{"RETIRE", getContainer(), getClock()};
 
+        // Last inst retired for testing
+        InstPtr last_inst_retired_ = nullptr;
+
         // A nice checker to make sure forward progress is being made
         // Note that in the ROB constructor, this event is set as non-continuing
         sparta::Clock::Cycle last_retirement_ = 0; // Last retirement cycle for checking stalled retire
@@ -136,5 +139,9 @@ namespace olympia
 
         void retireSysInst_(InstPtr & );
 
+        // Friend class used in retire testing
+        friend class ROBTester;
     };
+
+    class ROBTester;
 }

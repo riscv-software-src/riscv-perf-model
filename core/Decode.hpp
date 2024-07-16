@@ -28,7 +28,7 @@
 
 namespace olympia
 {
-
+    class VectorUopGenerator;
     /**
      * @file   Decode.h
      * @brief Decode instructions from Fetch and send them on
@@ -152,6 +152,9 @@ namespace olympia
         // The internal instruction queue
         InstQueue fetch_queue_;
         InstQueue uop_queue_;
+
+        // Vector uop generator
+        VectorUopGenerator * vec_uop_gen_ = nullptr;
 
         // Port listening to the fetch queue appends - Note the 1 cycle delay
         sparta::DataInPort<InstGroupPtr> fetch_queue_write_in_{&unit_port_set_,
@@ -331,7 +334,7 @@ namespace olympia
         const std::vector<std::string> fusion_group_definitions_;
 
         Inst::VCSRs VCSRs_;
-        
+
         MavisType* mavis_facade_;
 
         uint32_t mavis_vsetvl_uid_;
@@ -339,6 +342,10 @@ namespace olympia
         uint32_t mavis_vsetvli_uid_;
 
         bool waiting_on_vset_;
+
+        // Helper method to update VCSRs
+        void updateVcsrs_(const InstPtr &);
+
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();

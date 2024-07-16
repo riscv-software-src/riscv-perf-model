@@ -205,17 +205,23 @@ namespace olympia
                 sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
                               "ROB and rename inst_queue out of sync");
             }
+
+            inst_queue_.pop_front();
+
+            // pop all UOps from inst_queue_ to relaign ROB and rename inst_queue
             if (inst_ptr->hasUOps())
             {
-                // pop all UOps from inst_queue_ to relaign ROB and rename inst_queue
-                for (uint32_t i = 0; i < inst_ptr->getLMUL(); i++)
+                while (inst_queue_.empty() == false)
                 {
-                    inst_queue_.pop_front();
+                    if (inst_ptr->getUOpID() == inst_queue_.front()->getUOpID())
+                    {
+                        inst_queue_.pop_front();
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
-            }
-            else
-            {
-                inst_queue_.pop_front();
             }
         }
         else

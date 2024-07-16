@@ -44,6 +44,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->decode_rf
         },
         {
+            "vec_uop_gen",
+            "cpu.core*.decode",
+            "Vector Uop Generator",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->vec_uop_gen_rf
+        },
+        {
             "rename",
             "cpu.core*",
             "Rename Unit",

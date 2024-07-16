@@ -165,6 +165,7 @@ namespace olympia
                 ILOG("retiring " << ex_inst);
 
                 retire_event_.collect(*ex_inst_ptr);
+                last_inst_retired_ = ex_inst_ptr;
 
                 // Use the program ID to verify that the program order has been maintained.
                 sparta_assert(ex_inst.getProgramID() == expected_program_id_,

@@ -68,6 +68,8 @@ namespace olympia
         enum class UopGenType
         {
             ARITH,
+            ARITH_SINGLE_DEST,
+            ARITH_WIDE_DEST,
             NONE
         };
 

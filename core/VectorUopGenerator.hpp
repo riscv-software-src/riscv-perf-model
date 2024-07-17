@@ -25,6 +25,10 @@ namespace olympia
         {
           public:
             VectorUopGeneratorParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+
+            //! \brief Generate uops for widening vector instructions with two dests
+            //PARAMETER(bool, widening_dual_dest, false,
+            //    "Generate uops for widening vector instructions with two dests")
         };
 
         /**
@@ -44,6 +48,7 @@ namespace olympia
 
         const InstPtr generateUop();
 
+        template<bool SINGLE_DEST = false, bool WIDE_DEST = false>
         const InstPtr generateArithUop();
 
         uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }

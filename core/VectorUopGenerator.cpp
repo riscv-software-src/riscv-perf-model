@@ -9,9 +9,48 @@ namespace olympia
     VectorUopGenerator::VectorUopGenerator(sparta::TreeNode* node, const VectorUopGeneratorParameterSet* p) :
         sparta::Unit(node)
     {
-        // Vector arithmetic instruction uop generator
-        // Increment all src and dest register numbers for all uops
-        uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH, &VectorUopGenerator::generateArithUop);
+        // Vector arithmetic uop generator, increment all src and dest register numbers
+        // For a "vadd.vv v12, v4,v8" with an LMUL of 4:
+        //      Uop 1: vadd.vv v12, v4, v8
+        //      Uop 2: vadd.vv v13, v5, v9
+        //      Uop 3: vadd.vv v14, v6, v10
+        //      Uop 4: vadd.vv v15, v7, v11
+        {
+            constexpr bool SINGLE_DEST = false;
+            constexpr bool WIDE_DEST = false;
+            uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH,
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST>);
+        }
+
+        // Vector arithmetic single dest uop generator, only increment all src register numbers
+        // For a "vmseq.vv v12, v4,v8" with an LMUL of 4:
+        //      Uop 1: vadd.vv v12, v4, v8
+        //      Uop 2: vadd.vv v12, v5, v9
+        //      Uop 3: vadd.vv v12, v6, v10
+        //      Uop 4: vadd.vv v12, v7, v11
+        {
+            constexpr bool SINGLE_DEST = true;
+            constexpr bool WIDE_DEST = false;
+            uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH_SINGLE_DEST,
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST>);
+        }
+
+        // Vector arithmetic wide dest uop generator, only increment src register numbers for even uops
+        // For a "vwmul.vv v12, v4, v8" with an LMUL of 4:
+        //     Uop 1: vwmul.vv v12, v4, v8
+        //     Uop 2: vwmul.vv v13, v4, v8
+        //     Uop 3: vwmul.vv v14, v6, v10
+        //     Uop 4: vwmul.vv v15, v6, v10
+        //     Uop 5: vwmul.vv v16, v8, v12
+        //     Uop 6: vwmul.vv v17, v8, v12
+        //     Uop 7: vwmul.vv v18, v10, v14
+        //     Uop 8: vwmul.vv v19, v10, v14
+        {
+            constexpr bool SINGLE_DEST = false;
+            constexpr bool WIDE_DEST = true;
+            uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH_WIDE_DEST,
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST>);
+        }
     }
 
     void VectorUopGenerator::setInst(const InstPtr & inst)
@@ -20,27 +59,33 @@ namespace olympia
             "Cannot start generating uops for a new vector instruction, "
             "current instruction has not finished: " << current_inst_);
 
-        // Number of vector elements processed by each uop
-        const Inst::VCSRs * current_VCSRs = inst->getVCSRs();
-        const uint64_t num_elems_per_uop = Inst::VLEN / current_VCSRs->sew;
-        // TODO: For now, generate uops for all elements even if there is a tail
-        num_uops_to_generate_ = std::ceil(current_VCSRs->vlmax / num_elems_per_uop);
+        const auto uop_gen_type = inst->getUopGenType();
+        if(uop_gen_type != InstArchInfo::UopGenType::NONE)
+        {
+            // Number of vector elements processed by each uop
+            const Inst::VCSRs * current_VCSRs = inst->getVCSRs();
+            const uint64_t num_elems_per_uop = Inst::VLEN / current_VCSRs->sew;
+            // TODO: For now, generate uops for all elements even if there is a tail
+            num_uops_to_generate_ = std::ceil(current_VCSRs->vlmax / num_elems_per_uop);
 
-        // Does the instruction have tail elements?
-        const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
-        inst->setTail(num_elems < current_VCSRs->vlmax);
+            if(uop_gen_type == InstArchInfo::UopGenType::ARITH_WIDE_DEST)
+            {
+                // TODO: Add parameter to support dual dests
+                num_uops_to_generate_ *= 2;
+            }
+
+            // Does the instruction have tail elements?
+            inst->setTail(current_VCSRs->vl < current_VCSRs->vlmax);
+        }
 
         if(num_uops_to_generate_ > 1)
         {
             current_inst_ = inst;
             current_inst_->setUOpCount(num_uops_to_generate_);
-            ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
+            ILOG("Inst: " << current_inst_ << " is being split into "
+                          << num_uops_to_generate_ << " UOPs");
             // Inst counts as the first uop
             --num_uops_to_generate_;
-
-            const auto uop_gen_type = current_inst_->getUopGenType();
-            sparta_assert(uop_gen_type != InstArchInfo::UopGenType::NONE,
-                "Vector instruction does not specify which uop generator to use! " << inst);
         }
         else
         {
@@ -51,25 +96,40 @@ namespace olympia
     const InstPtr VectorUopGenerator::generateUop()
     {
         const auto uop_gen_type = current_inst_->getUopGenType();
+        sparta_assert(uop_gen_type != InstArchInfo::UopGenType::NONE,
+            "Inst: " << current_inst_ << " uop gen type is unknown");
         auto x = uop_gen_function_map_.at(uop_gen_type);
         return x(this);
     }
 
+    template<bool SINGLE_DEST, bool WIDE_DEST>
     const InstPtr VectorUopGenerator::generateArithUop()
     {
         ++num_uops_generated_;
 
         // Increment source and destination register values
-        // TODO: Different generators will handle this differently
         auto srcs = current_inst_->getSourceOpInfoList();
         for (auto & src : srcs)
         {
-            src.field_value += num_uops_generated_;
+            if constexpr (WIDE_DEST == true)
+            {
+                // Only increment source values for even uops
+                src.field_value += (num_uops_generated_ % 2) ? num_uops_generated_ - 1
+                                                             : num_uops_generated_;
+            }
+            else
+            {
+                src.field_value += num_uops_generated_;
+            }
         }
+
         auto dests = current_inst_->getDestOpInfoList();
-        for (auto & dest : dests)
+        if constexpr (SINGLE_DEST == false)
         {
-            dest.field_value += num_uops_generated_;
+            for (auto & dest : dests)
+            {
+                dest.field_value += num_uops_generated_;
+            }
         }
 
         // Create uop

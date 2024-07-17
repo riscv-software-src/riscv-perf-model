@@ -1,5 +1,13 @@
 [
     {
+        "mnemonic": "vsetivli",
+        "rs1": 5,
+        "rd": 1,
+        "vtype": "0x2",
+        "vl": 512,
+        "vta": 0
+    },
+    {
         "mnemonic": "add",
         "rs1": 1,
         "rs2": 2,

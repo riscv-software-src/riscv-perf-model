@@ -12,9 +12,11 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv.json      ${CMAKE_C
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vaddvv.json       ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vaddvv.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvl_vaddvv.json        ${CMAKE_CURRENT_BINARY_DIR}/vsetvl_vaddvv.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv_tail.json ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vaddvv_tail.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json      ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/add_vmulvx.json         ${CMAKE_CURRENT_BINARY_DIR}/add_vmulvx.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vrgather.json           ${CMAKE_CURRENT_BINARY_DIR}/vrgather.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json        ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmulvx.json               ${CMAKE_CURRENT_BINARY_DIR}/vmulvx.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vwmulvv.json              ${CMAKE_CURRENT_BINARY_DIR}/vwmulvv.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmseqvv.json              ${CMAKE_CURRENT_BINARY_DIR}/vmseqvv.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vrgather.json             ${CMAKE_CURRENT_BINARY_DIR}/vrgather.json SYMBOLIC)
 
 
 
@@ -23,5 +25,7 @@ sparta_named_test(Vector_test_vsetvli       Vector_test big_core.out -c test_cor
 sparta_named_test(Vector_test_vsetvl        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vaddvv.json)
 sparta_named_test(Vector_test_vsetivli_tail Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vaddvv_tail.json)
 #sparta_named_test(Vector_test_multiple_vset Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file multiple_vset.json)
-sparta_named_test(Vector_test_add_vmulvx    Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file add_vmulvx.json)
+sparta_named_test(Vector_test_vmulvx    Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmulvx.json)
+sparta_named_test(Vector_test_vmulvv        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vwmulvv.json)
+sparta_named_test(Vector_test_vmseqvv       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmseqvv.json)
 sparta_named_test(Vector_unsupported_test   Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file vrgather.json)

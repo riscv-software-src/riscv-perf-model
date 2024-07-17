@@ -246,7 +246,7 @@ void runTests(int argc, char **argv)
     {
         cls.runSimulator(&sim);
 
-        // Test Decode
+        // Test Decode (last vset)
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(1);
         decode_tester.test_vl(128);
@@ -254,15 +254,41 @@ void runTests(int argc, char **argv)
         decode_tester.test_sew(32);
         decode_tester.test_vlmax(32);
     }
-    else if(input_file.find("add_vmulvx.json") != std::string::npos)
+    else if(input_file.find("vmulvx.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(3);
+        // vadd + 4 vmul.vx uop
+        rob_tester.test_num_uops_retired(6);
+        rob_tester.test_last_inst_has_tail(false);
+
+        // TODO: Test source values for all uops
+    }
+    else if(input_file.find("vwmulvv.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
         // Test Retire
         rob_tester.test_num_insts_retired(2);
-        // vadd + 1 vmul.vx uop
-        rob_tester.test_num_uops_retired(2);
+        // vadd + 8 vwmul.vv uop
+        rob_tester.test_num_uops_retired(9);
         rob_tester.test_last_inst_has_tail(false);
+
+        // TODO: Test destination values for all uops
+    }
+    else if(input_file.find("vmseqvv.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(2);
+        // vadd + 4 vmseq.vv uops
+        rob_tester.test_num_uops_retired(5);
+        rob_tester.test_last_inst_has_tail(false);
+
+        // TODO: Test destination values for all uops
     }
     else if(input_file.find("vrgather.json") != std::string::npos)
     {

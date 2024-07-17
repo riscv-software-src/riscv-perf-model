@@ -111,6 +111,12 @@ namespace olympia
         auto srcs = current_inst_->getSourceOpInfoList();
         for (auto & src : srcs)
         {
+            // Do not increment scalar sources for transfer instructions
+            if (src.operand_type != mavis::InstMetaData::OperandTypes::VECTOR)
+            {
+                continue;
+            }
+
             if constexpr (WIDE_DEST == true)
             {
                 // Only increment source values for even uops

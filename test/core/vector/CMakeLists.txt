@@ -8,19 +8,20 @@ file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches      
 
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/test_cores   ${CMAKE_CURRENT_BINARY_DIR}/test_cores SYMBOLIC)
 
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vadd_lmul_4.json   ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vadd_lmul_4.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvl_vadd.json   ${CMAKE_CURRENT_BINARY_DIR}/vsetvl_vadd.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vadd_sew_32.json   ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vadd_sew_32.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vl_max_setting.json  ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vl_max_setting.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json  ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmul_transfer.json  ${CMAKE_CURRENT_BINARY_DIR}/vmul_transfer.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/undisturbed_checking.json  ${CMAKE_CURRENT_BINARY_DIR}/undisturbed_checking.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv.json      ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vaddvv.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vaddvv.json       ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vaddvv.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvl_vaddvv.json        ${CMAKE_CURRENT_BINARY_DIR}/vsetvl_vaddvv.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv_tail.json ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vaddvv_tail.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json      ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/add_vmulvx.json         ${CMAKE_CURRENT_BINARY_DIR}/add_vmulvx.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vrgather.json           ${CMAKE_CURRENT_BINARY_DIR}/vrgather.json SYMBOLIC)
 
 
 
-sparta_named_test(Vector_test_vsetivli_lmul_4        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vadd_lmul_4.json)
-sparta_named_test(Vector_test_vsetvl_vadd            Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vadd.json)
-sparta_named_test(Vector_test_vsetvli_vadd_sew_32    Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vadd_sew_32.json)
-sparta_named_test(Vector_test_vsetvli_vl_max_setting Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vl_max_setting.json)
-sparta_named_test(Vector_undisturbed_test            Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file undisturbed_checking.json)
-sparta_named_test(Vector_unsupported_test            Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file vrgather.json)
+sparta_named_test(Vector_test_vsetivli      Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vaddvv.json)
+sparta_named_test(Vector_test_vsetvli       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vaddvv.json)
+sparta_named_test(Vector_test_vsetvl        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vaddvv.json)
+sparta_named_test(Vector_test_vsetivli_tail Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vaddvv_tail.json)
+#sparta_named_test(Vector_test_multiple_vset Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file multiple_vset.json)
+sparta_named_test(Vector_test_add_vmulvx    Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file add_vmulvx.json)
+sparta_named_test(Vector_unsupported_test   Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file vrgather.json)

@@ -37,84 +37,81 @@ const char USAGE[] = "Usage:\n"
 
 sparta::app::DefaultValues DEFAULTS;
 
-class olympia::DecodeTester {
+class olympia::DecodeTester
+{
 public:
-    void test_waiting_on_vset(olympia::Decode &decode) {
-        EXPECT_TRUE(decode.waiting_on_vset_ == true);
-    }
-    void test_no_waiting_on_vset(olympia::Decode &decode) {
-        // test waiting on vset is false
-        EXPECT_TRUE(decode.waiting_on_vset_ == false);
-    }
-    void test_VCSRs(olympia::Decode &decode) {
-        // test VCSRs
-        EXPECT_TRUE(decode.VCSRs_.lmul == 1);
-        EXPECT_TRUE(decode.VCSRs_.vl == 128);
-        EXPECT_TRUE(decode.VCSRs_.vta == 0);
-        EXPECT_TRUE(decode.VCSRs_.sew == 8);
-        EXPECT_TRUE(decode.VCSRs_.vlmax == 128);
+    DecodeTester(olympia::Decode * decode) :
+        decode_(decode)
+    {}
+
+    void test_waiting_on_vset()
+    {
+        EXPECT_TRUE(decode_->waiting_on_vset_ == true);
     }
 
-    void test_VCSRs_after(olympia::Decode &decode) {
-        // test VCSRs
-        EXPECT_TRUE(decode.VCSRs_.lmul == 4);
-        EXPECT_TRUE(decode.VCSRs_.vl == 1024);
-        EXPECT_TRUE(decode.VCSRs_.vta == 0);
-        EXPECT_TRUE(decode.VCSRs_.sew == 8);
+    void test_waiting_on_vset(const bool expected_val)
+    {
+        EXPECT_TRUE(decode_->waiting_on_vset_ == expected_val);
     }
 
-    void test_VCSRs_sew_32(olympia::Decode &decode) {
-        // test VCSRs
-        EXPECT_TRUE(decode.VCSRs_.lmul == 1);
-        EXPECT_TRUE(decode.VCSRs_.vl == 32);
-        EXPECT_TRUE(decode.VCSRs_.vta == 1);
-        EXPECT_TRUE(decode.VCSRs_.sew == 32);
+    void test_vl(const uint32_t expected_vl)
+    {
+        EXPECT_TRUE(decode_->VCSRs_.vl == expected_vl);
     }
 
-    void test_vl_max(olympia::Decode &decode){
-        EXPECT_TRUE(decode.VCSRs_.vl == 512);
-        EXPECT_TRUE(decode.VCSRs_.lmul == 8);
-        EXPECT_TRUE(decode.VCSRs_.vta == 1);
-        EXPECT_TRUE(decode.VCSRs_.sew == 16);
+    void test_sew(const uint32_t expected_sew)
+    {
+        EXPECT_TRUE(decode_->VCSRs_.sew == expected_sew);
     }
 
-    void test_VCSRs_mul_vset(olympia::Decode &decode){
-        EXPECT_TRUE(decode.VCSRs_.vl == 128);
-        EXPECT_TRUE(decode.VCSRs_.lmul == 1);
-        EXPECT_TRUE(decode.VCSRs_.vta == 0);
-        EXPECT_TRUE(decode.VCSRs_.sew == 32);
-    }
-};
-
-class olympia::IssueQueueTester {
-public:
-    void test_uop_count(olympia::IssueQueue &issuequeue) {
-        // 4 UOps + 1 vset instruction, so 5 total
-        EXPECT_TRUE(issuequeue.total_insts_issued_ == 5);
+    void test_lmul(const uint32_t expected_lmul)
+    {
+        EXPECT_TRUE(decode_->VCSRs_.lmul == expected_lmul);
     }
 
-    void test_no_uop_count(olympia::IssueQueue &issuequeue) {
-        // 2 instructions, no uops
-        EXPECT_TRUE(issuequeue.total_insts_issued_ == 2);
+    void test_vlmax(const uint32_t expected_vlmax)
+    {
+        EXPECT_TRUE(decode_->VCSRs_.vlmax == expected_vlmax);
     }
 
-    void no_inst_issued(olympia::IssueQueue &issuequeue) {
-        EXPECT_TRUE(issuequeue.total_insts_issued_ == 0);
+    void test_vta(const bool expected_vta)
+    {
+        EXPECT_TRUE(decode_->VCSRs_.vta == expected_vta);
     }
+
+private:
+    olympia::Decode * decode_;
 };
 
 class olympia::ROBTester
 {
 public:
-    void test_hastail(olympia::ROB &rob)
+    ROBTester(olympia::ROB * rob) :
+        rob_(rob)
+    {}
+
+    void test_num_insts_retired(const uint64_t expected_num_insts_retired)
     {
-        sparta_assert(rob.last_inst_retired_ != nullptr,
-            "AHHHH");
-        EXPECT_TRUE(rob.last_inst_retired_->hasTail() == true);
+        EXPECT_TRUE(rob_->num_retired_ == expected_num_insts_retired);
     }
+
+    void test_num_uops_retired(const uint64_t expected_num_uops_retired)
+    {
+        EXPECT_TRUE(rob_->num_uops_retired_ == expected_num_uops_retired);
+    }
+
+    void test_last_inst_has_tail(const bool expected_tail)
+    {
+        EXPECT_TRUE(rob_->last_inst_retired_ != nullptr);
+        EXPECT_TRUE(rob_->last_inst_retired_->hasTail() == expected_tail);
+    }
+
+private:
+    olympia::ROB * rob_;
 };
 
-void runTests(int argc, char **argv) {
+void runTests(int argc, char **argv)
+    {
     DEFAULTS.auto_summary_default = "off";
     std::vector<std::string> datafiles;
     std::string input_file;
@@ -140,7 +137,8 @@ void runTests(int argc, char **argv) {
     pos_opts.add("output_file", -1); // example, look for the <data file> at the end
 
     int err_code = 0;
-    if (!cls.parse(argc, argv, err_code)) {
+    if (!cls.parse(argc, argv, err_code))
+    {
         sparta_assert(false,
             "Command line parsing failed"); // Any errors already printed to cerr
     }
@@ -158,106 +156,129 @@ void runTests(int argc, char **argv) {
     sparta::RootTreeNode *root_node = sim.getRoot();
     cls.populateSimulation(&sim);
 
-    if (input_file.find("vsetivli_vadd_lmul_4.json") != std::string::npos) {
-        // Test Decode
-        olympia::Decode *my_decode = \
-            root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
-        olympia::DecodeTester decode_tester;
-        decode_tester.test_VCSRs(*my_decode);
+    olympia::Decode *my_decode = \
+        root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
+    olympia::DecodeTester decode_tester {my_decode};
 
-        cls.runSimulator(&sim, 3);
-        // decode_tester.test_no_waiting_on_vset(*my_decode);
-        // decode_tester.test_VCSRs_after(*my_decode);
-        // cls.runSimulator(&sim, 8);
-        // decode_tester.test_VCSRs_after(*my_decode);
-        // cls.runSimulator(&sim);
-        // olympia::IssueQueue *my_issuequeue =
-        //         root_node->getChild("cpu.core0.execute.iq5")
-        //                 ->getResourceAs<olympia::IssueQueue *>();
+    olympia::ROB *my_rob = \
+        root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB *>();
+    olympia::ROBTester rob_tester {my_rob};
 
-        // olympia::IssueQueueTester issue_queue_tester;
-        // issue_queue_tester.test_uop_count(*my_issuequeue);
-    }
-    else if(input_file.find("vsetvli_vadd_sew_32.json") != std::string::npos){
-        cls.runSimulator(&sim, 8);
-
-        // Test Decode
-        olympia::Decode *my_decode = \
-            root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
-        olympia::DecodeTester decode_tester;
-        decode_tester.test_VCSRs_sew_32(*my_decode);
+    if (input_file.find("vsetivli_vaddvv.json") != std::string::npos)
+    {
+        // Test Decode (defaults)
+        decode_tester.test_lmul(1);
+        decode_tester.test_vl(128);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(8);
+        decode_tester.test_vlmax(128);
 
         cls.runSimulator(&sim);
 
-        // Test IQ
-        olympia::IssueQueue *my_issuequeue = \
-            root_node->getChild("cpu.core0.execute.iq5")->getResourceAs<olympia::IssueQueue *>();
-        olympia::IssueQueueTester issue_queue_tester;
-        issue_queue_tester.test_no_uop_count(*my_issuequeue);
-    }
-    else if(input_file.find("vsetvl_vadd.json") != std::string::npos)
-    {
-        cls.runSimulator(&sim, 4);
-
-        // Test Decode
-        olympia::Decode *my_decode = \
-            root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
-        olympia::DecodeTester decode_tester;
-        decode_tester.test_waiting_on_vset(*my_decode);
-    }
-    else if(input_file.find("vsetvli_vl_max_setting.json") != std::string::npos){
-        // lmul = 8
-        // SEW = 16
-        cls.runSimulator(&sim, 8);
-
-        // Test Decode
-        olympia::Decode *my_decode = \
-            root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
-        olympia::DecodeTester decode_tester;
-        decode_tester.test_vl_max(*my_decode);
-    }
-    else if(input_file.find("multiple_vset.json") != std::string::npos){
-        cls.runSimulator(&sim, 21);
-
-        // Test Decode
-        olympia::Decode *my_decode = \
-            root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
-        olympia::DecodeTester decode_tester;
-        decode_tester.test_VCSRs_mul_vset(*my_decode);
-    }
-    else if(input_file.find("vmul_transfer.json") != std::string::npos){
-        cls.runSimulator(&sim, 7);
-
-        // Test IQ
-        olympia::IssueQueue *my_issuequeue = \
-            root_node->getChild("cpu.core0.execute.iq5")->getResourceAs<olympia::IssueQueue *>();
-        olympia::IssueQueueTester issue_queue_tester;
-        // vmul.vx relies on scalar add, should not process until it's done RAW hazard
-        issue_queue_tester.no_inst_issued(*my_issuequeue);
-    }
-    else if(input_file.find("undisturbed_checking.json") != std::string::npos){
-        cls.runSimulator(&sim, 150);
+        // Test after vsetivli
+        decode_tester.test_waiting_on_vset(false);
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(512);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(8);
+        decode_tester.test_vlmax(512);
 
         // Test Retire
-        olympia::ROB *my_rob = \
-            root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB *>();
-        olympia::ROBTester rob_tester;
-        rob_tester.test_hastail(*my_rob);
+        rob_tester.test_num_insts_retired(2);
+        // vset + 4 vadd.vv uops
+        rob_tester.test_num_uops_retired(5);
+        rob_tester.test_last_inst_has_tail(false);
+    }
+    else if(input_file.find("vsetvli_vaddvv.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Decode
+        decode_tester.test_waiting_on_vset(false);
+        decode_tester.test_lmul(1);
+        decode_tester.test_vl(32);
+        decode_tester.test_vta(true);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(32);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(2);
+        // vset + 1 vadd.vv uop
+        rob_tester.test_num_uops_retired(2);
+        rob_tester.test_last_inst_has_tail(false);
+    }
+    else if(input_file.find("vsetvl_vaddvv.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Decode
+        decode_tester.test_waiting_on_vset(false);
+        decode_tester.test_lmul(1);
+        decode_tester.test_vl(16);
+        decode_tester.test_vta(true);
+        decode_tester.test_sew(64);
+        decode_tester.test_vlmax(16);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(2);
+        // vset + 1 vadd.vv uop
+        rob_tester.test_num_uops_retired(2);
+        rob_tester.test_last_inst_has_tail(false);
+    }
+    else if(input_file.find("vsetivli_vaddvv_tail.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Decode
+        decode_tester.test_lmul(8);
+        decode_tester.test_vl(900);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(8);
+        decode_tester.test_vlmax(1024);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(2);
+        // vset + 8 vadd.vv uop
+        rob_tester.test_num_uops_retired(9);
+        rob_tester.test_last_inst_has_tail(true);
+    }
+    else if(input_file.find("multiple_vset.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Decode
+        decode_tester.test_waiting_on_vset(false);
+        decode_tester.test_lmul(1);
+        decode_tester.test_vl(128);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(32);
+    }
+    else if(input_file.find("add_vmulvx.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(2);
+        // vadd + 1 vmul.vx uop
+        rob_tester.test_num_uops_retired(2);
+        rob_tester.test_last_inst_has_tail(false);
     }
     else if(input_file.find("vrgather.json") != std::string::npos)
     {
         // Unsupported vector instructions are expected to make the simulator to throw
         bool sparta_exception_fired = false;
         try {
-                cls.runSimulator(&sim, 2);
+            cls.runSimulator(&sim);
         } catch (const sparta::SpartaException& ex) {
-                sparta_exception_fired = true;
+            sparta_exception_fired = true;
         }
         EXPECT_TRUE(sparta_exception_fired);
     }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+    {
     runTests(argc, argv);
 
     REPORT_ERROR;

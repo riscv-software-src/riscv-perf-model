@@ -361,6 +361,8 @@ namespace olympia
 
         uint32_t getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
+        InstArchInfo::UopGenType getUopGenType() const { return inst_arch_info_->getUopGenType(); }
+
         uint64_t getRAdr() const { return target_vaddr_ | 0x8000000; } // faked
 
         bool isSpeculative() const { return is_speculative_; }

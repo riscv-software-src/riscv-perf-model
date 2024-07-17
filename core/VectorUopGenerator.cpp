@@ -8,7 +8,11 @@ namespace olympia
 
     VectorUopGenerator::VectorUopGenerator(sparta::TreeNode* node, const VectorUopGeneratorParameterSet* p) :
         sparta::Unit(node)
-    {}
+    {
+        // Vector arithmetic instruction uop generator
+        // Increment all src and dest register numbers for all uops
+        uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH, &VectorUopGenerator::generateArithUop);
+    }
 
     void VectorUopGenerator::setInst(const InstPtr & inst)
     {
@@ -33,6 +37,10 @@ namespace olympia
             ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
             // Inst counts as the first uop
             --num_uops_to_generate_;
+
+            const auto uop_gen_type = current_inst_->getUopGenType();
+            sparta_assert(uop_gen_type != InstArchInfo::UopGenType::NONE,
+                "Vector instruction does not specify which uop generator to use! " << inst);
         }
         else
         {
@@ -41,6 +49,13 @@ namespace olympia
     }
 
     const InstPtr VectorUopGenerator::generateUop()
+    {
+        const auto uop_gen_type = current_inst_->getUopGenType();
+        auto x = uop_gen_function_map_.at(uop_gen_type);
+        return x(this);
+    }
+
+    const InstPtr VectorUopGenerator::generateArithUop()
     {
         ++num_uops_generated_;
 

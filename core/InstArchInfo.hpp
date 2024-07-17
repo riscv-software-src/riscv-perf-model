@@ -65,6 +65,17 @@ namespace olympia
         using TargetPipeStringMap = std::map<TargetPipe, std::string>;
         static const TargetPipeStringMap execution_pipe_string_map;
 
+        enum class UopGenType
+        {
+            ARITH,
+            NONE
+        };
+
+        static constexpr uint32_t N_UOP_GEN_TYPES = static_cast<uint32_t>(UopGenType::NONE);
+
+        using UopGenMap = std::map<std::string, UopGenType>;
+        static const UopGenMap uop_gen_type_map;
+
         // Called by Mavis during its initialization
         explicit InstArchInfo(const nlohmann::json & jobj) { update(jobj); }
 
@@ -78,6 +89,9 @@ namespace olympia
         //! Return the execution time (latency) of the instruction
         uint32_t getExecutionTime() const { return execute_time_; }
 
+        //! Return the vector uop generator type
+        UopGenType getUopGenType() const { return uop_gen_; }
+
         //! Is this instruction a load/store type?
         bool isLoadStore() const { return is_load_store_; }
 
@@ -87,6 +101,7 @@ namespace olympia
       private:
         TargetPipe tgt_pipe_ = TargetPipe::UNKNOWN;
         uint32_t execute_time_ = 0;
+        UopGenType uop_gen_ = UopGenType::NONE;
         bool is_load_store_ = false;
         bool is_vset_ = false;
     };

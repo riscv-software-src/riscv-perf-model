@@ -47,6 +47,11 @@ namespace olympia
         {InstArchInfo::TargetPipe::UNKNOWN, "?"}
     };
 
+    const InstArchInfo::UopGenMap InstArchInfo::uop_gen_type_map = {
+        {"ARITH", InstArchInfo::UopGenType::ARITH},
+        {"NONE",  InstArchInfo::UopGenType::NONE}
+    };
+
     void InstArchInfo::update(const nlohmann::json & jobj)
     {
         if (jobj.find("pipe") != jobj.end())
@@ -62,6 +67,16 @@ namespace olympia
         if (jobj.find("latency") != jobj.end())
         {
             execute_time_ = jobj["latency"].get<uint32_t>();
+        }
+
+        if (jobj.find("uop_gen") != jobj.end())
+        {
+            auto uop_gen_name = jobj["uop_gen"].get<std::string>();
+            const auto itr = uop_gen_type_map.find(uop_gen_name);
+            sparta_assert(itr != uop_gen_type_map.end(),
+                "Unknown uop gen: " << uop_gen_name << " for inst: "
+                                    << jobj["mnemonic"].get<std::string>());
+            uop_gen_ = itr->second;
         }
 
         is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);

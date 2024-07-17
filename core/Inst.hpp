@@ -483,9 +483,8 @@ namespace olympia
         const bool is_vector_;
         const bool is_return_;
         bool has_tail_; // Does this vector instruction have a tail?
-        uint64_t uop_done_count_ =
-            1; // start at 1 because the uop count includes the parent instruction
-        uint64_t uop_count_ = 0;
+        uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction
+        uint64_t uop_count_ = 1;
         VCSRs VCSRs_;
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset

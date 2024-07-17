@@ -18,6 +18,9 @@ namespace olympia
         num_retired_(&unit_stat_set_, "total_number_retired",
                      "The total number of instructions retired by this core",
                      sparta::Counter::COUNT_NORMAL),
+        num_uops_retired_(&unit_stat_set_, "total_uops_retired",
+                     "The total number of uops retired by this core",
+                     sparta::Counter::COUNT_NORMAL),
         num_flushes_(&unit_stat_set_, "total_number_of_flushes",
                      "The total number of flushes performed by the ROB",
                      sparta::Counter::COUNT_NORMAL),
@@ -159,6 +162,7 @@ namespace olympia
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);
 
                 ++num_retired_;
+                num_uops_retired_ += ex_inst_ptr->getUOpCount();
                 ++retired_this_cycle;
                 reorder_buffer_.pop();
 

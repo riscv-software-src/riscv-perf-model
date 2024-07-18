@@ -27,6 +27,8 @@ namespace olympia
         inst->setTail(num_elems < current_VCSRs->vlmax);
         if(num_uops_to_generate_ > 1)
         {
+            // Original instruction will act as the first UOp
+            inst->setUOpID(0); // set UOpID()
             current_inst_ = inst;
             current_inst_->setUOpCount(num_uops_to_generate_);
             ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");

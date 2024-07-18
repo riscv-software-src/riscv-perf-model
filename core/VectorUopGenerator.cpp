@@ -25,8 +25,6 @@ namespace olympia
         // Does the instruction have tail elements?
         const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
         inst->setTail(num_elems < current_VCSRs->vlmax);
-        // Inst counts as the first uop
-        --num_uops_to_generate_;
         if(num_uops_to_generate_ > 1)
         {
             current_inst_ = inst;
@@ -37,6 +35,8 @@ namespace olympia
         {
             ILOG("Inst: " << inst << " does not need to generate uops");
         }
+        // Inst counts as the first uop
+        --num_uops_to_generate_;
     }
 
     const InstPtr VectorUopGenerator::generateUop()

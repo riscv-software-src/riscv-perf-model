@@ -271,7 +271,7 @@ namespace olympia
                     while(vec_uop_gen_->getNumUopsRemaining() >= 1)
                     {
                         const InstPtr uop = vec_uop_gen_->generateUop();
-                        if (insts->size() < num_to_decode_)
+                        if (insts->size() < num_to_decode)
                         {
                             insts->emplace_back(uop);
                             uop->setStatus(Inst::Status::DECODED);
@@ -336,6 +336,9 @@ namespace olympia
         // uint32_t unfusedInstsSize = insts->size();
 
         // Decrement internal Uop Queue credits
+        ILOG(uop_queue_credits_)
+        ILOG(num_to_decode)
+        ILOG(insts->size())
         sparta_assert(uop_queue_credits_ >= insts->size(),
             "Attempt to decrement d0q credits below what is available");
         uop_queue_credits_ -= insts->size();

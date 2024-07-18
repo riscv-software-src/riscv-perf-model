@@ -173,6 +173,28 @@ namespace olympia
                                                  current_inst_->getImmediate());
         InstPtr uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
 
+        // setting UOp instructions to have the same UID and PID as parent instruction
+        uop->setUniqueID(current_inst_->getUniqueID());
+        uop->setProgramID(current_inst_->getProgramID());
+
+        const Inst::VCSRs * current_VCSRs = current_inst_->getVCSRs();
+        uop->setVCSRs(current_VCSRs);
+        uop->setUOpID(num_uops_generated_);
+
+        // Set weak pointer to parent vector instruction (first uop)
+        sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = current_inst_;
+        uop->setUOpParent(weak_ptr_inst);
+
+        // Handle last uop
+        if(num_uops_generated_ == num_uops_to_generate_)
+        {
+            const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
+            uop->setTail(num_elems < current_VCSRs->vlmax);
+
+            reset_();
+        }
+        
+        ILOG("Generated uop: " << uop);
         return uop;
     }
 

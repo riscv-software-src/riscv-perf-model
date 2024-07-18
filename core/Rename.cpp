@@ -143,58 +143,66 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the inst hasn't retired yet!");
-        auto const & dests = inst_ptr->getDestOpInfoList();
-        if (dests.size() > 0)
-        {
-            sparta_assert(dests.size() == 1); // we should only have one destination
-            const auto dest = dests[0];
-            const auto rf = olympia::coreutils::determineRegisterFile(dest);
-            const auto num = dest.field_value;
-            const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
-            if (!is_x0)
+        int lmul = 1;
+        if(inst_ptr->hasUOps()){
+            lmul = inst_ptr->getUOpCount();
+        }
+        // loop through all Uops, mark dest/srcs accordingly
+        for(int i = 0; i < lmul; ++i){
+            auto const & dests = inst_ptr->getDestOpInfoList();
+            if (dests.size() > 0)
             {
-                auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
-                --reference_counter_[original_dest.rf][original_dest.val];
-                // free previous PRF mapping if no references from srcs, there should be a new dest
-                // mapping for the ARF -> PRF so we know it's free to be pushed to freelist if it
-                // has no other src references
-                if (reference_counter_[original_dest.rf][original_dest.val] <= 0)
+                sparta_assert(dests.size() == 1); // we should only have one destination
+                const auto dest = dests[0];
+                const auto rf = olympia::coreutils::determineRegisterFile(dest);
+                const auto num = dest.field_value + i;
+                const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+                if (!is_x0)
                 {
-                    freelist_[original_dest.rf].push(original_dest.val);
+                    auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+                    --reference_counter_[original_dest.rf][original_dest.val];
+                    // free previous PRF mapping if no references from srcs, there should be a new dest
+                    // mapping for the ARF -> PRF so we know it's free to be pushed to freelist if it
+                    // has no other src references
+                    if (reference_counter_[original_dest.rf][original_dest.val] <= 0)
+                    {
+                        freelist_[original_dest.rf].push(original_dest.val);
+                    }
+                }
+            }
+
+            const auto & srcs = inst_ptr->getRenameData().getSourceList();
+            // decrement reference to data register
+            if (inst_ptr->isLoadStoreInst())
+            {
+                const auto & data_reg = inst_ptr->getRenameData().getDataReg();
+                if (data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2
+                    && data_reg.is_x0 != true)
+                {
+                    --reference_counter_[data_reg.rf][data_reg.val + i];
+                    if (reference_counter_[data_reg.rf][data_reg.val + i] <= 0)
+                    {
+                        // freeing data register value, because it's not in the source list, so won't
+                        // get caught below
+                        freelist_[data_reg.rf].push(data_reg.val + i);
+                    }
+                }
+            }
+            // freeing references to PRF
+            for (const auto & src : srcs)
+            {
+                --reference_counter_[src.rf][src.val+i];
+                if (reference_counter_[src.rf][src.val+i] <= 0)
+                {
+                    // freeing a register in the case where it still has references and has already been
+                    // retired we wait until the last reference is retired to then free the prf any
+                    // "valid" PRF that is the true mapping of an ARF will have a reference_counter of
+                    // at least 1, and thus shouldn't be retired
+                    freelist_[src.rf].push(src.val+i);
                 }
             }
         }
 
-        const auto & srcs = inst_ptr->getRenameData().getSourceList();
-        // decrement reference to data register
-        if (inst_ptr->isLoadStoreInst())
-        {
-            const auto & data_reg = inst_ptr->getRenameData().getDataReg();
-            if (data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2
-                && data_reg.is_x0 != true)
-            {
-                --reference_counter_[data_reg.rf][data_reg.val];
-                if (reference_counter_[data_reg.rf][data_reg.val] <= 0)
-                {
-                    // freeing data register value, because it's not in the source list, so won't
-                    // get caught below
-                    freelist_[data_reg.rf].push(data_reg.val);
-                }
-            }
-        }
-        // freeing references to PRF
-        for (const auto & src : srcs)
-        {
-            --reference_counter_[src.rf][src.val];
-            if (reference_counter_[src.rf][src.val] <= 0)
-            {
-                // freeing a register in the case where it still has references and has already been
-                // retired we wait until the last reference is retired to then free the prf any
-                // "valid" PRF that is the true mapping of an ARF will have a reference_counter of
-                // at least 1, and thus shouldn't be retired
-                freelist_[src.rf].push(src.val);
-            }
-        }
         // Instruction queue bookkeeping
         if (SPARTA_EXPECT_TRUE(!inst_queue_.empty()))
         {

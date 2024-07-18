@@ -281,37 +281,35 @@ namespace olympia
         // NOTE:
         // win_ptr should always point to an instruction ready to be issued
         // Otherwise assertion error should already be fired in arbitrateInstIssue_()
-        if(win_ptr != nullptr){
-            ++VLSU_insts_issued_;
-            // Append load/store pipe
-            ldst_pipeline_.append(win_ptr);
+        ++VLSU_insts_issued_;
+        // Append load/store pipe
+        ldst_pipeline_.append(win_ptr);
 
-            // if the element width is greater than data width, we can only pull data width then
-            uint32_t width = data_width_ < win_ptr->getInstPtr()->getEEW() ? data_width_ : win_ptr->getInstPtr()->getEEW();
-            // Set total number of vector iterations
-            win_ptr->setTotalVectorIter(Inst::VLEN/width);
+        // if the element width is greater than data width, we can only pull data width then
+        uint32_t width = data_width_ < win_ptr->getInstPtr()->getEEW() ? data_width_ : win_ptr->getInstPtr()->getEEW();
+        // Set total number of vector iterations
+        win_ptr->setTotalVectorIter(Inst::VLEN/width);
+        ILOG(win_ptr->getInstPtr() << " " << Inst::VLEN/width)
+        // We append to replay queue to prevent ref count of the shared pointer to drop before
+        // calling pop below
+        if (allow_speculative_load_exec_)
+        {
+            ILOG("Appending to replay queue " << win_ptr);
+            appendToReplayQueue_(win_ptr);
+        }
 
-            // We append to replay queue to prevent ref count of the shared pointer to drop before
-            // calling pop below
-            if (allow_speculative_load_exec_)
-            {
-                ILOG("Appending to replay queue " << win_ptr);
-                appendToReplayQueue_(win_ptr);
-            }
+        // Remove inst from ready queue
+        win_ptr->setInReadyQueue(false);
 
-            // Remove inst from ready queue
-            win_ptr->setInReadyQueue(false);
+        // Update instruction issue info
+        win_ptr->setState(LoadStoreInstInfo::IssueState::ISSUED);
+        win_ptr->setPriority(LoadStoreInstInfo::IssuePriority::LOWEST);
 
-            // Update instruction issue info
-            win_ptr->setState(LoadStoreInstInfo::IssueState::ISSUED);
-            win_ptr->setPriority(LoadStoreInstInfo::IssuePriority::LOWEST);
-
-            // Schedule another instruction issue event if possible
-            if (isReadyToIssueInsts_())
-            {
-                ILOG("IssueInst_ issue");
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
-            }
+        // Schedule another instruction issue event if possible
+        if (isReadyToIssueInsts_())
+        {
+            ILOG("IssueInst_ issue");
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
     }
 
@@ -619,6 +617,7 @@ namespace olympia
         }
         const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[complete_stage_];
         uint32_t total_iters = load_store_info_ptr->getTotalVectorIter();
+        ILOG(load_store_info_ptr->getVectorIter() << " total: " << total_iters << " "<< load_store_info_ptr->getInstPtr())
         // we're done load/storing all vector bits, can complete
         const MemoryAccessInfoPtr & mem_access_info_ptr =
         load_store_info_ptr->getMemoryAccessInfoPtr();
@@ -775,7 +774,7 @@ namespace olympia
                 load_store_info_ptr->getInstPtr()->setTargetVAddr(addr + load_store_info_ptr->getInstPtr()->getStride());
                 // increment vector LSU count
                 uint32_t vector_iter = load_store_info_ptr->getVectorIter();
-                ILOG("Multiple passes needed for VLSU, pass number " << vector_iter << " of " << total_iters);
+                ILOG("Multiple passes needed for VLSU, pass number " << vector_iter << " of " << total_iters << " " << load_store_info_ptr->getInstPtr());
                 load_store_info_ptr->setVectorIter(++vector_iter);
                 
                 bool iterate = true;
@@ -1151,26 +1150,6 @@ namespace olympia
         sparta_assert(ready_queue_.size() > 0, "Arbitration fails: issue is empty!");
 
         LoadStoreInstInfoPtr ready_inst_ = ready_queue_.top();
-        // int stages_filled = 0;
-        // for (int stage = 0; stage <= complete_stage_; stage++)
-        // {
-        //     if (ldst_pipeline_.isValid(stage))
-        //     {
-        //         stages_filled++;
-        //         const auto & pipeline_inst = ldst_pipeline_[stage];
-        //         // pipeline_inst->getInstPtr()->getUniqueID() == ready_inst_->getInstPtr()->getUniqueID() works
-        //         if (pipeline_inst->getInstPtr()->getUOpID() == ready_inst_->getInstPtr()->getUOpID() && pipeline_inst->getInstPtr()->getUniqueID() == ready_inst_->getInstPtr()->getUniqueID()){
-        //             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
-        //             ILOG("Delaying issue, due to instruction still in ldst pipeline" << ready_inst_ << ready_inst_->getInstPtr())
-        //             return nullptr;
-        //         }
-        //     }
-        // }
-        // if(stages_filled == complete_stage_){
-        //     ILOG("No pipeline slots open, rescheduling")
-        //     uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
-        //     return nullptr;
-        // }
         ILOG("Arbitrating instruction, popping from queue: " << ready_inst_->getInstPtr());
         ready_queue_.pop();
 

@@ -81,8 +81,10 @@ namespace olympia
         if(num_uops_to_generate_ > 1)
         {
             // Original instruction will act as the first UOp
-            inst->setUOpID(0); // set UOpID()
+            inst->setUOpID(0); // set UOpID()   
             current_inst_ = inst;
+            current_inst_->setUOpCount(num_uops_to_generate_);
+            ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
             ILOG("Inst: " << current_inst_ << " is being split into "
                           << num_uops_to_generate_ << " UOPs");
         }
@@ -90,7 +92,6 @@ namespace olympia
         {
             ILOG("Inst: " << inst << " does not need to generate uops");
         }
-
         // Inst counts as the first uop
         --num_uops_to_generate_;
     }
@@ -184,6 +185,14 @@ namespace olympia
         // Set weak pointer to parent vector instruction (first uop)
         sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = current_inst_;
         uop->setUOpParent(weak_ptr_inst);
+        uop->setEEW(current_inst_->getEEW());
+        uop->setMOP(current_inst_->getMOP());
+        uop->setStride(current_inst_->getStride());
+        if(uop->isLoadStoreInst()){
+            // set base address according to LMUL, i.e if we're on the 3rd
+            // LMUL Uop, it's base address should be base address + 3 * EEW
+            uop->setTargetVAddr(uop->getTargetVAddr() + uop->getEEW() * uop->getUOpID());
+        }
 
         // Handle last uop
         if(num_uops_generated_ == num_uops_to_generate_)

@@ -25,14 +25,13 @@ namespace olympia
         // Does the instruction have tail elements?
         const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
         inst->setTail(num_elems < current_VCSRs->vlmax);
-
+        // Inst counts as the first uop
+        --num_uops_to_generate_;
         if(num_uops_to_generate_ > 1)
         {
             current_inst_ = inst;
             current_inst_->setUOpCount(num_uops_to_generate_);
             ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
-            // Inst counts as the first uop
-            --num_uops_to_generate_;
         }
         else
         {

@@ -89,11 +89,25 @@ namespace olympia {
                 // Set the --dcache_l2cache_credits_ here.
             }
         }
-        out_lsu_lookup_ack_.send(memory_access_info_ptr);
+        if(memory_access_info_ptr->isVector())
+        {
+            out_vlsu_lookup_ack_.send(memory_access_info_ptr);
+        }
+        else
+        {
+            out_lsu_lookup_ack_.send(memory_access_info_ptr);
+        }
     }
 
     void DCache::getRespFromL2Cache_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
-        out_lsu_lookup_req_.send(cache_pending_inst_);
+        if(memory_access_info_ptr->isVector())
+        {
+            out_vlsu_lookup_req_.send(cache_pending_inst_);
+        }
+        else
+        {
+            out_lsu_lookup_req_.send(cache_pending_inst_);
+        }
         reloadCache_(memory_access_info_ptr->getPhyAddr());
         cache_pending_inst_.reset();
         busy_ = false;

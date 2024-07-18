@@ -117,6 +117,9 @@ namespace olympia
         // Special case for the LSU
         dispatchers_[static_cast<size_t>(InstArchInfo::TargetPipe::LSU)].emplace_back(
             new Dispatcher("lsu", this, info_logger_, &in_lsu_credits_, &out_lsu_write_));
+        // Special case for VLSU
+        dispatchers_[static_cast<size_t>(InstArchInfo::TargetPipe::VLSU)].emplace_back(
+            new Dispatcher("vlsu", this, info_logger_, &in_vlsu_credits_, &out_vlsu_write_));
         in_lsu_credits_.enableCollection(node);
 
         in_reorder_credits_.registerConsumerHandler(
@@ -237,7 +240,7 @@ namespace olympia
                                  "pipe. Did you define it in the yaml properly?");
             // so we have a map here that checks for which valid dispatchers for that
             // instruction target pipe map needs to be: "int": [exe0, exe1, exe2]
-            if (target_pipe != InstArchInfo::TargetPipe::LSU)
+            if (target_pipe != InstArchInfo::TargetPipe::LSU && target_pipe != InstArchInfo::TargetPipe::VLSU)
             {
                 uint32_t max_credits = 0;
                 olympia::Dispatcher* best_dispatcher = nullptr;

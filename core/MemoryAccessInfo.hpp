@@ -100,6 +100,13 @@ namespace olympia
             return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
         }
 
+        // This is a function which will be added in the SPARTA_ADDPAIRs API.
+        uint64_t getInstUOpID() const
+        {
+            const InstPtr & inst_ptr = getInstPtr();
+            return inst_ptr == nullptr ? 0 : inst_ptr->getUOpID();
+        }
+
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
@@ -151,6 +158,8 @@ namespace olympia
             replay_queue_iterator_ = iter;
         }
 
+        void setIsVector(bool is_vector){ is_vector_ = is_vector; }
+        bool isVector(){ return is_vector_; }
       private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -176,6 +185,8 @@ namespace olympia
 
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
+
+        bool is_vector_ = false;
     };
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;

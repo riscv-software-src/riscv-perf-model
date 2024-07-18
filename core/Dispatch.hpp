@@ -86,6 +86,10 @@ namespace olympia
                                                      sparta::SchedulingPhase::Tick, 0};
         sparta::DataOutPort<InstQueue::value_type> out_lsu_write_{&unit_port_set_, "out_lsu_write",
                                                                   false};
+        sparta::DataInPort<uint32_t> in_vlsu_credits_{&unit_port_set_, "in_vlsu_credits",
+                                                     sparta::SchedulingPhase::Tick, 0};
+        sparta::DataOutPort<InstQueue::value_type> out_vlsu_write_{&unit_port_set_, "out_vlsu_write",
+                                                                  false};
         sparta::DataInPort<uint32_t> in_reorder_credits_{
             &unit_port_set_, "in_reorder_buffer_credits", sparta::SchedulingPhase::Tick, 0};
         sparta::DataOutPort<InstGroupPtr> out_reorder_write_{&unit_port_set_,
@@ -184,6 +188,8 @@ namespace olympia
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_vset_busy", "VSET busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "stall_vlsu_busy", "VLSU busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_sys_busy", "No credits from ROB",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
@@ -222,6 +228,8 @@ namespace olympia
              sparta::Counter(getStatisticSet(), "count_vdiv_insts", "Total VDIV insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_vset_insts", "Total VSET insts",
+                             sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_vlsu_insts", "Total VLSU insts",
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_sys_insts", "Total SYS insts",
                              sparta::Counter::COUNT_NORMAL)}};

@@ -71,6 +71,13 @@ namespace olympia
             return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUniqueID();
         }
 
+        // This is a function which will be added in the SPARTA_ADDPAIRs API.
+        uint64_t getInstUOpID() const
+        {
+            const MemoryAccessInfoPtr & mem_access_info_ptr = getMemoryAccessInfoPtr();
+            return mem_access_info_ptr == nullptr ? 0 : mem_access_info_ptr->getInstUOpID();
+        }
+
         // Get the mnemonic of the instruction this load/store is
         // associated.  Will return <unassoc> if not associated
         std::string getMnemonic() const {
@@ -127,14 +134,39 @@ namespace olympia
 
         friend bool operator<(const LoadStoreInstInfoPtr & lhs, const LoadStoreInstInfoPtr & rhs)
         {
-            return lhs->getInstUniqueID() < rhs->getInstUniqueID();
+            if(lhs->getInstUniqueID() == rhs->getInstUniqueID())
+            {
+                // if UID is the same, check Uops for vector
+                return lhs->getInstUOpID() < rhs->getInstUOpID();
+            }
+            else
+            {
+                return lhs->getInstUniqueID() < rhs->getInstUniqueID();
+            }
         }
 
+        void setVectorIter(uint32_t vec_iter){
+            // set number of iterations of VLSU until all bits are loaded into vector register
+            vector_iterations_ = vec_iter;
+        }
+
+        // return current vector iterations
+        uint32_t getVectorIter() const { return vector_iterations_; }
+
+        void setTotalVectorIter(uint32_t total_vec_iter){
+            // set number of iterations of VLSU until all bits are loaded into vector register
+            total_vector_iterations_ = total_vec_iter;
+        }
+
+        // return current vector iterations
+        uint32_t getTotalVectorIter() const { return total_vector_iterations_; }
       private:
         MemoryAccessInfoPtr mem_access_info_ptr_;
         sparta::State<IssuePriority> rank_;
         sparta::State<IssueState> state_;
         bool in_ready_queue_;
+        uint32_t vector_iterations_ = 0;
+        uint32_t total_vector_iterations_;
     }; // class LoadStoreInstInfo
 
     using LoadStoreInstInfoAllocator = sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo>;
@@ -195,7 +227,7 @@ namespace olympia
     inline std::ostream & operator<<(std::ostream & os, const olympia::LoadStoreInstInfo & ls_info)
     {
         os << "lsinfo: "
-           << "uid: " << ls_info.getInstUniqueID() << " pri:" << ls_info.getPriority()
+           << "uid: " << ls_info.getInstUniqueID() << " pri:" << ls_info.getPriority() << "uopid: " << ls_info.getInstUOpID()
            << " state: " << ls_info.getState();
         return os;
     }

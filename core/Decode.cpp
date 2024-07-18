@@ -106,12 +106,12 @@ namespace olympia
     void Decode::receiveUopQueueCredits_(const uint32_t & credits)
     {
         uop_queue_credits_ += credits;
-        if (fetch_queue_.size() > 0)
+        if (fetch_queue_.size() + uop_queue_.size() > 0)
         {
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
         }
 
-        ILOG("Received credits: " << uop_queue_credits_in_);
+        ILOG("Received credits: " << credits << " " << uop_queue_credits_in_);
     }
 
     // Called when the fetch buffer was appended by Fetch.  If decode
@@ -176,7 +176,7 @@ namespace olympia
     void Decode::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
         ILOG("Got a flush call for " << criteria);
-        fetch_queue_credits_outp_.send(fetch_queue_.size());
+        fetch_queue_credits_outp_.send(fetch_queue_.size() + uop_queue_.size());
         fetch_queue_.clear();
 
         // Reset the vector uop generator
@@ -347,6 +347,7 @@ namespace olympia
         // instructions in the queue, schedule another decode session
         if (uop_queue_credits_ > 0 && (fetch_queue_.size() + uop_queue_.size()) > 0)
         {
+            ILOG("Scheduling decode event, instructions still left")
             ev_decode_insts_event_.schedule(1);
         }
     }

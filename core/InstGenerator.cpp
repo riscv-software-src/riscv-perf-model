@@ -128,7 +128,6 @@ namespace olympia
             mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
             inst = mavis_facade_->makeInstDirectly(ex_info, clk);
         }
-
         if (jinst.find("vaddr") != jinst.end())
         {
             uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
@@ -144,19 +143,31 @@ namespace olympia
             inst->setLMUL(lmul);
             inst->setSEW(sew);
         }
-
         if (jinst.find("vta") != jinst.end())
         {
             const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
             inst->setVTA(vta);
         }
-
         if (jinst.find("vl") != jinst.end())
         {
             const uint64_t vl = jinst["vl"].get<uint64_t>();
             inst->setVL(vl);
         }
-
+        if (jinst.find("mop") != jinst.end())
+        {
+            const uint64_t mop = jinst["mop"].get<uint64_t>();
+            inst->setMOP(mop);
+        }
+        if (jinst.find("eew") != jinst.end())
+        {
+            const uint64_t eew = jinst["eew"].get<uint64_t>();
+            inst->setEEW(eew);
+        }
+        if (jinst.find("stride") != jinst.end())
+        {
+            const uint64_t stride = jinst["stride"].get<uint64_t>();
+            inst->setStride(stride);
+        }
         if (jinst.find("taken") != jinst.end())
         {
             const bool taken = jinst["taken"].get<bool>();

@@ -12,6 +12,7 @@
 #include "Dispatch.hpp"
 #include "Execute.hpp"
 #include "LSU.hpp"
+#include "VLSU.hpp"
 #include "MMU.hpp"
 #include "SimpleTLB.hpp"
 #include "BIU.hpp"
@@ -76,6 +77,10 @@ namespace olympia{
         //! \brief Resource Factory to build a LSU Unit
         sparta::ResourceFactory<olympia::LSU,
                                 olympia::LSU::LSUParameterSet> lsu_rf;
+
+        //! \brief Resource Factory to build a LSU Unit
+        sparta::ResourceFactory<olympia::VLSU,
+                                olympia::VLSU::VLSUParameterSet> vlsu_rf;
 
         //! \brief Resouce Factory to build a L2Cache Unit
         sparta::ResourceFactory<olympia_mss::L2Cache,

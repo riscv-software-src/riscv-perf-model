@@ -268,10 +268,7 @@ namespace olympia
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);
 
-                    // Original instruction will act as the first UOp
-                    inst->setUOpID(0); // set UOpID()
-
-                    while(vec_uop_gen_->getNumUopsRemaining() > 1)
+                    while(vec_uop_gen_->getNumUopsRemaining() >= 1)
                     {
                         const InstPtr uop = vec_uop_gen_->generateUop();
                         if (insts->size() < num_to_decode_)

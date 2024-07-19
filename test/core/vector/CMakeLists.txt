@@ -24,7 +24,7 @@ sparta_named_test(Vector_test_vsetivli      Vector_test big_core.out -c test_cor
 sparta_named_test(Vector_test_vsetvli       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vaddvv_e32m1ta.json)
 sparta_named_test(Vector_test_vsetvl        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vaddvv_e64m1ta.json)
 sparta_named_test(Vector_test_vsetivli_tail Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vaddvv_tail_e8m8ta.json)
-#sparta_named_test(Vector_test_multiple_vset Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file multiple_vset.json)
+sparta_named_test(Vector_test_multiple_vset Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file multiple_vset.json)
 sparta_named_test(Vector_test_vmulvx        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmulvx_e8m4.json)
 sparta_named_test(Vector_test_vmulvv        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vwmulvv_e8m4.json)
 sparta_named_test(Vector_test_vmseqvv       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmseqvv_e8m4.json)

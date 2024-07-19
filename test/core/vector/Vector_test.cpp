@@ -248,11 +248,16 @@ void runTests(int argc, char **argv)
 
         // Test Decode (last vset)
         decode_tester.test_waiting_on_vset(false);
-        decode_tester.test_lmul(1);
-        decode_tester.test_vl(128);
+        decode_tester.test_lmul(8);
+        decode_tester.test_vl(1024);
         decode_tester.test_vta(false);
-        decode_tester.test_sew(32);
-        decode_tester.test_vlmax(32);
+        decode_tester.test_sew(8);
+        decode_tester.test_vlmax(1024);
+
+        // Test Retire
+        rob_tester.test_num_insts_retired(4);
+        // vset + 4 vmul.vx uop + vset + 8 vadd.vv
+        rob_tester.test_num_uops_retired(14);
     }
     else if(input_file.find("vmulvx.json") != std::string::npos)
     {

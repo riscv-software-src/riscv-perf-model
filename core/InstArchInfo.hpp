@@ -70,7 +70,8 @@ namespace olympia
             ARITH,
             ARITH_SINGLE_DEST,
             ARITH_WIDE_DEST,
-            NONE
+            NONE,
+            UNKNOWN
         };
 
         static constexpr uint32_t N_UOP_GEN_TYPES = static_cast<uint32_t>(UopGenType::NONE);
@@ -103,7 +104,7 @@ namespace olympia
       private:
         TargetPipe tgt_pipe_ = TargetPipe::UNKNOWN;
         uint32_t execute_time_ = 0;
-        UopGenType uop_gen_ = UopGenType::NONE;
+        UopGenType uop_gen_ = UopGenType::UNKNOWN;
         bool is_load_store_ = false;
         bool is_vset_ = false;
     };

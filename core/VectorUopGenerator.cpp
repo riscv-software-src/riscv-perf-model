@@ -60,6 +60,9 @@ namespace olympia
             "current instruction has not finished: " << current_inst_);
 
         const auto uop_gen_type = inst->getUopGenType();
+        sparta_assert(uop_gen_type != InstArchInfo::UopGenType::UNKNOWN,
+            "Inst: " << current_inst_ << " uop gen type is unknown");
+
         if(uop_gen_type != InstArchInfo::UopGenType::NONE)
         {
             // Number of vector elements processed by each uop
@@ -80,23 +83,26 @@ namespace olympia
 
         if(num_uops_to_generate_ > 1)
         {
+            // Original instruction will act as the first UOp
+            inst->setUOpID(0); // set UOpID()
             current_inst_ = inst;
             current_inst_->setUOpCount(num_uops_to_generate_);
             ILOG("Inst: " << current_inst_ << " is being split into "
                           << num_uops_to_generate_ << " UOPs");
-            // Inst counts as the first uop
-            --num_uops_to_generate_;
         }
         else
         {
             ILOG("Inst: " << inst << " does not need to generate uops");
         }
+
+        // Inst counts as the first uop
+        --num_uops_to_generate_;
     }
 
     const InstPtr VectorUopGenerator::generateUop()
     {
         const auto uop_gen_type = current_inst_->getUopGenType();
-        sparta_assert(uop_gen_type != InstArchInfo::UopGenType::NONE,
+        sparta_assert(uop_gen_type <= InstArchInfo::UopGenType::NONE,
             "Inst: " << current_inst_ << " uop gen type is unknown");
         auto x = uop_gen_function_map_.at(uop_gen_type);
         return x(this);

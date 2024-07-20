@@ -2,6 +2,20 @@
     {
         "mnemonic": "vsetvli",
         "rs1": 0,
+        "vtype": "0x1",
+        "rd": 1,
+        "vl": 512,
+        "vta": 1
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 8,
+        "vs2": 10,
+        "vd": 12
+    },
+    {
+        "mnemonic": "vsetvli",
+        "rs1": 0,
         "vtype": "0x2",
         "rd": 1,
         "vl": 512,
@@ -9,9 +23,9 @@
     },
     {
         "mnemonic": "vadd.vv",
-        "vs1": 10,
-        "vs2": 11,
-        "vd": 12
+        "vs1": 8,
+        "vs2": 12,
+        "vd": 16
     },
     {
         "mnemonic": "vsetvli",

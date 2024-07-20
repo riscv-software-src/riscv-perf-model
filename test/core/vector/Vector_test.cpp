@@ -256,8 +256,8 @@ void runTests(int argc, char **argv)
 
         // Test Retire
         rob_tester.test_num_insts_retired(4);
-        // vset + 4 vmul.vx uop + vset + 8 vadd.vv
-        rob_tester.test_num_uops_retired(14);
+        // vset + 2 vadd.vv + vset + 4 vadd.vv uop + vset + 8 vadd.vv
+        rob_tester.test_num_uops_retired(17);
     }
     else if(input_file.find("vmulvx.json") != std::string::npos)
     {

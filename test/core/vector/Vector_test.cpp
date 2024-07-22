@@ -255,7 +255,7 @@ void runTests(int argc, char **argv)
         decode_tester.test_vlmax(1024);
 
         // Test Retire
-        rob_tester.test_num_insts_retired(4);
+        rob_tester.test_num_insts_retired(6);
         // vset + 2 vadd.vv + vset + 4 vadd.vv uop + vset + 8 vadd.vv
         rob_tester.test_num_uops_retired(17);
     }

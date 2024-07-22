@@ -211,7 +211,7 @@ namespace olympia
 
         InstGroupPtr insts_dispatched =
             sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-        ;
+
         bool keep_dispatching = true;
         for (uint32_t i = 0; (i < num_dispatch) && keep_dispatching; ++i)
         {

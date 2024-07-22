@@ -76,9 +76,6 @@ namespace olympia
                 // TODO: Add parameter to support dual dests
                 num_uops_to_generate_ *= 2;
             }
-
-            // Does the instruction have tail elements?
-            inst->setTail(current_VCSRs->vl < current_VCSRs->vlmax);
         }
 
         if(num_uops_to_generate_ > 1)
@@ -86,7 +83,6 @@ namespace olympia
             // Original instruction will act as the first UOp
             inst->setUOpID(0); // set UOpID()
             current_inst_ = inst;
-            current_inst_->setUOpCount(num_uops_to_generate_);
             ILOG("Inst: " << current_inst_ << " is being split into "
                           << num_uops_to_generate_ << " UOPs");
         }
@@ -160,8 +156,8 @@ namespace olympia
         uop->setUOpID(num_uops_generated_);
 
         // Set weak pointer to parent vector instruction (first uop)
-        sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = current_inst_;
-        uop->setUOpParent(weak_ptr_inst);
+        sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;
+        uop->setUOpParent(parent_weak_ptr);
 
         // Handle last uop
         if(num_uops_generated_ == num_uops_to_generate_)

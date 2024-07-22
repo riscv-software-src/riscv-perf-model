@@ -247,6 +247,14 @@ namespace olympia
 
         // Set the instruction's target PC (branch target or load/store target)
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
+        sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
+
+        void setVCSRs(const VCSRs * inputVCSRs)
+        {
+            VCSRs_.setVCSRs(inputVCSRs->vl, inputVCSRs->sew, inputVCSRs->lmul, inputVCSRs->vta);
+        }
+
+        const VCSRs * getVCSRs() const { return &VCSRs_; }
 
         // Set lmul from vset (vsetivli, vsetvli)
         void setLMUL(uint32_t lmul)
@@ -270,41 +278,20 @@ namespace olympia
         // vta = false means undisturbed, maintain original destination values
         void setVTA(bool vta) { VCSRs_.vta = vta; }
 
-        void setTail(bool has_tail) { has_tail_ = has_tail; }
-
-        void setVCSRs(const VCSRs * inputVCSRs)
-        {
-            VCSRs_.setVCSRs(inputVCSRs->vl, inputVCSRs->sew, inputVCSRs->lmul, inputVCSRs->vta);
-        }
-
-        const VCSRs * getVCSRs() const { return &VCSRs_; }
-
-        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & uop_parent)
-        {
-            uop_parent_ = uop_parent;
-        }
-
-        void setUOpCount(uint64_t uop_count) { uop_count_ = uop_count; }
-
-        void incrementUOpDoneCount() { uop_done_count_++; }
-
-        sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
-
         uint32_t getSEW() const { return VCSRs_.sew; }
-
         uint32_t getLMUL() const { return VCSRs_.lmul; }
-
         uint32_t getVL() const { return VCSRs_.vl; }
-
         uint32_t getVTA() const { return VCSRs_.vta; }
-
         uint32_t getVLMAX() const { return VCSRs_.vlmax; }
 
-        uint64_t getUOpDoneCount() { return uop_done_count_; }
+        void setTail(bool has_tail) { has_tail_ = has_tail; }
+        bool hasTail() const { return has_tail_; }
 
-        sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return uop_parent_; }
-
-        uint64_t getUOpCount() const { return uop_count_; }
+        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)
+        {
+            parent_uop_ = parent_uop;
+        }
+        sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return parent_uop_; }
 
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
@@ -384,10 +371,6 @@ namespace olympia
         bool isVset() const { return inst_arch_info_->isVset(); }
 
         bool isVector() const { return is_vector_; }
-
-        bool hasTail() const { return has_tail_; }
-
-        // bool isVX() const {} // checking if instruction is a vector-scalar
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -482,16 +465,16 @@ namespace olympia
         const bool is_csr_;
         const bool is_vector_;
         const bool is_return_;
-        bool has_tail_; // Does this vector instruction have a tail?
-        uint64_t uop_done_count_ = 1; // start at 1 because the uop count includes the parent instruction
-        uint64_t uop_count_ = 1;
+
         VCSRs VCSRs_;
+        bool has_tail_; // Does this vector uop have a tail?
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing
         bool is_blocking_vset_ = false;
 
-        sparta::SpartaWeakPointer<olympia::Inst> uop_parent_;
+        sparta::SpartaWeakPointer<olympia::Inst> parent_uop_;
+
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;
         bool is_taken_branch_ = false;

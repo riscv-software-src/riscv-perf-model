@@ -172,13 +172,6 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
         complete_event_.collect(*ex_inst);
         ILOG("Completing inst: " << ex_inst);
-        if (ex_inst->isUOp())
-        {
-            sparta_assert(!ex_inst->getUOpParent().expired(),
-                          "UOp instruction parent shared pointer is expired");
-            auto shared_ex_inst = ex_inst->getUOpParent().lock();
-            shared_ex_inst->incrementUOpDoneCount();
-        }
         out_execute_pipe_.send(1);
     }
 

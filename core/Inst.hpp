@@ -158,7 +158,7 @@ namespace olympia
                 }
             }
         }
-
+        void attemptRetire() { ev_retire_->schedule(); }
         const Status & getStatus() const { return status_state_; }
 
         bool getCompletedStatus() const { return getStatus() == olympia::Inst::Status::COMPLETED; }
@@ -300,6 +300,14 @@ namespace olympia
         uint32_t getStride() const { return stride_; }
         void setTail(bool has_tail) { has_tail_ = has_tail; }
         bool hasTail() const { return has_tail_; }
+
+        uint32_t getTotalVLSUIters(){ return vlsu_total_iters_; }
+
+        uint32_t getCurrVLSUIters(){ return vlsu_curr_iters_; }
+
+        void setTotalVLSUIters(uint32_t vlsu_total_iters){ vlsu_total_iters_ = vlsu_total_iters; }
+
+        void setCurrVLSUIters(uint32_t vlsu_curr_iters){ vlsu_curr_iters_ = vlsu_curr_iters; }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)
         {
@@ -485,6 +493,9 @@ namespace olympia
         uint32_t eew_;
         uint32_t mop_;
         uint32_t stride_;
+
+        uint32_t vlsu_total_iters_ = 0;
+        uint32_t vlsu_curr_iters_;
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing

@@ -325,6 +325,10 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.vlsu.ports.in_rob_retire_ack"
         },
         {
+            "cpu.core*.rob.ports.out_rob_retire_ack_vlsu",
+            "cpu.core*.vlsu.ports.in_rob_retire_ack"
+        },
+        {
             "cpu.core*.rob.ports.out_rob_retire_ack_rename",
             "cpu.core*.rename.ports.in_rename_retire_ack"
         },
@@ -351,6 +355,10 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.lsu.ports.in_reorder_flush"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_upper",
+            "cpu.core*.vlsu.ports.in_reorder_flush"
         },
         {
             "cpu.core*.flushmanager.ports.out_flush_upper",

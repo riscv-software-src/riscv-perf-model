@@ -130,15 +130,23 @@ namespace olympia
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
-
             if (ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
                 ex_inst.setStatus(Inst::Status::RETIRED);
-                if (ex_inst.isStoreInst())
-                {
+                if (ex_inst.isStoreInst() && !ex_inst.isVector()) {
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
+                // if(!(ex_inst.isStoreInst() && ex_inst.isVector())){
+                //     // VLSU we set status to retired from VLSU SQ due to VLSU requiring retired instruction
+                //     // to complete it. However, we don't officially retire in the instruction until all iterations
+                //     // and all Uops are done, hence why we have to do it internally
+                //     ex_inst.setStatus(Inst::Status::RETIRED);
+                // }
+                // if (ex_inst.isStoreInst() && !ex_inst.isVector())
+                // {
+                //     out_rob_retire_ack_.send(ex_inst_ptr);
+                // }
                 
                 // sending retired instruction to rename
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);

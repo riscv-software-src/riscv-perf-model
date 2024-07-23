@@ -143,63 +143,57 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the inst hasn't retired yet!");
-        int lmul = 1;
-        if(inst_ptr->hasUOps()){
-            lmul = inst_ptr->getUOpCount();
-        }
         // loop through all Uops, mark dest/srcs accordingly
-        for(int i = 0; i < lmul; ++i){
-            auto const & dests = inst_ptr->getDestOpInfoList();
-            if (dests.size() > 0)
+        auto const & dests = inst_ptr->getDestOpInfoList();
+        if (dests.size() > 0)
+        {
+            sparta_assert(dests.size() == 1); // we should only have one destination
+            const auto dest = dests[0];
+            const auto rf = olympia::coreutils::determineRegisterFile(dest);
+            const auto num = dest.field_value;
+            const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
+            if (!is_x0)
             {
-                sparta_assert(dests.size() == 1); // we should only have one destination
-                const auto dest = dests[0];
-                const auto rf = olympia::coreutils::determineRegisterFile(dest);
-                const auto num = dest.field_value + i;
-                const bool is_x0 = (num == 0 && rf == core_types::RF_INTEGER);
-                if (!is_x0)
+                auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
+                --reference_counter_[original_dest.rf][original_dest.val];
+                // free previous PRF mapping if no references from srcs, there should be a new dest
+                // mapping for the ARF -> PRF so we know it's free to be pushed to freelist if it
+                // has no other src references
+                if (reference_counter_[original_dest.rf][original_dest.val] <= 0)
                 {
-                    auto const & original_dest = inst_ptr->getRenameData().getOriginalDestination();
-                    --reference_counter_[original_dest.rf][original_dest.val];
-                    // free previous PRF mapping if no references from srcs, there should be a new dest
-                    // mapping for the ARF -> PRF so we know it's free to be pushed to freelist if it
-                    // has no other src references
-                    if (reference_counter_[original_dest.rf][original_dest.val] <= 0)
-                    {
-                        freelist_[original_dest.rf].push(original_dest.val);
-                    }
+                    freelist_[original_dest.rf].push(original_dest.val);
                 }
             }
+        }
 
-            const auto & srcs = inst_ptr->getRenameData().getSourceList();
-            // decrement reference to data register
-            if (inst_ptr->isLoadStoreInst())
+        const auto & srcs = inst_ptr->getRenameData().getSourceList();
+        // decrement reference to data register
+        if (inst_ptr->isLoadStoreInst())
+        {
+            const auto & data_reg = inst_ptr->getRenameData().getDataReg();
+            if (data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2
+                && data_reg.is_x0 != true)
             {
-                const auto & data_reg = inst_ptr->getRenameData().getDataReg();
-                if (data_reg.field_id == mavis::InstMetaData::OperandFieldID::RS2
-                    && data_reg.is_x0 != true)
+                --reference_counter_[data_reg.rf][data_reg.val];
+                if (reference_counter_[data_reg.rf][data_reg.val] <= 0)
                 {
-                    --reference_counter_[data_reg.rf][data_reg.val + i];
-                    if (reference_counter_[data_reg.rf][data_reg.val + i] <= 0)
-                    {
-                        // freeing data register value, because it's not in the source list, so won't
-                        // get caught below
-                        freelist_[data_reg.rf].push(data_reg.val + i);
-                    }
+                    // freeing data register value, because it's not in the source list, so won't
+                    // get caught below
+                    freelist_[data_reg.rf].push(data_reg.val);
                 }
             }
-            // freeing references to PRF
-            for (const auto & src : srcs)
+        }
+        // freeing references to PRF
+        for (const auto & src : srcs)
+        {
+            --reference_counter_[src.rf][src.val];
+            if (reference_counter_[src.rf][src.val] <= 0)
             {
-                --reference_counter_[src.rf][src.val+i];
-                if (reference_counter_[src.rf][src.val+i] <= 0)
-                {
-                    // freeing a register in the case where it still has references and has already been
-                    // retired we wait until the last reference is retired to then free the prf any
-                    // "valid" PRF that is the true mapping of an ARF will have a reference_counter of
-                    // at least 1, and thus shouldn't be retired
-                    freelist_[src.rf].push(src.val+i);
-                }
+                // freeing a register in the case where it still has references and has already been
+                // retired we wait until the last reference is retired to then free the prf any
+                // "valid" PRF that is the true mapping of an ARF will have a reference_counter of
+                // at least 1, and thus shouldn't be retired
+                freelist_[src.rf].push(src.val);
             }
         }
 
@@ -207,30 +201,31 @@ namespace olympia
         if (SPARTA_EXPECT_TRUE(!inst_queue_.empty()))
         {
             const auto & oldest_inst = inst_queue_.front();
-            if (!oldest_inst->hasUOps() && !oldest_inst->isUOp())
-            {
-                // if instructions aren't UOp and oldest instruction doesn't have UOps
-                sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
-                              "ROB and rename inst_queue out of sync");
-            }
+            sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID() && oldest_inst->getUOpID() == inst_ptr->getUOpID(), "ROB and rename inst_queue out of sync");
+            // if (!oldest_inst->hasUOps() && !oldest_inst->isUOp())
+            // {
+            //     // if instructions aren't UOp and oldest instruction doesn't have UOps
+            //     sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
+            //                   "ROB and rename inst_queue out of sync");
+            // }
 
             inst_queue_.pop_front();
 
-            // pop all UOps from inst_queue_ to relaign ROB and rename inst_queue
-            if (inst_ptr->hasUOps())
-            {
-                while (inst_queue_.empty() == false)
-                {
-                    if (inst_ptr->getUOpID() == inst_queue_.front()->getUOpID())
-                    {
-                        inst_queue_.pop_front();
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
+            // // pop all UOps from inst_queue_ to realign ROB and rename inst_queue
+            // if (inst_ptr->hasUOps())
+            // {
+            //     while (inst_queue_.empty() == false)
+            //     {
+            //         if (inst_ptr->getUOpID() == inst_queue_.front()->getUOpID())
+            //         {
+            //             inst_queue_.pop_front();
+            //         }
+            //         else
+            //         {
+            //             break;
+            //         }
+            //     }
+            // }
         }
         else
         {
@@ -468,7 +463,8 @@ namespace olympia
                     {
                         // check for data operand existing based on RS2 existence
                         // store data register info separately
-                        if (src.field_id == mavis::InstMetaData::OperandFieldID::RS2)
+                        // for vector, data operand is in RS3
+                        if (src.field_id == mavis::InstMetaData::OperandFieldID::RS2 || src.field_id == mavis::InstMetaData::OperandFieldID::RS3)
                         {
                             auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
                             const uint32_t prf = map_table_[rf][num];

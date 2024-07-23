@@ -1693,27 +1693,27 @@
     },
     {
         "mnemonic": "vse16.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vse32.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vse64.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vse8.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vsetivli",
@@ -1885,27 +1885,27 @@
     },
     {
         "mnemonic": "vsse16.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vsse32.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vsse64.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vsse8.v",
-        "pipe": "?",
+        "pipe": "vlsu",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vssra.vi",

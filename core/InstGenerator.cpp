@@ -107,6 +107,8 @@ namespace olympia
                    mavis::InstMetaData::OperandTypes::VECTOR);
         addElement(srcs, "vs2", mavis::InstMetaData::OperandFieldID::RS2,
                    mavis::InstMetaData::OperandTypes::VECTOR);
+        addElement(srcs, "vs3", mavis::InstMetaData::OperandFieldID::RS3,
+                   mavis::InstMetaData::OperandTypes::VECTOR);
 
         mavis::OperandInfo dests;
         addElement(dests, "rd", mavis::InstMetaData::OperandFieldID::RD,

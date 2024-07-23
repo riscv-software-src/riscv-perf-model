@@ -3,6 +3,7 @@
 #include "VLSU.hpp"
 #include "sparta/simulation/Unit.hpp"
 #include <string>
+#include "Decode.hpp"
 
 #include "OlympiaAllocators.hpp"
 
@@ -229,7 +230,6 @@ namespace olympia
                 all_ready = allOlderStoresIssued_(inst_ptr);
             }
         }
-
         // Load are ready when operands are ready
         // Stores are ready when both operands and data is ready
         // If speculative loads are allowed older store are not checked for Physical address
@@ -261,17 +261,20 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
 
-        ++stores_retired_;
+        if(inst_ptr->isVector()){
+            ++stores_retired_;
 
-        updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
-        if (isReadyToIssueInsts_())
-        {
-            ILOG("ROB Ack issue");
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
+            if (isReadyToIssueInsts_())
+            {
+                ILOG("ROB Ack issue");
+                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            }
+
+            ILOG("ROB Ack: Retired store instruction: " << inst_ptr);
         }
-
-        ILOG("ROB Ack: Retired store instruction: " << inst_ptr);
     }
+    
 
     // Issue/Re-issue ready instructions in the issue queue
     void VLSU::issueInst_()
@@ -284,12 +287,12 @@ namespace olympia
         ++VLSU_insts_issued_;
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr);
-
-        // if the element width is greater than data width, we can only pull data width then
-        uint32_t width = data_width_ < win_ptr->getInstPtr()->getEEW() ? data_width_ : win_ptr->getInstPtr()->getEEW();
-        // Set total number of vector iterations
-        win_ptr->setTotalVectorIter(Inst::VLEN/width);
-        ILOG(win_ptr->getInstPtr() << " " << Inst::VLEN/width)
+        if(win_ptr->getInstPtr()->getTotalVLSUIters() == 0){
+            // if the element width is greater than data width, we can only pull data width then
+            uint32_t width = data_width_ < win_ptr->getInstPtr()->getEEW() ? data_width_ : win_ptr->getInstPtr()->getEEW();
+            // Set total number of vector iterations
+            win_ptr->getInstPtr()->setTotalVLSUIters(win_ptr->getInstPtr()->getVL()/width);
+        }
         // We append to replay queue to prevent ref count of the shared pointer to drop before
         // calling pop below
         if (allow_speculative_load_exec_)
@@ -463,19 +466,24 @@ namespace olympia
         }
 
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        ILOG(load_store_info_ptr << " " << mem_access_info_ptr);
+        ILOG(load_store_info_ptr << " " << mem_access_info_ptr << " " << load_store_info_ptr->getVLSUStatusState());
 
         // If have passed translation and the instruction is a store,
         // then it's good to be retired (i.e. mark it completed).
         // Stores typically do not cause a flush after a successful
         // translation.  We now wait for the Retire block to "retire"
         // it, meaning it's good to go to the cache
-        if (inst_ptr->isStoreInst() && (inst_ptr->getStatus() == Inst::Status::SCHEDULED))
+        if (inst_ptr->isStoreInst() && (load_store_info_ptr->getVLSUStatusState() == Inst::Status::SCHEDULED))
         {
             ILOG("Store marked as completed " << inst_ptr);
-            inst_ptr->setStatus(Inst::Status::COMPLETED);
+            load_store_info_ptr->setVLSUStatusState(Inst::Status::RETIRED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
+            if (isReadyToIssueInsts_())
+            {
+                uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+            }
             if (allow_speculative_load_exec_)
             {
                 updateInstReplayReady_(load_store_info_ptr);
@@ -501,7 +509,7 @@ namespace olympia
         const bool is_already_hit =
             (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
         const bool is_unretired_store =
-            inst_ptr->isStoreInst() && (inst_ptr->getStatus() != Inst::Status::RETIRED);
+            inst_ptr->isStoreInst() && (load_store_info_ptr->getVLSUStatusState() != Inst::Status::RETIRED);
         const bool cache_bypass = is_already_hit || !phy_addr_is_ready || is_unretired_store;
 
         if (cache_bypass)
@@ -570,6 +578,7 @@ namespace olympia
 
         if (false == mem_access_info_ptr->isCacheHit())
         {
+            ILOG(mem_access_info_ptr->getCacheState())
             ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
             if (allow_speculative_load_exec_)
             {
@@ -616,8 +625,7 @@ namespace olympia
             return;
         }
         const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[complete_stage_];
-        uint32_t total_iters = load_store_info_ptr->getTotalVectorIter();
-        ILOG(load_store_info_ptr->getVectorIter() << " total: " << total_iters << " "<< load_store_info_ptr->getInstPtr())
+        uint32_t total_iters = load_store_info_ptr->getInstPtr()->getTotalVLSUIters();
         // we're done load/storing all vector bits, can complete
         const MemoryAccessInfoPtr & mem_access_info_ptr =
         load_store_info_ptr->getMemoryAccessInfoPtr();
@@ -629,8 +637,7 @@ namespace olympia
         }
         else
         {
-            if(load_store_info_ptr->getVectorIter() >= total_iters){
-
+            if(load_store_info_ptr->getInstPtr()->getCurrVLSUIters() >= total_iters || !load_store_info_ptr->getInstPtr()->isVector()){
                 const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
                 const bool is_store_inst = inst_ptr->isStoreInst();
                 ILOG("Completing inst: " << inst_ptr);
@@ -659,7 +666,7 @@ namespace olympia
                         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                     }
                     if (load_store_info_ptr->isRetired()
-                        || inst_ptr->getStatus() == Inst::Status::COMPLETED)
+                        || load_store_info_ptr->getVLSUStatusState() == Inst::Status::COMPLETED)
                     {
                         ILOG("Load was previously completed or retired " << load_store_info_ptr);
                         if (allow_speculative_load_exec_)
@@ -672,13 +679,6 @@ namespace olympia
 
                     // Mark instruction as completed
                     inst_ptr->setStatus(Inst::Status::COMPLETED);
-                    if (inst_ptr->isUOp())
-                    {
-                        sparta_assert(!inst_ptr->getUOpParent().expired(),
-                                    "UOp instruction parent shared pointer is expired");
-                        auto shared_ex_inst = inst_ptr->getUOpParent().lock();
-                        shared_ex_inst->incrementUOpDoneCount();
-                    }
                     // Remove completed instruction from queues
                     ILOG("Removed issue queue " << inst_ptr);
                     popIssueQueue_(load_store_info_ptr);
@@ -698,67 +698,44 @@ namespace olympia
                     return;
                 }
 
-                // Complete store instruction
-                if (inst_ptr->getStatus() != Inst::Status::RETIRED)
+                
+                sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
+                            "Store inst cannot finish when cache is still a miss! " << inst_ptr);
+
+                sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
+                            "Store inst cannot finish when cache is still a miss! " << inst_ptr);
+                inst_ptr->setStatus(Inst::Status::COMPLETED);
+                if (isReadyToIssueInsts_())
                 {
-
-                    sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
-                                "Store instruction cannot complete when TLB is still a miss!");
-
-                    ILOG("Store was completed but waiting for retire " << load_store_info_ptr);
-
-                    if (isReadyToIssueInsts_())
-                    {
-                        ILOG("Store complete issue");
-                        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                    }
+                    ILOG("Complete store issue");
+                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                 }
-                // Finish store operation
-                else
+
+                if (!load_store_info_ptr->getIssueQueueIterator().isValid())
                 {
-                    sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
-                                "Store inst cannot finish when cache is still a miss! " << inst_ptr);
-
-                    sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
-                                "Store inst cannot finish when cache is still a miss! " << inst_ptr);
-                    if (isReadyToIssueInsts_())
-                    {
-                        ILOG("Complete store issue");
-                        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                    }
-
-                    if (!load_store_info_ptr->getIssueQueueIterator().isValid())
-                    {
-                        ILOG("Inst was already retired " << load_store_info_ptr);
-                        if (allow_speculative_load_exec_)
-                        {
-                            ILOG("Removed replay " << load_store_info_ptr);
-                            removeInstFromReplayQueue_(load_store_info_ptr);
-                        }
-                        return;
-                    }
-
-                    ILOG("Removed issue queue " << inst_ptr);
-                    popIssueQueue_(load_store_info_ptr);
-
+                    ILOG("Inst was already retired " << load_store_info_ptr);
                     if (allow_speculative_load_exec_)
                     {
                         ILOG("Removed replay " << load_store_info_ptr);
                         removeInstFromReplayQueue_(load_store_info_ptr);
                     }
-
-                    VLSU_insts_completed_++;
-                    out_vlsu_credits_.send(1, 0);
-
-                    ILOG("Store operation is done!");
-                    if (inst_ptr->isUOp())
-                    {
-                        sparta_assert(!inst_ptr->getUOpParent().expired(),
-                                    "UOp instruction parent shared pointer is expired");
-                        auto shared_ex_inst = inst_ptr->getUOpParent().lock();
-                        shared_ex_inst->incrementUOpDoneCount();
-                    }
+                    return;
                 }
+
+                ILOG("Removed issue queue " << inst_ptr);
+                popIssueQueue_(load_store_info_ptr);
+
+                if (allow_speculative_load_exec_)
+                {
+                    ILOG("Removed replay " << load_store_info_ptr);
+                    removeInstFromReplayQueue_(load_store_info_ptr);
+                }
+
+                VLSU_insts_completed_++;
+                out_vlsu_credits_.send(1, 0);
+
+                ILOG("Store operation is done!");
+                
 
                 // NOTE:
                 // Checking whether an instruction is ready to complete could be non-trivial
@@ -767,41 +744,38 @@ namespace olympia
                 // (2)Store inst is ready to complete as long as MMU (address translation) is done
             }
             else{
-                //const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-                // queue up next iteration, increment address with stride or index. Keep same instruction pointer.
-                sparta::memory::addr_t addr = load_store_info_ptr->getInstPtr()->getTargetVAddr();
-                // increment base address by EEW
-                load_store_info_ptr->getInstPtr()->setTargetVAddr(addr + load_store_info_ptr->getInstPtr()->getStride());
-                // increment vector LSU count
-                uint32_t vector_iter = load_store_info_ptr->getVectorIter();
-                ILOG("Multiple passes needed for VLSU, pass number " << vector_iter << " of " << total_iters << " " << load_store_info_ptr->getInstPtr());
-                load_store_info_ptr->setVectorIter(++vector_iter);
-                
-                bool iterate = true;
-                for (const auto & inst : ready_queue_)
+                if (!load_store_info_ptr->isInReadyQueue())
                 {
-                    if(inst == load_store_info_ptr){
-                        iterate = false;
-                        break;
-                    }
-                }
-                // for (const auto & ldst_inst : ldst_inst_queue_)
-                // {
-                //     if (ldst_inst->getInstPtr() == inst_ptr)
-                //     {
-                //         iterate = false;
-                //         break;
-                //     }
-                // }
-                // we remove from replay because we should be done speculating, for futher iterations we don't need to
-                // speculate because should be a cache hit and address generation is straight forward
-                if(iterate){
+                    //const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+                    // queue up next iteration, increment address with stride or index. Keep same instruction pointer.
+                    sparta::memory::addr_t addr = load_store_info_ptr->getInstPtr()->getTargetVAddr();
+                    // increment base address by EEW
+                    load_store_info_ptr->getInstPtr()->setTargetVAddr(addr + load_store_info_ptr->getInstPtr()->getStride());
+                    // increment vector LSU count
+                    uint32_t vector_iter = load_store_info_ptr->getInstPtr()->getCurrVLSUIters();
+                    ILOG("Multiple passes needed for VLSU, pass number " << vector_iter << " of " << total_iters << " " << load_store_info_ptr->getInstPtr());
+                    load_store_info_ptr->getInstPtr()->setCurrVLSUIters(++vector_iter);
+                    
                     if(allow_speculative_load_exec_)
                     {
                         removeInstFromReplayQueue_(load_store_info_ptr->getInstPtr());
                     }
-                    appendToReadyQueue_(load_store_info_ptr);
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                    if(load_store_info_ptr->getIssueQueueIterator().isValid()){
+                        popIssueQueue_(load_store_info_ptr);
+                        allocateInstToIssueQueue_(load_store_info_ptr->getInstPtr());
+                        handleOperandIssueCheck_(load_store_info_ptr->getInstPtr());
+
+                        updateIssuePriorityAfterNewDispatch_(load_store_info_ptr->getInstPtr());
+
+                        appendToReadyQueue_(load_store_info_ptr->getInstPtr());
+
+                        if (isReadyToIssueInsts_())
+                        {
+                            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                        }
+                    }
+                    // appendToReadyQueue_(load_store_info_ptr);
+                    // uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                 }
                 
                 // reset load/store pipeline
@@ -931,7 +905,6 @@ namespace olympia
         // Always append newly dispatched instructions to the back of issue queue
         const LoadStoreInstIterator & iter = ldst_inst_queue_.push_back(inst_info_ptr);
         inst_info_ptr->setIssueQueueIterator(iter);
-
         ILOG("Append new load/store instruction to issue queue!");
     }
 
@@ -943,7 +916,8 @@ namespace olympia
             const auto & mem_info_ptr = ldst_info_ptr->getMemoryAccessInfoPtr();
             if (ldst_inst_ptr->isStoreInst()
                 && ldst_inst_ptr->getUniqueID() < inst_ptr->getUniqueID()
-                && !mem_info_ptr->getPhyAddrStatus() && ldst_info_ptr->getInstPtr() != inst_ptr)
+                && !mem_info_ptr->getPhyAddrStatus() && ldst_info_ptr->getInstPtr() != inst_ptr
+                && ldst_inst_ptr->getUOpID() < inst_ptr->getUOpID())
             {
                 return false;
             }
@@ -966,7 +940,7 @@ namespace olympia
             // Only ready loads which have register operands ready
             // We only care of the instructions which are still not ready
             // Instruction have a status of SCHEDULED if they are ready to be issued
-            if (inst_ptr->getStatus() == Inst::Status::DISPATCHED && instOperandReady_(inst_ptr))
+            if (store_inst_ptr->getVLSUStatusState() == Inst::Status::DISPATCHED && instOperandReady_(inst_ptr))
             {
                 ILOG("Updating inst to schedule " << inst_ptr << " " << ldst_inst_ptr);
                 updateIssuePriorityAfterNewDispatch_(inst_ptr);
@@ -1192,7 +1166,10 @@ namespace olympia
                 // (2)Instruction issue arbitration is guaranteed to be sucessful.
 
                 // Update instruction status
-                inst_ptr->setStatus(Inst::Status::SCHEDULED);
+                inst_info_ptr->setVLSUStatusState(Inst::Status::SCHEDULED);
+                if(inst_ptr->getStatus() != Inst::Status::SCHEDULED){
+                    inst_ptr->setStatus(Inst::Status::SCHEDULED);
+                }
                 return;
             }
         }
@@ -1275,27 +1252,29 @@ namespace olympia
     // Update issue priority after store instruction retires
     void VLSU::updateIssuePriorityAfterStoreInstRetire_(const InstPtr & inst_ptr)
     {
-        for (auto & inst_info_ptr : ldst_inst_queue_)
-        {
-            if (inst_info_ptr->getInstPtr() == inst_ptr)
+        if(inst_ptr->isVector()){
+            for (auto & inst_info_ptr : ldst_inst_queue_)
             {
-
-                if (inst_info_ptr->getState()
-                    != LoadStoreInstInfo::IssueState::ISSUED) // Speculative misses are marked as
-                                                              // not ready and replay event would
-                                                              // set them back to ready
+                if (inst_info_ptr->getInstPtr() == inst_ptr)
                 {
-                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+
+                    if (inst_info_ptr->getState()
+                        != LoadStoreInstInfo::IssueState::ISSUED) // Speculative misses are marked as
+                                                                // not ready and replay event would
+                                                                // set them back to ready
+                    {
+                        inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                    }
+                    inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_PENDING);
+                    uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
+
+                    return;
                 }
-                inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_PENDING);
-                uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
-
-                return;
             }
-        }
 
-        sparta_assert(
-            false, "Attempt to update issue priority for instruction not yet in the issue queue!");
+            sparta_assert(
+                false, "Attempt to update issue priority for instruction not yet in the issue queue!");
+        }
     }
 
     bool VLSU::olderStoresExists_(const InstPtr & inst_ptr)
@@ -1409,5 +1388,4 @@ namespace olympia
             }
         }
     }
-
 } // namespace olympia

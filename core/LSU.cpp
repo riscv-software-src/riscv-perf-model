@@ -259,17 +259,18 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
+        if(!inst_ptr->isVector()){
+            ++stores_retired_;
 
-        ++stores_retired_;
+            updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
+            if (isReadyToIssueInsts_())
+            {
+                ILOG("ROB Ack issue");
+                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            }
 
-        updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
-        if (isReadyToIssueInsts_())
-        {
-            ILOG("ROB Ack issue");
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+            ILOG("ROB Ack: Retired store instruction: " << inst_ptr);
         }
-
-        ILOG("ROB Ack: Retired store instruction: " << inst_ptr);
     }
 
     // Issue/Re-issue ready instructions in the issue queue
@@ -1200,27 +1201,29 @@ namespace olympia
     // Update issue priority after store instruction retires
     void LSU::updateIssuePriorityAfterStoreInstRetire_(const InstPtr & inst_ptr)
     {
-        for (auto & inst_info_ptr : ldst_inst_queue_)
-        {
-            if (inst_info_ptr->getInstPtr() == inst_ptr)
+        if(!inst_ptr->isVector()){
+            for (auto & inst_info_ptr : ldst_inst_queue_)
             {
-
-                if (inst_info_ptr->getState()
-                    != LoadStoreInstInfo::IssueState::ISSUED) // Speculative misses are marked as
-                                                              // not ready and replay event would
-                                                              // set them back to ready
+                if (inst_info_ptr->getInstPtr() == inst_ptr)
                 {
-                    inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+
+                    if (inst_info_ptr->getState()
+                        != LoadStoreInstInfo::IssueState::ISSUED) // Speculative misses are marked as
+                                                                // not ready and replay event would
+                                                                // set them back to ready
+                    {
+                        inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                    }
+                    inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_PENDING);
+                    uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
+
+                    return;
                 }
-                inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_PENDING);
-                uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
-
-                return;
             }
-        }
 
-        sparta_assert(
-            false, "Attempt to update issue priority for instruction not yet in the issue queue!");
+            sparta_assert(
+                false, "Attempt to update issue priority for instruction not yet in the issue queue!");
+        }
     }
 
     bool LSU::olderStoresExists_(const InstPtr & inst_ptr)

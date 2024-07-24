@@ -66,10 +66,10 @@ namespace olympia
         if(uop_gen_type != InstArchInfo::UopGenType::NONE)
         {
             // Number of vector elements processed by each uop
-            const Inst::VCSRs * current_VCSRs = inst->getVCSRs();
-            const uint64_t num_elems_per_uop = Inst::VLEN / current_VCSRs->sew;
+            const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
+            const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
             // TODO: For now, generate uops for all elements even if there is a tail
-            num_uops_to_generate_ = std::ceil(current_VCSRs->vlmax / num_elems_per_uop);
+            num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
 
             if(uop_gen_type == InstArchInfo::UopGenType::ARITH_WIDE_DEST)
             {
@@ -100,15 +100,41 @@ namespace olympia
         const auto uop_gen_type = current_inst_->getUopGenType();
         sparta_assert(uop_gen_type <= InstArchInfo::UopGenType::NONE,
             "Inst: " << current_inst_ << " uop gen type is unknown");
-        auto x = uop_gen_function_map_.at(uop_gen_type);
-        return x(this);
+
+        // Generate uop
+        auto uop_gen_func = uop_gen_function_map_.at(uop_gen_type);
+        const InstPtr uop = uop_gen_func(this);
+        ++num_uops_generated_;
+
+        // setting UOp instructions to have the same UID and PID as parent instruction
+        uop->setUniqueID(current_inst_->getUniqueID());
+        uop->setProgramID(current_inst_->getProgramID());
+
+        const Inst::VCSRs * current_vcsrs = current_inst_->getVCSRs();
+        uop->setVCSRs(current_vcsrs);
+        uop->setUOpID(num_uops_generated_);
+
+        // Set weak pointer to parent vector instruction (first uop)
+        sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;
+        uop->setUOpParent(parent_weak_ptr);
+
+        // Handle last uop
+        if(num_uops_generated_ == num_uops_to_generate_)
+        {
+            const uint32_t num_elems = current_vcsrs->vl / current_vcsrs->sew;
+            uop->setTail(num_elems < current_vcsrs->vlmax);
+
+            reset_();
+        }
+
+        ILOG("Generated uop: " << uop);
+
+        return uop;
     }
 
     template<bool SINGLE_DEST, bool WIDE_DEST>
     const InstPtr VectorUopGenerator::generateArithUop()
     {
-        ++num_uops_generated_;
-
         // Increment source and destination register values
         auto srcs = current_inst_->getSourceOpInfoList();
         for (auto & src : srcs)
@@ -147,28 +173,6 @@ namespace olympia
                                                  current_inst_->getImmediate());
         InstPtr uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
 
-        // setting UOp instructions to have the same UID and PID as parent instruction
-        uop->setUniqueID(current_inst_->getUniqueID());
-        uop->setProgramID(current_inst_->getProgramID());
-
-        const Inst::VCSRs * current_VCSRs = current_inst_->getVCSRs();
-        uop->setVCSRs(current_VCSRs);
-        uop->setUOpID(num_uops_generated_);
-
-        // Set weak pointer to parent vector instruction (first uop)
-        sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;
-        uop->setUOpParent(parent_weak_ptr);
-
-        // Handle last uop
-        if(num_uops_generated_ == num_uops_to_generate_)
-        {
-            const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
-            uop->setTail(num_elems < current_VCSRs->vlmax);
-
-            reset_();
-        }
-
-        ILOG("Generated uop: " << uop);
         return uop;
     }
 

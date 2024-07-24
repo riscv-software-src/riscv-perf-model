@@ -249,9 +249,9 @@ namespace olympia
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
-        void setVCSRs(const VCSRs * inputVCSRs)
+        void setVCSRs(const VCSRs * input_VCSRs)
         {
-            VCSRs_.setVCSRs(inputVCSRs->vl, inputVCSRs->sew, inputVCSRs->lmul, inputVCSRs->vta);
+            VCSRs_ = *input_VCSRs;
         }
 
         const VCSRs * getVCSRs() const { return &VCSRs_; }
@@ -467,7 +467,7 @@ namespace olympia
         const bool is_return_;
 
         VCSRs VCSRs_;
-        bool has_tail_; // Does this vector uop have a tail?
+        bool has_tail_ = false; // Does this vector uop have a tail?
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing

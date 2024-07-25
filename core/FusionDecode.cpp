@@ -1,6 +1,8 @@
-// TODO: add Condor header - this is a new file
+// Support methods for the fusion decoder
+// 2024.07.25 Jeff Nye
+// 
 // contact jeff at condor
-#include "fusion/FusionTypes.hpp"
+#include "fsl_api/FusionTypes.h"
 #include "Decode.hpp"
 
 #include "sparta/events/StartupEvent.hpp"

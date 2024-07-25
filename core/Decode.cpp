@@ -1,7 +1,7 @@
 // <Decode.cpp> -*- C++ -*-
 
 #include "Decode.hpp"
-#include "fusion/FusionTypes.hpp"
+#include "fsl_api/FusionTypes.h"
 
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/utils/LogUtils.hpp"

@@ -47,7 +47,31 @@ SUPPORTED_INSTS = {
     "vwsub.wx" :   {"pipe" : "vint", "uop_gen" : "ARITH_WIDE_DEST", "latency" : 1},
 
 # TODO: Vector Integer Arithmetic Instructions: Vector Integer Extension
-# TODO: Vector Integer Arithmetic Instructions: Vector Integer Add-with-Carry/Subtract-with-Borrow Instructions
+# FIXME: Requires Mavis fix to support correctly
+#    "vzext.vf2" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+#    "vsext.vf2" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+#    "vzext.vf4" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+#    "vsext.vf4" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+#    "vzext.vf8" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+#    "vsext.vf8" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+
+# Vector Integer Arithmetic Instructions: Vector Integer Add-with-Carry/Subtract-with-Borrow Instructions
+    "vadc.vvm"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vadc.vxm"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vadc.vim"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmadc.vvm" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmadc.vxm" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmadc.vim" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmadc.vv"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmadc.vx"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmadc.vi"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsbc.vvm"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsbc.vxm"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmsbc.vvm" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmsbc.vxm" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmsbc.vv"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmsbc.vx"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+
 # Vector Integer Arithmetic Instructions: Vector Bitwise Logical Instructions
     "vand.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
     "vand.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
@@ -121,10 +145,28 @@ SUPPORTED_INSTS = {
     "vwmulsu.vv" : {"pipe" : "vmul", "uop_gen" : "ARITH_WIDE_DEST", "latency" : 3},
     "vwmulsu.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_WIDE_DEST", "latency" : 3},
 
-# TODO: Vector Integer Arithmetic Instructions: Vector Single-Width Integer Multiply-Add Instructions
-# TODO: Vector Integer Arithmetic Instructions: Vector Widening Integer Multiply-Add Instructions
+# Vector Integer Arithmetic Instructions: Vector Single-Width Integer Multiply-Add Instructions
+     "vmacc.vv"  : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vmacc.vx"  : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vnmsac.vv" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vnmsac.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vmadd.vv"  : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vmadd.vx"  : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vnmsub.vv" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+     "vnmsub.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC", "latency" : 3},
+
+# Vector Integer Arithmetic Instructions: Vector Widening Integer Multiply-Add Instructions
+     "vwmaccu.vv"  : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+     "vwmaccu.vx"  : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+     "vwmacc.vv"   : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+     "vwmacc.vx"   : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+     "vwmaccsu.vv" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+     "vwmaccsu.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+     "vwmaccus.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
+
 # TODO: Vector Integer Arithmetic Instructions: Vector Integer Merge Instructions
 # TODO: Vector Integer Arithmetic Instructions: Vector Integer Move Instructions
+
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Saturating Add and Subtract
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Averaging Add and Subtract
 # Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Fractional Multiply with Rounding and Saturation
@@ -133,6 +175,7 @@ SUPPORTED_INSTS = {
 
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Scaling Shift Instructions
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Narrowing Fixed-Point Clip Instructions
+
 # TODO: Vector Floating-Point Instructions: Vector Floating-Point Exception Flags
 # TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
 # TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Add/Subtract Instructions
@@ -152,10 +195,12 @@ SUPPORTED_INSTS = {
 # TODO: Vector Floating-Point Instructions: Single-Width Floating-Point/Integer Type-Convert Instructions
 # TODO: Vector Floating-Point Instructions: Widening Floating-Point/Integer Type-Convert Instructions
 # TODO: Vector Floating-Point Instructions: Narrowing Floating-Point/Integer Type-Convert Instructions
+
 # TODO: Vector Reduction Operations: Vector Single-Width Integer Reduction Instructions
 # TODO: Vector Reduction Operations: Vector Widening Integer Reduction Instructions
 # TODO: Vector Reduction Operations: Vector Single-Width Floating-Point Reduction Instructions
 # TODO: Vector Reduction Operations: Vector Widening Floating-Point Reduction Instructions
+
 # Vector Mask Instructions: Vector Mask-Register Logical Instructions
     "vmandn.mm" : {"pipe" : "vmask", "uop_gen" : "NONE", "latency" : 1},
     "vmand.mm"  : {"pipe" : "vmask", "uop_gen" : "NONE", "latency" : 1},
@@ -173,6 +218,7 @@ SUPPORTED_INSTS = {
 # TODO: Vector Mask Instructions: vmsof.m set-only-rst mask bit
 # TODO: Vector Mask Instructions: Vector Iota Instruction
 # TODO: Vector Mask Instructions: Vector Element Index Instruction
+
 # TODO: Vector Permutation Instructions: Integer Scalar Move Instructions
 # TODO: Vector Permutation Instructions: Floating-Point Scalar Move Instructions
 # TODO: Vector Permutation Instructions: Vector Slide Instructions

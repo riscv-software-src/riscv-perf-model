@@ -314,8 +314,6 @@ namespace olympia
             return opcode_info_->getSourceOpInfoList();
         }
 
-        uint64_t getImmediate() const { return opcode_info_->getImmediate(); }
-
         const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
 
         bool hasZeroRegSource() const
@@ -334,6 +332,27 @@ namespace olympia
                 {
                     return elem.field_value == 0;
                 });
+        }
+
+        uint64_t hasImmediate() const { return opcode_info_->hasImmediate(); }
+        uint64_t getImmediate() const { return opcode_info_->getImmediate(); }
+
+        bool getVectorMaskEnabled() const
+        {
+            try
+            {
+                // If vm bit is 0, masking is enabled
+                const uint64_t vm_bit = opcode_info_->getSpecialField(mavis::OpcodeInfo::SpecialField::VM);
+                return vm_bit == 0;
+            }
+            catch (const mavis::UnsupportedExtractorSpecialFieldID & mavis_exception)
+            {
+                return false;
+            }
+            catch (const mavis::InvalidExtractorSpecialFieldID & mavis_exception)
+            {
+                return false;
+            }
         }
 
         // Static instruction information

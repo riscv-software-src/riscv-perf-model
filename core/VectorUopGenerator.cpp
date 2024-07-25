@@ -202,11 +202,22 @@ namespace olympia
         }
 
         // Create uop
-        mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
-                                                 srcs,
-                                                 dests,
-                                                 current_inst_->getImmediate());
-        InstPtr uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        InstPtr uop;
+        if (current_inst_->hasImmediate())
+        {
+            mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
+                                                     srcs,
+                                                     dests,
+                                                     current_inst_->getImmediate());
+            uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        }
+        else
+        {
+            mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
+                                                     srcs,
+                                                     dests);
+            uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        }
 
         return uop;
     }

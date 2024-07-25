@@ -70,6 +70,8 @@ namespace olympia
             ARITH,
             ARITH_SINGLE_DEST,
             ARITH_WIDE_DEST,
+            ARITH_MAC,
+            ARITH_MAC_WIDE_DEST,
             NONE,
             UNKNOWN
         };

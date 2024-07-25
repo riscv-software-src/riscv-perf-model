@@ -48,7 +48,7 @@ namespace olympia
 
         const InstPtr generateUop();
 
-        template<bool SINGLE_DEST = false, bool WIDE_DEST = false>
+        template<bool SINGLE_DEST, bool WIDE_DEST, bool ADD_DEST_AS_SRC>
         const InstPtr generateArithUop();
 
         uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }

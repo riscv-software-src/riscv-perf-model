@@ -215,11 +215,6 @@ namespace olympia
         // UID, but different UOp IDs.
         uint64_t getUOpID() const { return uopid_.isValid() ? uopid_.getValue() : 0; }
 
-        bool hasUOps() const { return uopid_.isValid() && uopid_.getValue() == 0; }
-
-        // UOpIDs start at 1, because we use 0 as default UOpID on initialization
-        bool isUOp() const { return uopid_.isValid() && uopid_ > 0; }
-
         void setBlockingVSET(bool is_blocking_vset) { is_blocking_vset_ = is_blocking_vset; }
 
         bool isBlockingVSET() const { return is_blocking_vset_; }

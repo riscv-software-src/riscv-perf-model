@@ -18,6 +18,9 @@ namespace olympia
         num_retired_(&unit_stat_set_, "total_number_retired",
                      "The total number of instructions retired by this core",
                      sparta::Counter::COUNT_NORMAL),
+        num_uops_retired_(&unit_stat_set_, "total_uops_retired",
+                     "The total number of uops retired by this core",
+                     sparta::Counter::COUNT_NORMAL),
         num_flushes_(&unit_stat_set_, "total_number_of_flushes",
                      "The total number of flushes performed by the ROB",
                      sparta::Counter::COUNT_NORMAL),
@@ -73,19 +76,8 @@ namespace olympia
     {
         for (auto & i : *in_reorder_buffer_write_.pullData())
         {
-            if (!i->isUOp())
-            {
-                // rob entries only for main instruction, uops aren't added.
-                reorder_buffer_.push(i);
-                ILOG("retire appended: " << i);
-            }
-            else
-            {
-                ILOG("UOp passed in, not adding to ROB " << i);
-                // checking that the UOp instruction's parent is the youngest element in
-                // the ROB, ensuring the order is still correct
-                sparta_assert(i->getUOpParent().lock()->getUniqueID() == reorder_buffer_.back()->getUniqueID());
-            }
+            reorder_buffer_.push(i);
+            ILOG("retire appended: " << i);
         }
 
         ev_retire_.schedule(sparta::Clock::Cycle(0));
@@ -138,16 +130,8 @@ namespace olympia
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
-            bool uops_done = true;
 
-            if (ex_inst_ptr->hasUOps() && ex_inst_ptr->getUOpDoneCount() < ex_inst_ptr->getUOpCount())
-            {
-                // if UOps are all done, you can retire parent
-                uops_done = false;
-                ILOG("UOP: " << ex_inst << " is not done for instruction: " << ex_inst);
-                break;
-            }
-            if ((ex_inst.getStatus() == Inst::Status::COMPLETED) && uops_done)
+            if (ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
                 ex_inst.setStatus(Inst::Status::RETIRED);
@@ -158,27 +142,33 @@ namespace olympia
                 // sending retired instruction to rename
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);
 
-                ++num_retired_;
-                ++retired_this_cycle;
-                reorder_buffer_.pop();
+                // All instructions count as 1 uop
+                ++num_uops_retired_;
+                if (ex_inst_ptr->getUOpID() == 0)
+                {
+                    ++num_retired_;
+                    ++retired_this_cycle;
 
+                    // Use the program ID to verify that the program order has been maintained.
+                    sparta_assert(ex_inst.getProgramID() == expected_program_id_,
+                        "\nUnexpected program ID when retiring instruction" <<
+                        "\n(suggests wrong program order)" <<
+                        "\n expected: " << expected_program_id_ <<
+                        "\n received: " << ex_inst.getProgramID() <<
+                        "\n UID: " << ex_inst_ptr->getMavisUid() <<
+                        "\n incr: " << ex_inst_ptr->getProgramIDIncrement() <<
+                        "\n inst " << ex_inst);
+
+                    // The fused op records the number of insts that
+                    // were eliminated and adjusts the progID as needed
+                    expected_program_id_ += ex_inst.getProgramIDIncrement();
+                }
+
+                reorder_buffer_.pop();
                 ILOG("retiring " << ex_inst);
 
                 retire_event_.collect(*ex_inst_ptr);
                 last_inst_retired_ = ex_inst_ptr;
-
-                // Use the program ID to verify that the program order has been maintained.
-                sparta_assert(ex_inst.getProgramID() == expected_program_id_,
-                              "\nUnexpected program ID when retiring instruction"
-                                  << "\n(suggests wrong program order)"
-                                  << "\n expected: " << expected_program_id_
-                                  << "\n received: " << ex_inst.getProgramID()
-                                  << "\n UID: " << ex_inst_ptr->getMavisUid() << "\n incr: "
-                                  << ex_inst_ptr->getProgramIDIncrement() << "\n inst " << ex_inst);
-
-                // The fused op records the number of insts that
-                // were eliminated and adjusts the progID as needed
-                expected_program_id_ += ex_inst.getProgramIDIncrement();
 
                 if (SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0))
                 {

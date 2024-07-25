@@ -72,11 +72,12 @@ namespace olympia
     private:
 
         // Stats and counters
-        sparta::StatisticDef       stat_ipc_;            // A simple expression to calculate IPC
-        sparta::Counter            num_retired_;         // Running counter of number instructions retired
-        sparta::Counter            num_flushes_;         // Number of flushes
-        sparta::StatisticInstance  overall_ipc_si_;      // An overall IPC statistic instance starting at time == 0
-        sparta::StatisticInstance  period_ipc_si_;       // An IPC counter for the period between retirement heartbeats
+        sparta::StatisticDef       stat_ipc_;         // A simple expression to calculate IPC
+        sparta::Counter            num_retired_;      // Running counter of number of instructions retired
+        sparta::Counter            num_uops_retired_; // Running counter of the number of uops retired
+        sparta::Counter            num_flushes_;      // Number of flushes
+        sparta::StatisticInstance  overall_ipc_si_;   // An overall IPC statistic instance starting at time == 0
+        sparta::StatisticInstance  period_ipc_si_;    // An IPC counter for the period between retirement heartbeats
 
         // Parameter constants
         const sparta::Clock::Cycle retire_timeout_interval_;

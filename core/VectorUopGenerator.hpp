@@ -25,6 +25,10 @@ namespace olympia
         {
           public:
             VectorUopGeneratorParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+
+            //! \brief Generate uops for widening vector instructions with two dests
+            //PARAMETER(bool, widening_dual_dest, false,
+            //    "Generate uops for widening vector instructions with two dests")
         };
 
         /**
@@ -44,6 +48,9 @@ namespace olympia
 
         const InstPtr generateUop();
 
+        template<bool SINGLE_DEST = false, bool WIDE_DEST = false>
+        const InstPtr generateArithUop();
+
         uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }
 
         void handleFlush(const FlushManager::FlushingCriteria &);
@@ -51,8 +58,14 @@ namespace olympia
     private:
         MavisType * mavis_facade_;
 
+        //typedef std::function<const InstPtr (VectorUopGenerator*)> FUNC;
+        typedef std::function<const InstPtr (VectorUopGenerator*)> UopGenFunctionType;
+        typedef std::map<InstArchInfo::UopGenType, UopGenFunctionType> UopGenFunctionMapType;
+        UopGenFunctionMapType uop_gen_function_map_;
+
         // TODO: Use Sparta ValidValue
         InstPtr current_inst_ = nullptr;
+        //UopGenFunctionMapType::iterator current_uop_gen_function_;
 
         uint64_t num_uops_generated_ = 0;
         uint64_t num_uops_to_generate_ = 0;

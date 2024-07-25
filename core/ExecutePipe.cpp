@@ -63,7 +63,10 @@ namespace olympia
                 unit_busy_ == false,
                 "ExecutePipe is receiving a new instruction when it's already busy!!");
         }
+
+        // Get instruction latency
         uint32_t exe_time = ignore_inst_execute_time_ ? execute_time_ : ex_inst->getExecuteTime();
+
         if (!ex_inst->isVset() && ex_inst->isVector())
         {
             // have to factor in vlen, sew, valu length to calculate how many passes are needed
@@ -72,14 +75,14 @@ namespace olympia
             // will truncate, but we have each adder support the largest SEW possible
             if (ex_inst->getPipe() == InstArchInfo::TargetPipe::VINT)
             {
+                // First time seeing this uop, determine number of passes needed
                 if (num_passes_needed_ == 0)
                 {
-                    // number of elements we operate on is dependent on either the AVL or current
-                    // VLMAX we divide VLMAX by LMUL, because we UOp fracture, so we divide by LMUL
-                    // for current instruction VL
-                    uint32_t vl = ex_inst->getVL() < ex_inst->getVLMAX() / ex_inst->getLMUL()
-                                      ? ex_inst->getVL()
-                                      : ex_inst->getVLMAX() / ex_inst->getLMUL();
+                    // The number of non-tail elements in the uop is used to determine how many
+                    // passes are needed
+                    const uint32_t num_elems_per_uop = ex_inst->getVLMAX() / ex_inst->getLMUL();
+                    const uint32_t num_elems_remaining = ex_inst->getVL() - (num_elems_per_uop * (ex_inst->getUOpID() - 1));
+                    const uint32_t vl = std::min(num_elems_per_uop, num_elems_remaining);
                     const uint32_t num_passes = std::ceil(vl / valu_adder_num_);
                     if (num_passes > 1)
                     {
@@ -169,13 +172,6 @@ namespace olympia
         ex_inst->setStatus(Inst::Status::COMPLETED);
         complete_event_.collect(*ex_inst);
         ILOG("Completing inst: " << ex_inst);
-        if (ex_inst->isUOp())
-        {
-            sparta_assert(!ex_inst->getUOpParent().expired(),
-                          "UOp instruction parent shared pointer is expired");
-            auto shared_ex_inst = ex_inst->getUOpParent().lock();
-            shared_ex_inst->incrementUOpDoneCount();
-        }
         out_execute_pipe_.send(1);
     }
 

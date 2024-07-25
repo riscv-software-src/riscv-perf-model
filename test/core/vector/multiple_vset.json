@@ -1,91 +1,44 @@
 [
     {
-        "mnemonic": "vsetvl",
-        "rs1": 3,
-        "vtype": "0x18",
+        "mnemonic": "vsetvli",
+        "rs1": 0,
+        "vtype": "0x1",
         "rd": 1,
         "vl": 512,
         "vta": 1
     },
     {
         "mnemonic": "vadd.vv",
-        "vs1": 10,
-        "vs2": 17,
-        "vd": 3
+        "vs1": 8,
+        "vs2": 10,
+        "vd": 12
     },
     {
         "mnemonic": "vsetvli",
         "rs1": 0,
-        "vtype": "0x10",
-        "rd": 1,
-        "vl": 512,
-        "vta": 1
-    },
-    {
-        "mnemonic": "vadd.vv",
-        "vs1": 10,
-        "vs2": 17,
-        "vd": 3
-    },
-    {
-        "mnemonic": "vsetvli",
-        "rs1": 2,
-        "vtype": "0x10",
-        "rd": 1,
-        "vl": 128,
-        "vta": 0
-    },
-    {
-        "mnemonic": "add",
-        "rs1": 1,
-        "rs2": 2,
-        "rd": 3
-    },
-    {
-        "mnemonic": "sw",
-        "rs2": 4,
-        "rs1": 3,
-        "imm": 5
-    },
-    {
-        "mnemonic": "lw",
-        "rs1": 3,
-        "rs2": 4,
-        "rd":  5,
-        "vaddr" : "0xdeadbeef"
-    },
-    {
-        "mnemonic": "vadd.vv",
-        "vs1": 1,
-        "vs2": 10,
-        "vd": 22
-    },
-    {
-        "mnemonic": "vsetvli",
-        "rs1": 2,
-        "vtype": "0x10",
-        "rd": 1,
-        "vl": 512,
-        "vta": 1
-    },
-    {
-        "mnemonic": "vadd.vv",
-        "vs1": 10,
-        "vs2": 17,
-        "vd": 3
-    },
-    {
-        "mnemonic": "vsetivli",
-        "rs1": 5,
-        "rd": 1,
         "vtype": "0x2",
+        "rd": 1,
+        "vl": 512,
+        "vta": 1
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 8,
+        "vs2": 12,
+        "vd": 16
+    },
+    {
+        "mnemonic": "vsetvli",
+        "rs1": 2,
+        "vtype": "0x3",
+        "rd": 1,
         "vl": 1024,
         "vta": 0
     },
     {
         "mnemonic": "vadd.vv",
-        "vs1": 10,
-        "vs2": 17,
-        "vd": 3
+        "vs1": 8,
+        "vs2": 16,
+        "vd": 24
     }
 ]

@@ -1,7 +1,6 @@
 // Support methods for the fusion decoder
 // 2024.07.25 Jeff Nye
-// 
-// contact jeff at condor
+
 #include "fsl_api/FusionTypes.h"
 #include "Decode.hpp"
 

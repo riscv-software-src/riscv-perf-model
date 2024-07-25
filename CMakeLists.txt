@@ -66,10 +66,14 @@ include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
 
 # Mavis, the Core, MSS, the simulator and Fusion
+
 add_subdirectory (mavis)
 add_subdirectory (core)
 add_subdirectory (mss)
-#add_subdirectory (fsl)
+
+# Tell FSL to use the top mavis submodule, instead of fsl's submodule
+set(FSL_MAVIS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/mavis")
+add_subdirectory (fsl)
 
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})

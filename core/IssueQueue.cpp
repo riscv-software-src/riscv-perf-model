@@ -117,11 +117,11 @@ namespace olympia
             {
                 // temporary fix for clearCallbacks not working
                 scoreboard_views_[reg_file]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
-                [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
-                { this->handleOperandIssueCheck_(ex_inst); });
-                ILOG("Instruction NOT ready: " << ex_inst
-                                               << " Bits needed:" << sparta::printBitSet(src_bits)
-                                               << " rf: " << reg_file);
+                    [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
+                    {
+                        this->handleOperandIssueCheck_(ex_inst);
+                    }
+                );
                 return false;
             }
         };
@@ -133,8 +133,11 @@ namespace olympia
 
             if (!src_ready)
             {
-                // we break to prevent multiple callbacks from being sent out
+                ILOG("Instruction NOT ready: " << ex_inst <<
+                     " Bits needed:" << sparta::printBitSet(ex_inst->getSrcRegisterBitMask(src.rf)) <<
+                     " rf: " << src.rf);
                 all_srcs_ready = false;
+                // we break to prevent multiple callbacks from being sent out
                 break;
             }
         }

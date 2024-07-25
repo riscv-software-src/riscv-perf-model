@@ -1003,21 +1003,21 @@
     },
     {
         "mnemonic": "vmerge.vim",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vmerge.vvm",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vmerge.vxm",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vmfeq.vf",
@@ -1333,21 +1333,21 @@
     },
     {
         "mnemonic": "vmv.v.i",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vmv.v.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vmv.v.x",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vmv.x.s",
@@ -1453,39 +1453,39 @@
     },
     {
         "mnemonic": "vnsra.wi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vnsra.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vnsra.wx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vnsrl.wi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vnsrl.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vnsrl.wx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vor.vi",
@@ -1789,21 +1789,21 @@
     },
     {
         "mnemonic": "vsll.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsll.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsll.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsm.v",
@@ -1849,39 +1849,39 @@
     },
     {
         "mnemonic": "vsra.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsra.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsra.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsrl.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsrl.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsrl.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsse16.v",

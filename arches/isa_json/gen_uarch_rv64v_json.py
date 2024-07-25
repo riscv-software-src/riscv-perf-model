@@ -56,6 +56,7 @@ SUPPORTED_INSTS = {
 #    "vsext.vf8" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
 
 # Vector Integer Arithmetic Instructions: Vector Integer Add-with-Carry/Subtract-with-Borrow Instructions
+# FIXME: Requires Mavis fix to include vector mask
     "vadc.vvm"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
     "vadc.vxm"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
     "vadc.vim"  : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
@@ -83,8 +84,25 @@ SUPPORTED_INSTS = {
     "vxor.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
     "vxor.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
 
-# TODO: Vector Integer Arithmetic Instructions: Vector Single-Width Shift Instructions
-# TODO: Vector Integer Arithmetic Instructions: Vector Narrowing Integer Right Shift Instructions
+# Vector Integer Arithmetic Instructions: Vector Single-Width Shift Instructions
+    "vsll.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsll.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsll.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsrl.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsrl.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsrl.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsra.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsra.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsra.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Integer Arithmetic Instructions: Vector Narrowing Integer Right Shift Instructions
+    "vnsrl.wv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vnsrl.wx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vnsrl.wi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vnsra.wv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vnsra.wx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vnsra.wi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+
 # Vector Integer Arithmetic Instructions: Vector Integer Compare Instructions
     "vmseq.vv" :  {"pipe" : "vint", "uop_gen" : "ARITH_SINGLE_DEST", "latency" : 1},
     "vmseq.vx" :  {"pipe" : "vint", "uop_gen" : "ARITH_SINGLE_DEST", "latency" : 1},
@@ -164,8 +182,16 @@ SUPPORTED_INSTS = {
      "vwmaccsu.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
      "vwmaccus.vx" : {"pipe" : "vmul", "uop_gen" : "ARITH_MAC_WIDE_DEST", "latency" : 3},
 
-# TODO: Vector Integer Arithmetic Instructions: Vector Integer Merge Instructions
-# TODO: Vector Integer Arithmetic Instructions: Vector Integer Move Instructions
+# Vector Integer Arithmetic Instructions: Vector Integer Merge Instructions
+# FIXME: Requires Mavis fix to include vector mask
+    "vmerge.vvm" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmerge.vxm" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmerge.vim" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Integer Arithmetic Instructions: Vector Integer Move Instructions
+    "vmv.v.v" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmv.v.x" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vmv.v.i" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
 
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Saturating Add and Subtract
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Averaging Add and Subtract

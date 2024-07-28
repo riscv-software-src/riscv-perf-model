@@ -1,6 +1,6 @@
 [submodule "mavis"]
 	path = mavis
-	url = https://github.com/sparcians/mavis.git
+	url = git@github.com:sparcians/mavis
 [submodule "stf_lib"]
 	path = stf_lib
-	url = https://github.com/sparcians/stf_lib.git
+	url = git@github.com:sparcians/stf_lib

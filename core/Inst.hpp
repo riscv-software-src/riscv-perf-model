@@ -74,6 +74,33 @@ namespace olympia
             Reg data_reg_;
         };
 
+        static const uint32_t VLEN = 1024; // vector register default bit size
+
+        // Vector CSRs
+        struct VCSRs
+        {
+            uint32_t vl = 16;  // vector length
+            uint32_t sew = 8;  // set element width
+            uint32_t lmul = 1; // effective length
+            bool vta = false;  // vector tail agnostic, false = undisturbed, true = agnostic
+
+            uint32_t vlmax_formula() { return (VLEN / sew) * lmul; }
+
+            void setVCSRs(uint32_t input_vl,
+                          uint32_t input_sew,
+                          uint32_t input_lmul,
+                          uint32_t input_vta)
+            {
+                vl = input_vl;
+                sew = input_sew;
+                lmul = input_lmul;
+                vta = input_vta;
+                vlmax = vlmax_formula();
+            }
+
+            uint32_t vlmax = vlmax_formula();
+        };
+
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
 
@@ -93,7 +120,7 @@ namespace olympia
             COMPLETED,
             RETIRED,
             FLUSHED,
-            UNMOD,        //no extended status
+            UNMOD, // no extended status
             FUSED,
             FUSION_GHOST,
             __LAST
@@ -132,52 +159,30 @@ namespace olympia
             }
         }
 
-        const Status & getStatus() const
-        {
-            return status_state_;
-        }
+        const Status & getStatus() const { return status_state_; }
 
-        bool getCompletedStatus() const
-        {
-            return getStatus() == olympia::Inst::Status::COMPLETED;
-        }
+        bool getCompletedStatus() const { return getStatus() == olympia::Inst::Status::COMPLETED; }
 
-        bool getFlushedStatus() const
-        {
-            return getStatus() == olympia::Inst::Status::FLUSHED;
-        }
+        bool getFlushedStatus() const { return getStatus() == olympia::Inst::Status::FLUSHED; }
 
-        void setMispredicted()
-        {
-            is_mispredicted_ = true;
-        }
+        void setMispredicted() { is_mispredicted_ = true; }
 
         // Is this branch instruction mispredicted?
-        bool isMispredicted() const
-        {
-            return is_mispredicted_;
-        }
+        bool isMispredicted() const { return is_mispredicted_; }
 
-        const Status & getExtendedStatus() const
-        {
-          return extended_status_state_;
-        }
+        const Status & getExtendedStatus() const { return extended_status_state_; }
 
         void setExtendedStatus(Status status)
         {
-            sparta_assert(
-                     extended_status_state_ == Inst::Status::UNMOD
-                  || extended_status_state_ == Inst::Status::FUSED
-                  || extended_status_state_ == Inst::Status::FUSION_GHOST,
-                          "Attempt to set unknown extended status : "
-                          << status << " " << *this);
+            sparta_assert(extended_status_state_ == Inst::Status::UNMOD
+                              || extended_status_state_ == Inst::Status::FUSED
+                              || extended_status_state_ == Inst::Status::FUSION_GHOST,
+                          "Attempt to set unknown extended status : " << status << " " << *this);
 
             extended_status_state_ = status;
         }
 
-        InstArchInfo::TargetPipe getPipe() const
-        {
-            return inst_arch_info_->getTargetPipe(); }
+        InstArchInfo::TargetPipe getPipe() const { return inst_arch_info_->getTargetPipe(); }
 
         // ROB handling -- mark this instruction as the oldest in the machine
         void setOldest(bool oldest, sparta::Scheduleable* rob_retire_event)
@@ -200,6 +205,25 @@ namespace olympia
 
         uint64_t getUniqueID() const { return unique_id_; }
 
+        // Set the instruction's UOp ID. This ID is incremented based
+        // off of number of Uops. The UOp instructions will all have the same
+        // UID, but different UOp IDs.
+        void setUOpID(uint64_t uopid) { uopid_ = uopid; }
+
+        // Set the instruction's UOp ID. This ID is incremented based
+        // off of number of Uops. The UOp instructions will all have the same
+        // UID, but different UOp IDs.
+        uint64_t getUOpID() const { return uopid_.isValid() ? uopid_.getValue() : 0; }
+
+        bool hasUOps() const { return uopid_.isValid() && uopid_.getValue() == 0; }
+
+        // UOpIDs start at 1, because we use 0 as default UOpID on initialization
+        bool isUOp() const { return uopid_.isValid() && uopid_ > 0; }
+
+        void setBlockingVSET(bool is_blocking_vset) { is_blocking_vset_ = is_blocking_vset; }
+
+        bool isBlockingVSET() const { return is_blocking_vset_; }
+
         // Set the instruction's Program ID.  This ID is specific to
         // an instruction's retire pointer.  The same instruction in a
         // trace will have the same program ID (as compared to
@@ -208,19 +232,13 @@ namespace olympia
 
         uint64_t getProgramID() const { return program_id_; }
 
-        //A fused operation will modify the program_id_increment_ based on 
-        //the number of instructions fused. A-B-C-D -> fA  incr becomes 4
-        //This is planned, but not currently used. 
-        void setProgramIDIncrement(uint64_t incr)
-        {
-            program_id_increment_ = incr;
-        }
+        // A fused operation will modify the program_id_increment_ based on
+        // the number of instructions fused. A-B-C-D -> fA  incr becomes 4
+        // This is planned, but not currently used.
+        void setProgramIDIncrement(uint64_t incr) { program_id_increment_ = incr; }
 
-        //This is planned, but not currently used.
-        uint64_t getProgramIDIncrement() const
-        {
-            return program_id_increment_;
-        }
+        // This is planned, but not currently used.
+        uint64_t getProgramIDIncrement() const { return program_id_increment_; }
 
         // Set the instruction's PC
         void setPC(sparta::memory::addr_t inst_pc) { inst_pc_ = inst_pc; }
@@ -229,12 +247,54 @@ namespace olympia
 
         // Set the instruction's target PC (branch target or load/store target)
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
-
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
+
+        void setVCSRs(const VCSRs * input_VCSRs)
+        {
+            VCSRs_ = *input_VCSRs;
+        }
+
+        const VCSRs * getVCSRs() const { return &VCSRs_; }
+
+        // Set lmul from vset (vsetivli, vsetvli)
+        void setLMUL(uint32_t lmul)
+        {
+            VCSRs_.lmul = lmul;
+            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+        }
+
+        // Set sew from vset (vsetivli, vsetvli)
+        void setSEW(uint32_t sew)
+        {
+            VCSRs_.sew = sew;
+            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+        }
+
+        // Set VL from vset (vsetivli, vsetvli)
+        void setVL(uint32_t vl) { VCSRs_.vl = vl; }
+
+        // Set VTA (vector tail agnostic)
+        // vta = true means agnostic, set destination values to 1's or maintain original
+        // vta = false means undisturbed, maintain original destination values
+        void setVTA(bool vta) { VCSRs_.vta = vta; }
+
+        uint32_t getSEW() const { return VCSRs_.sew; }
+        uint32_t getLMUL() const { return VCSRs_.lmul; }
+        uint32_t getVL() const { return VCSRs_.vl; }
+        uint32_t getVTA() const { return VCSRs_.vta; }
+        uint32_t getVLMAX() const { return VCSRs_.vlmax; }
+
+        void setTail(bool has_tail) { has_tail_ = has_tail; }
+        bool hasTail() const { return has_tail_; }
+
+        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)
+        {
+            parent_uop_ = parent_uop;
+        }
+        sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return parent_uop_; }
 
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
-
 
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
@@ -247,7 +307,9 @@ namespace olympia
         uint32_t getOpCode() const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
         mavis::InstructionUniqueID getMavisUid() const
-                { return opcode_info_->getInstructionUniqueID(); }
+        {
+            return opcode_info_->getInstructionUniqueID();
+        }
 
         // Operand information
         using OpInfoList = mavis::DecodedInstructionInfo::OpInfoList;
@@ -257,7 +319,27 @@ namespace olympia
             return opcode_info_->getSourceOpInfoList();
         }
 
+        uint64_t getImmediate() const { return opcode_info_->getImmediate(); }
+
         const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
+
+        bool hasZeroRegSource() const
+        {
+            return std::any_of(getSourceOpInfoList().begin(), getSourceOpInfoList().end(),
+                [](const mavis::OperandInfo::Element & elem)
+                {
+                    return elem.field_value == 0;
+                });
+        }
+
+        bool hasZeroRegDest() const
+        {
+            return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
+                [](const mavis::OperandInfo::Element & elem)
+                {
+                    return elem.field_value == 0;
+                });
+        }
 
         // Static instruction information
         bool isStoreInst() const { return is_store_; }
@@ -265,6 +347,8 @@ namespace olympia
         bool isLoadStoreInst() const { return inst_arch_info_->isLoadStore(); }
 
         uint32_t getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
+
+        InstArchInfo::UopGenType getUopGenType() const { return inst_arch_info_->getUopGenType(); }
 
         uint64_t getRAdr() const { return target_vaddr_ | 0x8000000; } // faked
 
@@ -280,7 +364,13 @@ namespace olympia
 
         bool isCall() const { return is_call_; }
 
+        bool isCSR() const { return is_csr_; }
+
         bool isReturn() const { return is_return_; }
+
+        bool isVset() const { return inst_arch_info_->isVset(); }
+
+        bool isVector() const { return is_vector_; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -320,38 +410,40 @@ namespace olympia
 
         const RenameData & getRenameData() const { return rename_data; }
 
+        mavis::OpcodeInfo::PtrType getOpCodeInfo() { return opcode_info_; }
+
         // Duplicates stream operator but does not change EXPECT logs
         std::string info()
         {
             std::string rStatus = "DONTCARE";
             std::string eStatus = "UNKNOWN";
 
-            if(getExtendedStatus() == Inst::Status::UNMOD) {
-              eStatus = "UNMOD";
-            } else if(getExtendedStatus() == Inst::Status::FUSED) {
-              eStatus = "FUSED";
-            } else if(getExtendedStatus() == Inst::Status::FUSION_GHOST) {
-              eStatus = "GHOST";
+            if (getExtendedStatus() == Inst::Status::UNMOD)
+            {
+                eStatus = "UNMOD";
             }
-           
+            else if (getExtendedStatus() == Inst::Status::FUSED)
+            {
+                eStatus = "FUSED";
+            }
+            else if (getExtendedStatus() == Inst::Status::FUSION_GHOST)
+            {
+                eStatus = "GHOST";
+            }
+
             std::stringstream ss;
 
-            ss <<  "uid: "   << std::dec //<< std::hex << std::setfill('0')
-                             << getUniqueID()
-               << " pid: "   << std::dec //<< std::hex << std::setfill('0')
-                             << getProgramID()
-               << " mav: 0x" << std::hex << std::setw(2) << std::setfill('0')
-                             << getMavisUid()
-               << " inc: "   << std::dec
-                             << getProgramIDIncrement()
-               << " pc: 0x"  << std::hex << std::setw(8) << std::setfill('0')
-                             << getPC()
-               << " "        << std::setw(10) << std::setfill(' ') << rStatus
-               << " "        << std::setw(12) << std::setfill(' ') << eStatus
-               << " '"       << getDisasm() << "'";
+            ss << "uid: " << std::dec                   //<< std::hex << std::setfill('0')
+               << getUniqueID() << " pid: " << std::dec //<< std::hex << std::setfill('0')
+               << getProgramID() << " mav: 0x" << std::hex << std::setw(2) << std::setfill('0')
+               << getMavisUid() << " inc: " << std::dec << getProgramIDIncrement() << " pc: 0x"
+               << std::hex << std::setw(8) << std::setfill('0') << getPC() << " " << std::setw(10)
+               << std::setfill(' ') << rStatus << " " << std::setw(12) << std::setfill(' ')
+               << eStatus << " '" << getDisasm() << "'";
 
             return ss.str();
         }
+
       private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType inst_arch_info_;
@@ -360,8 +452,9 @@ namespace olympia
         sparta::memory::addr_t target_vaddr_ =
             0; // Instruction's Target PC (for branches, loads/stores)
         bool is_oldest_ = false;
-        uint64_t unique_id_ = 0;      // Supplied by Fetch
-        uint64_t program_id_ = 0;     // Supplied by a trace Reader or execution backend
+        uint64_t unique_id_ = 0;  // Supplied by Fetch
+        uint64_t program_id_ = 0; // Supplied by a trace Reader or execution backend
+        sparta::utils::ValidValue<uint64_t> uopid_; // Set in decode
         uint64_t program_id_increment_ = 1;
         bool is_speculative_ = false; // Is this instruction soon to be flushed?
         const bool is_store_;
@@ -369,7 +462,18 @@ namespace olympia
         const bool is_branch_;
         const bool is_condbranch_;
         const bool is_call_;
+        const bool is_csr_;
+        const bool is_vector_;
         const bool is_return_;
+
+        VCSRs VCSRs_;
+        bool has_tail_ = false; // Does this vector uop have a tail?
+
+        // blocking vset is a vset that needs to read a value from a register value. A blocking vset
+        // can't be resolved until after execution, so we need to block on it due to UOp fracturing
+        bool is_blocking_vset_ = false;
+
+        sparta::SpartaWeakPointer<olympia::Inst> parent_uop_;
 
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;
@@ -389,7 +493,7 @@ namespace olympia
         RegisterBitMaskArray dest_reg_bit_masks_;
         RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
-        static const std::unordered_map<Inst::Status,std::string> status2String;
+        static const std::unordered_map<Inst::Status, std::string> status2String;
     };
 
     using InstPtr = Inst::PtrType;
@@ -423,15 +527,15 @@ namespace olympia
         case Inst::Status::FLUSHED:
             os << "FLUSHED";
             break;
-        //Used in extended_status_state as default case
+        // Used in extended_status_state as default case
         case Inst::Status::UNMOD:
             os << "UNMOD";
             break;
-        //The new opcode/instruction as a result of fusion
+        // The new opcode/instruction as a result of fusion
         case Inst::Status::FUSED:
             os << "FUSED";
             break;
-        //The opcodes/instruction no longer present due to fusion
+        // The opcodes/instruction no longer present due to fusion
         case Inst::Status::FUSION_GHOST:
             os << "FUSION_GHOST";
             break;
@@ -441,21 +545,24 @@ namespace olympia
         return os;
     }
 
-    // Expect log info system uses simple diff 
+    // Expect log info system uses simple diff
     //   - any changes here will break EXPECT
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst)
     {
         os << "uid: " << inst.getUniqueID() << " " << std::setw(10) << inst.getStatus() << " "
-           << std::hex << inst.getPC() << std::dec << " pid: " << inst.getProgramID() << " '"
-           << inst.getDisasm() << "' ";
+           << std::hex << inst.getPC() << std::dec << " pid: " << inst.getProgramID()
+           << " uopid: " << inst.getUOpID() << " '" << inst.getDisasm() << "' ";
         return os;
     }
 
     inline std::ostream & operator<<(std::ostream & os, const InstPtr & inst)
     {
-        if(inst) {
+        if (inst)
+        {
             os << *inst;
-        } else {
+        }
+        else
+        {
             os << "nullptr";
         }
         return os;

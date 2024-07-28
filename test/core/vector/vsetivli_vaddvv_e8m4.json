@@ -1,0 +1,16 @@
+[
+    {
+        "mnemonic": "vsetivli",
+        "rs1": 5,
+        "rd": 1,
+        "vtype": "0x2",
+        "vl": 512,
+        "vta": 0
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 10,
+        "vs2": 17,
+        "vd": 3
+    }
+]

@@ -1,0 +1,41 @@
+#Name:     
+#Cmdline:  
+#Exe:      
+#SimulatorVersion:
+#Repro:    
+#Start:    Sunday Sun Jul 28 14:29:57 2024
+#Elapsed:  0.004246s
+{0000000000 00000000 top.lsu info} req_inst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' ' Requested
+{0000000001 00000001 top.dcache info} receiveMemReqFromLSU_: Received memory access request from LSU memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000001 00000001 top.lsu info} ReceiveAck_: Ack: 'memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' ' Received
+{0000000001 00000001 top.dcache info} arbitrate_l2_lsu_req_: Received LSU request memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000002 00000002 top.dcache info} mshrRequest_: Send mshr req
+{0000000002 00000002 top.dcache info} handleLookup_: Lookup stage
+{0000000002 00000002 top.dcache info} handleLookup_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  in Lookup stage
+{0000000002 00000002 top.dcache info} dataLookup_: DL1 DCache MISS: phyAddr=0xdeadbeef
+{0000000002 00000002 top.dcache info} handleLookup_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  performing lookup 0
+{0000000002 00000002 top.dcache info} handleLookup_: Creating new MSHR Entry memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000002 00000002 top.dcache info} handleLookup_: Load miss inst to LMQ; block address:0xdeadbee0
+{0000000002 00000002 top.lsu info} ReceiveAck_: Ack: 'memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' ' Received
+{0000000003 00000003 top.dcache info} handleDataRead_: Data Read stage
+{0000000003 00000003 top.dcache info} handleDataRead_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  in read stage
+{0000000003 00000003 top.lsu info} ReceiveAck_: Ack: 'memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' ' Received
+{0000000004 00000004 top.next_lvl info} sinkInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' ' sinked
+{0000000004 00000004 top.dcache info} handleDeallocate_: Data Dellocate stage
+{0000000004 00000004 top.dcache info} handleDeallocate_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  in deallocate stage
+{0000000004 00000004 top.dcache info} handleDeallocate_: Deallocating pipeline for memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000008 00000008 top.lsu info} req_inst_: Instruction: 'uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Requested
+{0000000009 00000009 top.dcache info} receiveRespFromL2Cache_: Received cache refill memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000009 00000009 top.dcache info} receiveRespFromL2Cache_: Removing mshr entry for memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000009 00000009 top.dcache info} receiveMemReqFromLSU_: Received memory access request from LSU memptr: uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' 
+{0000000009 00000009 top.dcache info} arbitrate_l2_lsu_req_: Received Refill request memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000009 00000009 top.lsu info} ReceiveAck_: Ack: 'memptr: uid: 1    FETCHED 0 pid: 2 'lw	5,3,4' ' Received
+{0000000010 00000010 top.dcache info} mshrRequest_: Send mshr req
+{0000000010 00000010 top.dcache info} handleLookup_: Lookup stage
+{0000000010 00000010 top.dcache info} handleLookup_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  in Lookup stage
+{0000000010 00000010 top.dcache info} handleLookup_: Incoming cache refill memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4' 
+{0000000011 00000011 top.dcache info} handleDataRead_: Data Read stage
+{0000000011 00000011 top.dcache info} handleDataRead_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  in read stage
+{0000000011 00000011 top.dcache info} reloadCache_: DCache reload complete!
+{0000000012 00000012 top.dcache info} handleDeallocate_: Data Dellocate stage
+{0000000012 00000012 top.dcache info} handleDeallocate_: memptr: uid: 0    FETCHED 0 pid: 1 'lw	5,3,4'  in deallocate stage

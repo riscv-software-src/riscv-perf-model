@@ -125,21 +125,28 @@ namespace olympia
             &unit_event_set_, "mshr_request", CREATE_SPARTA_HANDLER(DCache, mshrRequest_)};
 
 
-        sparta::utils::ValidValue<MemoryAccessInfoPtr> pending_mem_access_info_;
-
+        sparta::utils::ValidValue<MemoryAccessInfoPtr> l2_mem_access_info_;
+        sparta::utils::ValidValue<MemoryAccessInfoPtr> lsu_mem_access_info_;
         void arbitrate_l2_lsu_req_()
         {
-            auto flush_data = pending_mem_access_info_.getValue();
-            if (flush_data->isRefill())
+            if (l2_mem_access_info_.isValid())
             {
-                ILOG("Received Refill request " << flush_data);
+                auto mem_access_info_ptr = l2_mem_access_info_.getValue();
+                ILOG("Received Refill request " << mem_access_info_ptr);
+                cache_pipeline_.append(mem_access_info_ptr);
             }
             else
             {
-                ILOG("Received LSU request " << flush_data);
+                auto mem_access_info_ptr = lsu_mem_access_info_.getValue();
+                ILOG("Received LSU request " << mem_access_info_ptr);
+                cache_pipeline_.append(mem_access_info_ptr);
             }
-            cache_pipeline_.append(flush_data);
-            pending_mem_access_info_.clearValid();
+            if(l2_mem_access_info_.isValid()){
+                l2_mem_access_info_.clearValid();
+            }
+            if(lsu_mem_access_info_.isValid()){
+                lsu_mem_access_info_.clearValid();
+            }
             uev_mshr_request_.schedule(1);
         }
 

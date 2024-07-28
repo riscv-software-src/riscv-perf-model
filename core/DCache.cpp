@@ -274,7 +274,7 @@ namespace olympia
         ILOG("Received memory access request from LSU " << memory_access_info_ptr);
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
         in_l2_cache_resp_receive_event_.schedule();
-        pending_mem_access_info_ = memory_access_info_ptr;
+        lsu_mem_access_info_ = memory_access_info_ptr;
     }
 
     void DCache::receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
@@ -282,7 +282,12 @@ namespace olympia
         ILOG("Received cache refill " << memory_access_info_ptr);
         // We mark the mem access to refill, this could be moved to the lower level caches later
         memory_access_info_ptr->setIsRefill(true);
-        pending_mem_access_info_ = memory_access_info_ptr;
+        l2_mem_access_info_ = memory_access_info_ptr;
+        const auto & mshr_itb = memory_access_info_ptr->getMSHRInfoIterator();
+        if(mshr_itb.isValid()){
+            ILOG("Removing mshr entry for " << memory_access_info_ptr);
+            mshr_file_.erase(memory_access_info_ptr->getMSHRInfoIterator());
+        }
         l2cache_busy_ = false;
         in_l2_cache_resp_receive_event_.schedule();
     }

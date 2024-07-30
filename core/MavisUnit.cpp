@@ -27,7 +27,9 @@ namespace olympia
                                               isa_file_path + "/isa_rv64zicsr.json",
                                               isa_file_path + "/isa_rv64c.json",
                                               isa_file_path + "/isa_rv64cf.json",
-                                              isa_file_path + "/isa_rv64cd.json"};
+                                              isa_file_path + "/isa_rv64cd.json",
+                                              isa_file_path + "/isa_rv64v.json",
+                                              isa_file_path + "/isa_rv64vf.json"};
         return isa_files;
     }
 
@@ -36,7 +38,8 @@ namespace olympia
     {
         std::vector<std::string> uarch_files = {uarch_file_path + "/olympia_uarch_rv64g.json",
                                                 uarch_file_path + "/olympia_uarch_rv64c.json",
-                                                uarch_file_path + "/olympia_uarch_rv64b.json"};
+                                                uarch_file_path + "/olympia_uarch_rv64b.json",
+                                                uarch_file_path + "/olympia_uarch_rv64v.json"};
 
         if(false == std::string(p->uarch_overrides_json).empty()) {
             uarch_files.emplace_back(p->uarch_overrides_json);

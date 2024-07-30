@@ -35,6 +35,7 @@ include_directories(${SPARTA_INCLUDE_DIRS})
 # Set up STF library
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
+set (DISABLE_STF_TESTS ON)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)

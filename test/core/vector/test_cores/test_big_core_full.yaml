@@ -1,0 +1,69 @@
+#
+# Set up the pipeline for a 8-wide machine
+#
+top.cpu.core0:
+  fetch.params.num_to_fetch:   8
+  decode.params.num_to_decode: 3
+  rename.params.num_integer_renames: 64
+  rename.params.num_float_renames: 64
+  rename.params.num_vector_renames: 64
+  dispatch.params.num_to_dispatch: 8
+  rob.params.num_to_retire:    8
+  dcache.params:
+    l1_size_kb: 64
+  
+top.cpu.core0.extension.core_extensions:
+  pipelines:
+  [
+    ["int"], # alu0
+    ["int", "div"], # alu1
+    ["int", "mul"],
+    ["int", "mul", "i2f", "cmov"],
+    ["int"],
+    ["int"],
+    ["float", "faddsub", "fmac"], 
+    ["float", "f2i"],
+    ["br"],
+    ["br"],
+    ["vint", "vset", "vdiv", "vmul"]
+  ]
+  issue_queue_to_pipe_map:
+  [ 
+    ["0", "1"],
+    ["2", "3"],
+    ["4", "5"],
+    ["6", "7"],
+    ["8", "9"],
+    ["10"]
+  ]
+top.cpu.core0.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4", "iq5"],
+      ["lsu",    1,     1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1,     1],
+      ["iq5",    1,     1,     1,     1,     1,     1,     1]]
+  float.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4", "iq5"],
+      ["lsu",    1,     1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1,     1],
+      ["iq5",    1,     1,     1,     1,     1,     1,     1]]
+  vector.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4", "iq5"],
+      ["lsu",    1,     1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1,     1],
+      ["iq5",    1,     1,     1,     1,     1,     1,     1]]

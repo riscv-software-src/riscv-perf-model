@@ -68,11 +68,18 @@ namespace olympia
         is_condbranch_(opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL)),
         is_call_(isCallInstruction(opcode_info)),
         is_csr_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::CSR)),
+        is_vector_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::VECTOR)),
         is_return_(isReturnInstruction(opcode_info)),
         status_state_(Status::FETCHED)
     {
         sparta_assert(inst_arch_info_ != nullptr,
                       "Mavis decoded the instruction, but Olympia has no uarch data for it: "
                           << getDisasm() << " " << std::hex << " opc: 0x" << getOpCode());
+
+        // Check that instruction is supported
+        sparta_assert(getPipe() != InstArchInfo::TargetPipe::UNKNOWN,
+            "Unknown target pipe (execution) for " << getMnemonic());
+        sparta_assert(getExecuteTime() != 0,
+            "Unknown execution time (latency) for " << getMnemonic());
     }
 } // namespace olympia

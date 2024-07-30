@@ -28,7 +28,8 @@ namespace olympia::coreutils
                 {mavis::InstMetaData::OperandTypes::DOUBLE, core_types::RegFile::RF_FLOAT},
                 {mavis::InstMetaData::OperandTypes::WORD, core_types::RegFile::RF_INTEGER},
                 {mavis::InstMetaData::OperandTypes::LONG, core_types::RegFile::RF_INTEGER},
-                {mavis::InstMetaData::OperandTypes::QUAD, core_types::RegFile::RF_INTEGER}};
+                {mavis::InstMetaData::OperandTypes::QUAD, core_types::RegFile::RF_INTEGER},
+                {mavis::InstMetaData::OperandTypes::VECTOR, core_types::RegFile::RF_VECTOR}};
         if (auto match = mavis_optype_to_regfile.find(reg.operand_type);
             match != mavis_optype_to_regfile.end())
         {

@@ -44,6 +44,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->decode_rf
         },
         {
+            "vec_uop_gen",
+            "cpu.core*.decode",
+            "Vector Uop Generator",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->vec_uop_gen_rf
+        },
+        {
             "rename",
             "cpu.core*",
             "Rename Unit",
@@ -381,8 +389,15 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                 pipe_target_end = stoi(iq[1]);
             }
             pipe_target_end++;
+            const std::string vset_in_decode =
+                core_node + ".decode." + "ports.in_vset_inst";
             for (int pipe_idx = pipe_target_start; pipe_idx < pipe_target_end; ++pipe_idx)
             {
+                // check to ensure no duplicate pipe definitions
+                std::set<std::string> unique_pipe_def_check(pipelines[pipe_idx].begin(), pipelines[pipe_idx].end());
+                sparta_assert(unique_pipe_def_check.size() == pipelines[pipe_idx].size(), 
+                              "Duplicate pipe definitions, double check yaml file")
+
                 std::string unit_name = "exe" + std::to_string(pipe_idx);
                 if (exe_pipe_rename.size() > 0)
                 {
@@ -395,6 +410,16 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
                 const std::string exe_pipe_out =
                     core_node + ".execute." + unit_name + ".ports.out_execute_pipe";
                 bind_ports(exe_pipe_in, exe_pipe_out);
+
+                for(uint32_t i = 0; i < pipelines[pipe_idx].size(); ++i){
+                    if(pipelines[pipe_idx][i] == "vset"){
+                        // only bind execute pipe -> decode port for an issue queue if it has a vset pipe
+                        const std::string exe_vset_out =
+                            core_node + ".execute." + unit_name + ".ports.out_vset";
+                        bind_ports(vset_in_decode, exe_vset_out);
+                        break; // break after we find a vset in pipeline def
+                    }
+                }
             }
 
             const std::string exe_flush_in =

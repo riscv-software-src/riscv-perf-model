@@ -7,12 +7,12 @@
 #include "InstGroup.hpp"
 #include "MavisUnit.hpp"
 
-#include "fusion/FieldExtractor.hpp"
-#include "fusion/Fusion.hpp"
-#include "fusion/FusionGroup.hpp"
-#include "fusion/FusionTypes.hpp"
-#include "fusion/HCache.hpp"
-#include "fusion/MachineInfo.hpp"
+#include "fsl_api/FieldExtractor.h"
+#include "fsl_api/Fusion.h"
+#include "fsl_api/FusionGroup.h"
+#include "fsl_api/FusionTypes.h"
+#include "fsl_api/HCache.h"
+#include "fsl_api/MachineInfo.h"
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"

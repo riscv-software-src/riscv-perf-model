@@ -97,6 +97,9 @@ namespace olympia
 
         bool isRetired() const { return getInstPtr()->getStatus() == Inst::Status::RETIRED; }
 
+        void setIsLastMemOp(bool is_last_mem_op) { is_last_mem_op_ = is_last_mem_op; }
+        bool isLastMemOp() const { return is_last_mem_op_; }
+
         bool winArb(const LoadStoreInstInfoPtr & that) const
         {
             if (that == nullptr)
@@ -170,7 +173,7 @@ namespace olympia
         bool in_ready_queue_;
         uint32_t vector_iterations_ = 0;
         uint32_t total_vector_iterations_ = 0;
-
+        bool is_last_mem_op_ = false;
         Inst::Status vlsu_status_state_;
     }; // class LoadStoreInstInfo
 

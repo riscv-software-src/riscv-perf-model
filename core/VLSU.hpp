@@ -47,18 +47,18 @@ namespace olympia
             VLSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
             // Parameters for ldst_inst_queue
-            PARAMETER(uint32_t, ldst_inst_queue_size, 8, "VLSU ldst inst queue size")
-            PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
+            PARAMETER(uint32_t, mem_request_queue_size, 8, "VLSU ldst inst queue size")
+            PARAMETER(uint32_t, replay_buffer_size, mem_request_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // VLSU microarchitecture parameters
             PARAMETER(
-                bool, allow_speculative_load_exec, true,
+                bool, allow_speculative_load_exec, false,
                 "Allow loads to proceed speculatively before all older store addresses are known")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
             PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
-            PARAMETER(uint32_t, data_width, 16, "Number of bits load/store per cycle")
+            PARAMETER(uint32_t, data_width, 64, "Number of bits load/store per cycle")
 
         };
 
@@ -132,8 +132,9 @@ namespace olympia
 
         // Issue Queue
         using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
-        LoadStoreIssueQueue ldst_inst_queue_;
-        const uint32_t ldst_inst_queue_size_;
+        LoadStoreIssueQueue mem_request_queue_;
+        InstQueue inst_queue_; // holds inst_ptrs until done
+        const uint32_t mem_request_queue_size_;
 
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
         const uint32_t replay_buffer_size_;
@@ -184,6 +185,9 @@ namespace olympia
         // Event to issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                                               CREATE_SPARTA_HANDLER(VLSU, issueInst_)};
+        
+        sparta::UniqueEvent<> uev_gen_mem_ops_{&unit_event_set_, "gen_mem_ops",
+                                              CREATE_SPARTA_HANDLER(VLSU, memRequestGenerator_)};
 
         sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{
             &unit_event_set_, "replay_ready",
@@ -196,7 +200,7 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
-        // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
+        // Send initial credits (mem_request_queue_size_) to Dispatch Unit
         void sendInitialCredits_();
 
         // Setup Scoreboard Views
@@ -206,7 +210,7 @@ namespace olympia
         void getInstsFromDispatch_(const InstPtr &);
 
         // Callback from Scoreboard to inform Operand Readiness
-        void handleOperandIssueCheck_(const InstPtr & inst_ptr);
+        void handleOperandIssueCheck_(const LoadStoreInstInfoPtr & inst_ptr);
 
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
@@ -261,6 +265,8 @@ namespace olympia
 
         LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
 
+        void memRequestGenerator_();
+
         void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
 
         bool olderStoresExists_(const InstPtr & inst_ptr);
@@ -285,8 +291,6 @@ namespace olympia
 
         void appendToReadyQueue_(const LoadStoreInstInfoPtr &);
 
-        void appendToReadyQueue_(const InstPtr &);
-
         // Pop completed load/store instruction out of issue queue
         void popIssueQueue_(const LoadStoreInstInfoPtr &);
 
@@ -297,7 +301,7 @@ namespace olympia
         bool isReadyToIssueInsts_() const;
 
         // Update issue priority after dispatch
-        void updateIssuePriorityAfterNewDispatch_(const InstPtr &);
+        void updateIssuePriorityAfterNewDispatch_(const LoadStoreInstInfoPtr &);
 
         // Update issue priority after TLB reload
         void updateIssuePriorityAfterTLBReload_(const MemoryAccessInfoPtr &);
@@ -306,7 +310,7 @@ namespace olympia
         void updateIssuePriorityAfterCacheReload_(const MemoryAccessInfoPtr &);
 
         // Update issue priority after store instruction retires
-        void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
+        void updateIssuePriorityAfterStoreInstRetire_(const LoadStoreInstInfoPtr &);
 
         // Flush instruction issue queue
         void flushIssueQueue_(const FlushCriteria &);

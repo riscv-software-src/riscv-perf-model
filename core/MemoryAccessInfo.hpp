@@ -113,7 +113,9 @@ namespace olympia
 
         uint64_t getPhyAddr() const { return ldst_inst_ptr_->getRAdr(); }
 
-        sparta::memory::addr_t getVAddr() const { return ldst_inst_ptr_->getTargetVAddr(); }
+        sparta::memory::addr_t getVAddr() const { return vaddr_; }
+
+        void setVAddr(sparta::memory::addr_t vaddr) { vaddr_ = vaddr; }
 
         void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
 
@@ -187,6 +189,7 @@ namespace olympia
         LoadStoreInstIterator replay_queue_iterator_;
 
         bool is_vector_ = false;
+        sparta::memory::addr_t vaddr_;
     };
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
@@ -267,7 +270,7 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        os << "memptr: " << mem.getInstPtr();
+        os << "memptr: " << mem.getInstPtr() << " " << mem.getVAddr();
         return os;
     }
 

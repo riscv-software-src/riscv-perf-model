@@ -112,6 +112,7 @@ namespace olympia
 
     void ROB::retireInstructions_()
     {
+        ILOG("Retiring")
         // ROB is expecting a flush (back to itself)
         if (expect_flush_)
         {

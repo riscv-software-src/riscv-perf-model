@@ -121,13 +121,13 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::UniqueEvent<> uev_mshr_request_{
-            &unit_event_set_, "mshr_request", CREATE_SPARTA_HANDLER(DCache, mshrRequest_)};
-
+        sparta::UniqueEvent<> uev_mshr_request_{&unit_event_set_, "mshr_request",
+                                                CREATE_SPARTA_HANDLER(DCache, mshrRequest_)};
 
         sparta::utils::ValidValue<MemoryAccessInfoPtr> l2_mem_access_info_;
         sparta::utils::ValidValue<MemoryAccessInfoPtr> lsu_mem_access_info_;
-        void arbitrate_l2_lsu_req_()
+
+        void arbitrateL2LsuReq_()
         {
             if (l2_mem_access_info_.isValid())
             {
@@ -141,18 +141,20 @@ namespace olympia
                 ILOG("Received LSU request " << mem_access_info_ptr);
                 cache_pipeline_.append(mem_access_info_ptr);
             }
-            if(l2_mem_access_info_.isValid()){
+            if (l2_mem_access_info_.isValid())
+            {
                 l2_mem_access_info_.clearValid();
             }
-            if(lsu_mem_access_info_.isValid()){
+            if (lsu_mem_access_info_.isValid())
+            {
                 lsu_mem_access_info_.clearValid();
             }
             uev_mshr_request_.schedule(1);
         }
 
-        sparta::UniqueEvent<> in_l2_cache_resp_receive_event_{&unit_event_set_,
-                                                              "in_l2_cache_resp_receive_event",
-                                                              CREATE_SPARTA_HANDLER(DCache, arbitrate_l2_lsu_req_)};
+        sparta::UniqueEvent<> in_l2_cache_resp_receive_event_{
+            &unit_event_set_, "in_l2_cache_resp_receive_event",
+            CREATE_SPARTA_HANDLER(DCache, arbitrateL2LsuReq_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Counters

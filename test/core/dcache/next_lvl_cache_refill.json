@@ -2,14 +2,12 @@
     {
         "mnemonic": "lw",
         "rs1": 3,
-        "rs2": 4,
         "rd":  5,
         "vaddr" : "0xdeadbeef"
     },
     {
         "mnemonic": "lw",
         "rs1": 3,
-        "rs2": 4,
         "rd":  5,
         "vaddr" : "0xdeedbeef"
     }

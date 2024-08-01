@@ -70,6 +70,7 @@ namespace olympia
         is_csr_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::CSR)),
         is_vector_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::VECTOR)),
         is_return_(isReturnInstruction(opcode_info)),
+        has_immediate_(opcode_info_->hasImmediate()),
         status_state_(Status::FETCHED)
     {
         sparta_assert(inst_arch_info_ != nullptr,

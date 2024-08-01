@@ -334,8 +334,12 @@ namespace olympia
                 });
         }
 
-        uint64_t hasImmediate() const { return opcode_info_->hasImmediate(); }
-        uint64_t getImmediate() const { return opcode_info_->getImmediate(); }
+        uint64_t getImmediate() const
+        {
+            sparta_assert(has_immediate_,
+                "Instruction does not have an immediate!");
+            return opcode_info_->getImmediate();
+        }
 
         bool getVectorMaskEnabled() const
         {
@@ -381,6 +385,8 @@ namespace olympia
         bool isCSR() const { return is_csr_; }
 
         bool isReturn() const { return is_return_; }
+
+        bool hasImmediate() const { return has_immediate_; }
 
         bool isVset() const { return inst_arch_info_->isVset(); }
 
@@ -479,6 +485,7 @@ namespace olympia
         const bool is_csr_;
         const bool is_vector_;
         const bool is_return_;
+        const bool has_immediate_;
 
         VCSRs VCSRs_;
         bool has_tail_ = false; // Does this vector uop have a tail?

@@ -136,6 +136,9 @@ namespace olympia
                 // UPDATE:
                 ex_inst.setStatus(Inst::Status::RETIRED);
                 if (ex_inst.isStoreInst() && !ex_inst.isVector()) {
+                    // We don't send signal back for vector because
+                    // statuses are held by load_store_info_ptr, not inst_ptr
+                    // like in LSU
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
                 

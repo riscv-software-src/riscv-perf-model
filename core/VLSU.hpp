@@ -47,7 +47,8 @@ namespace olympia
             VLSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
             // Parameters for ldst_inst_queue
-            PARAMETER(uint32_t, mem_request_queue_size, 8, "VLSU ldst inst queue size")
+            PARAMETER(uint32_t, mem_request_queue_size, 8, "VLSU mem request queue size")
+            PARAMETER(uint32_t, inst_queue_size, 8, "VLSU inst queue size")
             PARAMETER(uint32_t, replay_buffer_size, mem_request_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // VLSU microarchitecture parameters
@@ -59,7 +60,6 @@ namespace olympia
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
             PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
             PARAMETER(uint32_t, data_width, 64, "Number of bits load/store per cycle")
-
         };
 
         /*!
@@ -92,7 +92,8 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<InstQueue::value_type> in_vlsu_insts_{&unit_port_set_, "in_vlsu_insts", 1};
+        sparta::DataInPort<InstQueue::value_type> in_vlsu_insts_{&unit_port_set_, "in_vlsu_insts",
+                                                                 1};
 
         sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
 
@@ -135,6 +136,7 @@ namespace olympia
         LoadStoreIssueQueue mem_request_queue_;
         InstQueue inst_queue_; // holds inst_ptrs until done
         const uint32_t mem_request_queue_size_;
+        const uint32_t inst_queue_size_;
 
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
         const uint32_t replay_buffer_size_;
@@ -185,9 +187,9 @@ namespace olympia
         // Event to issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                                               CREATE_SPARTA_HANDLER(VLSU, issueInst_)};
-        
+
         sparta::UniqueEvent<> uev_gen_mem_ops_{&unit_event_set_, "gen_mem_ops",
-                                              CREATE_SPARTA_HANDLER(VLSU, memRequestGenerator_)};
+                                               CREATE_SPARTA_HANDLER(VLSU, memRequestGenerator_)};
 
         sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{
             &unit_event_set_, "replay_ready",
@@ -258,7 +260,7 @@ namespace olympia
         // writes out text to aid debug
         // set as protected because VLSU dervies from LSU
         void dumpDebugContent_(std::ostream & output) const override final;
-        
+
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
@@ -328,22 +330,22 @@ namespace olympia
 
         // Counters
         sparta::Counter vlsu_insts_dispatched_{getStatisticSet(), "vlsu_insts_dispatched",
-                                              "Number of VLSU instructions dispatched",
-                                              sparta::Counter::COUNT_NORMAL};
+                                               "Number of VLSU instructions dispatched",
+                                               sparta::Counter::COUNT_NORMAL};
         sparta::Counter stores_retired_{getStatisticSet(), "stores_retired",
                                         "Number of stores retired", sparta::Counter::COUNT_NORMAL};
         sparta::Counter VLSU_insts_issued_{getStatisticSet(), "VLSU_insts_issued",
-                                          "Number of VLSU instructions issued",
-                                          sparta::Counter::COUNT_NORMAL};
+                                           "Number of VLSU instructions issued",
+                                           sparta::Counter::COUNT_NORMAL};
         sparta::Counter replay_insts_{getStatisticSet(), "replay_insts_",
                                       "Number of Replay instructions issued",
                                       sparta::Counter::COUNT_NORMAL};
         sparta::Counter VLSU_insts_completed_{getStatisticSet(), "VLSU_insts_completed",
-                                             "Number of VLSU instructions completed",
-                                             sparta::Counter::COUNT_NORMAL};
+                                              "Number of VLSU instructions completed",
+                                              sparta::Counter::COUNT_NORMAL};
         sparta::Counter VLSU_flushes_{getStatisticSet(), "VLSU_flushes",
-                                     "Number of instruction flushes at VLSU",
-                                     sparta::Counter::COUNT_NORMAL};
+                                      "Number of instruction flushes at VLSU",
+                                      sparta::Counter::COUNT_NORMAL};
 
         sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
                                   sparta::Counter::COUNT_NORMAL};

@@ -270,7 +270,7 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        os << "memptr: " << mem.getInstPtr() << " " << mem.getVAddr();
+        os << "memptr: " << mem.getInstPtr() << " vaddr: " << mem.getVAddr();
         return os;
     }
 

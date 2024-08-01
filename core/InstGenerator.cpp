@@ -77,90 +77,97 @@ namespace olympia
 
         // Get the JSON record at the current index
         nlohmann::json jinst = jobj_->at(curr_inst_index_);
-
-        if (jinst.find("mnemonic") == jinst.end())
-        {
-            throw sparta::SpartaException() << "Missing mnemonic at " << curr_inst_index_;
-        }
-        const std::string mnemonic = jinst["mnemonic"];
-
-        auto addElement = [&jinst](mavis::OperandInfo & operands, const std::string & key,
-                                   const mavis::InstMetaData::OperandFieldID operand_field_id,
-                                   const mavis::InstMetaData::OperandTypes operand_type)
-        {
-            if (jinst.find(key) != jinst.end())
-            {
-                operands.addElement(operand_field_id, operand_type, jinst[key].get<uint64_t>());
-            }
-        };
-
-        mavis::OperandInfo srcs;
-        addElement(srcs, "rs1", mavis::InstMetaData::OperandFieldID::RS1,
-                   mavis::InstMetaData::OperandTypes::LONG);
-        addElement(srcs, "fs1", mavis::InstMetaData::OperandFieldID::RS1,
-                   mavis::InstMetaData::OperandTypes::DOUBLE);
-        addElement(srcs, "rs2", mavis::InstMetaData::OperandFieldID::RS2,
-                   mavis::InstMetaData::OperandTypes::LONG);
-        addElement(srcs, "fs2", mavis::InstMetaData::OperandFieldID::RS2,
-                   mavis::InstMetaData::OperandTypes::DOUBLE);
-        addElement(srcs, "vs1", mavis::InstMetaData::OperandFieldID::RS1,
-                   mavis::InstMetaData::OperandTypes::VECTOR);
-        addElement(srcs, "vs2", mavis::InstMetaData::OperandFieldID::RS2,
-                   mavis::InstMetaData::OperandTypes::VECTOR);
-
-        mavis::OperandInfo dests;
-        addElement(dests, "rd", mavis::InstMetaData::OperandFieldID::RD,
-                   mavis::InstMetaData::OperandTypes::LONG);
-        addElement(dests, "fd", mavis::InstMetaData::OperandFieldID::RD,
-                   mavis::InstMetaData::OperandTypes::DOUBLE);
-        addElement(dests, "vd", mavis::InstMetaData::OperandFieldID::RD,
-                   mavis::InstMetaData::OperandTypes::VECTOR);
-
         InstPtr inst;
-        if (jinst.find("imm") != jinst.end())
+        if (jinst.find("opcode") != jinst.end())
         {
-            const uint64_t imm = jinst["imm"].get<uint64_t>();
-            mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
-            inst = mavis_facade_->makeInstDirectly(ex_info, clk);
+            uint64_t opcode = std::strtoull(jinst["opcode"].get<std::string>().c_str(), nullptr, 0);
+            inst = mavis_facade_->makeInst(opcode, clk);
         }
         else
         {
-            mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
-            inst = mavis_facade_->makeInstDirectly(ex_info, clk);
-        }
+            if (jinst.find("mnemonic") == jinst.end())
+            {
+                throw sparta::SpartaException() << "Missing mnemonic at " << curr_inst_index_;
+            }
+            const std::string mnemonic = jinst["mnemonic"];
 
-        if (jinst.find("vaddr") != jinst.end())
-        {
-            uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
-            inst->setTargetVAddr(vaddr);
-        }
-        if (jinst.find("vtype") != jinst.end())
-        {
-            // immediate, so decode from hex
-            uint64_t vtype = std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
-            std::string binaryString = std::bitset<32>(vtype).to_string();
-            uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
-            uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
-            inst->setLMUL(lmul);
-            inst->setSEW(sew);
-        }
+            auto addElement = [&jinst](mavis::OperandInfo & operands, const std::string & key,
+                                       const mavis::InstMetaData::OperandFieldID operand_field_id,
+                                       const mavis::InstMetaData::OperandTypes operand_type)
+            {
+                if (jinst.find(key) != jinst.end())
+                {
+                    operands.addElement(operand_field_id, operand_type, jinst[key].get<uint64_t>());
+                }
+            };
 
-        if (jinst.find("vta") != jinst.end())
-        {
-            const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
-            inst->setVTA(vta);
-        }
+            mavis::OperandInfo srcs;
+            addElement(srcs, "rs1", mavis::InstMetaData::OperandFieldID::RS1,
+                       mavis::InstMetaData::OperandTypes::LONG);
+            addElement(srcs, "fs1", mavis::InstMetaData::OperandFieldID::RS1,
+                       mavis::InstMetaData::OperandTypes::DOUBLE);
+            addElement(srcs, "rs2", mavis::InstMetaData::OperandFieldID::RS2,
+                       mavis::InstMetaData::OperandTypes::LONG);
+            addElement(srcs, "fs2", mavis::InstMetaData::OperandFieldID::RS2,
+                       mavis::InstMetaData::OperandTypes::DOUBLE);
+            addElement(srcs, "vs1", mavis::InstMetaData::OperandFieldID::RS1,
+                       mavis::InstMetaData::OperandTypes::VECTOR);
+            addElement(srcs, "vs2", mavis::InstMetaData::OperandFieldID::RS2,
+                       mavis::InstMetaData::OperandTypes::VECTOR);
 
-        if (jinst.find("vl") != jinst.end())
-        {
-            const uint64_t vl = jinst["vl"].get<uint64_t>();
-            inst->setVL(vl);
-        }
+            mavis::OperandInfo dests;
+            addElement(dests, "rd", mavis::InstMetaData::OperandFieldID::RD,
+                       mavis::InstMetaData::OperandTypes::LONG);
+            addElement(dests, "fd", mavis::InstMetaData::OperandFieldID::RD,
+                       mavis::InstMetaData::OperandTypes::DOUBLE);
+            addElement(dests, "vd", mavis::InstMetaData::OperandFieldID::RD,
+                       mavis::InstMetaData::OperandTypes::VECTOR);
 
-        if (jinst.find("taken") != jinst.end())
-        {
-            const bool taken = jinst["taken"].get<bool>();
-            inst->setTakenBranch(taken);
+            if (jinst.find("imm") != jinst.end())
+            {
+                const uint64_t imm = jinst["imm"].get<uint64_t>();
+                mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
+                inst = mavis_facade_->makeInstDirectly(ex_info, clk);
+            }
+            else
+            {
+                mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
+                inst = mavis_facade_->makeInstDirectly(ex_info, clk);
+            }
+
+            if (jinst.find("vaddr") != jinst.end())
+            {
+                uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
+                inst->setTargetVAddr(vaddr);
+            }
+            if (jinst.find("vtype") != jinst.end())
+            {
+                // immediate, so decode from hex
+                uint64_t vtype = std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
+                std::string binaryString = std::bitset<32>(vtype).to_string();
+                uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
+                uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
+                inst->setLMUL(lmul);
+                inst->setSEW(sew);
+            }
+
+            if (jinst.find("vta") != jinst.end())
+            {
+                const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
+                inst->setVTA(vta);
+            }
+
+            if (jinst.find("vl") != jinst.end())
+            {
+                const uint64_t vl = jinst["vl"].get<uint64_t>();
+                inst->setVL(vl);
+            }
+
+            if (jinst.find("taken") != jinst.end())
+            {
+                const bool taken = jinst["taken"].get<bool>();
+                inst->setTakenBranch(taken);
+            }
         }
 
         inst->setRewindIterator<uint64_t>(curr_inst_index_);

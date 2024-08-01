@@ -258,16 +258,16 @@ namespace olympia
                 }
 
                 ILOG("Decoded: " << inst);
-                insts->emplace_back(inst);
-                inst->setStatus(Inst::Status::DECODED);
 
                 // Handle vector uop generation
-                if (inst->isVector() && !inst->isVset())
+                if (inst->isVector() && !inst->isVset() && (inst->getUopGenType() != InstArchInfo::UopGenType::NONE))
                 {
-                    // If LMUL > 1, fracture instruction into UOps
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);
 
+                    // Even if LMUL == 1, we need the vector uop generator to create a uop for us
+                    // because some generators will add additional sources and destinations to the
+                    // instruction (e.g. widening, multiply-add, slides).
                     while(vec_uop_gen_->getNumUopsRemaining() >= 1)
                     {
                         const InstPtr uop = vec_uop_gen_->generateUop();
@@ -283,6 +283,11 @@ namespace olympia
                             uop_queue_.push(uop);
                         }
                     }
+                }
+                else
+                {
+                    insts->emplace_back(inst);
+                    inst->setStatus(Inst::Status::DECODED);
                 }
 
                 if (fusion_enable_)

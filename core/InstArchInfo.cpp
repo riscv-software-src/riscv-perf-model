@@ -48,10 +48,12 @@ namespace olympia
     };
 
     const InstArchInfo::UopGenMap InstArchInfo::uop_gen_type_map = {
-        {"ARITH",             InstArchInfo::UopGenType::ARITH},
-        {"ARITH_SINGLE_DEST", InstArchInfo::UopGenType::ARITH_SINGLE_DEST},
-        {"ARITH_WIDE_DEST",   InstArchInfo::UopGenType::ARITH_WIDE_DEST},
-        {"NONE",              InstArchInfo::UopGenType::NONE}
+        {"ARITH",               InstArchInfo::UopGenType::ARITH},
+        {"ARITH_SINGLE_DEST",   InstArchInfo::UopGenType::ARITH_SINGLE_DEST},
+        {"ARITH_WIDE_DEST",     InstArchInfo::UopGenType::ARITH_WIDE_DEST},
+        {"ARITH_MAC",           InstArchInfo::UopGenType::ARITH_MAC},
+        {"ARITH_MAC_WIDE_DEST", InstArchInfo::UopGenType::ARITH_MAC_WIDE_DEST},
+        {"NONE",                InstArchInfo::UopGenType::NONE}
     };
 
     void InstArchInfo::update(const nlohmann::json & jobj)

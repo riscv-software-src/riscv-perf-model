@@ -18,8 +18,9 @@ namespace olympia
         {
             constexpr bool SINGLE_DEST = false;
             constexpr bool WIDE_DEST = false;
+            constexpr bool ADD_DEST_AS_SRC = false;
             uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH,
-                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST>);
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST, ADD_DEST_AS_SRC>);
         }
 
         // Vector arithmetic single dest uop generator, only increment all src register numbers
@@ -31,8 +32,9 @@ namespace olympia
         {
             constexpr bool SINGLE_DEST = true;
             constexpr bool WIDE_DEST = false;
+            constexpr bool ADD_DEST_AS_SRC = false;
             uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH_SINGLE_DEST,
-                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST>);
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST, ADD_DEST_AS_SRC>);
         }
 
         // Vector arithmetic wide dest uop generator, only increment src register numbers for even uops
@@ -48,8 +50,41 @@ namespace olympia
         {
             constexpr bool SINGLE_DEST = false;
             constexpr bool WIDE_DEST = true;
+            constexpr bool ADD_DEST_AS_SRC = false;
             uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH_WIDE_DEST,
-                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST>);
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST, ADD_DEST_AS_SRC>);
+        }
+
+        // Vector arithmetic multiplay-add wide dest uop generator, add dest as source
+        // For a "vmacc.vv v12, v4, v8" with an LMUL of 4:
+        //      Uop 1: vwmacc.vv v12, v4, v8, v12
+        //      Uop 2: vwmacc.vv v13, v4, v8, v13
+        //      Uop 3: vwmacc.vv v14, v5, v9, v14
+        //      Uop 4: vwmacc.vv v15, v5, v9, v15
+        //      Uop 5: vwmacc.vv v16, v6, v10, v16
+        //      Uop 6: vwmacc.vv v17, v6, v10, v17
+        //      Uop 7: vwmacc.vv v18, v7, v11, v18
+        //      Uop 8: vwmacc.vv v19, v7, v11, v19
+        {
+            constexpr bool SINGLE_DEST = false;
+            constexpr bool WIDE_DEST = false;
+            constexpr bool ADD_DEST_AS_SRC = true;
+            uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH_MAC,
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST, ADD_DEST_AS_SRC>);
+        }
+
+        // Vector arithmetic multiplay-add uop generator, add dest as source
+        // For a "vmacc.vv v12, v4, v8" with an LMUL of 4:
+        //      Uop 1: vmacc.vv v12, v4, v8, v12
+        //      Uop 2: vmacc.vv v13, v5, v9, v13
+        //      Uop 3: vmacc.vv v14, v6, v10, v14
+        //      Uop 4: vmacc.vv v15, v7, v11, v15
+        {
+            constexpr bool SINGLE_DEST = false;
+            constexpr bool WIDE_DEST = true;
+            constexpr bool ADD_DEST_AS_SRC = true;
+            uop_gen_function_map_.emplace(InstArchInfo::UopGenType::ARITH_MAC_WIDE_DEST,
+                &VectorUopGenerator::generateArithUop<SINGLE_DEST, WIDE_DEST, ADD_DEST_AS_SRC>);
         }
     }
 
@@ -62,37 +97,25 @@ namespace olympia
         const auto uop_gen_type = inst->getUopGenType();
         sparta_assert(uop_gen_type != InstArchInfo::UopGenType::UNKNOWN,
             "Inst: " << current_inst_ << " uop gen type is unknown");
+        sparta_assert(uop_gen_type != InstArchInfo::UopGenType::NONE,
+            "Inst: " << current_inst_ << " uop gen type is none");
 
-        if(uop_gen_type != InstArchInfo::UopGenType::NONE)
+        // Number of vector elements processed by each uop
+        const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
+        const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
+        // TODO: For now, generate uops for all elements even if there is a tail
+        num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
+
+        if((uop_gen_type == InstArchInfo::UopGenType::ARITH_WIDE_DEST) ||
+           (uop_gen_type == InstArchInfo::UopGenType::ARITH_MAC_WIDE_DEST))
         {
-            // Number of vector elements processed by each uop
-            const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
-            const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
-            // TODO: For now, generate uops for all elements even if there is a tail
-            num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
-
-            if(uop_gen_type == InstArchInfo::UopGenType::ARITH_WIDE_DEST)
-            {
-                // TODO: Add parameter to support dual dests
-                num_uops_to_generate_ *= 2;
-            }
+            // TODO: Add parameter to support dual dests
+            num_uops_to_generate_ *= 2;
         }
 
-        if(num_uops_to_generate_ > 1)
-        {
-            // Original instruction will act as the first UOp
-            inst->setUOpID(0); // set UOpID()
-            current_inst_ = inst;
-            ILOG("Inst: " << current_inst_ << " is being split into "
-                          << num_uops_to_generate_ << " UOPs");
-        }
-        else
-        {
-            ILOG("Inst: " << inst << " does not need to generate uops");
-        }
-
-        // Inst counts as the first uop
-        --num_uops_to_generate_;
+        current_inst_ = inst;
+        ILOG("Inst: " << current_inst_ <<
+             " is being split into " << num_uops_to_generate_ << " UOPs");
     }
 
     const InstPtr VectorUopGenerator::generateUop()
@@ -104,7 +127,6 @@ namespace olympia
         // Generate uop
         auto uop_gen_func = uop_gen_function_map_.at(uop_gen_type);
         const InstPtr uop = uop_gen_func(this);
-        ++num_uops_generated_;
 
         // setting UOp instructions to have the same UID and PID as parent instruction
         uop->setUniqueID(current_inst_->getUniqueID());
@@ -119,6 +141,7 @@ namespace olympia
         uop->setUOpParent(parent_weak_ptr);
 
         // Handle last uop
+        ++num_uops_generated_;
         if(num_uops_generated_ == num_uops_to_generate_)
         {
             const uint32_t num_elems = current_vcsrs->vl / current_vcsrs->sew;
@@ -132,7 +155,7 @@ namespace olympia
         return uop;
     }
 
-    template<bool SINGLE_DEST, bool WIDE_DEST>
+    template<bool SINGLE_DEST, bool WIDE_DEST, bool ADD_DEST_AS_SRC>
     const InstPtr VectorUopGenerator::generateArithUop()
     {
         // Increment source and destination register values
@@ -163,15 +186,38 @@ namespace olympia
             for (auto & dest : dests)
             {
                 dest.field_value += num_uops_generated_;
+
+                if constexpr (ADD_DEST_AS_SRC == true)
+                {
+                    // OperandFieldID is an enum with RS1 = 0, RS2 = 1, etc. with a max RS of RS4
+                    using OperandFieldID = mavis::InstMetaData::OperandFieldID;
+                    const OperandFieldID field_id = static_cast<OperandFieldID>(srcs.size());
+                    sparta_assert(field_id <= OperandFieldID::RS_MAX,
+                        "Mavis does not support instructions with more than " << std::dec <<
+                        static_cast<std::underlying_type_t<OperandFieldID>>(OperandFieldID::RS_MAX) <<
+                        " sources");
+                    srcs.emplace_back(field_id, dest.operand_type, dest.field_value);
+                }
             }
         }
 
         // Create uop
-        mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
-                                                 srcs,
-                                                 dests,
-                                                 current_inst_->getImmediate());
-        InstPtr uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        InstPtr uop;
+        if (current_inst_->hasImmediate())
+        {
+            mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
+                                                     srcs,
+                                                     dests,
+                                                     current_inst_->getImmediate());
+            uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        }
+        else
+        {
+            mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
+                                                     srcs,
+                                                     dests);
+            uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        }
 
         return uop;
     }

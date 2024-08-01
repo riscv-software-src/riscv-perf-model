@@ -199,30 +199,13 @@ namespace olympia
         if (SPARTA_EXPECT_TRUE(!inst_queue_.empty()))
         {
             const auto & oldest_inst = inst_queue_.front();
-            if (!oldest_inst->hasUOps() && !oldest_inst->isUOp())
+            if (oldest_inst->getUOpID() == 0)
             {
-                // if instructions aren't UOp and oldest instruction doesn't have UOps
                 sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
                               "ROB and rename inst_queue out of sync");
             }
 
             inst_queue_.pop_front();
-
-            // pop all UOps from inst_queue_ to relaign ROB and rename inst_queue
-            if (inst_ptr->hasUOps())
-            {
-                while (inst_queue_.empty() == false)
-                {
-                    if (inst_ptr->getUOpID() == inst_queue_.front()->getUOpID())
-                    {
-                        inst_queue_.pop_front();
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
         }
         else
         {

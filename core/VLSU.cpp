@@ -195,6 +195,7 @@ namespace olympia
 
             if (mem_request_queue_.size() < mem_request_queue_size_)
             {
+                // TODO: Address Unroller Class
                 sparta::memory::addr_t addr = inst_ptr->getTargetVAddr();
                 inst_ptr->setTargetVAddr(addr + inst_ptr->getStride());
                 LoadStoreInstInfoPtr load_store_info_ptr = createLoadStoreInst_(inst_ptr);
@@ -1115,33 +1116,12 @@ namespace olympia
     {
         sparta_assert(replay_buffer_.size() < replay_buffer_size_,
                       "Appending load queue causes overflows!");
-
-        // const bool iter_exists = inst_info_ptr->getReplayQueueIterator().isValid();
-        //  sparta_assert(!iter_exists,
-        //                "Cannot push duplicate instructions into the replay queue " <<
-        //                inst_info_ptr->getInstPtr());
-
         // Always append newly dispatched instructions to the back of issue queue
         const auto & iter = replay_buffer_.push_back(inst_info_ptr);
         inst_info_ptr->setReplayQueueIterator(iter);
 
         ILOG("Append new instruction to replay queue!" << inst_info_ptr);
     }
-
-    // void VLSU::appendToReadyQueue_(const InstPtr & inst_ptr)
-    // {
-    //     for (const auto & inst : mem_request_queue_)
-    //     {
-    //         if (inst_ptr->getMemoryAccessInfoPtr()->getVAddr() ==
-    //         inst->getMemoryAccessInfoPtr()->getVAddr())
-    //         {
-    //             appendToReadyQueue_(inst);
-    //             return;
-    //         }
-    //     }
-
-    //     sparta_assert(false, "Instruction not found in the issue queue " << inst_ptr);
-    // }
 
     void VLSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & ldst_inst_ptr)
     {

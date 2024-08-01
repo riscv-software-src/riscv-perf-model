@@ -240,7 +240,7 @@ namespace olympia
                                  "pipe. Did you define it in the yaml properly?");
             // so we have a map here that checks for which valid dispatchers for that
             // instruction target pipe map needs to be: "int": [exe0, exe1, exe2]
-            if (target_pipe != InstArchInfo::TargetPipe::LSU && target_pipe != InstArchInfo::TargetPipe::VLSU)
+            if (!ex_inst_ptr->isLoadStoreInst())
             {
                 uint32_t max_credits = 0;
                 olympia::Dispatcher* best_dispatcher = nullptr;

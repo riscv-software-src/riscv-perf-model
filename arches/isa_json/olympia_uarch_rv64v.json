@@ -799,9 +799,9 @@
     },
     {
         "mnemonic": "vle16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vle16ff.v",
@@ -811,9 +811,9 @@
     },
     {
         "mnemonic": "vle32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vle32ff.v",
@@ -823,9 +823,9 @@
     },
     {
         "mnemonic": "vle64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vle64ff.v",
@@ -835,9 +835,9 @@
     },
     {
         "mnemonic": "vle8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vle8ff.v",
@@ -877,27 +877,27 @@
     },
     {
         "mnemonic": "vlse16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vlse32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vlse64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vlse8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vlsu",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vluxei16.v",
@@ -1694,25 +1694,25 @@
     {
         "mnemonic": "vse16.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
         "mnemonic": "vse32.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
         "mnemonic": "vse64.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
         "mnemonic": "vse8.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
@@ -1886,25 +1886,25 @@
     {
         "mnemonic": "vsse16.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
         "mnemonic": "vsse32.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
         "mnemonic": "vsse64.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {
         "mnemonic": "vsse8.v",
         "pipe": "vlsu",
-        "uop_gen": "NONE",
+        "uop_gen": "ARITH",
         "latency": 1
     },
     {

@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu May 30 21:50:19 2024
-#Elapsed:  0.015993s
+#Start:    Wednesday Wed Jul 31 23:16:02 2024
+#Elapsed:  0.022853s
 {0000000000 00000000 top.l2cache info} L2Cache: L2Cache construct: #4294967295
 {0000000000 00000000 top.l2cache info} sendInitialCredits_: Sending initial credits to ICache : 8
 {0000000000 00000000 top.l2cache info} sendInitialCredits_: Sending initial credits to DCache : 8
@@ -28,16 +28,16 @@
 {0000000003 00000003 top.dcache info} ReceiveAck_: Ack: '8' Received
 {0000000003 00000003 top.l2cache info} handle_L2Cache_DCache_Ack_: L2Cache->DCache :  Ack is sent.
 {0000000003 00000003 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : DCACHE
-{0000000011 00000011 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000011 00000011 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000011 00000011 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
-{0000000012 00000012 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000012 00000012 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000012 00000012 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
-{0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000012 00000012 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
 {0000000012 00000012 top.l2cache info} appendBIUReqQueue_: Append L2Cache->BIU req queue
 {0000000012 00000012 top.l2cache info} handle_L2Cache_BIU_Req_: L2Cache Request sent to BIU : Current BIU credit available = 31
 {0000000013 00000013 top.biu info} sinkInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' ' sinked
-{0000000013 00000013 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000013 00000013 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000013 00000013 top.l2cache info} handleCacheAccessResult_: Storing the CACHE MISS in miss_pending_buffer_
 {0000000024 00000024 top.l2cache info} getAckFromBIU_: Ack received from BIU on the port : Current BIU credit available = 32
 {0000000034 00000034 top.l2cache info} getRespFromBIU_: Response received from BIU on the port
@@ -48,16 +48,16 @@
 {0000000035 00000035 top.l2cache info} arbitrateL2CacheAccessReqs_: Arbitration winner - BIU
 {0000000035 00000035 top.l2cache info} create_Req_: Request found in miss_pending_buffer_ with SrcUnit : DCACHE
 {0000000036 00000036 top.l2cache info} issue_Req_: Request is sent to Pipeline! SrcUnit : BIU
-{0000000044 00000044 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000044 00000044 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000044 00000044 top.l2cache info} cacheLookup_: Cache MISS: phyAddr=0xdeadbeef
 {0000000044 00000044 top.l2cache info} handleCacheAccessRequest_: Reload Complete: phyAddr=0xdeadbeef
-{0000000045 00000045 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000045 00000045 top.l2cache info} handleCacheAccessRequest_: Pipeline stage CACHE_LOOKUP : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000045 00000045 top.l2cache info} cacheLookup_: Cache HIT: phyAddr=0xdeadbeef
-{0000000045 00000045 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000045 00000045 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000045 00000045 top.l2cache info} appendICacheRespQueue_: Append L2Cache->ICache resp queue!
 {0000000045 00000045 top.l2cache info} handle_L2Cache_ICache_Resp_: L2Cache Resp is sent to ICache!
 {0000000046 00000046 top.icache info} ReceiveInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' ' Received
-{0000000046 00000046 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' 
+{0000000046 00000046 top.l2cache info} handleCacheAccessResult_: Pipeline stage HIT_MISS_HANDLING : memptr: uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3'  0
 {0000000046 00000046 top.l2cache info} appendDCacheRespQueue_: Append L2Cache->DCache resp queue!
 {0000000046 00000046 top.l2cache info} handle_L2Cache_DCache_Resp_: L2Cache Resp is sent to DCache!
 {0000000047 00000047 top.dcache info} ReceiveInst_: Instruction: 'uid: 0    FETCHED 0 pid: 1 uopid: 0 'sw	3' ' Received

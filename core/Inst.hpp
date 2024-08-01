@@ -297,7 +297,6 @@ namespace olympia
 
         uint32_t getStride() const { return stride_; }
 
-        uint32_t getStride() const { return stride_; }
         void setTail(bool has_tail) { has_tail_ = has_tail; }
         bool hasTail() const { return has_tail_; }
 

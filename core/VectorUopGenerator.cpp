@@ -83,8 +83,6 @@ namespace olympia
             // Original instruction will act as the first UOp
             inst->setUOpID(0); // set UOpID()   
             current_inst_ = inst;
-            current_inst_->setUOpCount(num_uops_to_generate_);
-            ILOG("Inst: " << current_inst_ << " is being split into " << num_uops_to_generate_ << " UOPs");
             ILOG("Inst: " << current_inst_ << " is being split into "
                           << num_uops_to_generate_ << " UOPs");
         }
@@ -103,6 +101,7 @@ namespace olympia
             "Inst: " << current_inst_ << " uop gen type is unknown");
 
         // Generate uop
+        ILOG("test")
         auto uop_gen_func = uop_gen_function_map_.at(uop_gen_type);
         const InstPtr uop = uop_gen_func(this);
         ++num_uops_generated_;

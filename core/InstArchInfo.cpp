@@ -37,6 +37,7 @@ namespace olympia
         {InstArchInfo::TargetPipe::F2I,     "F2I"},
         {InstArchInfo::TargetPipe::INT,     "INT"},
         {InstArchInfo::TargetPipe::LSU,     "LSU"},
+        {InstArchInfo::TargetPipe::VLSU,    "VLSU"},
         {InstArchInfo::TargetPipe::MUL,     "MUL"},
         {InstArchInfo::TargetPipe::VINT,    "VINT"},
         {InstArchInfo::TargetPipe::VMASK,   "VMASK"},

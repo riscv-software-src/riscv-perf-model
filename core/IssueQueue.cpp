@@ -98,8 +98,11 @@ namespace olympia
     void IssueQueue::handleOperandIssueCheck_(const InstPtr & ex_inst)
     {
         const auto srcs = ex_inst->getRenameData().getSourceList();
-        uint32_t ready = 0;
-        for(const auto & src : srcs)
+
+        // Lambda function to check if a source is ready.
+        // Returns true if source is ready.
+        // Returns false and registers a callback if source is not ready.
+        auto check_src_ready = [this, ex_inst](const Inst::RenameData::Reg & src)
         {
             // vector-scalar operations have 1 vector src and 1 scalar src that
             // need to be checked, so can't assume the register files are the
@@ -108,24 +111,39 @@ namespace olympia
             const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file);
             if (scoreboard_views_[reg_file]->isSet(src_bits))
             {
-                ready++;
+                return true;
             }
             else
             {
                 // temporary fix for clearCallbacks not working
                 scoreboard_views_[reg_file]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
-                [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
-                { this->handleOperandIssueCheck_(ex_inst); });
-                ILOG("Instruction NOT ready: " << ex_inst
-                                               << " Bits needed:" << sparta::printBitSet(src_bits)
-                                               << " rf: " << reg_file);
+                    [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
+                    {
+                        this->handleOperandIssueCheck_(ex_inst);
+                    }
+                );
+                return false;
+            }
+        };
+
+        bool all_srcs_ready = true;
+        for (const auto & src : srcs)
+        {
+            const bool src_ready = check_src_ready(src);
+
+            if (!src_ready)
+            {
+                ILOG("Instruction NOT ready: " << ex_inst <<
+                     " Bits needed:" << sparta::printBitSet(ex_inst->getSrcRegisterBitMask(src.rf)) <<
+                     " rf: " << src.rf);
+                all_srcs_ready = false;
                 // we break to prevent multiple callbacks from being sent out
                 break;
             }
         }
 
         // we wait till the final callback comes back and checks in the case where both RF are ready at the same time
-        if(ready == srcs.size())
+        if (all_srcs_ready)
         {
             // all register file types are ready
             ILOG("Sending to issue queue " << ex_inst);

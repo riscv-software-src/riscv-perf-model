@@ -215,11 +215,6 @@ namespace olympia
         // UID, but different UOp IDs.
         uint64_t getUOpID() const { return uopid_.isValid() ? uopid_.getValue() : 0; }
 
-        bool hasUOps() const { return uopid_.isValid() && uopid_.getValue() == 0; }
-
-        // UOpIDs start at 1, because we use 0 as default UOpID on initialization
-        bool isUOp() const { return uopid_.isValid() && uopid_ > 0; }
-
         void setBlockingVSET(bool is_blocking_vset) { is_blocking_vset_ = is_blocking_vset; }
 
         bool isBlockingVSET() const { return is_blocking_vset_; }
@@ -340,8 +335,6 @@ namespace olympia
             return opcode_info_->getSourceOpInfoList();
         }
 
-        uint64_t getImmediate() const { return opcode_info_->getImmediate(); }
-
         const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
 
         bool hasZeroRegSource() const
@@ -360,6 +353,31 @@ namespace olympia
                 {
                     return elem.field_value == 0;
                 });
+        }
+
+        uint64_t getImmediate() const
+        {
+            sparta_assert(has_immediate_,
+                "Instruction does not have an immediate!");
+            return opcode_info_->getImmediate();
+        }
+
+        bool getVectorMaskEnabled() const
+        {
+            try
+            {
+                // If vm bit is 0, masking is enabled
+                const uint64_t vm_bit = opcode_info_->getSpecialField(mavis::OpcodeInfo::SpecialField::VM);
+                return vm_bit == 0;
+            }
+            catch (const mavis::UnsupportedExtractorSpecialFieldID & mavis_exception)
+            {
+                return false;
+            }
+            catch (const mavis::InvalidExtractorSpecialFieldID & mavis_exception)
+            {
+                return false;
+            }
         }
 
         // Static instruction information
@@ -388,6 +406,8 @@ namespace olympia
         bool isCSR() const { return is_csr_; }
 
         bool isReturn() const { return is_return_; }
+
+        bool hasImmediate() const { return has_immediate_; }
 
         bool isVset() const { return inst_arch_info_->isVset(); }
 
@@ -486,6 +506,7 @@ namespace olympia
         const bool is_csr_;
         const bool is_vector_;
         const bool is_return_;
+        const bool has_immediate_;
 
         VCSRs VCSRs_;
         bool has_tail_ = false; // Does this vector uop have a tail?

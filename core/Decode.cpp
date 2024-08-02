@@ -65,7 +65,7 @@ namespace olympia
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
 
-        VCSRs_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
+        VectorConfig_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
     }
 
     // Send fetch the initial credit count
@@ -131,37 +131,37 @@ namespace olympia
         }
     }
 
-    void Decode::updateVcsrs_(const InstPtr & inst)
+    void Decode::updateVectorConfig_(const InstPtr & inst)
     {
-        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
+        VectorConfig_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
 
         const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
         if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
         {
             // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
-            VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
-                                               : VCSRs_.vlmax;
+            VectorConfig_.vl = inst->hasZeroRegDest() ? std::min(VectorConfig_.vl, VectorConfig_.vlmax)
+                                               : VectorConfig_.vlmax;
         }
 
         ILOG("Processing vset{i}vl{i} instruction: " << inst);
-        ILOG("  LMUL: " << VCSRs_.lmul);
-        ILOG("   SEW: " << VCSRs_.sew);
-        ILOG("   VTA: " << VCSRs_.vta);
-        ILOG(" VLMAX: " << VCSRs_.vlmax);
-        ILOG("    VL: " << VCSRs_.vl);
+        ILOG("  LMUL: " << VectorConfig_.lmul);
+        ILOG("   SEW: " << VectorConfig_.sew);
+        ILOG("   VTA: " << VectorConfig_.vta);
+        ILOG(" VLMAX: " << VectorConfig_.vlmax);
+        ILOG("    VL: " << VectorConfig_.vl);
 
         // Check validity of vector config
-        sparta_assert(VCSRs_.lmul <= 8,
-            "LMUL (" << VCSRs_.lmul << ") cannot be greater than " << 8);
-        sparta_assert(VCSRs_.vl <= VCSRs_.vlmax,
-            "VL (" << VCSRs_.vl << ") cannot be greater than VLMAX ("<< VCSRs_.vlmax << ")");
+        sparta_assert(VectorConfig_.lmul <= 8,
+            "LMUL (" << VectorConfig_.lmul << ") cannot be greater than " << 8);
+        sparta_assert(VectorConfig_.vl <= VectorConfig_.vlmax,
+            "VL (" << VectorConfig_.vl << ") cannot be greater than VLMAX ("<< VectorConfig_.vlmax << ")");
     }
 
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
-        updateVcsrs_(inst);
+        updateVectorConfig_(inst);
 
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
@@ -238,7 +238,7 @@ namespace olympia
                 if ((uid == mavis_vsetivli_uid_) ||
                    ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource()))
                 {
-                    updateVcsrs_(inst);
+                    updateVectorConfig_(inst);
                 }
                 else if (uid == mavis_vsetvli_uid_ || uid == mavis_vsetvl_uid_)
                 {
@@ -253,7 +253,7 @@ namespace olympia
                     if (!inst->isVset() && inst->isVector())
                     {
                         // set LMUL, VSET, VL, VTA for any other vector instructions
-                        inst->setVCSRs(&VCSRs_);
+                        inst->setVectorConfigVCSRs(&VectorConfig_);
                     }
                 }
 
@@ -264,7 +264,7 @@ namespace olympia
                 {
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);
-
+                    
                     // Even if LMUL == 1, we need the vector uop generator to create a uop for us
                     // because some generators will add additional sources and destinations to the
                     // instruction (e.g. widening, multiply-add, slides).

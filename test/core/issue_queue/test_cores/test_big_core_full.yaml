@@ -32,7 +32,7 @@ top.cpu.core0.rename.scoreboards:
   integer.params.latency_matrix: |
       [["",      "lsu", "vlsu", "iq0", "iq1", "iq2", "iq3", "iq4", "iq5"],
       ["lsu",    1,     1,     1,     1,     1,     1,     1,     1],
-      ["vlsu",    1,     1,     1,     1,     1,     1,     1,     1],
+      ["vlsu",   1,     1,     1,     1,     1,     1,     1,     1],
       ["iq0",    1,     1,     1,     1,     1,     1,     1,     1],
       ["iq1",    1,     1,     1,     1,     1,     1,     1,     1],
       ["iq2",    1,     1,     1,     1,     1,     1,     1,     1],
@@ -42,7 +42,7 @@ top.cpu.core0.rename.scoreboards:
   float.params.latency_matrix: |
       [["",      "lsu", "vlsu", "iq0", "iq1", "iq2", "iq3", "iq4", "iq5"],
       ["lsu",    1,     1,     1,     1,     1,     1,     1,     1],
-      ["vlsu",    1,     1,     1,     1,     1,     1,     1,     1],
+      ["vlsu",   1,     1,     1,     1,     1,     1,     1,     1],
       ["iq0",    1,     1,     1,     1,     1,     1,     1,     1],
       ["iq1",    1,     1,     1,     1,     1,     1,     1,     1],
       ["iq2",    1,     1,     1,     1,     1,     1,     1,     1],
@@ -52,7 +52,7 @@ top.cpu.core0.rename.scoreboards:
   vector.params.latency_matrix: |
       [["",      "lsu", "vlsu", "iq0", "iq1", "iq2", "iq3", "iq4", "iq5"],
       ["lsu",    1,     1,     1,     1,     1,     1,     1,     1],
-      ["vlsu",    1,     1,     1,     1,     1,     1,     1,     1],
+      ["vlsu",   1,     1,     1,     1,     1,     1,     1,     1],
       ["iq0",    1,     1,     1,     1,     1,     1,     1,     1],
       ["iq1",    1,     1,     1,     1,     1,     1,     1,     1],
       ["iq2",    1,     1,     1,     1,     1,     1,     1,     1],

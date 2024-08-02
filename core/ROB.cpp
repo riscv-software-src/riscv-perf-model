@@ -150,7 +150,12 @@ namespace olympia
                 {
                     ++num_retired_;
                     ++retired_this_cycle;
-
+                    ILOG( "\nIncrementing" <<
+                        "\n expected: " << expected_program_id_ <<
+                        "\n received: " << ex_inst.getProgramID() <<
+                        "\n UID: " << ex_inst_ptr->getMavisUid() <<
+                        "\n incr: " << ex_inst_ptr->getProgramIDIncrement() <<
+                        "\n inst " << ex_inst)
                     // Use the program ID to verify that the program order has been maintained.
                     sparta_assert(ex_inst.getProgramID() == expected_program_id_,
                         "\nUnexpected program ID when retiring instruction" <<

@@ -101,7 +101,7 @@ namespace olympia
             "Inst: " << current_inst_ << " uop gen type is none");
 
         // Number of vector elements processed by each uop
-        const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
+        const Inst::VectorConfig * current_vcsrs = inst->getVectorConfig();
         const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
         // TODO: For now, generate uops for all elements even if there is a tail
         num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
@@ -113,20 +113,9 @@ namespace olympia
             num_uops_to_generate_ *= 2;
         }
 
-        if(num_uops_to_generate_ > 1)
-        {
-            // Original instruction will act as the first UOp
-            inst->setUOpID(0); // set UOpID()   
-            current_inst_ = inst;
-            ILOG("Inst: " << current_inst_ << " is being split into "
-                          << num_uops_to_generate_ << " UOPs");
-        }
-        else
-        {
-            ILOG("Inst: " << inst << " does not need to generate uops");
-        }
-        // Inst counts as the first uop
-        --num_uops_to_generate_;
+        current_inst_ = inst;
+        ILOG("Inst: " << current_inst_ <<
+             " is being split into " << num_uops_to_generate_ << " UOPs");
     }
 
     const InstPtr VectorUopGenerator::generateUop()
@@ -136,7 +125,6 @@ namespace olympia
             "Inst: " << current_inst_ << " uop gen type is unknown");
 
         // Generate uop
-        ILOG("test")
         auto uop_gen_func = uop_gen_function_map_.at(uop_gen_type);
         const InstPtr uop = uop_gen_func(this);
 
@@ -144,9 +132,10 @@ namespace olympia
         uop->setUniqueID(current_inst_->getUniqueID());
         uop->setProgramID(current_inst_->getProgramID());
 
-        const Inst::VCSRs * current_vcsrs = current_inst_->getVCSRs();
-        uop->setVCSRs(current_vcsrs);
+        const Inst::VectorConfig * current_vcsrs = current_inst_->getVectorConfig();
+        uop->setVectorConfigVCSRs(current_vcsrs);
         uop->setUOpID(num_uops_generated_);
+        uop->setVectorConfigVLSU(current_vcsrs);
 
         // Set weak pointer to parent vector instruction (first uop)
         sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;
@@ -214,42 +203,23 @@ namespace olympia
         }
 
         // Create uop
-        mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
-                                                 srcs,
-                                                 dests,
-                                                 current_inst_->getImmediate());
-        InstPtr uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
-
-        // setting UOp instructions to have the same UID and PID as parent instruction
-        uop->setUniqueID(current_inst_->getUniqueID());
-        uop->setProgramID(current_inst_->getProgramID());
-
-        const Inst::VCSRs * current_VCSRs = current_inst_->getVCSRs();
-        uop->setVCSRs(current_VCSRs);
-        uop->setUOpID(num_uops_generated_);
-
-        // Set weak pointer to parent vector instruction (first uop)
-        sparta::SpartaWeakPointer<olympia::Inst> weak_ptr_inst = current_inst_;
-        uop->setUOpParent(weak_ptr_inst);
-        uop->setEEW(current_inst_->getEEW());
-        uop->setMOP(current_inst_->getMOP());
-        uop->setStride(current_inst_->getStride());
-        if(uop->isLoadStoreInst()){
-            // set base address according to LMUL, i.e if we're on the 3rd
-            // LMUL Uop, it's base address should be base address + 3 * EEW
-            uop->setTargetVAddr(uop->getTargetVAddr() + uop->getEEW() * uop->getUOpID());
-        }
-
-        // Handle last uop
-        if(num_uops_generated_ == num_uops_to_generate_)
+        InstPtr uop;
+        if (current_inst_->hasImmediate())
         {
-            const uint32_t num_elems = current_VCSRs->vl / current_VCSRs->sew;
-            uop->setTail(num_elems < current_VCSRs->vlmax);
-
-            reset_();
+            mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
+                                                     srcs,
+                                                     dests,
+                                                     current_inst_->getImmediate());
+            uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
         }
-        
-        ILOG("Generated uop: " << uop);
+        else
+        {
+            mavis::ExtractorDirectOpInfoList ex_info(current_inst_->getMnemonic(),
+                                                     srcs,
+                                                     dests);
+            uop = mavis_facade_->makeInstDirectly(ex_info, getClock());
+        }
+
         return uop;
     }
 

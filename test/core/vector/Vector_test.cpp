@@ -56,27 +56,27 @@ public:
 
     void test_vl(const uint32_t expected_vl)
     {
-        EXPECT_TRUE(decode_->VCSRs_.vl == expected_vl);
+        EXPECT_TRUE(decode_->VectorConfig_.vl == expected_vl);
     }
 
     void test_sew(const uint32_t expected_sew)
     {
-        EXPECT_TRUE(decode_->VCSRs_.sew == expected_sew);
+        EXPECT_TRUE(decode_->VectorConfig_.sew == expected_sew);
     }
 
     void test_lmul(const uint32_t expected_lmul)
     {
-        EXPECT_TRUE(decode_->VCSRs_.lmul == expected_lmul);
+        EXPECT_TRUE(decode_->VectorConfig_.lmul == expected_lmul);
     }
 
     void test_vlmax(const uint32_t expected_vlmax)
     {
-        EXPECT_TRUE(decode_->VCSRs_.vlmax == expected_vlmax);
+        EXPECT_TRUE(decode_->VectorConfig_.vlmax == expected_vlmax);
     }
 
     void test_vta(const bool expected_vta)
     {
-        EXPECT_TRUE(decode_->VCSRs_.vta == expected_vta);
+        EXPECT_TRUE(decode_->VectorConfig_.vta == expected_vta);
     }
 
 private:

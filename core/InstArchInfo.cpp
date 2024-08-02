@@ -21,9 +21,10 @@ namespace olympia
         {"vmask",   InstArchInfo::TargetPipe::VMASK},
         {"vset",   InstArchInfo::TargetPipe::VSET}, 
         {"vmul", InstArchInfo::TargetPipe::VMUL},
-        {"vlsu", InstArchInfo::TargetPipe::VLSU},   {"vdiv",   InstArchInfo::TargetPipe::VDIV},
-      
-        {"sys", InstArchInfo::TargetPipe::SYS},    {"?",       InstArchInfo::TargetPipe::UNKNOWN}
+        {"vlsu", InstArchInfo::TargetPipe::VLSU},   
+        {"vdiv",   InstArchInfo::TargetPipe::VDIV},
+        {"sys", InstArchInfo::TargetPipe::SYS},    
+        {"?",       InstArchInfo::TargetPipe::UNKNOWN}
     };
 
     const InstArchInfo::TargetPipeStringMap InstArchInfo::execution_pipe_string_map = {

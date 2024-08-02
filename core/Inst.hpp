@@ -77,12 +77,15 @@ namespace olympia
         static const uint32_t VLEN = 1024; // vector register default bit size
 
         // Vector CSRs
-        struct VCSRs
+        struct VectorConfig
         {
             uint32_t vl = 16;  // vector length
             uint32_t sew = 8;  // set element width
             uint32_t lmul = 1; // effective length
             bool vta = false;  // vector tail agnostic, false = undisturbed, true = agnostic
+            uint32_t mop = 0;
+            uint32_t eew = 0;
+            uint32_t stride = 0;
 
             uint32_t vlmax_formula() { return (VLEN / sew) * lmul; }
 
@@ -96,6 +99,13 @@ namespace olympia
                 lmul = input_lmul;
                 vta = input_vta;
                 vlmax = vlmax_formula();
+            }
+
+            void setVLSU(uint32_t input_eew, uint32_t input_stride, uint32_t input_mop)
+            {
+                eew = input_eew;
+                stride = input_stride;
+                mop = input_mop;
             }
 
             uint32_t vlmax = vlmax_formula();
@@ -244,53 +254,59 @@ namespace olympia
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
-        void setVCSRs(const VCSRs * input_VCSRs)
+        void setVectorConfigVCSRs(const VectorConfig * input_VectorConfig)
         {
-            VCSRs_ = *input_VCSRs;
+            // we only want to update the VCSRs of the VectorConfig
+            VectorConfigs_.setVCSRs(input_VectorConfig->vl, input_VectorConfig->sew, input_VectorConfig->lmul, input_VectorConfig->vta);
         }
 
-        const VCSRs * getVCSRs() const { return &VCSRs_; }
+        void setVectorConfigVLSU(const VectorConfig * input_VectorConfig)
+        {
+            // we only want to update the VCSRs of the VectorConfig
+            VectorConfigs_.setVLSU(input_VectorConfig->eew, input_VectorConfig->stride, input_VectorConfig->mop);
+        }
+
+        const VectorConfig * getVectorConfig() const { return &VectorConfigs_; }
 
         // Set lmul from vset (vsetivli, vsetvli)
         void setLMUL(uint32_t lmul)
         {
-            VCSRs_.lmul = lmul;
-            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+            VectorConfigs_.lmul = lmul;
+            VectorConfigs_.vlmax = VectorConfigs_.vlmax_formula();
         }
 
         // Set sew from vset (vsetivli, vsetvli)
         void setSEW(uint32_t sew)
         {
-            VCSRs_.sew = sew;
-            VCSRs_.vlmax = VCSRs_.vlmax_formula();
+            VectorConfigs_.sew = sew;
+            VectorConfigs_.vlmax = VectorConfigs_.vlmax_formula();
         }
 
         // Set VL from vset (vsetivli, vsetvli)
-        void setVL(uint32_t vl) { VCSRs_.vl = vl; }
+        void setVL(uint32_t vl) { VectorConfigs_.vl = vl; }
 
         // Set EEW from vlsu operation
-        void setEEW(uint32_t eew) { eew_ = eew; }
+        void setEEW(uint32_t eew) { VectorConfigs_.eew = eew; }
         // Set MOP from vlsu operation
-        void setMOP(uint32_t mop) { mop_ = mop; }
+        void setMOP(uint32_t mop) { VectorConfigs_.mop = mop; }
         // Set stride from vlsu operation
-        void setStride(uint32_t stride) { stride_ = stride; }
+        void setStride(uint32_t stride) { VectorConfigs_.stride = stride; }
 
         // Set VTA (vector tail agnostic)
         // vta = true means agnostic, set destination values to 1's or maintain original
         // vta = false means undisturbed, maintain original destination values
-        void setVTA(bool vta) { VCSRs_.vta = vta; }
+        void setVTA(bool vta) { VectorConfigs_.vta = vta; }
 
-        uint32_t getSEW() const { return VCSRs_.sew; }
-        uint32_t getLMUL() const { return VCSRs_.lmul; }
-        uint32_t getVL() const { return VCSRs_.vl; }
+        uint32_t getSEW() const { return VectorConfigs_.sew; }
+        uint32_t getLMUL() const { return VectorConfigs_.lmul; }
+        uint32_t getVL() const { return VectorConfigs_.vl; }
 
-        uint32_t getMOP() const { return mop_; }
+        uint32_t getMOP() const { return VectorConfigs_.mop; }
+        uint32_t getStride() const { return VectorConfigs_.stride; }
+        uint32_t getEEW() const { return VectorConfigs_.eew; }
 
-        uint32_t getEEW() const { return eew_; }
-        uint32_t getVTA() const { return VCSRs_.vta; }
-        uint32_t getVLMAX() const { return VCSRs_.vlmax; }
-
-        uint32_t getStride() const { return stride_; }
+        uint32_t getVTA() const { return VectorConfigs_.vta; }
+        uint32_t getVLMAX() const { return VectorConfigs_.vlmax; }
 
         void setTail(bool has_tail) { has_tail_ = has_tail; }
         bool hasTail() const { return has_tail_; }
@@ -508,14 +524,11 @@ namespace olympia
         const bool is_return_;
         const bool has_immediate_;
 
-        VCSRs VCSRs_;
+        VectorConfig VectorConfigs_;
         bool has_tail_ = false; // Does this vector uop have a tail?
-        uint32_t eew_;
-        uint32_t mop_;
-        uint32_t stride_;
 
         uint32_t vlsu_total_iters_ = 0;
-        uint32_t vlsu_curr_iters_;
+        uint32_t vlsu_curr_iters_ = 0;
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing

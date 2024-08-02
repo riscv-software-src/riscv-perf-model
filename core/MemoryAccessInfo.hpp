@@ -160,8 +160,7 @@ namespace olympia
             replay_queue_iterator_ = iter;
         }
 
-        void setIsVector(bool is_vector){ is_vector_ = is_vector; }
-        bool isVector(){ return is_vector_; }
+        bool isVector(){ return getInstPtr()->isVector(); }
       private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -188,7 +187,6 @@ namespace olympia
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
 
-        bool is_vector_ = false;
         sparta::memory::addr_t vaddr_;
     };
 

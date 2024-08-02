@@ -921,8 +921,6 @@ namespace olympia
         // Create load/store memory access info
         MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(
             memory_access_allocator_, inst_ptr);
-        // set variable denoting is a vector instruction
-        mem_info_ptr->setIsVector(true);
         // Create load/store instruction issue info
         LoadStoreInstInfoPtr inst_info_ptr =
             sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,

@@ -1,0 +1,14 @@
+top:
+  lsu:
+    params:
+      delay_btwn_insts: 8
+  dcache:
+    params:
+      l1_size_kb: 64
+      l1_line_size: 32
+      l1_associativity: 8
+      l1_always_hit: false
+      mshr_entries: 8
+  next_lvl:
+    params:
+      sink_latency: 2

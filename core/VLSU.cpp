@@ -175,7 +175,8 @@ namespace olympia
     void VLSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
         ILOG("New instruction added to the ldst queue " << inst_ptr);
-        sparta_assert(inst_queue_.size() < inst_queue_size_, "More instructions appended to inst queue then allowed!");
+        sparta_assert(inst_queue_.size() < inst_queue_size_,
+                      "More instructions appended to inst queue then allowed!");
         inst_queue_.push(inst_ptr);
         memRequestGenerator_();
         vlsu_insts_dispatched_++;
@@ -209,7 +210,8 @@ namespace olympia
                 handleOperandIssueCheck_(load_store_info_ptr);
                 ILOG("Generating request: "
                      << i << " of " << total_number_iterations << " for instruction: " << inst_ptr
-                     << " with vaddr of: " << load_store_info_ptr->getMemoryAccessInfoPtr()->getVAddr());
+                     << " with vaddr of: "
+                     << load_store_info_ptr->getMemoryAccessInfoPtr()->getVAddr());
                 if (i == (total_number_iterations - 1))
                 {
                     load_store_info_ptr->setIsLastMemOp(true);
@@ -274,7 +276,7 @@ namespace olympia
                 }
             }
             else if (false == allow_speculative_load_exec_)
-            { 
+            {
                 // Its a load
                 // Load instruction is ready is when both address and older stores addresses are
                 // known
@@ -582,7 +584,34 @@ namespace olympia
         out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
-    void VLSU::getAckFromCache_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr) {}
+    void VLSU::getAckFromCache_(const MemoryAccessInfoPtr & mem_access_info_ptr)
+    {
+        const LoadStoreInstIterator & iter = mem_access_info_ptr->getIssueQueueIterator();
+        if (!iter.isValid())
+        {
+            return;
+        }
+
+        // Is its a cache miss we dont need to rechedule the instruction
+        if (!mem_access_info_ptr->isCacheHit())
+        {
+            return;
+        }
+
+        const LoadStoreInstInfoPtr & inst_info_ptr = *(iter);
+
+        // Update issue priority for this outstanding cache miss
+        if (inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
+        {
+            inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+        }
+
+        inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
+        if (!inst_info_ptr->isInReadyQueue())
+        {
+            uev_append_ready_.preparePayload(inst_info_ptr)->schedule(sparta::Clock::Cycle(0));
+        }
+    }
 
     void VLSU::handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
@@ -686,7 +715,9 @@ namespace olympia
         }
         else
         {
-            if (inst_ptr->getCurrVLSUIters() >= total_iters && load_store_info_ptr->isLastMemOp())
+            if (inst_ptr->getCurrVLSUIters() >= total_iters && load_store_info_ptr->isLastMemOp()
+                && load_store_info_ptr->getVLSUStatusState() != Inst::Status::COMPLETED
+                && !(load_store_info_ptr->isRetired()))
             {
                 const bool is_store_inst = inst_ptr->isStoreInst();
                 ILOG("Completing inst: " << inst_ptr);
@@ -736,7 +767,6 @@ namespace olympia
                     // Remove completed instruction from queues
                     ILOG("Removed issue queue " << inst_ptr);
                     popIssueQueue_(load_store_info_ptr);
-
                     if (allow_speculative_load_exec_)
                     {
                         ILOG("Removed replay " << inst_ptr);
@@ -1126,7 +1156,8 @@ namespace olympia
         for (const auto & inst : mem_request_queue_)
         {
             if (ldst_inst_ptr->getMemoryAccessInfoPtr()->getVAddr()
-                == inst->getMemoryAccessInfoPtr()->getVAddr())
+                    == inst->getMemoryAccessInfoPtr()->getVAddr()
+                && ldst_inst_ptr->getInstPtr() == inst->getInstPtr())
             {
                 ILOG("Appending to Ready queue " << ldst_inst_ptr);
                 // appendToReadyQueue_(inst);
@@ -1181,11 +1212,13 @@ namespace olympia
     void VLSU::updateIssuePriorityAfterNewDispatch_(
         const LoadStoreInstInfoPtr & load_store_inst_info_ptr)
     {
-        ILOG("Issue priority new dispatch " << load_store_inst_info_ptr);
+        ILOG("Issue priority new dispatch " << load_store_inst_info_ptr
+                                            << load_store_inst_info_ptr->getInstPtr());
         for (auto & inst_info_ptr : mem_request_queue_)
         {
             if (inst_info_ptr->getMemoryAccessInfoPtr()->getVAddr()
-                == load_store_inst_info_ptr->getMemoryAccessInfoPtr()->getVAddr())
+                    == load_store_inst_info_ptr->getMemoryAccessInfoPtr()->getVAddr()
+                && inst_info_ptr->getInstPtr() == load_store_inst_info_ptr->getInstPtr())
             {
                 inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 inst_info_ptr->setPriority(LoadStoreInstInfo::IssuePriority::NEW_DISP);
@@ -1194,7 +1227,6 @@ namespace olympia
                 // This guarantees that whenever a new instruction issue event is scheduled:
                 // (1)Instruction issue queue already has "something READY";
                 // (2)Instruction issue arbitration is guaranteed to be sucessful.
-
                 // Update instruction status
                 inst_info_ptr->setVLSUStatusState(Inst::Status::SCHEDULED);
                 if (inst_info_ptr->getInstPtr()->getStatus() != Inst::Status::SCHEDULED)

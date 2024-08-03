@@ -102,13 +102,15 @@ void runTests(int argc, char **argv) {
 
     if (input_file.find("vlsu_load_multiple.json") != std::string::npos) {
         // Test VLSU
-        cls.runSimulator(&sim, 57);
-        vlsu_tester.test_mem_request_count(13);
+        cls.runSimulator(&sim, 68);
+        vlsu_tester.test_mem_request_count(12);
+        
+        
     }
     else if (input_file.find("vlsu_store.json") != std::string::npos) {
         // Test VLSU
-        cls.runSimulator(&sim, 61);
-        vlsu_tester.test_mem_request_count(9);
+        cls.runSimulator(&sim, 41);
+        vlsu_tester.test_mem_request_count(16);
     }
     else{
         cls.runSimulator(&sim);

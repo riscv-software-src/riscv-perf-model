@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "sparta/ports/PortSet.hpp"
@@ -31,6 +30,9 @@
 #include "MMU.hpp"
 #include "DCache.hpp"
 
+#include <vector>
+#include <mutex>
+
 namespace olympia
 {
     class LSU : public sparta::Unit
@@ -58,6 +60,9 @@ namespace olympia
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
             PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
+
+            // New parameter for the number of load/store pipelines
+            PARAMETER(uint32_t, num_pipelines, 1, "Number of load/store pipelines")
         };
 
         /*!
@@ -130,14 +135,15 @@ namespace olympia
 
         // Issue Queue
         using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
-        LoadStoreIssueQueue ldst_inst_queue_;
+        std::vector<LoadStoreIssueQueue> ldst_inst_queues_;
         const uint32_t ldst_inst_queue_size_;
 
-        sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
+        std::vector<sparta::Buffer<LoadStoreInstInfoPtr>> replay_buffers_;
         const uint32_t replay_buffer_size_;
         const uint32_t replay_issue_delay_;
 
-        sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
+        std::vector<sparta::PriorityQueue<LoadStoreInstInfoPtr>> ready_queues_;
+        
         // MMU unit
         bool mmu_busy_ = false;
 
@@ -153,25 +159,28 @@ namespace olympia
         // allocator for this object type
         MemoryAccessInfoAllocator & memory_access_allocator_;
 
-        // NOTE:
-        // Depending on which kind of cache (e.g. blocking vs. non-blocking) is being used
-        // This single slot could potentially be extended to a cache pending miss queue
-
         const int address_calculation_stage_;
         const int mmu_lookup_stage_;
         const int cache_lookup_stage_;
         const int cache_read_stage_;
         const int complete_stage_;
 
-        // Load/Store Pipeline
+        // Load/Store Pipelines
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_;
+        std::vector<LoadStorePipeline> ldst_pipelines_;
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
 
         // ROB stopped simulation early, transactions could still be inflight.
         bool rob_stopped_simulation_ = false;
+
+        // Number of pipelines
+        const uint32_t num_pipelines_;
+
+        // Mutexes for synchronization
+        std::mutex cache_mutex_;
+        std::mutex tlb_mutex_;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
@@ -256,7 +265,7 @@ namespace olympia
 
         LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
 
-        void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+        void allocateInstToIssueQueue_(const InstPtr & inst_ptr, size_t pipeline_id);
 
         bool olderStoresExists_(const InstPtr & inst_ptr);
 
@@ -272,24 +281,24 @@ namespace olympia
         void dropInstFromPipeline_(const LoadStoreInstInfoPtr &);
 
         // Append new store instruction into replay queue
-        void appendToReplayQueue_(const LoadStoreInstInfoPtr & inst_info_ptr);
+        void appendToReplayQueue_(const LoadStoreInstInfoPtr & inst_info_ptr, size_t pipeline_id);
 
         // Pop completed load/store instruction out of replay queue
-        void removeInstFromReplayQueue_(const LoadStoreInstInfoPtr & inst_to_remove);
-        void removeInstFromReplayQueue_(const InstPtr & inst_to_remove);
+        void removeInstFromReplayQueue_(const LoadStoreInstInfoPtr & inst_to_remove, size_t pipeline_id);
+        void removeInstFromReplayQueue_(const InstPtr & inst_to_remove, size_t pipeline_id);
 
-        void appendToReadyQueue_(const LoadStoreInstInfoPtr &);
+        void appendToReadyQueue_(const LoadStoreInstInfoPtr &, size_t pipeline_id);
 
-        void appendToReadyQueue_(const InstPtr &);
+        void appendToReadyQueue_(const InstPtr &, size_t pipeline_id);
 
         // Pop completed load/store instruction out of issue queue
-        void popIssueQueue_(const LoadStoreInstInfoPtr &);
+        void popIssueQueue_(const LoadStoreInstInfoPtr &, size_t pipeline_id);
 
         // Arbitrate instruction issue from ldst_inst_queue
-        LoadStoreInstInfoPtr arbitrateInstIssue_();
+        LoadStoreInstInfoPtr arbitrateInstIssue_(size_t pipeline_id);
 
         // Check for ready to issue instructions
-        bool isReadyToIssueInsts_() const;
+        bool isReadyToIssueInsts_(size_t pipeline_id) const;
 
         // Update issue priority after dispatch
         void updateIssuePriorityAfterNewDispatch_(const InstPtr &);

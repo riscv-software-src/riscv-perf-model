@@ -53,7 +53,7 @@ namespace olympia
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // VLSU microarchitecture parameters
             PARAMETER(
-                bool, allow_speculative_load_exec, false,
+                bool, allow_speculative_load_exec, true,
                 "Allow loads to proceed speculatively before all older store addresses are known")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
@@ -133,8 +133,11 @@ namespace olympia
 
         // Issue Queue
         using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
+        // holds loadstoreinfo memory requests
         LoadStoreIssueQueue mem_request_queue_;
-        InstQueue inst_queue_; // holds inst_ptrs until done
+        // holds inst_ptrs until done
+        // one instruction can have multiple memory requests
+        InstQueue inst_queue_;
         const uint32_t mem_request_queue_size_;
         const uint32_t inst_queue_size_;
 

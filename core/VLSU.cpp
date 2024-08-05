@@ -198,6 +198,7 @@ namespace olympia
             {
                 // TODO: Address Unroller Class
                 sparta::memory::addr_t addr = inst_ptr->getTargetVAddr();
+                // Need to modify for indexed load/stores
                 inst_ptr->setTargetVAddr(addr + inst_ptr->getStride());
                 LoadStoreInstInfoPtr load_store_info_ptr = createLoadStoreInst_(inst_ptr);
                 load_store_info_ptr->getMemoryAccessInfoPtr()->setVAddr(inst_ptr->getTargetVAddr());
@@ -205,6 +206,7 @@ namespace olympia
                     mem_request_queue_.push_back(load_store_info_ptr);
                 load_store_info_ptr->setIssueQueueIterator(iter);
                 uint32_t vector_iter = inst_ptr->getCurrVLSUIters();
+                // setting current vlsu iteration
                 inst_ptr->setCurrVLSUIters(++vector_iter);
                 load_store_info_ptr->setVLSUStatusState(Inst::Status::DISPATCHED);
                 handleOperandIssueCheck_(load_store_info_ptr);
@@ -697,6 +699,10 @@ namespace olympia
     // Retire load/store instruction
     void VLSU::completeInst_()
     {
+        // For VLSU, the condition for completing an instruction
+        // is for all memory requests are done.
+        // Once done we then pop it from inst_queue as well and send to ROB for retiring
+
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(complete_stage_))
         {
@@ -715,9 +721,12 @@ namespace olympia
         }
         else
         {
+            // Don't complete inst until we get the last memory request
+            // For stores, we have to wait for handleCacheLookupReq_ to mark as RETIRED
+            // For loads we don't wait for that to process it, so we don't gate on that condition
             if (inst_ptr->getCurrVLSUIters() >= total_iters && load_store_info_ptr->isLastMemOp()
-                && load_store_info_ptr->getVLSUStatusState() != Inst::Status::COMPLETED
-                && !(load_store_info_ptr->isRetired()))
+                && (load_store_info_ptr->getVLSUStatusState() == Inst::Status::RETIRED
+                    || !inst_ptr->isStoreInst()))
             {
                 const bool is_store_inst = inst_ptr->isStoreInst();
                 ILOG("Completing inst: " << inst_ptr);

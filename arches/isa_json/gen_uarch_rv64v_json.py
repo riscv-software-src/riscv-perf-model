@@ -13,7 +13,23 @@ SUPPORTED_INSTS = {
     "vsetivli" :   {"pipe" : "vset", "latency" : 1},
 
 # TODO: Vector Loads and Stores: Vector Unit-Stride Instructions
+    "vse8.v"  :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vse16.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vse32.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vse64.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vle8.v"  :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vle16.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vle32.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vle64.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
 # TODO: Vector Loads and Stores: Vector Strided Instructions
+    "vsse8.v"  :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vsse16.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vsse32.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vsse64.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vlse8.v"  :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vlse16.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vlse32.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
+    "vlse64.v" :      {"pipe" : "vlsu", "uop_gen" : "ARITH", "latency" : 1},
 # TODO: Vector Loads and Stores: Vector Indexed Instructions
 # TODO: Vector Loads and Stores: Unit-stride Fault-Only-First Loads
 # TODO: Vector Loads and Stores: Vector Load/Store Segment Instructions

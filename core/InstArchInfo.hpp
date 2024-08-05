@@ -53,6 +53,7 @@ namespace olympia
             VMUL,
             VDIV,
             VSET,
+            VLSU,
             SYS,
             UNKNOWN
         };

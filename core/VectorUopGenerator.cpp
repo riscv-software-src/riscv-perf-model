@@ -101,7 +101,7 @@ namespace olympia
             "Inst: " << current_inst_ << " uop gen type is none");
 
         // Number of vector elements processed by each uop
-        const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
+        const Inst::VectorConfig * current_vcsrs = inst->getVectorConfig();
         const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
         // TODO: For now, generate uops for all elements even if there is a tail
         num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
@@ -132,9 +132,10 @@ namespace olympia
         uop->setUniqueID(current_inst_->getUniqueID());
         uop->setProgramID(current_inst_->getProgramID());
 
-        const Inst::VCSRs * current_vcsrs = current_inst_->getVCSRs();
-        uop->setVCSRs(current_vcsrs);
+        const Inst::VectorConfig * current_vcsrs = current_inst_->getVectorConfig();
+        uop->setVectorConfigVCSRs(current_vcsrs);
         uop->setUOpID(num_uops_generated_);
+        uop->setVectorConfigVLSU(current_vcsrs);
 
         // Set weak pointer to parent vector instruction (first uop)
         sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;

@@ -65,7 +65,7 @@ namespace olympia
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
 
-        VCSRs_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
+        VectorConfig_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
     }
 
     // Send fetch the initial credit count
@@ -106,12 +106,12 @@ namespace olympia
     void Decode::receiveUopQueueCredits_(const uint32_t & credits)
     {
         uop_queue_credits_ += credits;
-        if (fetch_queue_.size() > 0)
+        if (fetch_queue_.size() + uop_queue_.size() > 0)
         {
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
         }
 
-        ILOG("Received credits: " << uop_queue_credits_in_);
+        ILOG("Received credits: " << credits << " " << uop_queue_credits_in_);
     }
 
     // Called when the fetch buffer was appended by Fetch.  If decode
@@ -131,37 +131,37 @@ namespace olympia
         }
     }
 
-    void Decode::updateVcsrs_(const InstPtr & inst)
+    void Decode::updateVectorConfig_(const InstPtr & inst)
     {
-        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
+        VectorConfig_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
 
         const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
         if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
         {
             // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
-            VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
-                                               : VCSRs_.vlmax;
+            VectorConfig_.vl = inst->hasZeroRegDest() ? std::min(VectorConfig_.vl, VectorConfig_.vlmax)
+                                               : VectorConfig_.vlmax;
         }
 
         ILOG("Processing vset{i}vl{i} instruction: " << inst);
-        ILOG("  LMUL: " << VCSRs_.lmul);
-        ILOG("   SEW: " << VCSRs_.sew);
-        ILOG("   VTA: " << VCSRs_.vta);
-        ILOG(" VLMAX: " << VCSRs_.vlmax);
-        ILOG("    VL: " << VCSRs_.vl);
+        ILOG("  LMUL: " << VectorConfig_.lmul);
+        ILOG("   SEW: " << VectorConfig_.sew);
+        ILOG("   VTA: " << VectorConfig_.vta);
+        ILOG(" VLMAX: " << VectorConfig_.vlmax);
+        ILOG("    VL: " << VectorConfig_.vl);
 
         // Check validity of vector config
-        sparta_assert(VCSRs_.lmul <= 8,
-            "LMUL (" << VCSRs_.lmul << ") cannot be greater than " << 8);
-        sparta_assert(VCSRs_.vl <= VCSRs_.vlmax,
-            "VL (" << VCSRs_.vl << ") cannot be greater than VLMAX ("<< VCSRs_.vlmax << ")");
+        sparta_assert(VectorConfig_.lmul <= 8,
+            "LMUL (" << VectorConfig_.lmul << ") cannot be greater than " << 8);
+        sparta_assert(VectorConfig_.vl <= VectorConfig_.vlmax,
+            "VL (" << VectorConfig_.vl << ") cannot be greater than VLMAX ("<< VectorConfig_.vlmax << ")");
     }
 
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
-        updateVcsrs_(inst);
+        updateVectorConfig_(inst);
 
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
@@ -176,7 +176,7 @@ namespace olympia
     void Decode::handleFlush_(const FlushManager::FlushingCriteria & criteria)
     {
         ILOG("Got a flush call for " << criteria);
-        fetch_queue_credits_outp_.send(fetch_queue_.size());
+        fetch_queue_credits_outp_.send(fetch_queue_.size() + uop_queue_.size());
         fetch_queue_.clear();
 
         // Reset the vector uop generator
@@ -238,7 +238,7 @@ namespace olympia
                 if ((uid == mavis_vsetivli_uid_) ||
                    ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource()))
                 {
-                    updateVcsrs_(inst);
+                    updateVectorConfig_(inst);
                 }
                 else if (uid == mavis_vsetvli_uid_ || uid == mavis_vsetvl_uid_)
                 {
@@ -253,7 +253,7 @@ namespace olympia
                     if (!inst->isVset() && inst->isVector())
                     {
                         // set LMUL, VSET, VL, VTA for any other vector instructions
-                        inst->setVCSRs(&VCSRs_);
+                        inst->setVectorConfigVCSRs(&VectorConfig_);
                     }
                 }
 
@@ -264,14 +264,14 @@ namespace olympia
                 {
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);
-
+                    
                     // Even if LMUL == 1, we need the vector uop generator to create a uop for us
                     // because some generators will add additional sources and destinations to the
                     // instruction (e.g. widening, multiply-add, slides).
                     while(vec_uop_gen_->getNumUopsRemaining() >= 1)
                     {
                         const InstPtr uop = vec_uop_gen_->generateUop();
-                        if (insts->size() < num_to_decode_)
+                        if (insts->size() < num_to_decode)
                         {
                             insts->emplace_back(uop);
                             uop->setStatus(Inst::Status::DECODED);
@@ -341,6 +341,9 @@ namespace olympia
         // uint32_t unfusedInstsSize = insts->size();
 
         // Decrement internal Uop Queue credits
+        ILOG(uop_queue_credits_)
+        ILOG(num_to_decode)
+        ILOG(insts->size())
         sparta_assert(uop_queue_credits_ >= insts->size(),
             "Attempt to decrement d0q credits below what is available");
         uop_queue_credits_ -= insts->size();
@@ -352,6 +355,7 @@ namespace olympia
         // instructions in the queue, schedule another decode session
         if (uop_queue_credits_ > 0 && (fetch_queue_.size() + uop_queue_.size()) > 0)
         {
+            ILOG("Scheduling decode event, instructions still left")
             ev_decode_insts_event_.schedule(1);
         }
     }

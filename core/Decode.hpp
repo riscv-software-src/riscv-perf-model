@@ -333,7 +333,7 @@ namespace olympia
         //! \brief the fusion group definition files, JSON or (future) FSL
         const std::vector<std::string> fusion_group_definitions_;
 
-        Inst::VCSRs VCSRs_;
+        Inst::VectorConfig VectorConfig_;
 
         MavisType* mavis_facade_;
 
@@ -344,7 +344,7 @@ namespace olympia
         bool waiting_on_vset_;
 
         // Helper method to update VCSRs
-        void updateVcsrs_(const InstPtr &);
+        void updateVectorConfig_(const InstPtr &);
 
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks

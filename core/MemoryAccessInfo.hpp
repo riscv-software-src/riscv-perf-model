@@ -106,13 +106,22 @@ namespace olympia
             return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
         }
 
+        // This is a function which will be added in the SPARTA_ADDPAIRs API.
+        uint64_t getInstUOpID() const
+        {
+            const InstPtr & inst_ptr = getInstPtr();
+            return inst_ptr == nullptr ? 0 : inst_ptr->getUOpID();
+        }
+
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
         uint64_t getPhyAddr() const { return ldst_inst_ptr_->getRAdr(); }
 
-        sparta::memory::addr_t getVAddr() const { return ldst_inst_ptr_->getTargetVAddr(); }
+        sparta::memory::addr_t getVAddr() const { return vaddr_; }
+
+        void setVAddr(sparta::memory::addr_t vaddr) { vaddr_ = vaddr; }
 
         void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
 
@@ -171,6 +180,7 @@ namespace olympia
             mshr_entry_info_iterator_ = iter;
         }
 
+        bool isVector(){ return getInstPtr()->isVector(); }
       private:
         // load/store instruction pointer
         InstPtr ldst_inst_ptr_;
@@ -199,6 +209,8 @@ namespace olympia
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
         MSHREntryInfoIterator mshr_entry_info_iterator_;
+
+        sparta::memory::addr_t vaddr_;
     };
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
@@ -279,7 +291,14 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        os << "memptr: " << mem.getInstPtr();
+        if(mem.getInstPtr()->isVector())
+        {
+            os << "memptr: " << mem.getInstPtr() << " vaddr: " << mem.getVAddr();
+        }
+        else
+        {
+            os << "memptr: " << mem.getInstPtr();
+        }
         return os;
     }
 

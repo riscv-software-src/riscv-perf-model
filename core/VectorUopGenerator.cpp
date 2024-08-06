@@ -88,6 +88,11 @@ namespace olympia
         }
     }
 
+    void VectorUopGenerator::onBindTreeLate_()
+    {
+        mavis_facade_ = getMavis(getContainer());
+    }
+
     void VectorUopGenerator::setInst(const InstPtr & inst)
     {
         sparta_assert(current_inst_ == nullptr,

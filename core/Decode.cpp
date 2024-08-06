@@ -17,9 +17,7 @@ namespace olympia
 
     Decode::Decode(sparta::TreeNode* node, const DecodeParameterSet* p) :
         sparta::Unit(node),
-
         fetch_queue_("FetchQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
-        uop_queue_("UOpQueue", p->uop_queue_size, node->getClock(), &unit_stat_set_),
         fusion_num_fuse_instructions_(&unit_stat_set_, "fusion_num_fuse_instructions",
                                       "The number of custom instructions created by fusion",
                                       sparta::Counter::COUNT_NORMAL),
@@ -48,7 +46,8 @@ namespace olympia
         fusion_match_max_tries_(p->fusion_match_max_tries),
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
-        fusion_group_definitions_(p->fusion_group_definitions)
+        fusion_group_definitions_(p->fusion_group_definitions),
+        vector_enabled_(true)
     {
         initializeFusion_();
 
@@ -68,22 +67,20 @@ namespace olympia
         VCSRs_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
     }
 
+    uint32_t Decode::getNumVecUopsRemaining() const
+    {
+        return vector_enabled_ ? vec_uop_gen_->getNumUopsRemaining() : 0;
+    }
+
     // Send fetch the initial credit count
     void Decode::sendInitialCredits_()
     {
         fetch_queue_credits_outp_.send(fetch_queue_.capacity());
 
-        // setting MavisIDs for vsetvl and vsetivli
-        mavis_facade_ = getMavis(getContainer());
-        mavis_vsetvl_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvl");
-        mavis_vsetivli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetivli");
-        mavis_vsetvli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvli");
-
         // Get pointer to the vector uop generator
         sparta::TreeNode * root_node = getContainer()->getRoot();
         vec_uop_gen_ = \
             root_node->getChild("cpu.core0.decode.vec_uop_gen")->getResourceAs<olympia::VectorUopGenerator*>();
-        vec_uop_gen_->setMavis(mavis_facade_);
     }
 
     // -------------------------------------------------------------------
@@ -136,7 +133,7 @@ namespace olympia
         VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
 
         const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
-        if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
+        if ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource())
         {
             // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
             VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
@@ -186,7 +183,7 @@ namespace olympia
     // Decode instructions
     void Decode::decodeInsts_()
     {
-        uint32_t num_to_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size());
+        uint32_t num_to_decode = std::min(uop_queue_credits_, fetch_queue_.size() + getNumVecUopsRemaining());
         num_to_decode = std::min(num_to_decode, num_to_decode_);
 
         // buffer to maximize the chances of a group match limited
@@ -212,13 +209,11 @@ namespace olympia
         // vset and stall anything else
         while ((insts->size() < num_to_decode) && !waiting_on_vset_)
         {
-            if (uop_queue_.size() > 0)
+            if (vec_uop_gen_->getNumUopsRemaining() > 0)
             {
-                const auto & inst = uop_queue_.read(0);
-                insts->emplace_back(inst);
-                inst->setStatus(Inst::Status::DECODED);
-                ILOG("From UOp Queue Decoded: " << inst);
-                uop_queue_.pop();
+                const InstPtr uop = vec_uop_gen_->generateUop();
+                insts->emplace_back(uop);
+                uop->setStatus(Inst::Status::DECODED);
             }
             else if (fetch_queue_.size() > 0)
             {
@@ -235,12 +230,12 @@ namespace olympia
                 // vsetvli only blocks if rs1 is not x0
                 // vsetivli never blocks
                 const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
-                if ((uid == mavis_vsetivli_uid_) ||
-                   ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource()))
+                if ((uid == MAVIS_UID_VSETIVLI) ||
+                   ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource()))
                 {
                     updateVcsrs_(inst);
                 }
-                else if (uid == mavis_vsetvli_uid_ || uid == mavis_vsetvl_uid_)
+                else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                     waiting_on_vset_ = true;
@@ -259,30 +254,17 @@ namespace olympia
 
                 ILOG("Decoded: " << inst);
 
-                // Handle vector uop generation
+                // Even if LMUL == 1, we need the vector uop generator to create a uop for us
+                // because some generators will add additional sources and destinations to the
+                // instruction (e.g. widening, multiply-add, slides).
                 if (inst->isVector() && !inst->isVset() && (inst->getUopGenType() != InstArchInfo::UopGenType::NONE))
                 {
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);
 
-                    // Even if LMUL == 1, we need the vector uop generator to create a uop for us
-                    // because some generators will add additional sources and destinations to the
-                    // instruction (e.g. widening, multiply-add, slides).
-                    while(vec_uop_gen_->getNumUopsRemaining() >= 1)
-                    {
-                        const InstPtr uop = vec_uop_gen_->generateUop();
-                        if (insts->size() < num_to_decode_)
-                        {
-                            insts->emplace_back(uop);
-                            uop->setStatus(Inst::Status::DECODED);
-                        }
-                        else
-                        {
-                            ILOG("Not enough decode credits to process UOp, "
-                                 "appending to the uop queue: " << uop);
-                            uop_queue_.push(uop);
-                        }
-                    }
+                    const InstPtr uop = vec_uop_gen_->generateUop();
+                    insts->emplace_back(uop);
+                    uop->setStatus(Inst::Status::DECODED);
                 }
                 else
                 {
@@ -350,7 +332,7 @@ namespace olympia
 
         // If we still have credits to send instructions as well as
         // instructions in the queue, schedule another decode session
-        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + uop_queue_.size()) > 0)
+        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + getNumVecUopsRemaining()) > 0)
         {
             ev_decode_insts_event_.schedule(1);
         }

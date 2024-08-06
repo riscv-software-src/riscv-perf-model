@@ -76,9 +76,6 @@ namespace olympia
             //! \brief depth of the input instruction buffer
             PARAMETER(uint32_t, fetch_queue_size, 10, "Size of the fetch queue")
 
-            //! \brief depth of UOp Queue
-            PARAMETER(uint32_t, uop_queue_size, 8, "Size of the UOp queue")
-
             //! \brief enable fusion operations
             //!
             //! master enable, when false fusion_* parmeters have no effect
@@ -151,7 +148,6 @@ namespace olympia
       private:
         // The internal instruction queue
         InstQueue fetch_queue_;
-        InstQueue uop_queue_;
 
         // Vector uop generator
         VectorUopGenerator * vec_uop_gen_ = nullptr;
@@ -333,18 +329,17 @@ namespace olympia
         //! \brief the fusion group definition files, JSON or (future) FSL
         const std::vector<std::string> fusion_group_definitions_;
 
+        //////////////////////////////////////////////////////////////////////
+        // Vector
+        const bool vector_enabled_;
         Inst::VCSRs VCSRs_;
-
-        MavisType* mavis_facade_;
-
-        uint32_t mavis_vsetvl_uid_;
-        uint32_t mavis_vsetivli_uid_;
-        uint32_t mavis_vsetvli_uid_;
 
         bool waiting_on_vset_;
 
         // Helper method to update VCSRs
         void updateVcsrs_(const InstPtr &);
+
+        uint32_t getNumVecUopsRemaining() const;
 
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks

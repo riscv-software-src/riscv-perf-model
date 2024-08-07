@@ -140,18 +140,19 @@ namespace olympia
         const Inst::VCSRs * current_vcsrs = current_inst_->getVCSRs();
         uop->setVCSRs(current_vcsrs);
         uop->setUOpID(num_uops_generated_);
+        ++num_uops_generated_;
 
         // Set weak pointer to parent vector instruction (first uop)
         sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;
         uop->setUOpParent(parent_weak_ptr);
 
+        // Does this uop contain tail elements?
+        const uint32_t num_elems_per_uop = current_vcsrs->vlmax / current_vcsrs->sew;
+        uop->setTail((num_elems_per_uop * num_uops_generated_) > current_vcsrs->vl);
+
         // Handle last uop
-        ++num_uops_generated_;
         if(num_uops_generated_ == num_uops_to_generate_)
         {
-            const uint32_t num_elems = current_vcsrs->vl / current_vcsrs->sew;
-            uop->setTail(num_elems < current_vcsrs->vlmax);
-
             reset_();
         }
 

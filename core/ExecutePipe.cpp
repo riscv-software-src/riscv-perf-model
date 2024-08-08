@@ -80,8 +80,10 @@ namespace olympia
                 {
                     // The number of non-tail elements in the uop is used to determine how many
                     // passes are needed
-                    const uint32_t num_elems_per_uop = ex_inst->getVLMAX() / ex_inst->getLMUL();
-                    const uint32_t num_elems_remaining = ex_inst->getVL() - (num_elems_per_uop * (ex_inst->getUOpID() - 1));
+                    const VectorConfigPtr & vector_config = ex_inst->getVectorConfig();
+                    const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getLMUL();
+                    const uint32_t num_elems_remaining = \
+                        vector_config->getVL() - (num_elems_per_uop * (ex_inst->getUOpID() - 1));
                     const uint32_t vl = std::min(num_elems_per_uop, num_elems_remaining);
                     const uint32_t num_passes = std::ceil(vl / valu_adder_num_);
                     if (num_passes > 1)
@@ -134,9 +136,10 @@ namespace olympia
             if (ex_inst->isVset() && ex_inst->isBlockingVSET())
             {
                 // sending back VSET CSRs
+                const VectorConfigPtr & vector_config = ex_inst->getVectorConfig();
                 ILOG("Forwarding VSET CSRs back to decode, LMUL: "
-                     << ex_inst->getLMUL() << " SEW: " << ex_inst->getSEW()
-                     << " VTA: " << ex_inst->getVTA() << " VL: " << ex_inst->getVL());
+                     << vector_config->getLMUL() << " SEW: " << vector_config->getSEW()
+                     << " VTA: " << vector_config->getVTA() << " VL: " << vector_config->getVL());
                 out_vset_.send(ex_inst);
             }
             auto reg_file = ex_inst->getRenameData().getDestination().rf;

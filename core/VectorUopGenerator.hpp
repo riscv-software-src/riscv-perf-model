@@ -42,8 +42,6 @@ namespace olympia
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static constexpr char name[] = "vec_uop_gen";
 
-        void setMavis(MavisType * mavis) { mavis_facade_ = mavis; }
-
         void setInst(const InstPtr & inst);
 
         const InstPtr generateUop();
@@ -56,6 +54,8 @@ namespace olympia
         void handleFlush(const FlushManager::FlushingCriteria &);
 
     private:
+        void onBindTreeLate_() override;
+
         MavisType * mavis_facade_;
 
         //typedef std::function<const InstPtr (VectorUopGenerator*)> FUNC;

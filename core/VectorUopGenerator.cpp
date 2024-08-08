@@ -88,6 +88,11 @@ namespace olympia
         }
     }
 
+    void VectorUopGenerator::onBindTreeLate_()
+    {
+        mavis_facade_ = getMavis(getContainer());
+    }
+
     void VectorUopGenerator::setInst(const InstPtr & inst)
     {
         sparta_assert(current_inst_ == nullptr,
@@ -101,10 +106,10 @@ namespace olympia
             "Inst: " << current_inst_ << " uop gen type is none");
 
         // Number of vector elements processed by each uop
-        const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
-        const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
+        const VectorConfigPtr & vector_config = inst->getVectorConfig();
+        const uint64_t num_elems_per_uop = VectorConfig::VLEN / vector_config->getSEW();
         // TODO: For now, generate uops for all elements even if there is a tail
-        num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
+        num_uops_to_generate_ = std::ceil(vector_config->getVLMAX() / num_elems_per_uop);
 
         if((uop_gen_type == InstArchInfo::UopGenType::ARITH_WIDE_DEST) ||
            (uop_gen_type == InstArchInfo::UopGenType::ARITH_MAC_WIDE_DEST))
@@ -132,21 +137,22 @@ namespace olympia
         uop->setUniqueID(current_inst_->getUniqueID());
         uop->setProgramID(current_inst_->getProgramID());
 
-        const Inst::VCSRs * current_vcsrs = current_inst_->getVCSRs();
-        uop->setVCSRs(current_vcsrs);
+        const VectorConfigPtr & vector_config = current_inst_->getVectorConfig();
+        uop->setVectorConfig(vector_config);
         uop->setUOpID(num_uops_generated_);
+        ++num_uops_generated_;
 
         // Set weak pointer to parent vector instruction (first uop)
         sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_;
         uop->setUOpParent(parent_weak_ptr);
 
+        // Does this uop contain tail elements?
+        const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getSEW();
+        uop->setTail((num_elems_per_uop * num_uops_generated_) > vector_config->getVL());
+
         // Handle last uop
-        ++num_uops_generated_;
         if(num_uops_generated_ == num_uops_to_generate_)
         {
-            const uint32_t num_elems = current_vcsrs->vl / current_vcsrs->sew;
-            uop->setTail(num_elems < current_vcsrs->vlmax);
-
             reset_();
         }
 
@@ -180,6 +186,19 @@ namespace olympia
             }
         }
 
+        // Add a destination to the list of sources
+        auto add_dest_as_src = [](auto & srcs, auto & dest)
+            {
+                // OperandFieldID is an enum with RS1 = 0, RS2 = 1, etc. with a max RS of RS4
+                using OperandFieldID = mavis::InstMetaData::OperandFieldID;
+                const OperandFieldID field_id = static_cast<OperandFieldID>(srcs.size());
+                sparta_assert(field_id <= OperandFieldID::RS_MAX,
+                    "Mavis does not support instructions with more than " << std::dec <<
+                    static_cast<std::underlying_type_t<OperandFieldID>>(OperandFieldID::RS_MAX) <<
+                    " sources");
+                srcs.emplace_back(field_id, dest.operand_type, dest.field_value);
+            };
+
         auto dests = current_inst_->getDestOpInfoList();
         if constexpr (SINGLE_DEST == false)
         {
@@ -189,14 +208,24 @@ namespace olympia
 
                 if constexpr (ADD_DEST_AS_SRC == true)
                 {
-                    // OperandFieldID is an enum with RS1 = 0, RS2 = 1, etc. with a max RS of RS4
-                    using OperandFieldID = mavis::InstMetaData::OperandFieldID;
-                    const OperandFieldID field_id = static_cast<OperandFieldID>(srcs.size());
-                    sparta_assert(field_id <= OperandFieldID::RS_MAX,
-                        "Mavis does not support instructions with more than " << std::dec <<
-                        static_cast<std::underlying_type_t<OperandFieldID>>(OperandFieldID::RS_MAX) <<
-                        " sources");
-                    srcs.emplace_back(field_id, dest.operand_type, dest.field_value);
+                    add_dest_as_src(srcs, dest);
+                }
+            }
+        }
+
+        // If uop contains tail or masked elements that need to be left undisturbed, we need to add
+        // the destination registers as source registers
+        if constexpr (ADD_DEST_AS_SRC == false)
+        {
+            const VectorConfigPtr & vector_config = current_inst_->getVectorConfig();
+            const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getSEW();
+            const bool uop_contains_tail_elems = (num_elems_per_uop * num_uops_generated_) > vector_config->getVL();
+
+            if (uop_contains_tail_elems && (vector_config->getVTA() == false))
+            {
+                for (auto & dest : dests)
+                {
+                    add_dest_as_src(srcs, dest);
                 }
             }
         }

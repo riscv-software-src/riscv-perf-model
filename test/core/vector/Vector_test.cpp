@@ -56,27 +56,27 @@ public:
 
     void test_vl(const uint32_t expected_vl)
     {
-        EXPECT_TRUE(decode_->VCSRs_.vl == expected_vl);
+        EXPECT_TRUE(decode_->vector_config_->getVL() == expected_vl);
     }
 
     void test_sew(const uint32_t expected_sew)
     {
-        EXPECT_TRUE(decode_->VCSRs_.sew == expected_sew);
+        EXPECT_TRUE(decode_->vector_config_->getSEW() == expected_sew);
     }
 
     void test_lmul(const uint32_t expected_lmul)
     {
-        EXPECT_TRUE(decode_->VCSRs_.lmul == expected_lmul);
+        EXPECT_TRUE(decode_->vector_config_->getLMUL() == expected_lmul);
     }
 
     void test_vlmax(const uint32_t expected_vlmax)
     {
-        EXPECT_TRUE(decode_->VCSRs_.vlmax == expected_vlmax);
+        EXPECT_TRUE(decode_->vector_config_->getVLMAX() == expected_vlmax);
     }
 
     void test_vta(const bool expected_vta)
     {
-        EXPECT_TRUE(decode_->VCSRs_.vta == expected_vta);
+        EXPECT_TRUE(decode_->vector_config_->getVTA() == expected_vta);
     }
 
 private:
@@ -113,28 +113,15 @@ private:
 void runTests(int argc, char **argv)
     {
     DEFAULTS.auto_summary_default = "off";
-    std::vector<std::string> datafiles;
     std::string input_file;
-    bool enable_vector;
 
     sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
     auto &app_opts = cls.getApplicationOptions();
-    app_opts.add_options()("output_file",
-                                                 sparta::app::named_value<std::vector<std::string>>(
-                                                         "output_file", &datafiles),
-                                                 "Specifies the output file")(
-            "input-file",
-            sparta::app::named_value<std::string>("INPUT_FILE", &input_file)
-                    ->default_value(""),
+    app_opts.add_options()
+        ("input-file",
+            sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
             "Provide a JSON instruction stream",
-            "Provide a JSON file with instructions to run through Execute")(
-            "enable_vector",
-            sparta::app::named_value<bool>("enable_vector", &enable_vector)
-                    ->default_value(false),
-            "Enable the experimental vector pipelines");
-
-    po::positional_options_description &pos_opts = cls.getPositionalOptions();
-    pos_opts.add("output_file", -1); // example, look for the <data file> at the end
+            "Provide a JSON file with instructions to run through Execute");
 
     int err_code = 0;
     if (!cls.parse(argc, argv, err_code))
@@ -143,16 +130,16 @@ void runTests(int argc, char **argv)
             "Command line parsing failed"); // Any errors already printed to cerr
     }
 
-    sparta_assert(false == datafiles.empty(),
-        "Need an output file as the last argument of the test");
-
-    uint64_t ilimit = 0;
-    uint32_t num_cores = 1;
-    bool show_factories = false;
     sparta::Scheduler scheduler;
-    OlympiaSim sim("simple", scheduler,
-                                 num_cores, // cores
-                                 input_file, ilimit, show_factories);
+    uint32_t num_cores = 1;
+    uint64_t ilimit = 0;
+    bool show_factories = false;
+    OlympiaSim sim("simple",
+                   scheduler,
+                   num_cores,
+                   input_file,
+                   ilimit,
+                   show_factories);
     sparta::RootTreeNode *root_node = sim.getRoot();
     cls.populateSimulation(&sim);
 
@@ -164,7 +151,7 @@ void runTests(int argc, char **argv)
         root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB *>();
     olympia::ROBTester rob_tester {my_rob};
 
-    if (input_file.find("vsetivli_vaddvv.json") != std::string::npos)
+    if (input_file.find("vsetivli_vaddvv_e8m4.json") != std::string::npos)
     {
         // Test Decode (defaults)
         decode_tester.test_lmul(1);
@@ -189,7 +176,7 @@ void runTests(int argc, char **argv)
         rob_tester.test_num_uops_retired(5);
         rob_tester.test_last_inst_has_tail(false);
     }
-    else if(input_file.find("vsetvli_vaddvv.json") != std::string::npos)
+    else if(input_file.find("vsetvli_vaddvv_e32m1ta.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -207,7 +194,7 @@ void runTests(int argc, char **argv)
         rob_tester.test_num_uops_retired(2);
         rob_tester.test_last_inst_has_tail(false);
     }
-    else if(input_file.find("vsetvl_vaddvv.json") != std::string::npos)
+    else if(input_file.find("vsetvl_vaddvv_e64m1ta.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -225,7 +212,7 @@ void runTests(int argc, char **argv)
         rob_tester.test_num_uops_retired(2);
         rob_tester.test_last_inst_has_tail(false);
     }
-    else if(input_file.find("vsetivli_vaddvv_tail.json") != std::string::npos)
+    else if(input_file.find("vsetivli_vaddvv_tail_e8m8ta.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -259,7 +246,7 @@ void runTests(int argc, char **argv)
         // vset + 1 vadd.vv + vset + 2 vadd.vv + vset + 4 vadd.vv uop + vset + 8 vadd.vv
         rob_tester.test_num_uops_retired(19);
     }
-    else if(input_file.find("vmulvx.json") != std::string::npos)
+    else if(input_file.find("vmulvx_e8m4.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -271,7 +258,7 @@ void runTests(int argc, char **argv)
 
         // TODO: Test source values for all uops
     }
-    else if(input_file.find("vwmulvv.json") != std::string::npos)
+    else if(input_file.find("vwmulvv_e8m4.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -283,7 +270,7 @@ void runTests(int argc, char **argv)
 
         // TODO: Test destination values for all uops
     }
-    else if(input_file.find("vmseqvv.json") != std::string::npos)
+    else if(input_file.find("vmseqvv_e8m4.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -305,6 +292,10 @@ void runTests(int argc, char **argv)
             sparta_exception_fired = true;
         }
         EXPECT_TRUE(sparta_exception_fired);
+    }
+    else
+    {
+        sparta_assert(false, "Invalid input file: " << input_file);
     }
 }
 

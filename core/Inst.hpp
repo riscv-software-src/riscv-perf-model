@@ -15,6 +15,7 @@
 
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
+#include "VectorConfig.hpp"
 #include "MiscUtils.hpp"
 
 #include <cstdlib>
@@ -72,33 +73,6 @@ namespace olympia
             Reg dest_;
             RegList src_;
             Reg data_reg_;
-        };
-
-        static const uint32_t VLEN = 1024; // vector register default bit size
-
-        // Vector CSRs
-        struct VCSRs
-        {
-            uint32_t vl = 16;  // vector length
-            uint32_t sew = 8;  // set element width
-            uint32_t lmul = 1; // effective length
-            bool vta = false;  // vector tail agnostic, false = undisturbed, true = agnostic
-
-            uint32_t vlmax_formula() { return (VLEN / sew) * lmul; }
-
-            void setVCSRs(uint32_t input_vl,
-                          uint32_t input_sew,
-                          uint32_t input_lmul,
-                          uint32_t input_vta)
-            {
-                vl = input_vl;
-                sew = input_sew;
-                lmul = input_lmul;
-                vta = input_vta;
-                vlmax = vlmax_formula();
-            }
-
-            uint32_t vlmax = vlmax_formula();
         };
 
         // Used by Mavis
@@ -244,40 +218,13 @@ namespace olympia
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
-        void setVCSRs(const VCSRs * input_VCSRs)
+        void setVectorConfig(const VectorConfigPtr input_vector_config)
         {
-            VCSRs_ = *input_VCSRs;
+            vector_config_ = input_vector_config;
         }
 
-        const VCSRs * getVCSRs() const { return &VCSRs_; }
-
-        // Set lmul from vset (vsetivli, vsetvli)
-        void setLMUL(uint32_t lmul)
-        {
-            VCSRs_.lmul = lmul;
-            VCSRs_.vlmax = VCSRs_.vlmax_formula();
-        }
-
-        // Set sew from vset (vsetivli, vsetvli)
-        void setSEW(uint32_t sew)
-        {
-            VCSRs_.sew = sew;
-            VCSRs_.vlmax = VCSRs_.vlmax_formula();
-        }
-
-        // Set VL from vset (vsetivli, vsetvli)
-        void setVL(uint32_t vl) { VCSRs_.vl = vl; }
-
-        // Set VTA (vector tail agnostic)
-        // vta = true means agnostic, set destination values to 1's or maintain original
-        // vta = false means undisturbed, maintain original destination values
-        void setVTA(bool vta) { VCSRs_.vta = vta; }
-
-        uint32_t getSEW() const { return VCSRs_.sew; }
-        uint32_t getLMUL() const { return VCSRs_.lmul; }
-        uint32_t getVL() const { return VCSRs_.vl; }
-        uint32_t getVTA() const { return VCSRs_.vta; }
-        uint32_t getVLMAX() const { return VCSRs_.vlmax; }
+        const VectorConfigPtr getVectorConfig() const { return vector_config_; }
+        VectorConfigPtr getVectorConfig() { return vector_config_; }
 
         void setTail(bool has_tail) { has_tail_ = has_tail; }
         bool hasTail() const { return has_tail_; }
@@ -487,7 +434,7 @@ namespace olympia
         const bool is_return_;
         const bool has_immediate_;
 
-        VCSRs VCSRs_;
+        VectorConfigPtr vector_config_{new VectorConfig};
         bool has_tail_ = false; // Does this vector uop have a tail?
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset

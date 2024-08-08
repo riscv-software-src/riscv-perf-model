@@ -141,7 +141,7 @@ namespace olympia
                 inst->setTargetVAddr(vaddr);
             }
 
-            VectorConfigPtr & vector_config = inst->getVectorConfig();
+            VectorConfigPtr vector_config = inst->getVectorConfig();
             if (jinst.find("vtype") != jinst.end())
             {
                 // immediate, so decode from hex

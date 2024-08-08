@@ -48,7 +48,7 @@ namespace olympia
         fusion_summary_report_(p->fusion_summary_report),
         fusion_group_definitions_(p->fusion_group_definitions),
         vector_enabled_(true),
-        vector_config_(new VectorConfig(p->init_sew, p->init_lmul, p->init_vl, p->init_vta))
+        vector_config_(new VectorConfig(p->init_vl, p->init_sew, p->init_lmul, p->init_vta))
     {
         initializeFusion_();
 

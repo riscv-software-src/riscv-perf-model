@@ -20,13 +20,12 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vrgather.json                    ${
 
 
 
-sparta_named_test(Vector_test_vsetivli      Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vaddvv_e8m4.json)
-sparta_named_test(Vector_test_vsetvli       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvli_vaddvv_e32m1ta.json)
-sparta_named_test(Vector_test_vsetvl        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetvl_vaddvv_e64m1ta.json)
-sparta_named_test(Vector_test_vsetivli_tail Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vsetivli_vaddvv_tail_e8m8ta.json)
-sparta_named_test(Vector_test_multiple_vset Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file multiple_vset.json)
-sparta_named_test(Vector_test_vmulvx        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmulvx_e8m4.json)
-sparta_named_test(Vector_test_vmulvv        Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vwmulvv_e8m4.json)
-sparta_named_test(Vector_test_vmseqvv       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmseqvv_e8m4.json)
-sparta_named_test(Vector_test_vmaccvv       Vector_test big_core.out -c test_cores/test_big_core_full.yaml --input-file vmaccvv_e8m4.json)
-sparta_named_test(Vector_unsupported_test   Vector_test big_core.out -c test_cores/test_big_core_full_8_decode.yaml --input-file vrgather.json)
+sparta_named_test(Vector_test_vsetivli      Vector_test -l top info vsetivli.out      -c test_cores/test_big_core.yaml --input-file vsetivli_vaddvv_e8m4.json)
+sparta_named_test(Vector_test_vsetvli       Vector_test -l top info vsetvli.out       -c test_cores/test_big_core.yaml --input-file vsetvli_vaddvv_e32m1ta.json)
+sparta_named_test(Vector_test_vsetvl        Vector_test -l top info vsetvl.out        -c test_cores/test_big_core.yaml --input-file vsetvl_vaddvv_e64m1ta.json)
+sparta_named_test(Vector_test_vsetivli_tail Vector_test -l top info vsetivli_tail.out -c test_cores/test_big_core.yaml --input-file vsetivli_vaddvv_tail_e8m8ta.json)
+sparta_named_test(Vector_test_multiple_vset Vector_test -l top info mulitple_vset.out -c test_cores/test_big_core.yaml --input-file multiple_vset.json)
+sparta_named_test(Vector_test_vmulvx        Vector_test -l top info vmulvx.out        -c test_cores/test_big_core.yaml --input-file vmulvx_e8m4.json)
+sparta_named_test(Vector_test_vmulvv        Vector_test -l top info vmulvv.out        -c test_cores/test_big_core.yaml --input-file vwmulvv_e8m4.json)
+sparta_named_test(Vector_test_vmseqvv       Vector_test -l top info vmseqvv.out       -c test_cores/test_big_core.yaml --input-file vmseqvv_e8m4.json)
+sparta_named_test(Vector_unsupported_test   Vector_test -l top info unsupported.out   -c test_cores/test_big_core.yaml --input-file vrgather.json)

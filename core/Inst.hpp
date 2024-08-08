@@ -434,7 +434,7 @@ namespace olympia
         const bool is_return_;
         const bool has_immediate_;
 
-        VectorConfigPtr vector_config_;
+        VectorConfigPtr vector_config_{new VectorConfig};
         bool has_tail_ = false; // Does this vector uop have a tail?
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset

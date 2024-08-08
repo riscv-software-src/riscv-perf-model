@@ -140,6 +140,8 @@ namespace olympia
                 uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
                 inst->setTargetVAddr(vaddr);
             }
+
+            VectorConfigPtr & vector_config = inst->getVectorConfig();
             if (jinst.find("vtype") != jinst.end())
             {
                 // immediate, so decode from hex
@@ -147,20 +149,20 @@ namespace olympia
                 std::string binaryString = std::bitset<32>(vtype).to_string();
                 uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
                 uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
-                inst->setLMUL(lmul);
-                inst->setSEW(sew);
+                vector_config->setLMUL(lmul);
+                vector_config->setSEW(sew);
             }
 
             if (jinst.find("vta") != jinst.end())
             {
                 const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
-                inst->setVTA(vta);
+                vector_config->setVTA(vta);
             }
 
             if (jinst.find("vl") != jinst.end())
             {
                 const uint64_t vl = jinst["vl"].get<uint64_t>();
-                inst->setVL(vl);
+                vector_config->setVL(vl);
             }
 
             if (jinst.find("taken") != jinst.end())

@@ -47,7 +47,8 @@ namespace olympia
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
         fusion_group_definitions_(p->fusion_group_definitions),
-        vector_enabled_(true)
+        vector_enabled_(true),
+        vector_config_(new VectorConfig(p->init_sew, p->init_lmul, p->init_vl, p->init_vta))
     {
         initializeFusion_();
 
@@ -63,8 +64,6 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, process_vset_, InstPtr));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
-
-        VCSRs_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
     }
 
     uint32_t Decode::getNumVecUopsRemaining() const
@@ -128,37 +127,28 @@ namespace olympia
         }
     }
 
-    void Decode::updateVcsrs_(const InstPtr & inst)
+    void Decode::updateVectorConfig_(const InstPtr & inst)
     {
-        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
+        vector_config_ = inst->getVectorConfig();
 
+        // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
         const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
         if ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource())
         {
-            // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
-            VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
-                                               : VCSRs_.vlmax;
+            const uint32_t new_vl = \
+                inst->hasZeroRegDest() ? std::min(vector_config_->getVL(), vector_config_->getVLMAX())
+                                       : vector_config_->getVLMAX();
+            vector_config_->setVL(new_vl);
         }
 
-        ILOG("Processing vset{i}vl{i} instruction: " << inst);
-        ILOG("  LMUL: " << VCSRs_.lmul);
-        ILOG("   SEW: " << VCSRs_.sew);
-        ILOG("   VTA: " << VCSRs_.vta);
-        ILOG(" VLMAX: " << VCSRs_.vlmax);
-        ILOG("    VL: " << VCSRs_.vl);
-
-        // Check validity of vector config
-        sparta_assert(VCSRs_.lmul <= 8,
-            "LMUL (" << VCSRs_.lmul << ") cannot be greater than " << 8);
-        sparta_assert(VCSRs_.vl <= VCSRs_.vlmax,
-            "VL (" << VCSRs_.vl << ") cannot be greater than VLMAX ("<< VCSRs_.vlmax << ")");
+        ILOG("Processing vset{i}vl{i} instruction: " << inst << " " << vector_config_);
     }
 
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
     void Decode::process_vset_(const InstPtr & inst)
     {
-        updateVcsrs_(inst);
+        updateVectorConfig_(inst);
 
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
@@ -183,8 +173,7 @@ namespace olympia
     // Decode instructions
     void Decode::decodeInsts_()
     {
-        uint32_t num_to_decode = std::min(uop_queue_credits_, fetch_queue_.size() + getNumVecUopsRemaining());
-        num_to_decode = std::min(num_to_decode, num_to_decode_);
+        const uint32_t num_to_decode = std::min(uop_queue_credits_, num_to_decode_);
 
         // buffer to maximize the chances of a group match limited
         // by max allowed latency, bounded by max group size
@@ -233,7 +222,7 @@ namespace olympia
                 if ((uid == MAVIS_UID_VSETIVLI) ||
                    ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource()))
                 {
-                    updateVcsrs_(inst);
+                    updateVectorConfig_(inst);
                 }
                 else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
@@ -248,7 +237,7 @@ namespace olympia
                     if (!inst->isVset() && inst->isVector())
                     {
                         // set LMUL, VSET, VL, VTA for any other vector instructions
-                        inst->setVCSRs(&VCSRs_);
+                        inst->setVectorConfig(vector_config_);
                     }
                 }
 
@@ -282,7 +271,7 @@ namespace olympia
             }
             else
             {
-                // Uop queue and fetch queue are both empty, nothing left to decode
+                // Nothing left to decode
                 break;
             }
         }
@@ -313,8 +302,6 @@ namespace olympia
         }
 
         // Send decoded instructions to rename
-        sparta_assert(insts->size() <= num_to_decode_,
-            "Instruction group grew too large! " << insts);
         uop_queue_outp_.send(insts);
 
         // TODO: whereisegon() would remove the ghosts,
@@ -323,8 +310,6 @@ namespace olympia
         // uint32_t unfusedInstsSize = insts->size();
 
         // Decrement internal Uop Queue credits
-        sparta_assert(uop_queue_credits_ >= insts->size(),
-            "Attempt to decrement d0q credits below what is available");
         uop_queue_credits_ -= insts->size();
 
         // Send credits back to Fetch to get more instructions

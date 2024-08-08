@@ -106,10 +106,10 @@ namespace olympia
             "Inst: " << current_inst_ << " uop gen type is none");
 
         // Number of vector elements processed by each uop
-        const Inst::VCSRs * current_vcsrs = inst->getVCSRs();
-        const uint64_t num_elems_per_uop = Inst::VLEN / current_vcsrs->sew;
+        const VectorConfigPtr & vector_config = inst->getVectorConfig();
+        const uint64_t num_elems_per_uop = VectorConfig::VLEN / vector_config->getSEW();
         // TODO: For now, generate uops for all elements even if there is a tail
-        num_uops_to_generate_ = std::ceil(current_vcsrs->vlmax / num_elems_per_uop);
+        num_uops_to_generate_ = std::ceil(vector_config->getVLMAX() / num_elems_per_uop);
 
         if((uop_gen_type == InstArchInfo::UopGenType::ARITH_WIDE_DEST) ||
            (uop_gen_type == InstArchInfo::UopGenType::ARITH_MAC_WIDE_DEST))
@@ -137,8 +137,8 @@ namespace olympia
         uop->setUniqueID(current_inst_->getUniqueID());
         uop->setProgramID(current_inst_->getProgramID());
 
-        const Inst::VCSRs * current_vcsrs = current_inst_->getVCSRs();
-        uop->setVCSRs(current_vcsrs);
+        const VectorConfigPtr & vector_config = current_inst_->getVectorConfig();
+        uop->setVectorConfig(vector_config);
         uop->setUOpID(num_uops_generated_);
         ++num_uops_generated_;
 
@@ -147,8 +147,8 @@ namespace olympia
         uop->setUOpParent(parent_weak_ptr);
 
         // Does this uop contain tail elements?
-        const uint32_t num_elems_per_uop = current_vcsrs->vlmax / current_vcsrs->sew;
-        uop->setTail((num_elems_per_uop * num_uops_generated_) > current_vcsrs->vl);
+        const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getSEW();
+        uop->setTail((num_elems_per_uop * num_uops_generated_) > vector_config->getVL());
 
         // Handle last uop
         if(num_uops_generated_ == num_uops_to_generate_)

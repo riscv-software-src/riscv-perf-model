@@ -332,12 +332,12 @@ namespace olympia
         //////////////////////////////////////////////////////////////////////
         // Vector
         const bool vector_enabled_;
-        Inst::VCSRs VCSRs_;
+        VectorConfigPtr vector_config_;
 
         bool waiting_on_vset_;
 
-        // Helper method to update VCSRs
-        void updateVcsrs_(const InstPtr &);
+        // Helper method to get the current vector config
+        void updateVectorConfig_(const InstPtr &);
 
         uint32_t getNumVecUopsRemaining() const;
 

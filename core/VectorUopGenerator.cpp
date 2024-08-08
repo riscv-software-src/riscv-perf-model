@@ -186,6 +186,19 @@ namespace olympia
             }
         }
 
+        // Add a destination to the list of sources
+        auto add_dest_as_src = [](auto & srcs, auto & dest)
+            {
+                // OperandFieldID is an enum with RS1 = 0, RS2 = 1, etc. with a max RS of RS4
+                using OperandFieldID = mavis::InstMetaData::OperandFieldID;
+                const OperandFieldID field_id = static_cast<OperandFieldID>(srcs.size());
+                sparta_assert(field_id <= OperandFieldID::RS_MAX,
+                    "Mavis does not support instructions with more than " << std::dec <<
+                    static_cast<std::underlying_type_t<OperandFieldID>>(OperandFieldID::RS_MAX) <<
+                    " sources");
+                srcs.emplace_back(field_id, dest.operand_type, dest.field_value);
+            };
+
         auto dests = current_inst_->getDestOpInfoList();
         if constexpr (SINGLE_DEST == false)
         {
@@ -195,14 +208,24 @@ namespace olympia
 
                 if constexpr (ADD_DEST_AS_SRC == true)
                 {
-                    // OperandFieldID is an enum with RS1 = 0, RS2 = 1, etc. with a max RS of RS4
-                    using OperandFieldID = mavis::InstMetaData::OperandFieldID;
-                    const OperandFieldID field_id = static_cast<OperandFieldID>(srcs.size());
-                    sparta_assert(field_id <= OperandFieldID::RS_MAX,
-                        "Mavis does not support instructions with more than " << std::dec <<
-                        static_cast<std::underlying_type_t<OperandFieldID>>(OperandFieldID::RS_MAX) <<
-                        " sources");
-                    srcs.emplace_back(field_id, dest.operand_type, dest.field_value);
+                    add_dest_as_src(srcs, dest);
+                }
+            }
+        }
+
+        // If uop contains tail or masked elements that need to be left undisturbed, we need to add
+        // the destination registers as source registers
+        if constexpr (ADD_DEST_AS_SRC == false)
+        {
+            const VectorConfigPtr & vector_config = current_inst_->getVectorConfig();
+            const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getSEW();
+            const bool uop_contains_tail_elems = (num_elems_per_uop * num_uops_generated_) > vector_config->getVL();
+
+            if (uop_contains_tail_elems && (vector_config->getVTA() == false))
+            {
+                for (auto & dest : dests)
+                {
+                    add_dest_as_src(srcs, dest);
                 }
             }
         }

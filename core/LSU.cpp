@@ -84,6 +84,10 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
 
         // Allow the pipeline to create events and schedule work
+        for(uint32_t pipe_idx = 0; pipe_idx < ldst_pipeline_num_; pipe_idx++)
+        {
+            ldst_pipeline_vec_[pipe_idx]->performOwnUpdates();
+        }
         ldst_pipeline_.performOwnUpdates();
 
         // There can be situations where NOTHING is going on in the
@@ -92,10 +96,22 @@ namespace olympia
         // be the only event keeping simulation alive.  Sparta
         // supports identifying non-essential events (by calling
         // setContinuing to false on any event).
+        for(uint32_t pipe_idx = 0; pipe_idx < ldst_pipeline_num_; pipe_idx++)
+        {
+            ldst_pipeline_vec_[pipe_idx]->setContinuing(true);
+        }
         ldst_pipeline_.setContinuing(true);
 
-        ldst_pipeline_.registerHandlerAtStage(
-            address_calculation_stage_, CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
+        /****
+        * To handle multiple l/s pipelines
+        * traverse ready_queue, and one by one put instructions into l/s pipelines
+        */
+
+        /***
+        * once an instruction is inside pipeline, they flow in the manner described below
+        ***/
+        ldst_pipeline_.registerHandlerAtStage(address_calculation_stage_,
+                                              CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
 
         ldst_pipeline_.registerHandlerAtStage(mmu_lookup_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
@@ -140,6 +156,24 @@ namespace olympia
 
            ldst_pipeline_vec_.push_back(std::move(ptr));
        }
+    }
+
+	// to carry out pipeline stages for a generic pipeline identified by pipeline_idx
+    void LSU::instr_flow_inside_pipeline(uint32_t pipeline_idx) {
+        ldst_pipeline_vec_[pipeline_idx]->registerHandlerAtStage(address_calculation_stage_,
+                                              CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
+
+        ldst_pipeline_vec_[pipeline_idx]->registerHandlerAtStage(mmu_lookup_stage_,
+                                              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
+
+        ldst_pipeline_vec_[pipeline_idx]->registerHandlerAtStage(cache_lookup_stage_,
+                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+
+        ldst_pipeline_vec_[pipeline_idx]->registerHandlerAtStage(cache_read_stage_,
+                                              CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
+
+        ldst_pipeline_vec_[pipeline_idx]->registerHandlerAtStage(complete_stage_,
+                                              CREATE_SPARTA_HANDLER(LSU, completeInst_));
     }
 
     void LSU::onROBTerminate_(const bool & val) { rob_stopped_simulation_ = val; }
@@ -294,6 +328,7 @@ namespace olympia
     }
 
     // Issue/Re-issue ready instructions in the issue queue
+    // Modified function to issue load/store instruction a round robin fashion to different pipelines
     void LSU::issueInst_()
     {
         // Instruction issue arbitration

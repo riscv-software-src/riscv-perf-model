@@ -180,6 +180,8 @@ namespace olympia
         std::vector<std::unique_ptr<LoadStorePipeline>> ldst_pipeline_vec_;
         void init_vector_of_pipeline(uint32_t pipeline_num);
 
+        void instr_flow_inside_pipeline(uint32_t pipeline_idx);
+
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
 

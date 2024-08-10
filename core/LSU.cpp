@@ -5,6 +5,8 @@
 
 #include "OlympiaAllocators.hpp"
 
+#include <iostream>
+
 namespace olympia
 {
     const char LSU::name[] = "lsu";
@@ -35,8 +37,15 @@ namespace olympia
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
         ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
                        getClock()), // complete_stage_ + 1 is number of stages
+
+        // LSU pipeline vector related initialisation
+        ldst_pipeline_num_(p->ldst_pipeline_num),
+
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
+        init_vector_of_pipeline(ldst_pipeline_num_);
+        std::cout << "num of pipelines: " << ldst_pipeline_vec_.size() << std::endl;
+
         sparta_assert(p->mmu_lookup_stage_length > 0,
                       "MMU lookup stage should atleast be one cycle");
         sparta_assert(p->cache_read_stage_length > 0,
@@ -118,6 +127,19 @@ namespace olympia
                                            << " LoadStoreInstInfo objects allocated/created");
         DLOG(getContainer()->getLocation() << ": " << memory_access_allocator_.getNumAllocated()
                                            << " MemoryAccessInfo objects allocated/created");
+    }
+
+    // function to initialize the vector of pipelines
+    void LSU::init_vector_of_pipeline(uint32_t pipeline_num)
+    {
+       std::unique_ptr<LoadStorePipeline> ptr;
+       for(uint32_t i = 0; i < pipeline_num; i++)
+       {
+           ptr = std::make_unique<LoadStorePipeline>("LoadStorePipeline", (complete_stage_ + 1),
+                                                                                       getClock());
+
+           ldst_pipeline_vec_.push_back(std::move(ptr));
+       }
     }
 
     void LSU::onROBTerminate_(const bool & val) { rob_stopped_simulation_ = val; }

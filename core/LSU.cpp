@@ -364,7 +364,15 @@ namespace olympia
             }
         }
 
-        out_mmu_lookup_req_.send({mem_access_info_ptr, 0});
+        // TODO: set a max upper bound?
+        uint32_t mmu_sync_delay = 0;
+        while (out_mmu_lookup_req_.isDriven(mmu_sync_delay))
+        {
+            mmu_sync_delay++;
+        }
+
+        out_mmu_lookup_req_.send({mem_access_info_ptr, mmu_sync_delay});
+
         ILOG(mem_access_info_ptr << load_store_info_ptr);
     }
 

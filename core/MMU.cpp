@@ -63,6 +63,7 @@ namespace olympia
     // Get Lookup Requests from LSU
     void MMU::getInstsFromLSU_(const LSPipelineRequest & ls_pipeline_req)
     {
+        ILOG("TLB - ldst idx --> " << ls_pipeline_req.second);
         auto memory_access_info_ptr = ls_pipeline_req.first;
 
         const bool hit = memLookup_(memory_access_info_ptr);

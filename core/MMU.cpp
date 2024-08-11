@@ -14,7 +14,7 @@ namespace olympia
     {
 
         in_lsu_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(MMU, getInstsFromLSU_, MemoryAccessInfoPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(MMU, getInstsFromLSU_, LSPipelineRequest));
     }
 
     bool MMU::memLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
@@ -61,8 +61,10 @@ namespace olympia
     }
 
     // Get Lookup Requests from LSU
-    void MMU::getInstsFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    void MMU::getInstsFromLSU_(const LSPipelineRequest & ls_pipeline_req)
     {
+        auto memory_access_info_ptr = ls_pipeline_req.first;
+
         const bool hit = memLookup_(memory_access_info_ptr);
         ILOG("MMU Lookup " << memory_access_info_ptr << " " << std::boolalpha << hit);
         if (hit)

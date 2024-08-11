@@ -364,7 +364,7 @@ namespace olympia
             }
         }
 
-        out_mmu_lookup_req_.send(mem_access_info_ptr);
+        out_mmu_lookup_req_.send({mem_access_info_ptr, 0});
         ILOG(mem_access_info_ptr << load_store_info_ptr);
     }
 

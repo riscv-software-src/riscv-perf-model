@@ -36,8 +36,6 @@ namespace olympia
         complete_stage_(
             cache_read_stage_
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
-        //ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
-          //             getClock()), // complete_stage_ + 1 is number of stages
 
         // LSU pipeline vector related initialisation
         ldst_pipeline_num_(p->ldst_pipeline_num),
@@ -59,7 +57,6 @@ namespace olympia
         {
             ldst_pipeline_vec_[pipe_idx]->enableCollection(node);
         }
-        //ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
 
@@ -93,7 +90,6 @@ namespace olympia
         {
             ldst_pipeline_vec_[pipe_idx]->performOwnUpdates();
         }
-        //ldst_pipeline_.performOwnUpdates();
 
         // There can be situations where NOTHING is going on in the
         // simulator but forward progression of the pipeline elements.
@@ -105,17 +101,9 @@ namespace olympia
         {
             ldst_pipeline_vec_[pipe_idx]->setContinuing(true);
         }
-        //ldst_pipeline_.setContinuing(true);
 
         /****
-        * To handle multiple l/s pipelines
-        * traverse ready_queue, and one by one put instructions into l/s pipelines
-        */
-
-        /***
         * once an instruction is inside pipeline, they flow in the manner described below
-        ***/
-        /***
         ldst_pipeline_.registerHandlerAtStage(address_calculation_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
 
@@ -130,8 +118,10 @@ namespace olympia
 
         ldst_pipeline_.registerHandlerAtStage(complete_stage_,
                                               CREATE_SPARTA_HANDLER(LSU, completeInst_));
-                                              ***/
+        ****/
 
+        // To handle multiple load-store pipelines
+        // put ready instructions into load-store pipelines in a round-robin manner
         for(pipeline_id = 0; pipeline_id < ldst_pipeline_num_; pipeline_id++)
         {
             instr_flow_inside_pipeline(pipeline_id);
@@ -170,9 +160,7 @@ namespace olympia
            // TreeNode group "LoadStorePipeline0" ends with a '0' character which is not permitted.
            // A TreeNode group must not end with a decimal digit.
            std::string pipeline_name = "LoadStorePipeline" + to_string((int) i) + "_" ;
-           ptr = std::make_unique<LoadStorePipeline>(pipeline_name, (complete_stage_ + 1),
-                                                                                       getClock());
-
+           ptr = std::make_unique<LoadStorePipeline>(pipeline_name, (complete_stage_ + 1), getClock());
            ldst_pipeline_vec_.push_back(std::move(ptr));
        }
     }
@@ -350,9 +338,6 @@ namespace olympia
     // Modified function to issue load/store instruction a round robin fashion to different pipelines
     void LSU::issueInst_()
     {
-        // Instruction issue arbitration
-        const LoadStoreInstInfoPtr win_ptr = arbitrateInstIssue_();
-
 		// vector of ready instructions recieved from arbitrateInstIssue_()
 		std::vector<LoadStoreInstInfoPtr> win_ptr_vec;
 
@@ -360,6 +345,7 @@ namespace olympia
 		for(uint32_t idx = 0; idx < ldst_pipeline_num_; idx++)
 		{
 		    if(isReadyToIssueInsts_()) {
+		        // Instruction issue arbitration
 		        LoadStoreInstInfoPtr temp_win_ptr = arbitrateInstIssue_();
 		        win_ptr_vec.push_back(temp_win_ptr);
 
@@ -373,16 +359,6 @@ namespace olympia
 		        break;
 		    }
 		}
-        // NOTE:
-        // win_ptr should always point to an instruction ready to be issued
-        // Otherwise assertion error should already be fired in arbitrateInstIssue_()
-        ILOG("Arbitrated inst " << win_ptr << " " << win_ptr->getInstPtr());
-
-        ++lsu_insts_issued_;
-
-        // Append load/store pipe
-        //ldst_pipeline_.append(win_ptr);
-
         // to keep track of the number of pipelines filled in one issueInst_()
         uint32_t pipelines_filled_num = 0;
 
@@ -403,8 +379,6 @@ namespace olympia
         // calling pop below
         if (allow_speculative_load_exec_)
         {
-            //ILOG("Appending to replay queue " << win_ptr);
-            //appendToReplayQueue_(win_ptr);
             for(uint32_t pipeline_idx = 0; pipeline_idx < win_ptr_vec.size(); pipeline_idx++)
             {
                 ILOG("Appending to replay queue " << win_ptr_vec[pipeline_idx]);
@@ -413,18 +387,11 @@ namespace olympia
 
         }
 
-        // Remove inst from ready queue
-        //win_ptr->setInReadyQueue(false);
-
         // remove all instructions already in pipeline from ready queue
         for(uint32_t idx = 0; idx < win_ptr_vec.size(); idx++)
         {
             win_ptr_vec[idx]->setInReadyQueue(false);
         }
-
-        // Update instruction issue info
-        win_ptr->setState(LoadStoreInstInfo::IssueState::ISSUED);
-        win_ptr->setPriority(LoadStoreInstInfo::IssuePriority::LOWEST);
 
         // Update instruction issue info for all instructions already in pipeline
         for(uint32_t idx = 0; idx < win_ptr_vec.size(); idx++)
@@ -472,7 +439,8 @@ namespace olympia
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = (*ldst_pipeline_vec_[pipeline_id])[mmu_lookup_stage_];
+        const LoadStoreInstInfoPtr & load_store_info_ptr =
+            (*ldst_pipeline_vec_[pipeline_id])[mmu_lookup_stage_];
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         const InstPtr & inst_ptr = load_store_info_ptr->getInstPtr();
@@ -841,7 +809,6 @@ namespace olympia
         // Complete store instruction
         if (inst_ptr->getStatus() != Inst::Status::RETIRED)
         {
-
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
                           "Store instruction cannot complete when TLB is still a miss!");
 

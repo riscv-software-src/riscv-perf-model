@@ -172,7 +172,7 @@ namespace olympia
 
         // Load/Store Pipeline
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_;
+        //LoadStorePipeline ldst_pipeline_;
 
         const uint32_t ldst_pipeline_num_;
 
@@ -181,6 +181,7 @@ namespace olympia
         void init_vector_of_pipeline(uint32_t pipeline_num);
 
         void instr_flow_inside_pipeline(uint32_t pipeline_idx);
+		uint32_t pipeline_id;
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;

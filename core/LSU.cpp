@@ -6,6 +6,7 @@
 #include "OlympiaAllocators.hpp"
 
 #include <iostream>
+#include <string>
 
 namespace olympia
 {
@@ -162,7 +163,14 @@ namespace olympia
        std::unique_ptr<LoadStorePipeline> ptr;
        for(uint32_t i = 0; i < pipeline_num; i++)
        {
-           ptr = std::make_unique<LoadStorePipeline>("LoadStorePipeline", (complete_stage_ + 1),
+           // generating new pipeline_name for each of the pipeline since otherwise getting following error -
+           // Cannot add child named "LoadStorePipeline" because a child named "LoadStorePipeline" with the same group
+           // "LoadStorePipeline" and group index 0 is already present under TreeNode "lsu"
+           // also pipeline_name should not end with a digit, otherwise getting following error -
+           // TreeNode group "LoadStorePipeline0" ends with a '0' character which is not permitted.
+           // A TreeNode group must not end with a decimal digit.
+           std::string pipeline_name = "LoadStorePipeline" + to_string((int) i) + "_" ;
+           ptr = std::make_unique<LoadStorePipeline>(pipeline_name, (complete_stage_ + 1),
                                                                                        getClock());
 
            ldst_pipeline_vec_.push_back(std::move(ptr));

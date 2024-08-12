@@ -33,8 +33,10 @@ namespace olympia
         complete_stage_(
             cache_read_stage_
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
-        ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
-                       getClock()), // complete_stage_ + 1 is number of stages
+        ldst_pipeline_count_(p->ldst_pipeline_count),
+        ldst_pipelines_(ldst_pipeline_count_),
+        // ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
+        //               getClock()), // complete_stage_ + 1 is number of stages
         allow_speculative_load_exec_(p->allow_speculative_load_exec)
     {
         sparta_assert(p->mmu_lookup_stage_length > 0,
@@ -45,7 +47,6 @@ namespace olympia
                       "Cache lookup stage should atleast be one cycle");
 
         // Pipeline collection config
-        ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
 
@@ -74,31 +75,40 @@ namespace olympia
         in_cache_lookup_ack_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
 
-        // Allow the pipeline to create events and schedule work
-        ldst_pipeline_.performOwnUpdates();
+        for (uint32_t i = 0; i < ldst_pipeline_count_; i++)
+        {
+            auto p = std::make_unique<LoadStorePipeline>("LoadStorePipeline", complete_stage_ + 1,
+                                                         getClock());
 
-        // There can be situations where NOTHING is going on in the
-        // simulator but forward progression of the pipeline elements.
-        // In this case, the internal event for the LS pipeline will
-        // be the only event keeping simulation alive.  Sparta
-        // supports identifying non-essential events (by calling
-        // setContinuing to false on any event).
-        ldst_pipeline_.setContinuing(true);
+            p->enableCollection(node);
 
-        ldst_pipeline_.registerHandlerAtStage(
-            address_calculation_stage_, CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
+            // Allow the pipeline to create events and schedule work
+            p->performOwnUpdates();
 
-        ldst_pipeline_.registerHandlerAtStage(mmu_lookup_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
+            // There can be situations where NOTHING is going on in the
+            // simulator but forward progression of the pipeline elements.
+            // In this case, the internal event for the LS pipeline will
+            // be the only event keeping simulation alive.  Sparta
+            // supports identifying non-essential events (by calling
+            // setContinuing to false on any event).
+            p->setContinuing(true);
 
-        ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+            p->registerHandlerAtStage(address_calculation_stage_,
+                                      CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
 
-        ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
+            p->registerHandlerAtStage(mmu_lookup_stage_,
+                                      CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
-        ldst_pipeline_.registerHandlerAtStage(complete_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, completeInst_));
+            p->registerHandlerAtStage(cache_lookup_stage_,
+                                      CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+
+            p->registerHandlerAtStage(cache_read_stage_,
+                                      CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
+
+            p->registerHandlerAtStage(complete_stage_, CREATE_SPARTA_HANDLER(LSU, completeInst_));
+
+            ldst_pipelines_[i] = std::move(p);
+        }
 
         // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
         node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
@@ -284,7 +294,7 @@ namespace olympia
         ++lsu_insts_issued_;
 
         // Append load/store pipe
-        ldst_pipeline_.append(win_ptr);
+        ldst_pipelines_[0]->append({win_ptr, 0});
 
         // We append to replay queue to prevent ref count of the shared pointer to drop before
         // calling pop below
@@ -313,12 +323,12 @@ namespace olympia
     {
         auto stage_id = address_calculation_stage_;
 
-        if (!ldst_pipeline_.isValid(stage_id))
+        if (!ldst_pipelines_[0]->isValid(stage_id))
         {
             return;
         }
 
-        auto & ldst_info_ptr = ldst_pipeline_[stage_id];
+        auto & ldst_info_ptr = (*ldst_pipelines_[0])[stage_id].ldst_inst_info_ptr;
         auto & inst_ptr = ldst_info_ptr->getInstPtr();
         // Assume Calculate Address
 
@@ -336,12 +346,13 @@ namespace olympia
     void LSU::handleMMULookupReq_()
     {
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(mmu_lookup_stage_))
+        if (!ldst_pipelines_[0]->isValid(mmu_lookup_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[mmu_lookup_stage_];
+        const LoadStoreInstInfoPtr & load_store_info_ptr =
+            (*ldst_pipelines_[0])[mmu_lookup_stage_].ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         const InstPtr & inst_ptr = load_store_info_ptr->getInstPtr();
@@ -381,7 +392,7 @@ namespace olympia
         const auto stage_id = mmu_lookup_stage_;
 
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id))
+        if (!ldst_pipelines_[0]->isValid(stage_id))
         {
             ILOG("MMU stage not valid");
             return;
@@ -431,12 +442,13 @@ namespace olympia
     void LSU::handleCacheLookupReq_()
     {
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(cache_lookup_stage_))
+        if (!ldst_pipelines_[0]->isValid(cache_lookup_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[cache_lookup_stage_];
+        const LoadStoreInstInfoPtr & load_store_info_ptr =
+            (*ldst_pipelines_[0])[cache_lookup_stage_].ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
@@ -460,7 +472,7 @@ namespace olympia
                     uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                 }
             }
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            ldst_pipelines_[0]->invalidateStage(cache_lookup_stage_);
             return;
         }
 
@@ -477,7 +489,7 @@ namespace olympia
             ILOG("Store marked as completed " << inst_ptr);
             inst_ptr->setStatus(Inst::Status::COMPLETED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            ldst_pipelines_[0]->invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
             {
                 updateInstReplayReady_(load_store_info_ptr);
@@ -492,7 +504,7 @@ namespace olympia
         {
             ILOG("Dropping speculative load " << inst_ptr);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            ldst_pipelines_[0]->invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
             {
                 updateInstReplayReady_(load_store_info_ptr);
@@ -522,7 +534,6 @@ namespace olympia
             }
             return;
         }
-
 
         // TODO: set a max upper bound
         uint32_t cache_sync_delay = 0;
@@ -568,12 +579,13 @@ namespace olympia
     void LSU::handleCacheRead_()
     {
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(cache_read_stage_))
+        if (!ldst_pipelines_[0]->isValid(cache_read_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[cache_read_stage_];
+        const LoadStoreInstInfoPtr & load_store_info_ptr =
+            (*ldst_pipelines_[0])[cache_read_stage_].ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         ILOG(mem_access_info_ptr);
@@ -596,7 +608,7 @@ namespace olympia
                     uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                 }
             }
-            ldst_pipeline_.invalidateStage(cache_read_stage_);
+            ldst_pipelines_[0]->invalidateStage(cache_read_stage_);
             return;
         }
 
@@ -620,12 +632,13 @@ namespace olympia
     void LSU::completeInst_()
     {
         // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(complete_stage_))
+        if (!ldst_pipelines_[0]->isValid(complete_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[complete_stage_];
+        const LoadStoreInstInfoPtr & load_store_info_ptr =
+            (*ldst_pipelines_[0])[complete_stage_].ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
 
@@ -766,7 +779,7 @@ namespace olympia
         lsu_flushes_++;
 
         // Flush load/store pipeline entry
-        flushLSPipeline_(criteria);
+        flushLSPipeline_(*ldst_pipelines_[0], criteria);
 
         // Flush instruction issue queue
         flushIssueQueue_(criteria);
@@ -993,12 +1006,12 @@ namespace olympia
 
         for (int stage = 0; stage <= complete_stage_; stage++)
         {
-            if (ldst_pipeline_.isValid(stage))
+            if (ldst_pipelines_[0]->isValid(stage))
             {
-                const auto & pipeline_inst = ldst_pipeline_[stage];
+                const auto & pipeline_inst = (*ldst_pipelines_[0])[stage].ldst_inst_info_ptr;
                 if (pipeline_inst == load_store_inst_info_ptr)
                 {
-                    ldst_pipeline_.invalidateStage(stage);
+                    ldst_pipelines_[0]->invalidateStage(stage);
                     return;
                 }
             }
@@ -1294,10 +1307,10 @@ namespace olympia
     }
 
     // Flush load/store pipe
-    void LSU::flushLSPipeline_(const FlushCriteria & criteria)
+    void LSU::flushLSPipeline_(LoadStorePipeline & ldst_pipeline, const FlushCriteria & criteria)
     {
         uint32_t stage_id = 0;
-        for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++)
+        for (auto iter = ldst_pipeline.begin(); iter != ldst_pipeline.end(); iter++, stage_id++)
         {
             // If the pipe stage is already invalid, no need to criteria
             if (!iter.isValid())
@@ -1305,10 +1318,10 @@ namespace olympia
                 continue;
             }
 
-            auto inst_ptr = (*iter)->getInstPtr();
+            auto inst_ptr = (*iter).ldst_inst_info_ptr->getInstPtr();
             if (criteria.includedInFlush(inst_ptr))
             {
-                ldst_pipeline_.flushStage(iter);
+                ldst_pipeline.flushStage(iter);
 
                 ILOG("Flush Pipeline Stage[" << stage_id
                                              << "], Instruction ID: " << inst_ptr->getUniqueID());

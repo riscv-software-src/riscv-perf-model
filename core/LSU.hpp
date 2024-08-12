@@ -47,6 +47,7 @@ namespace olympia
             LSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
             // Parameters for ldst_inst_queue
+            PARAMETER(uint32_t, ldst_pipeline_count, 1, "LSU load/store pipeline count")
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
@@ -124,7 +125,7 @@ namespace olympia
                                                                    "out_mmu_lookup_req", 0};
 
         sparta::DataOutPort<LSPipelineRequest> out_cache_lookup_req_{&unit_port_set_,
-                                                                       "out_cache_lookup_req", 0};
+                                                                     "out_cache_lookup_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -166,8 +167,22 @@ namespace olympia
         const int complete_stage_;
 
         // Load/Store Pipeline
-        using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_;
+        const uint32_t ldst_pipeline_count_;
+        uint32_t ldst_active_pipeline_idx = 0;
+
+        struct LSPayload
+        {
+            LoadStoreInstInfoPtr ldst_inst_info_ptr;
+            uint32_t ldst_pipeline_idx;
+        };
+
+        friend inline std::ostream & operator<<(std::ostream & os, const LSPayload & ls_payload)
+        {
+            return os;
+        }
+
+        using LoadStorePipeline = sparta::Pipeline<LSPayload>;
+        std::vector<std::unique_ptr<LoadStorePipeline>> ldst_pipelines_;
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
@@ -309,7 +324,7 @@ namespace olympia
         void flushIssueQueue_(const FlushCriteria &);
 
         // Flush load/store pipeline
-        void flushLSPipeline_(const FlushCriteria &);
+        void flushLSPipeline_(LoadStorePipeline &, const FlushCriteria &);
 
         // Flush Ready Queue
         void flushReadyQueue_(const FlushCriteria &);

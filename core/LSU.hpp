@@ -181,7 +181,8 @@ namespace olympia
             return os;
         }
 
-        using LoadStorePipeline = sparta::Pipeline<LSPayload>;
+        using LoadStorePipeline =
+            sparta::Pipeline<LSPayload, sparta::PhasedPayloadEvent<LSPayload>>;
         std::vector<std::unique_ptr<LoadStorePipeline>> ldst_pipelines_;
 
         // LSU Microarchitecture parameters
@@ -228,21 +229,21 @@ namespace olympia
         void issueInst_();
 
         // Calculate memory load/store address
-        void handleAddressCalculation_();
+        void handleAddressCalculation_(const LSPayload &);
         // Handle MMU access request
-        void handleMMULookupReq_();
+        void handleMMULookupReq_(const LSPayload &);
         void handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
         void getAckFromMMU_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
 
         // Handle cache access request
-        void handleCacheLookupReq_();
+        void handleCacheLookupReq_(const LSPayload &);
         void handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
         void getAckFromCache_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
 
         // Perform cache read
-        void handleCacheRead_();
+        void handleCacheRead_(const LSPayload &);
         // Retire load/store instruction
-        void completeInst_();
+        void completeInst_(const LSPayload &);
 
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &);

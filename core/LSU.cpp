@@ -93,19 +93,22 @@ namespace olympia
             // setContinuing to false on any event).
             p->setContinuing(true);
 
-            p->registerHandlerAtStage(address_calculation_stage_,
-                                      CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
+            p->registerHandlerAtStage(
+                address_calculation_stage_,
+                CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleAddressCalculation_, LSPayload));
 
-            p->registerHandlerAtStage(mmu_lookup_stage_,
-                                      CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
+            p->registerHandlerAtStage(mmu_lookup_stage_, CREATE_SPARTA_HANDLER_WITH_DATA(
+                                                             LSU, handleMMULookupReq_, LSPayload));
 
-            p->registerHandlerAtStage(cache_lookup_stage_,
-                                      CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+            p->registerHandlerAtStage(
+                cache_lookup_stage_,
+                CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleCacheLookupReq_, LSPayload));
 
-            p->registerHandlerAtStage(cache_read_stage_,
-                                      CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
+            p->registerHandlerAtStage(cache_read_stage_, CREATE_SPARTA_HANDLER_WITH_DATA(
+                                                             LSU, handleCacheRead_, LSPayload));
 
-            p->registerHandlerAtStage(complete_stage_, CREATE_SPARTA_HANDLER(LSU, completeInst_));
+            p->registerHandlerAtStage(
+                complete_stage_, CREATE_SPARTA_HANDLER_WITH_DATA(LSU, completeInst_, LSPayload));
 
             ldst_pipelines_[i] = std::move(p);
         }
@@ -319,7 +322,7 @@ namespace olympia
         }
     }
 
-    void LSU::handleAddressCalculation_()
+    void LSU::handleAddressCalculation_(const LSPayload & ls_payload)
     {
         auto stage_id = address_calculation_stage_;
 
@@ -343,7 +346,7 @@ namespace olympia
     // MMU subroutines
     ////////////////////////////////////////////////////////////////////////////////
     // Handle MMU access request
-    void LSU::handleMMULookupReq_()
+    void LSU::handleMMULookupReq_(const LSPayload & ls_payload)
     {
         // Check if flushing event occurred just now
         if (!ldst_pipelines_[0]->isValid(mmu_lookup_stage_))
@@ -439,7 +442,7 @@ namespace olympia
     // Cache Subroutine
     ////////////////////////////////////////////////////////////////////////////////
     // Handle cache access request
-    void LSU::handleCacheLookupReq_()
+    void LSU::handleCacheLookupReq_(const LSPayload & ls_payload)
     {
         // Check if flushing event occurred just now
         if (!ldst_pipelines_[0]->isValid(cache_lookup_stage_))
@@ -576,7 +579,7 @@ namespace olympia
         }
     }
 
-    void LSU::handleCacheRead_()
+    void LSU::handleCacheRead_(const LSPayload & ls_payload)
     {
         // Check if flushing event occurred just now
         if (!ldst_pipelines_[0]->isValid(cache_read_stage_))
@@ -629,7 +632,7 @@ namespace olympia
     }
 
     // Retire load/store instruction
-    void LSU::completeInst_()
+    void LSU::completeInst_(const LSPayload & ls_payload)
     {
         // Check if flushing event occurred just now
         if (!ldst_pipelines_[0]->isValid(complete_stage_))

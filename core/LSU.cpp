@@ -297,7 +297,8 @@ namespace olympia
         ++lsu_insts_issued_;
 
         // Append load/store pipe
-        ldst_pipelines_[0]->append({win_ptr, 0});
+        ldst_pipelines_[ldst_active_pipeline_idx]->append({win_ptr, ldst_active_pipeline_idx});
+        ldst_active_pipeline_idx = (ldst_active_pipeline_idx + 1) % ldst_pipeline_count_;
 
         // We append to replay queue to prevent ref count of the shared pointer to drop before
         // calling pop below
@@ -324,14 +325,16 @@ namespace olympia
 
     void LSU::handleAddressCalculation_(const LSPayload & ls_payload)
     {
+        auto* ldst_pipeline = ldst_pipelines_[ls_payload.ldst_pipeline_idx].get();
+
         auto stage_id = address_calculation_stage_;
 
-        if (!ldst_pipelines_[0]->isValid(stage_id))
+        if (!ldst_pipeline->isValid(stage_id))
         {
             return;
         }
 
-        auto & ldst_info_ptr = (*ldst_pipelines_[0])[stage_id].ldst_inst_info_ptr;
+        auto & ldst_info_ptr = ls_payload.ldst_inst_info_ptr;
         auto & inst_ptr = ldst_info_ptr->getInstPtr();
         // Assume Calculate Address
 
@@ -348,14 +351,15 @@ namespace olympia
     // Handle MMU access request
     void LSU::handleMMULookupReq_(const LSPayload & ls_payload)
     {
+        auto* ldst_pipeline = ldst_pipelines_[ls_payload.ldst_pipeline_idx].get();
+
         // Check if flushing event occurred just now
-        if (!ldst_pipelines_[0]->isValid(mmu_lookup_stage_))
+        if (!ldst_pipeline->isValid(mmu_lookup_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr =
-            (*ldst_pipelines_[0])[mmu_lookup_stage_].ldst_inst_info_ptr;
+        const LoadStoreInstInfoPtr & load_store_info_ptr = ls_payload.ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         const InstPtr & inst_ptr = load_store_info_ptr->getInstPtr();
@@ -395,6 +399,8 @@ namespace olympia
         const auto stage_id = mmu_lookup_stage_;
 
         // Check if flushing event occurred just now
+
+        // TODO - attach pipeline idx in response
         if (!ldst_pipelines_[0]->isValid(stage_id))
         {
             ILOG("MMU stage not valid");
@@ -444,14 +450,15 @@ namespace olympia
     // Handle cache access request
     void LSU::handleCacheLookupReq_(const LSPayload & ls_payload)
     {
+        auto* ldst_pipeline = ldst_pipelines_[ls_payload.ldst_pipeline_idx].get();
+
         // Check if flushing event occurred just now
-        if (!ldst_pipelines_[0]->isValid(cache_lookup_stage_))
+        if (!ldst_pipeline->isValid(cache_lookup_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr =
-            (*ldst_pipelines_[0])[cache_lookup_stage_].ldst_inst_info_ptr;
+        const LoadStoreInstInfoPtr & load_store_info_ptr = ls_payload.ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
@@ -475,7 +482,7 @@ namespace olympia
                     uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                 }
             }
-            ldst_pipelines_[0]->invalidateStage(cache_lookup_stage_);
+            ldst_pipeline->invalidateStage(cache_lookup_stage_);
             return;
         }
 
@@ -492,7 +499,7 @@ namespace olympia
             ILOG("Store marked as completed " << inst_ptr);
             inst_ptr->setStatus(Inst::Status::COMPLETED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-            ldst_pipelines_[0]->invalidateStage(cache_lookup_stage_);
+            ldst_pipeline->invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
             {
                 updateInstReplayReady_(load_store_info_ptr);
@@ -507,7 +514,7 @@ namespace olympia
         {
             ILOG("Dropping speculative load " << inst_ptr);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-            ldst_pipelines_[0]->invalidateStage(cache_lookup_stage_);
+            ldst_pipeline->invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
             {
                 updateInstReplayReady_(load_store_info_ptr);
@@ -581,14 +588,15 @@ namespace olympia
 
     void LSU::handleCacheRead_(const LSPayload & ls_payload)
     {
+        auto* ldst_pipeline = ldst_pipelines_[ls_payload.ldst_pipeline_idx].get();
+
         // Check if flushing event occurred just now
-        if (!ldst_pipelines_[0]->isValid(cache_read_stage_))
+        if (!ldst_pipeline->isValid(cache_read_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr =
-            (*ldst_pipelines_[0])[cache_read_stage_].ldst_inst_info_ptr;
+        const LoadStoreInstInfoPtr & load_store_info_ptr = ls_payload.ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         ILOG(mem_access_info_ptr);
@@ -611,7 +619,7 @@ namespace olympia
                     uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
                 }
             }
-            ldst_pipelines_[0]->invalidateStage(cache_read_stage_);
+            ldst_pipeline->invalidateStage(cache_read_stage_);
             return;
         }
 
@@ -634,14 +642,15 @@ namespace olympia
     // Retire load/store instruction
     void LSU::completeInst_(const LSPayload & ls_payload)
     {
+        auto* ldst_pipeline = ldst_pipelines_[ls_payload.ldst_pipeline_idx].get();
+
         // Check if flushing event occurred just now
-        if (!ldst_pipelines_[0]->isValid(complete_stage_))
+        if (!ldst_pipeline->isValid(complete_stage_))
         {
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr =
-            (*ldst_pipelines_[0])[complete_stage_].ldst_inst_info_ptr;
+        const LoadStoreInstInfoPtr & load_store_info_ptr = ls_payload.ldst_inst_info_ptr;
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
 
@@ -782,8 +791,12 @@ namespace olympia
         lsu_flushes_++;
 
         // Flush load/store pipeline entry
-        flushLSPipeline_(*ldst_pipelines_[0], criteria);
 
+        // TODO: add logic for single pipeline flush?
+        for (uint32_t i = 0; i < ldst_pipeline_count_; i++)
+        {
+            flushLSPipeline_(*ldst_pipelines_[i], criteria);
+        }
         // Flush instruction issue queue
         flushIssueQueue_(criteria);
         flushReplayBuffer_(criteria);

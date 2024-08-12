@@ -1,28 +1,30 @@
 #include "DCache.hpp"
 
-namespace olympia {
+namespace olympia
+{
     const char DCache::name[] = "cache";
 
-    DCache::DCache(sparta::TreeNode *n, const CacheParameterSet *p) :
-            sparta::Unit(n),
-            l1_always_hit_(p->l1_always_hit),
-            cache_latency_(p->cache_latency) {
+    DCache::DCache(sparta::TreeNode* n, const CacheParameterSet* p) :
+        sparta::Unit(n),
+        l1_always_hit_(p->l1_always_hit),
+        cache_latency_(p->cache_latency)
+    {
 
-        in_lsu_lookup_req_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, MemoryAccessInfoPtr));
+        in_lsu_lookup_req_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getInstsFromLSU_, LSPipelineRequest));
 
-        in_l2cache_ack_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromL2Cache_, uint32_t));
+        in_l2cache_ack_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getAckFromL2Cache_, uint32_t));
 
-        in_l2cache_resp_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getRespFromL2Cache_, MemoryAccessInfoPtr));
+        in_l2cache_resp_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getRespFromL2Cache_, MemoryAccessInfoPtr));
 
         // DL1 cache config
         const uint32_t l1_line_size = p->l1_line_size;
         const uint32_t l1_size_kb = p->l1_size_kb;
         const uint32_t l1_associativity = p->l1_associativity;
-        std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
-                                                                   (l1_associativity));
+        std::unique_ptr<sparta::cache::ReplacementIF> repl(
+            new sparta::cache::TreePLRUReplacement(l1_associativity));
         l1_cache_.reset(new CacheFuncModel(getContainer(), l1_size_kb, l1_line_size, *repl));
     }
 
@@ -43,28 +45,34 @@ namespace olympia {
 
         bool cache_hit = false;
 
-        if (l1_always_hit_) {
+        if (l1_always_hit_)
+        {
             cache_hit = true;
         }
-        else {
+        else
+        {
             auto cache_line = l1_cache_->peekLine(phyAddr);
             cache_hit = (cache_line != nullptr) && cache_line->isValid();
 
             // Update MRU replacement state if DCache HIT
-            if (cache_hit) {
+            if (cache_hit)
+            {
                 l1_cache_->touchMRU(*cache_line);
             }
         }
 
-        if (l1_always_hit_) {
+        if (l1_always_hit_)
+        {
             ILOG("DL1 DCache HIT all the time: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_hits_++;
         }
-        else if (cache_hit) {
+        else if (cache_hit)
+        {
             ILOG("DL1 DCache HIT: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_hits_++;
         }
-        else {
+        else
+        {
             ILOG("DL1 DCache MISS: phyAddr=0x" << std::hex << phyAddr);
             dl1_cache_misses_++;
         }
@@ -72,16 +80,24 @@ namespace olympia {
         return cache_hit;
     }
 
-    void DCache::getInstsFromLSU_(const MemoryAccessInfoPtr &memory_access_info_ptr){
+    void DCache::getInstsFromLSU_(const LSPipelineRequest & ls_pipeline_req)
+    {
+        ILOG("DCache - ldst idx --> " << ls_pipeline_req.second);
+        auto memory_access_info_ptr = ls_pipeline_req.first;
+
         const bool hit = dataLookup_(memory_access_info_ptr);
-        if(hit){
+        if (hit)
+        {
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-        }else{
+        }
+        else
+        {
             memory_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
             // Poll on dcache_l2cache_credits_ > 0 which means
             // that L2Cache can accept requests from DCache.
             // Provide a corresponsing backpressure mechanism up the pipeline.
-            if(!busy_) {
+            if (!busy_)
+            {
                 busy_ = true;
                 cache_pending_inst_ = memory_access_info_ptr;
                 out_l2cache_req_.send(cache_pending_inst_);
@@ -92,14 +108,16 @@ namespace olympia {
         out_lsu_lookup_ack_.send(memory_access_info_ptr);
     }
 
-    void DCache::getRespFromL2Cache_(const MemoryAccessInfoPtr &memory_access_info_ptr) {
+    void DCache::getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    {
         out_lsu_lookup_req_.send(cache_pending_inst_);
         reloadCache_(memory_access_info_ptr->getPhyAddr());
         cache_pending_inst_.reset();
         busy_ = false;
     }
 
-    void DCache::getAckFromL2Cache_(const uint32_t &ack) {
+    void DCache::getAckFromL2Cache_(const uint32_t & ack)
+    {
         // When DCache sends the request to L2Cache for a miss,
         // This bool will be set to false, and Dcache should wait for ack from
         // L2Cache notifying DCache that there is space in it's dcache request buffer
@@ -108,4 +126,4 @@ namespace olympia {
         dcache_l2cache_credits_ = ack;
     }
 
-}
+} // namespace olympia

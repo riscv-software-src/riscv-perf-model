@@ -67,7 +67,7 @@ namespace olympia
         auto memory_access_info_ptr = ls_pipeline_req.first;
 
         const bool hit = memLookup_(memory_access_info_ptr);
-        ILOG("MMU Lookup " << memory_access_info_ptr << " " << std::boolalpha << hit);
+        ILOG("MMU Lookup " << memory_access_info_ptr << " " << (hit ? "HIT" : "MISS"));
         if (hit)
         {
             memory_access_info_ptr->setMMUState(MemoryAccessInfo::MMUState::HIT);

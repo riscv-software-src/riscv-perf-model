@@ -364,7 +364,7 @@ namespace olympia
             }
         }
 
-        // TODO: set a max upper bound?
+        // TODO: set a max upper bound
         uint32_t mmu_sync_delay = 0;
         while (out_mmu_lookup_req_.isDriven(mmu_sync_delay))
         {
@@ -523,7 +523,15 @@ namespace olympia
             return;
         }
 
-        out_cache_lookup_req_.send(mem_access_info_ptr);
+
+        // TODO: set a max upper bound
+        uint32_t cache_sync_delay = 0;
+        while (out_cache_lookup_req_.isDriven(cache_sync_delay))
+        {
+            cache_sync_delay++;
+        }
+
+        out_cache_lookup_req_.send({mem_access_info_ptr, cache_sync_delay});
     }
 
     void LSU::getAckFromCache_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr) {}
@@ -680,7 +688,7 @@ namespace olympia
             }
 
             lsu_insts_completed_++;
-            out_lsu_credits_.send(1, 0);
+            out_lsu_credits_.send(1);
 
             ILOG("Complete Load Instruction: " << inst_ptr->getMnemonic() << " uid("
                                                << inst_ptr->getUniqueID() << ")");
@@ -738,7 +746,7 @@ namespace olympia
             }
 
             lsu_insts_completed_++;
-            out_lsu_credits_.send(1, 0);
+            out_lsu_credits_.send(1);
 
             ILOG("Store operation is done!");
         }

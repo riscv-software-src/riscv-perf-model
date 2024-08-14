@@ -17,9 +17,7 @@ namespace olympia
 
     Decode::Decode(sparta::TreeNode* node, const DecodeParameterSet* p) :
         sparta::Unit(node),
-
         fetch_queue_("FetchQueue", p->fetch_queue_size, node->getClock(), &unit_stat_set_),
-        uop_queue_("UOpQueue", p->uop_queue_size, node->getClock(), &unit_stat_set_),
         fusion_num_fuse_instructions_(&unit_stat_set_, "fusion_num_fuse_instructions",
                                       "The number of custom instructions created by fusion",
                                       sparta::Counter::COUNT_NORMAL),
@@ -48,7 +46,9 @@ namespace olympia
         fusion_match_max_tries_(p->fusion_match_max_tries),
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
-        fusion_group_definitions_(p->fusion_group_definitions)
+        fusion_group_definitions_(p->fusion_group_definitions),
+        vector_enabled_(true),
+        vector_config_(new VectorConfig(p->init_vl, p->init_sew, p->init_lmul, p->init_vta))
     {
         initializeFusion_();
 
@@ -61,11 +61,14 @@ namespace olympia
         in_reorder_flush_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFlush_, FlushManager::FlushingCriteria));
         in_vset_inst_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(Decode, process_vset_, InstPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(Decode, processVset_, InstPtr));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
+    }
 
-        VCSRs_.setVCSRs(p->init_vl, p->init_sew, p->init_lmul, p->init_vta);
+    uint32_t Decode::getNumVecUopsRemaining() const
+    {
+        return vector_enabled_ ? vec_uop_gen_->getNumUopsRemaining() : 0;
     }
 
     // Send fetch the initial credit count
@@ -73,17 +76,10 @@ namespace olympia
     {
         fetch_queue_credits_outp_.send(fetch_queue_.capacity());
 
-        // setting MavisIDs for vsetvl and vsetivli
-        mavis_facade_ = getMavis(getContainer());
-        mavis_vsetvl_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvl");
-        mavis_vsetivli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetivli");
-        mavis_vsetvli_uid_ = mavis_facade_->lookupInstructionUniqueID("vsetvli");
-
         // Get pointer to the vector uop generator
         sparta::TreeNode * root_node = getContainer()->getRoot();
         vec_uop_gen_ = \
             root_node->getChild("cpu.core0.decode.vec_uop_gen")->getResourceAs<olympia::VectorUopGenerator*>();
-        vec_uop_gen_->setMavis(mavis_facade_);
     }
 
     // -------------------------------------------------------------------
@@ -131,37 +127,28 @@ namespace olympia
         }
     }
 
-    void Decode::updateVcsrs_(const InstPtr & inst)
+    void Decode::updateVectorConfig_(const InstPtr & inst)
     {
-        VCSRs_.setVCSRs(inst->getVL(), inst->getSEW(), inst->getLMUL(), inst->getVTA());
+        vector_config_ = inst->getVectorConfig();
 
+        // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
         const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
-        if ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource())
+        if ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource())
         {
-            // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
-            VCSRs_.vl = inst->hasZeroRegDest() ? std::min(VCSRs_.vl, VCSRs_.vlmax)
-                                               : VCSRs_.vlmax;
+            const uint32_t new_vl = \
+                inst->hasZeroRegDest() ? std::min(vector_config_->getVL(), vector_config_->getVLMAX())
+                                       : vector_config_->getVLMAX();
+            vector_config_->setVL(new_vl);
         }
 
-        ILOG("Processing vset{i}vl{i} instruction: " << inst);
-        ILOG("  LMUL: " << VCSRs_.lmul);
-        ILOG("   SEW: " << VCSRs_.sew);
-        ILOG("   VTA: " << VCSRs_.vta);
-        ILOG(" VLMAX: " << VCSRs_.vlmax);
-        ILOG("    VL: " << VCSRs_.vl);
-
-        // Check validity of vector config
-        sparta_assert(VCSRs_.lmul <= 8,
-            "LMUL (" << VCSRs_.lmul << ") cannot be greater than " << 8);
-        sparta_assert(VCSRs_.vl <= VCSRs_.vlmax,
-            "VL (" << VCSRs_.vl << ") cannot be greater than VLMAX ("<< VCSRs_.vlmax << ")");
+        ILOG("Processing vset{i}vl{i} instruction: " << inst << " " << vector_config_);
     }
 
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
-    void Decode::process_vset_(const InstPtr & inst)
+    void Decode::processVset_(const InstPtr & inst)
     {
-        updateVcsrs_(inst);
+        updateVectorConfig_(inst);
 
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
@@ -186,8 +173,7 @@ namespace olympia
     // Decode instructions
     void Decode::decodeInsts_()
     {
-        uint32_t num_to_decode = std::min(uop_queue_credits_, fetch_queue_.size() + uop_queue_.size());
-        num_to_decode = std::min(num_to_decode, num_to_decode_);
+        const uint32_t num_to_decode = std::min(uop_queue_credits_, num_to_decode_);
 
         // buffer to maximize the chances of a group match limited
         // by max allowed latency, bounded by max group size
@@ -212,13 +198,11 @@ namespace olympia
         // vset and stall anything else
         while ((insts->size() < num_to_decode) && !waiting_on_vset_)
         {
-            if (uop_queue_.size() > 0)
+            if (vec_uop_gen_->getNumUopsRemaining() > 0)
             {
-                const auto & inst = uop_queue_.read(0);
-                insts->emplace_back(inst);
-                inst->setStatus(Inst::Status::DECODED);
-                ILOG("From UOp Queue Decoded: " << inst);
-                uop_queue_.pop();
+                const InstPtr uop = vec_uop_gen_->generateUop();
+                insts->emplace_back(uop);
+                uop->setStatus(Inst::Status::DECODED);
             }
             else if (fetch_queue_.size() > 0)
             {
@@ -235,12 +219,12 @@ namespace olympia
                 // vsetvli only blocks if rs1 is not x0
                 // vsetivli never blocks
                 const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
-                if ((uid == mavis_vsetivli_uid_) ||
-                   ((uid == mavis_vsetvli_uid_) && inst->hasZeroRegSource()))
+                if ((uid == MAVIS_UID_VSETIVLI) ||
+                   ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource()))
                 {
-                    updateVcsrs_(inst);
+                    updateVectorConfig_(inst);
                 }
-                else if (uid == mavis_vsetvli_uid_ || uid == mavis_vsetvl_uid_)
+                else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                     waiting_on_vset_ = true;
@@ -253,36 +237,23 @@ namespace olympia
                     if (!inst->isVset() && inst->isVector())
                     {
                         // set LMUL, VSET, VL, VTA for any other vector instructions
-                        inst->setVCSRs(&VCSRs_);
+                        inst->setVectorConfig(vector_config_);
                     }
                 }
 
                 ILOG("Decoded: " << inst);
 
-                // Handle vector uop generation
+                // Even if LMUL == 1, we need the vector uop generator to create a uop for us
+                // because some generators will add additional sources and destinations to the
+                // instruction (e.g. widening, multiply-add, slides).
                 if (inst->isVector() && !inst->isVset() && (inst->getUopGenType() != InstArchInfo::UopGenType::NONE))
                 {
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);
 
-                    // Even if LMUL == 1, we need the vector uop generator to create a uop for us
-                    // because some generators will add additional sources and destinations to the
-                    // instruction (e.g. widening, multiply-add, slides).
-                    while(vec_uop_gen_->getNumUopsRemaining() >= 1)
-                    {
-                        const InstPtr uop = vec_uop_gen_->generateUop();
-                        if (insts->size() < num_to_decode_)
-                        {
-                            insts->emplace_back(uop);
-                            uop->setStatus(Inst::Status::DECODED);
-                        }
-                        else
-                        {
-                            ILOG("Not enough decode credits to process UOp, "
-                                 "appending to the uop queue: " << uop);
-                            uop_queue_.push(uop);
-                        }
-                    }
+                    const InstPtr uop = vec_uop_gen_->generateUop();
+                    insts->emplace_back(uop);
+                    uop->setStatus(Inst::Status::DECODED);
                 }
                 else
                 {
@@ -300,7 +271,7 @@ namespace olympia
             }
             else
             {
-                // Uop queue and fetch queue are both empty, nothing left to decode
+                // Nothing left to decode
                 break;
             }
         }
@@ -331,8 +302,6 @@ namespace olympia
         }
 
         // Send decoded instructions to rename
-        sparta_assert(insts->size() <= num_to_decode_,
-            "Instruction group grew too large! " << insts);
         uop_queue_outp_.send(insts);
 
         // TODO: whereisegon() would remove the ghosts,
@@ -341,8 +310,6 @@ namespace olympia
         // uint32_t unfusedInstsSize = insts->size();
 
         // Decrement internal Uop Queue credits
-        sparta_assert(uop_queue_credits_ >= insts->size(),
-            "Attempt to decrement d0q credits below what is available");
         uop_queue_credits_ -= insts->size();
 
         // Send credits back to Fetch to get more instructions
@@ -350,7 +317,7 @@ namespace olympia
 
         // If we still have credits to send instructions as well as
         // instructions in the queue, schedule another decode session
-        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + uop_queue_.size()) > 0)
+        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + getNumVecUopsRemaining()) > 0)
         {
             ev_decode_insts_event_.schedule(1);
         }

@@ -346,7 +346,7 @@ namespace olympia
         void sendInitialCredits_();
         void fetchBufferAppended_(const InstGroupPtr &);
         void receiveUopQueueCredits_(const uint32_t &);
-        void process_vset_(const InstPtr &);
+        void processVset_(const InstPtr &);
         void decodeInsts_();
         void handleFlush_(const FlushManager::FlushingCriteria & criteria);
 

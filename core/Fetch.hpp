@@ -125,9 +125,6 @@ namespace olympia
         // Receive flush from FlushManager
         void flushFetch_(const FlushManager::FlushingCriteria &);
 
-        // Recieve vset instruction and set waiting_on_vset_ flag
-        void process_vset_(const InstPtr &);
-
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
     };

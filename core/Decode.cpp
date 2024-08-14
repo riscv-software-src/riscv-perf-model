@@ -61,7 +61,7 @@ namespace olympia
         in_reorder_flush_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, handleFlush_, FlushManager::FlushingCriteria));
         in_vset_inst_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(Decode, process_vset_, InstPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(Decode, processVset_, InstPtr));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
     }
@@ -146,7 +146,7 @@ namespace olympia
 
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
-    void Decode::process_vset_(const InstPtr & inst)
+    void Decode::processVset_(const InstPtr & inst)
     {
         updateVectorConfig_(inst);
 

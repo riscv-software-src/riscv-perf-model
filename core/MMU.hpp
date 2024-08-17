@@ -58,7 +58,7 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         sparta::SignalOutPort out_lsu_free_req_{&unit_port_set_, "out_lsu_free_req", 0};
 
-        sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_ack_{&unit_port_set_,
+        sparta::DataOutPort<LSPipelineRequest> out_lsu_lookup_ack_{&unit_port_set_,
                                                                      "out_lsu_lookup_ack", 0};
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_lsu_lookup_req_{&unit_port_set_,

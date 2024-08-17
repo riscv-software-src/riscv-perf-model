@@ -1,0 +1,62 @@
+#
+# Set up the pipeline for a 2-wide machine
+#
+
+top.cpu.core0:
+  fetch.params.num_to_fetch:   2
+  decode.params.num_to_decode: 2
+  rename.params.num_to_rename: 2
+  dispatch.params.num_to_dispatch: 2
+  rob.params.num_to_retire:    2
+  lsu.params:
+    cache_lookup_stage_length: 2
+    cache_read_stage_length: 2
+    ldst_pipeline_count: 2
+  dcache.params:
+    l1_size_kb: 16
+
+#
+# Set up the pipeline for a 2-wide machine
+#
+
+top.cpu.core0.extension.core_extensions:
+  pipelines:
+    [
+      ["int", "mul", "i2f", "cmov", "div"],
+      ["float", "faddsub", "fmac", "f2i"], 
+      ["br"],
+      ["vint", "vset", "vdiv", "vmul"]
+    ]
+  issue_queue_to_pipe_map:
+  [ 
+    ["0"],
+    ["1"],
+    ["2"],
+    ["3"]
+  ]
+
+top.cpu.core0.rename.scoreboards:
+  # From
+  # |
+  # V
+  integer.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]
+  float.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]
+  vector.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]

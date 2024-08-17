@@ -84,7 +84,7 @@ namespace olympia
                 uev_lookup_inst_.schedule(sparta::Clock::Cycle(mmu_latency_));
             }
         }
-        out_lsu_lookup_ack_.send(memory_access_info_ptr);
+        out_lsu_lookup_ack_.send({memory_access_info_ptr, ls_pipeline_req.second});
     }
 
     // TLB ready for memory access

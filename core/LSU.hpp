@@ -87,6 +87,8 @@ namespace olympia
         using ScoreboardViews =
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
 
+        using LSPipelineRequest = std::pair<MemoryAccessInfoPtr, uint32_t>;
+
         ScoreboardViews scoreboard_views_;
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
@@ -101,8 +103,8 @@ namespace olympia
         sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_req_{&unit_port_set_,
                                                                    "in_mmu_lookup_req", 1};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_{&unit_port_set_,
-                                                                   "in_mmu_lookup_ack", 0};
+        sparta::DataInPort<LSPipelineRequest> in_mmu_lookup_ack_{&unit_port_set_,
+                                                                 "in_mmu_lookup_ack", 0};
 
         sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_{&unit_port_set_,
                                                                      "in_cache_lookup_req", 1};
@@ -118,8 +120,6 @@ namespace olympia
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataOutPort<uint32_t> out_lsu_credits_{&unit_port_set_, "out_lsu_credits"};
-
-        using LSPipelineRequest = std::pair<MemoryAccessInfoPtr, uint32_t>;
 
         sparta::DataOutPort<LSPipelineRequest> out_mmu_lookup_req_{&unit_port_set_,
                                                                    "out_mmu_lookup_req", 0};
@@ -173,12 +173,12 @@ namespace olympia
         struct LSPayload
         {
             LoadStoreInstInfoPtr ldst_inst_info_ptr;
-            uint32_t ldst_pipeline_idx;
+            uint32_t ldst_pipeline_idx = std::numeric_limits<uint32_t>::max();
         };
 
         friend inline std::ostream & operator<<(std::ostream & os, const LSPayload & ls_payload)
         {
-            return os;
+            return os << ls_payload.ldst_inst_info_ptr << std::endl;
         }
 
         using LoadStorePipeline =
@@ -233,7 +233,7 @@ namespace olympia
         // Handle MMU access request
         void handleMMULookupReq_(const LSPayload &);
         void handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
-        void getAckFromMMU_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr);
+        void getAckFromMMU_(const LSPipelineRequest & mmu_response);
 
         // Handle cache access request
         void handleCacheLookupReq_(const LSPayload &);
@@ -284,10 +284,11 @@ namespace olympia
 
         bool instOperandReady_(const InstPtr &);
 
-        void abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr);
+        void abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr,
+                                LoadStorePipeline* ldst_pipeline);
 
         // Remove instruction from pipeline which share the same address
-        void dropInstFromPipeline_(const LoadStoreInstInfoPtr &);
+        void dropInstFromPipeline_(const LoadStoreInstInfoPtr &, LoadStorePipeline*);
 
         // Append new store instruction into replay queue
         void appendToReplayQueue_(const LoadStoreInstInfoPtr & inst_info_ptr);

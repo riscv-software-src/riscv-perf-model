@@ -12,3 +12,4 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/test_cores   ${CMAKE_CURRENT_BINARY
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/raw.json  ${CMAKE_CURRENT_BINARY_DIR}/raw.json SYMBOLIC)
 
 sparta_named_test(Lsu_test_raw  Lsu_test small_core.out -c test_cores/test_small_core_full.yaml --input-file raw.json)
+sparta_named_test(Lsu_test_multiple_ldst_raw  Lsu_test small_core_multiple_ldst.out -c test_cores/test_small_core_full_multiple_ldst.yaml --input-file raw.json)

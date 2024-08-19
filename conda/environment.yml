@@ -6,7 +6,7 @@ dependencies:
   - _openmp_mutex>=4.5=2_gnu
   - binutils_impl_linux-64>=2.39=he00db2b_1
   - binutils_linux-64>=2.39=h5fc0e48_11
-  - bison>=3.8.3
+  - bison>=3.8.2
   - boost>=1.76.0=py310h7c3ba0c_1
   - boost-cpp>=1.76.0=h312852a_1
   - bzip2>=1.0.8=h7f98852_4

@@ -6,7 +6,7 @@ dependencies:
   - _openmp_mutex>=4.5=2_gnu
   - binutils_impl_linux-64>=2.39=he00db2b_1
   - binutils_linux-64>=2.39=h5fc0e48_11
-  - bison>=3.8
+  - bison>=3.8.3
   - boost>=1.76.0=py310h7c3ba0c_1
   - boost-cpp>=1.76.0=h312852a_1
   - bzip2>=1.0.8=h7f98852_4
@@ -20,7 +20,7 @@ dependencies:
   - curl>=7.87.0=h6312ad2_0
   - doxygen>=1.8.20=had0d8f1_0
   - expat>=2.5.0=h27087fc_0
-  - flex>=2.6
+  - flex>=2.6.4
   - gcc>=10.4.0=hb92f740_13
   - gcc_impl_linux-64>=10.4.0=h5231bdf_19
   - gcc_linux-64>=10.4.0=h9215b83_11

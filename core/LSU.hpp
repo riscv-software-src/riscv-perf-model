@@ -31,6 +31,9 @@
 #include "MMU.hpp"
 #include "DCache.hpp"
 
+#include <vector>
+#include <memory>
+
 namespace olympia
 {
     class LSU : public sparta::Unit
@@ -58,6 +61,10 @@ namespace olympia
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
             PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
+
+            // LSU Pipeline vector related parameter
+            // default value for now = 2, change later
+            PARAMETER(uint32_t, ldst_pipeline_num, 3, "Number of LSU pipeline")
         };
 
         /*!
@@ -165,7 +172,21 @@ namespace olympia
 
         // Load/Store Pipeline
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_;
+
+        // defines the number of pipelines supported
+        const uint32_t ldst_pipeline_num_;
+
+        // creating a vector of unique_ptr to loadstorepipelin, since it is non-copyable and non-movable
+        std::vector<std::unique_ptr<LoadStorePipeline>> ldst_pipeline_vec_;
+    
+        // variable to track the current pipeline being processed
+		uint32_t pipeline_id;
+
+        // function to initialize the vector of pipelines
+        void init_vector_of_pipeline(uint32_t pipeline_num);
+
+        // to carry out pipeline stages for a generic pipeline identified by pipeline_idx
+        void instr_flow_inside_pipeline(uint32_t pipeline_idx);
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;

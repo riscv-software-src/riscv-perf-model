@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "sparta/ports/PortSet.hpp"
@@ -58,6 +57,10 @@ namespace olympia
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
             PARAMETER(uint32_t, cache_read_stage_length, 1, "Length of the cache read stage")
+            // UPDATE: pipelines & reservation station
+            PARAMETER(uint32_t, num_pipelines, 1, "Number of LSU pipelines")
+            PARAMETER(uint32_t, reservation_station_size, 16, "Size of the reservation station")
+
         };
 
         /*!
@@ -90,7 +93,10 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
+
+        // sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
+        // UPDATE: Added new input port for instruction dispatch
+        sparta::DataInPort<InstPtr> in_inst_dispatch_{&unit_port_set_, "in_inst_dispatch", 1};
 
         sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
 
@@ -123,15 +129,65 @@ namespace olympia
 
         sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_{&unit_port_set_,
                                                                        "out_cache_lookup_req", 0};
+        // UPDATE: Added new output port for completed instructions
+        sparta::DataOutPort<InstPtr> out_inst_complete_{&unit_port_set_, "out_inst_complete"};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
         ////////////////////////////////////////////////////////////////////////////////
+       
+        // UPDATE: Added new members for multiple pipelines and reservation station
+        const uint32_t num_pipelines_;
+        const uint32_t reservation_station_size_;
 
+        struct ReservationStationEntry
+        {
+            InstPtr inst;
+            bool address_ready;
+            uint64_t effective_address;
+            bool operands_ready;
+            bool is_store;
+        };
+
+        using ReservationStation = sparta::Buffer<ReservationStationEntry>;
+        ReservationStation reservation_station_;
+        std::vector<sparta::Pipeline<InstPtr>> lsu_pipelines;
+
+        // Add share resource manager, prevent multiple units from accessing MMU and Cache
+        class SharedResourceManager {
+            public:
+                bool requestMMUAccess(int pipelineId) {
+                    if (mmu_busy_) return false;
+                    mmu_busy_ = true;
+                    current_mmu_user_ = pipelineId;
+                    return true;
+                }
+
+                bool requestCacheAccess(int pipelineId) {
+                    if (cache_busy_) return false;
+                    cache_busy_ = true;
+                    current_cache_user_ = pipelineId;
+                    return true;
+                }
+
+                void releaseMMU() { mmu_busy_ = false; }
+                void releaseCache() { cache_busy_ = false; }
+
+                int getCurrentMMUUser() const { return current_mmu_user_; }
+                int getCurrentCacheUser() const { return current_cache_user_; }
+
+            private:
+                bool mmu_busy_ = false;
+                bool cache_busy_ = false;
+                int current_mmu_user_ = -1;
+                int current_cache_user_ = -1;
+            };
+
+        SharedResourceManager shared_resource_manager_;
         // Issue Queue
-        using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
-        LoadStoreIssueQueue ldst_inst_queue_;
-        const uint32_t ldst_inst_queue_size_;
+        // using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
+        // LoadStoreIssueQueue ldst_inst_queue_;
+        // const uint32_t ldst_inst_queue_size_;
 
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
         const uint32_t replay_buffer_size_;
@@ -164,8 +220,8 @@ namespace olympia
         const int complete_stage_;
 
         // Load/Store Pipeline
-        using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_;
+        // using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
+        // LoadStorePipeline ldst_pipeline_;
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
@@ -256,7 +312,21 @@ namespace olympia
 
         LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
 
-        void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+        // void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+        // UPDATE
+        void allocateInstToReservationStation_(const InstPtr & inst_ptr);
+
+        bool isInPipeline_(const InstPtr& inst) const;
+
+        sparta::Pipeline<InstPtr>* findAvailablePipeline_();
+
+        bool isPipelineAvailable_() const;
+
+        MemoryAccessInfoPtr createMemoryAccessInfo_(const InstPtr & inst_ptr);
+
+        uint64_t calculateEffectiveAddress_(const InstPtr & inst_ptr);
+
+        void updateReservationStation_();
 
         bool olderStoresExists_(const InstPtr & inst_ptr);
 
@@ -316,26 +386,37 @@ namespace olympia
         void flushReplayBuffer_(const FlushCriteria &);
 
         // Counters
-        sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",
-                                              "Number of LSU instructions dispatched",
-                                              sparta::Counter::COUNT_NORMAL};
+        // sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",
+        //                                       "Number of LSU instructions dispatched",
+        //                                       sparta::Counter::COUNT_NORMAL};
         sparta::Counter stores_retired_{getStatisticSet(), "stores_retired",
                                         "Number of stores retired", sparta::Counter::COUNT_NORMAL};
-        sparta::Counter lsu_insts_issued_{getStatisticSet(), "lsu_insts_issued",
-                                          "Number of LSU instructions issued",
-                                          sparta::Counter::COUNT_NORMAL};
+        // sparta::Counter lsu_insts_issued_{getStatisticSet(), "lsu_insts_issued",
+        //                                   "Number of LSU instructions issued",
+        //                                   sparta::Counter::COUNT_NORMAL};
         sparta::Counter replay_insts_{getStatisticSet(), "replay_insts_",
                                       "Number of Replay instructions issued",
                                       sparta::Counter::COUNT_NORMAL};
-        sparta::Counter lsu_insts_completed_{getStatisticSet(), "lsu_insts_completed",
-                                             "Number of LSU instructions completed",
-                                             sparta::Counter::COUNT_NORMAL};
+        // sparta::Counter lsu_insts_completed_{getStatisticSet(), "lsu_insts_completed",
+        //                                      "Number of LSU instructions completed",
+        //                                      sparta::Counter::COUNT_NORMAL};
         sparta::Counter lsu_flushes_{getStatisticSet(), "lsu_flushes",
                                      "Number of instruction flushes at LSU",
                                      sparta::Counter::COUNT_NORMAL};
 
         sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
                                   sparta::Counter::COUNT_NORMAL};
+
+        // UPDATE
+        sparta::Counter insts_received_{getStatisticSet(), "insts_received",
+                                        "Number of instructions received by LSU",
+                                        sparta::Counter::COUNT_NORMAL};
+        sparta::Counter insts_issued_{getStatisticSet(), "insts_issued",
+                                      "Number of instructions issued to LSU pipelines",
+                                      sparta::Counter::COUNT_NORMAL};
+        sparta::Counter insts_completed_{getStatisticSet(), "insts_completed",
+                                         "Number of instructions completed by LSU",
+                                         sparta::Counter::COUNT_NORMAL};
 
         friend class LSUTester;
     };

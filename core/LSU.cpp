@@ -6,111 +6,120 @@
 #include "OlympiaAllocators.hpp"
 
 namespace olympia
+const char LSU::name[] = "lsu";
+
+////////////////////////////////////////////////////////////////////////////////
+// Constructor
+//////////////////////////////////////////////////////////////////////////////
+
+LSU::LSU(sparta::TreeNode* node, const LSUParameterSet* p) :
+    sparta::Unit(node),
+    ldst_inst_queue_size_(p->ldst_inst_queue_size),
+    replay_buffer_size_(p->replay_buffer_size),
+    replay_issue_delay_(p->replay_issue_delay),
+    num_pipelines_(p->num_pipelines),
+    address_calculation_stage_(0),
+    mmu_lookup_stage_(address_calculation_stage_ + p->mmu_lookup_stage_length),
+    cache_lookup_stage_(mmu_lookup_stage_ + p->cache_lookup_stage_length),
+    cache_read_stage_(cache_lookup_stage_ + 1), // Get data from the cache in the cycle after cache lookup
+    complete_stage_(cache_read_stage_ + p->cache_read_stage_length), // Complete stage is after the cache read stage
+    allow_speculative_load_exec_(p->allow_speculative_load_exec),
+    load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
+                               ->load_store_info_allocator),
+    memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
+                             ->memory_access_allocator)
 {
-    const char LSU::name[] = "lsu";
+    // Validate the stages' lengths to ensure they are at least one cycle
+    sparta_assert(p->mmu_lookup_stage_length > 0,
+                  "MMU lookup stage should at least be one cycle");
+    sparta_assert(p->cache_read_stage_length > 0,
+                  "Cache read stage should at least be one cycle");
+    sparta_assert(p->cache_lookup_stage_length > 0,
+                  "Cache lookup stage should at least be one cycle");
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Constructor
-    ////////////////////////////////////////////////////////////////////////////////
+    // Initialize vectors for multiple pipelines, buffers, and ready queues
+    ldst_pipelines_.resize(num_pipelines_);
+    ldst_inst_queues_.resize(num_pipelines_);
+    replay_buffers_.resize(num_pipelines_);
+    ready_queues_.resize(num_pipelines_);
 
-    LSU::LSU(sparta::TreeNode* node, const LSUParameterSet* p) :
-        sparta::Unit(node),
-        ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
-        ldst_inst_queue_size_(p->ldst_inst_queue_size),
-        replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
-        replay_buffer_size_(p->replay_buffer_size),
-        replay_issue_delay_(p->replay_issue_delay),
-        ready_queue_(),
-        load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
-                                       ->load_store_info_allocator),
-        memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
-                                     ->memory_access_allocator),
-        address_calculation_stage_(0),
-        mmu_lookup_stage_(address_calculation_stage_ + p->mmu_lookup_stage_length),
-        cache_lookup_stage_(mmu_lookup_stage_ + p->cache_lookup_stage_length),
-        cache_read_stage_(cache_lookup_stage_
-                          + 1), // Get data from the cache in the cycle after cache lookup
-        complete_stage_(
-            cache_read_stage_
-            + p->cache_read_stage_length), // Complete stage is after the cache read stage
-        ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
-                       getClock()), // complete_stage_ + 1 is number of stages
-        allow_speculative_load_exec_(p->allow_speculative_load_exec)
-    {
-        sparta_assert(p->mmu_lookup_stage_length > 0,
-                      "MMU lookup stage should atleast be one cycle");
-        sparta_assert(p->cache_read_stage_length > 0,
-                      "Cache read stage should atleast be one cycle");
-        sparta_assert(p->cache_lookup_stage_length > 0,
-                      "Cache lookup stage should atleast be one cycle");
+    // Configure each pipeline with corresponding buffers and stages
+    for (uint32_t i = 0; i < num_pipelines_; ++i) {
+        // Initialize instruction queue for each pipeline
+        ldst_inst_queues_[i] = sparta::Buffer<LoadStoreInstInfoPtr>("lsu_inst_queue_" + std::to_string(i), ldst_inst_queue_size_, getClock());
+        
+        // Initialize replay buffer for speculative execution
+        replay_buffers_[i] = sparta::Buffer<LoadStoreInstInfoPtr>("replay_buffer_" + std::to_string(i), replay_buffer_size_, getClock());
+        
+        // Initialize priority queue for ready instructions
+        ready_queues_[i] = sparta::PriorityQueue<LoadStoreInstInfoPtr>("ready_queue_" + std::to_string(i), getClock());
 
-        // Pipeline collection config
-        ldst_pipeline_.enableCollection(node);
-        ldst_inst_queue_.enableCollection(node);
-        replay_buffer_.enableCollection(node);
+        // Initialize pipeline for load/store instructions
+        ldst_pipelines_[i] = sparta::Pipeline<LoadStoreInstInfoPtr>("LoadStorePipeline_" + std::to_string(i), (complete_stage_ + 1), getClock());
 
-        // Startup handler for sending initial credits
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
+        // Enable collection for the pipeline and buffers for monitoring and debugging
+        ldst_pipelines_[i].enableCollection(node);
+        ldst_inst_queues_[i].enableCollection(node);
+        replay_buffers_[i].enableCollection(node);
 
-        // Port config
-        in_lsu_insts_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
-
-        in_rob_retire_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
-
-        in_reorder_flush_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
-
-        in_mmu_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleMMUReadyReq_, MemoryAccessInfoPtr));
-
-        in_mmu_lookup_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
-
-        in_cache_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleCacheReadyReq_, MemoryAccessInfoPtr));
-
-        in_cache_lookup_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
-
-        // Allow the pipeline to create events and schedule work
-        ldst_pipeline_.performOwnUpdates();
-
-        // There can be situations where NOTHING is going on in the
-        // simulator but forward progression of the pipeline elements.
-        // In this case, the internal event for the LS pipeline will
-        // be the only event keeping simulation alive.  Sparta
-        // supports identifying non-essential events (by calling
-        // setContinuing to false on any event).
-        ldst_pipeline_.setContinuing(true);
-
-        ldst_pipeline_.registerHandlerAtStage(
+        // Register handlers for each stage in the pipeline
+        ldst_pipelines_[i].registerHandlerAtStage(
             address_calculation_stage_, CREATE_SPARTA_HANDLER(LSU, handleAddressCalculation_));
 
-        ldst_pipeline_.registerHandlerAtStage(mmu_lookup_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
+        ldst_pipelines_[i].registerHandlerAtStage(
+            mmu_lookup_stage_, CREATE_SPARTA_HANDLER(LSU, handleMMULookupReq_));
 
-        ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
+        ldst_pipelines_[i].registerHandlerAtStage(
+            cache_lookup_stage_, CREATE_SPARTA_HANDLER(LSU, handleCacheLookupReq_));
 
-        ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
+        ldst_pipelines_[i].registerHandlerAtStage(
+            cache_read_stage_, CREATE_SPARTA_HANDLER(LSU, handleCacheRead_));
 
-        ldst_pipeline_.registerHandlerAtStage(complete_stage_,
-                                              CREATE_SPARTA_HANDLER(LSU, completeInst_));
-
-        // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
-        node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
-            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
-
-        uev_append_ready_ >> uev_issue_inst_;
-        // NOTE:
-        // To resolve the race condition when:
-        // Both cache and MMU try to drive the single BIU port at the same cycle
-        // Here we give cache the higher priority
-        ILOG("LSU construct: #" << node->getGroupIdx());
+        ldst_pipelines_[i].registerHandlerAtStage(
+            complete_stage_, CREATE_SPARTA_HANDLER(LSU, completeInst_));
     }
+
+    // Startup event to send initial credits for the LSU
+    sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
+
+    // Configure ports and register handlers for various events
+    in_lsu_insts_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getInstsFromDispatch_, InstPtr));
+
+    in_rob_retire_ack_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromROB_, InstPtr));
+
+    in_reorder_flush_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleFlush_, FlushManager::FlushingCriteria));
+
+    in_mmu_lookup_req_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleMMUReadyReq_, MemoryAccessInfoPtr));
+
+    in_mmu_lookup_ack_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromMMU_, MemoryAccessInfoPtr));
+
+    in_cache_lookup_req_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, handleCacheReadyReq_, MemoryAccessInfoPtr));
+
+    in_cache_lookup_ack_.registerConsumerHandler(
+        CREATE_SPARTA_HANDLER_WITH_DATA(LSU, getAckFromCache_, MemoryAccessInfoPtr));
+
+    // Allow each pipeline to perform its own updates and set them to continue
+    for (auto& pipeline : ldst_pipelines_) {
+        pipeline.performOwnUpdates();
+        pipeline.setContinuing(true);
+    }
+
+    // Register for notification if the simulation is stopped prematurely due to the ROB hitting the retire limit
+    node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
+        this, "rob_stopped_notif_channel", false /* ROB may not be constructed yet */);
+
+    // Connect events for instruction issuing and arbitration
+    uev_append_ready_ >> uev_issue_inst_;
+
+    // Log construction of LSU with the group index
+    ILOG("LSU construct: #" << node->getGroupIdx());
+}
 
     LSU::~LSU()
     {
@@ -272,8 +281,9 @@ namespace olympia
     }
 
     // Issue/Re-issue ready instructions in the issue queue
-    void LSU::issueInst_()
-    {
+    void LSU::issueInst_(){
+    // Instruction issue arbitration for each pipeline
+    for (uint32_t i = 0; i < num_pipelines_; ++i) {
         // Instruction issue arbitration
         const LoadStoreInstInfoPtr win_ptr = arbitrateInstIssue_();
         // NOTE:
@@ -284,7 +294,7 @@ namespace olympia
         ++lsu_insts_issued_;
 
         // Append load/store pipe
-        ldst_pipeline_.append(win_ptr);
+        ldst_pipelines_[i].append(win_ptr);
 
         // We append to replay queue to prevent ref count of the shared pointer to drop before
         // calling pop below
@@ -308,6 +318,7 @@ namespace olympia
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
     }
+}
 
     void LSU::handleAddressCalculation_()
     {

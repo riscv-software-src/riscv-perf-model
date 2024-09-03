@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "sparta/ports/PortSet.hpp"
@@ -51,6 +50,7 @@ namespace olympia
             PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // LSU microarchitecture parameters
+            PARAMETER(uint32_t, num_pipelines, 2, "Number of load/store pipelines")
             PARAMETER(
                 bool, allow_speculative_load_exec, true,
                 "Allow loads to proceed speculatively before all older store addresses are known")
@@ -87,6 +87,7 @@ namespace olympia
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
 
         ScoreboardViews scoreboard_views_;
+        
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
@@ -128,9 +129,17 @@ namespace olympia
         // Internal States
         ////////////////////////////////////////////////////////////////////////////////
 
+        // Number of pipelines
+        const uint32_t num_pipelines_;
+
+        // Vectors for multiple pipelines
+        std::vector<sparta::Pipeline<LoadStoreInstInfoPtr>> ldst_pipelines_;
+        std::vector<sparta::Buffer<LoadStoreInstInfoPtr>> ldst_inst_queues_;
+        std::vector<sparta::Buffer<LoadStoreInstInfoPtr>> replay_buffers_;
+        std::vector<sparta::PriorityQueue<LoadStoreInstInfoPtr>> ready_queues_;
+
         // Issue Queue
-        using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
-        LoadStoreIssueQueue ldst_inst_queue_;
+        sparta::Buffer<LoadStoreInstInfoPtr> ldst_inst_queue_;
         const uint32_t ldst_inst_queue_size_;
 
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
@@ -162,10 +171,6 @@ namespace olympia
         const int cache_lookup_stage_;
         const int cache_read_stage_;
         const int complete_stage_;
-
-        // Load/Store Pipeline
-        using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
-        LoadStorePipeline ldst_pipeline_;
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;

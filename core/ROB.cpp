@@ -112,6 +112,7 @@ namespace olympia
 
     void ROB::retireInstructions_()
     {
+        ILOG("Retiring")
         // ROB is expecting a flush (back to itself)
         if (expect_flush_)
         {
@@ -130,25 +131,31 @@ namespace olympia
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
-
             if (ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
                 ex_inst.setStatus(Inst::Status::RETIRED);
-                if (ex_inst.isStoreInst())
-                {
+                if (ex_inst.isStoreInst() && !ex_inst.isVector()) {
+                    // We don't send signal back for vector because
+                    // statuses are held by load_store_info_ptr, not inst_ptr
+                    // like in LSU
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
+
                 // sending retired instruction to rename
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);
-
                 // All instructions count as 1 uop
                 ++num_uops_retired_;
                 if (ex_inst_ptr->getUOpID() == 0)
                 {
                     ++num_retired_;
                     ++retired_this_cycle;
-
+                    ILOG( "\nIncrementing" <<
+                        "\n expected: " << expected_program_id_ <<
+                        "\n received: " << ex_inst.getProgramID() <<
+                        "\n UID: " << ex_inst_ptr->getMavisUid() <<
+                        "\n incr: " << ex_inst_ptr->getProgramIDIncrement() <<
+                        "\n inst " << ex_inst)
                     // Use the program ID to verify that the program order has been maintained.
                     sparta_assert(ex_inst.getProgramID() == expected_program_id_,
                         "\nUnexpected program ID when retiring instruction" <<
@@ -163,7 +170,6 @@ namespace olympia
                     // were eliminated and adjusts the progID as needed
                     expected_program_id_ += ex_inst.getProgramIDIncrement();
                 }
-
                 reorder_buffer_.pop();
                 ILOG("retiring " << ex_inst);
 

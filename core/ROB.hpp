@@ -103,6 +103,7 @@ namespace olympia
         sparta::DataOutPort<FlushManager::FlushingCriteria> out_retire_flush_ {&unit_port_set_, "out_retire_flush"};
         // UPDATE:
         sparta::DataOutPort<InstPtr> out_rob_retire_ack_         {&unit_port_set_, "out_rob_retire_ack"};
+        sparta::DataOutPort<InstPtr> out_rob_retire_ack_vlsu_         {&unit_port_set_, "out_rob_retire_ack_vlsu"};
         sparta::DataOutPort<InstPtr> out_rob_retire_ack_rename_  {&unit_port_set_, "out_rob_retire_ack_rename"};
 
         // For flush

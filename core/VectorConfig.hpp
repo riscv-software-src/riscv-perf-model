@@ -67,7 +67,7 @@ namespace olympia
         uint32_t vl_ = 16;  // vector length
         uint32_t vlmax_ = vlmax_formula_();
         bool vta_ = false;  // vector tail agnostic, false = undisturbed, true = agnostic
-            
+
         uint32_t vlmax_formula_()
         {
             return (VLEN / sew_) * lmul_;

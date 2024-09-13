@@ -18,6 +18,7 @@ add_library(core
   IssueQueue.cpp
   ROB.cpp
   LSU.cpp
+  VLSU.cpp
   MMU.cpp
   DCache.cpp
   MavisUnit.cpp

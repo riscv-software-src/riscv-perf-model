@@ -143,6 +143,7 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the inst hasn't retired yet!");
+        // loop through all Uops, mark dest/srcs accordingly
         auto const & dests = inst_ptr->getDestOpInfoList();
         if (dests.size() > 0)
         {
@@ -195,6 +196,7 @@ namespace olympia
                 freelist_[src.rf].push(src.val);
             }
         }
+
         // Instruction queue bookkeeping
         if (SPARTA_EXPECT_TRUE(!inst_queue_.empty()))
         {
@@ -443,7 +445,8 @@ namespace olympia
                     {
                         // check for data operand existing based on RS2 existence
                         // store data register info separately
-                        if (src.field_id == mavis::InstMetaData::OperandFieldID::RS2)
+                        // for vector, data operand is in RS3
+                        if (src.field_id == mavis::InstMetaData::OperandFieldID::RS2 || src.field_id == mavis::InstMetaData::OperandFieldID::RS3)
                         {
                             auto & bitmask = renaming_inst->getDataRegisterBitMask(rf);
                             const uint32_t prf = map_table_[rf][num];

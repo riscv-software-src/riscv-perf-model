@@ -1,0 +1,45 @@
+[
+    {
+        "mnemonic": "vsetvl",
+        "rs1": 5,
+        "rd": 1,
+        "vtype": "0x0",
+        "vl": 128
+    },
+    {
+        "mnemonic": "vle8.v",
+        "rs1": 4,
+        "vd": 10,
+        "vaddr": "0xdeadbeef",
+        "mop": 0,
+        "eew": 8,
+        "stride": 8
+    },
+    {
+        "mnemonic": "vle8.v",
+        "rs1": 4,
+        "vd": 10,
+        "vaddr": "0xbeadbeef",
+        "mop": 0,
+        "eew": 8,
+        "stride": 8
+    },
+    {
+        "mnemonic": "vle8.v",
+        "rs1": 4,
+        "vd": 10,
+        "vaddr": "0xceeabeea",
+        "mop": 0,
+        "eew": 8,
+        "stride": 8
+    },
+    {
+        "mnemonic": "vle8.v",
+        "rs1": 4,
+        "vd": 10,
+        "vaddr": "0xdeadbeef",
+        "mop": 0,
+        "eew": 8,
+        "stride": 8
+    }
+]

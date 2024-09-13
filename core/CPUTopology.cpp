@@ -109,6 +109,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->lsu_rf
         },
         {
+            "vlsu",
+            "cpu.core*",
+            "Vector Load-Store Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->vlsu_rf
+        },
+        {
             "l2cache",
             "cpu.core*",
             "L2Cache Unit",
@@ -193,6 +201,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.out_lsu_credits"
         },
         {
+            "cpu.core*.dispatch.ports.out_vlsu_write",
+            "cpu.core*.vlsu.ports.in_vlsu_insts"
+        },
+        {
+            "cpu.core*.dispatch.ports.in_vlsu_credits",
+            "cpu.core*.vlsu.ports.out_vlsu_credits"
+        },
+        {
             "cpu.core*.dispatch.ports.out_reorder_buffer_write",
             "cpu.core*.rob.ports.in_reorder_buffer_write"
         },
@@ -215,6 +231,22 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.dcache.ports.out_lsu_free_req",
             "cpu.core*.lsu.ports.in_cache_free_req"
+        },
+        {
+            "cpu.core*.vlsu.ports.out_cache_lookup_req",
+            "cpu.core*.dcache.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_vlsu_lookup_ack",
+            "cpu.core*.vlsu.ports.in_cache_lookup_ack"
+        },
+        {
+            "cpu.core*.dcache.ports.out_vlsu_lookup_req",
+            "cpu.core*.vlsu.ports.in_cache_lookup_req"
+        },
+        {
+            "cpu.core*.dcache.ports.out_vlsu_free_req",
+            "cpu.core*.vlsu.ports.in_cache_free_req"
         },
         {
             "cpu.core*.dcache.ports.out_l2cache_req",
@@ -257,6 +289,22 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_mmu_free_req"
         },
         {
+            "cpu.core*.vlsu.ports.out_mmu_lookup_req",
+            "cpu.core*.mmu.ports.in_lsu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_vlsu_lookup_ack",
+            "cpu.core*.vlsu.ports.in_mmu_lookup_ack"
+        },
+        {
+            "cpu.core*.mmu.ports.out_vlsu_lookup_req",
+            "cpu.core*.vlsu.ports.in_mmu_lookup_req"
+        },
+        {
+            "cpu.core*.mmu.ports.out_vlsu_free_req",
+            "cpu.core*.vlsu.ports.in_mmu_free_req"
+        },
+        {
             "cpu.core*.biu.ports.out_mss_req_sync",
             "cpu.core*.mss.ports.in_mss_req_sync"
         },
@@ -271,6 +319,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.rob.ports.out_rob_retire_ack",
             "cpu.core*.lsu.ports.in_rob_retire_ack"
+        },
+        {
+            "cpu.core*.rob.ports.out_rob_retire_ack",
+            "cpu.core*.vlsu.ports.in_rob_retire_ack"
+        },
+        {
+            "cpu.core*.rob.ports.out_rob_retire_ack_vlsu",
+            "cpu.core*.vlsu.ports.in_rob_retire_ack"
         },
         {
             "cpu.core*.rob.ports.out_rob_retire_ack_rename",
@@ -299,6 +355,10 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.lsu.ports.in_reorder_flush"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_upper",
+            "cpu.core*.vlsu.ports.in_reorder_flush"
         },
         {
             "cpu.core*.flushmanager.ports.out_flush_upper",
@@ -395,7 +455,7 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             {
                 // check to ensure no duplicate pipe definitions
                 std::set<std::string> unique_pipe_def_check(pipelines[pipe_idx].begin(), pipelines[pipe_idx].end());
-                sparta_assert(unique_pipe_def_check.size() == pipelines[pipe_idx].size(), 
+                sparta_assert(unique_pipe_def_check.size() == pipelines[pipe_idx].size(),
                               "Duplicate pipe definitions, double check yaml file")
 
                 std::string unit_name = "exe" + std::to_string(pipe_idx);

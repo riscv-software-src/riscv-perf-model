@@ -6,23 +6,24 @@
 namespace olympia
 {
     const InstArchInfo::TargetPipeMap InstArchInfo::execution_pipe_map = {
-        {"br",      InstArchInfo::TargetPipe::BR},
-        {"cmov",    InstArchInfo::TargetPipe::CMOV},
-        {"div",     InstArchInfo::TargetPipe::DIV},
+        {"br",   InstArchInfo::TargetPipe::BR},
+        {"cmov", InstArchInfo::TargetPipe::CMOV},
+        {"div",   InstArchInfo::TargetPipe::DIV},
         {"faddsub", InstArchInfo::TargetPipe::FADDSUB},
         {"float",   InstArchInfo::TargetPipe::FLOAT},
-        {"fmac",    InstArchInfo::TargetPipe::FMAC},
-        {"i2f",     InstArchInfo::TargetPipe::I2F},
-        {"f2i",     InstArchInfo::TargetPipe::F2I},
-        {"int",     InstArchInfo::TargetPipe::INT},
-        {"lsu",     InstArchInfo::TargetPipe::LSU},
-        {"mul",     InstArchInfo::TargetPipe::MUL},
-        {"vint",    InstArchInfo::TargetPipe::VINT},
+        {"fmac", InstArchInfo::TargetPipe::FMAC},
+        {"i2f",   InstArchInfo::TargetPipe::I2F},
+        {"f2i", InstArchInfo::TargetPipe::F2I},
+        {"int",   InstArchInfo::TargetPipe::INT},
+        {"lsu", InstArchInfo::TargetPipe::LSU},
+        {"mul",   InstArchInfo::TargetPipe::MUL},
+        {"vint", InstArchInfo::TargetPipe::VINT},
         {"vmask",   InstArchInfo::TargetPipe::VMASK},
-        {"vset",    InstArchInfo::TargetPipe::VSET},
-        {"vmul",    InstArchInfo::TargetPipe::VMUL},
-        {"vdiv",    InstArchInfo::TargetPipe::VDIV},
-        {"sys",     InstArchInfo::TargetPipe::SYS},
+        {"vset",   InstArchInfo::TargetPipe::VSET},
+        {"vmul", InstArchInfo::TargetPipe::VMUL},
+        {"vlsu", InstArchInfo::TargetPipe::VLSU},
+        {"vdiv",   InstArchInfo::TargetPipe::VDIV},
+        {"sys", InstArchInfo::TargetPipe::SYS},
         {"?",       InstArchInfo::TargetPipe::UNKNOWN}
     };
 
@@ -37,6 +38,7 @@ namespace olympia
         {InstArchInfo::TargetPipe::F2I,     "F2I"},
         {InstArchInfo::TargetPipe::INT,     "INT"},
         {InstArchInfo::TargetPipe::LSU,     "LSU"},
+        {InstArchInfo::TargetPipe::VLSU,    "VLSU"},
         {InstArchInfo::TargetPipe::MUL,     "MUL"},
         {InstArchInfo::TargetPipe::VINT,    "VINT"},
         {InstArchInfo::TargetPipe::VMASK,   "VMASK"},
@@ -83,7 +85,16 @@ namespace olympia
             uop_gen_ = itr->second;
         }
 
-        is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);
+        if (jobj.find("uop_gen") != jobj.end())
+        {
+            auto uop_gen_name = jobj["uop_gen"].get<std::string>();
+            const auto itr = uop_gen_type_map.find(uop_gen_name);
+            sparta_assert(itr != uop_gen_type_map.end(),
+                "Unknown uop gen: " << uop_gen_name << " for inst: "
+                                    << jobj["mnemonic"].get<std::string>());
+            uop_gen_ = itr->second;
+        }
+        is_load_store_ = (tgt_pipe_ == TargetPipe::LSU || tgt_pipe_ == TargetPipe::VLSU);
         is_vset_ = {tgt_pipe_ == TargetPipe::VSET};
     }
 

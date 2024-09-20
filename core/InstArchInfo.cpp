@@ -85,15 +85,6 @@ namespace olympia
             uop_gen_ = itr->second;
         }
 
-        if (jobj.find("uop_gen") != jobj.end())
-        {
-            auto uop_gen_name = jobj["uop_gen"].get<std::string>();
-            const auto itr = uop_gen_type_map.find(uop_gen_name);
-            sparta_assert(itr != uop_gen_type_map.end(),
-                "Unknown uop gen: " << uop_gen_name << " for inst: "
-                                    << jobj["mnemonic"].get<std::string>());
-            uop_gen_ = itr->second;
-        }
         is_load_store_ = (tgt_pipe_ == TargetPipe::LSU || tgt_pipe_ == TargetPipe::VLSU);
         is_vset_ = {tgt_pipe_ == TargetPipe::VSET};
     }

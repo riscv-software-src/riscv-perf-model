@@ -239,11 +239,9 @@ namespace olympia
         uint32_t getStride() const { return stride_; }
 
         uint32_t getTotalVLSUIters(){ return vlsu_total_iters_; }
-
         uint32_t getCurrVLSUIters(){ return vlsu_curr_iters_; }
 
         void setTotalVLSUIters(uint32_t vlsu_total_iters){ vlsu_total_iters_ = vlsu_total_iters; }
-
         void setCurrVLSUIters(uint32_t vlsu_curr_iters){ vlsu_curr_iters_ = vlsu_curr_iters; }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)

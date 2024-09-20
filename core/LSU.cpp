@@ -15,7 +15,6 @@ namespace olympia
 
     LSU::LSU(sparta::TreeNode* node, const LSUParameterSet* p) :
         sparta::Unit(node),
-        //data_width_(p->data_width),
         ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
         ldst_inst_queue_size_(p->ldst_inst_queue_size),
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
@@ -1235,8 +1234,8 @@ namespace olympia
 
                 if (inst_info_ptr->getState()
                     != LoadStoreInstInfo::IssueState::ISSUED) // Speculative misses are marked as
-                                                            // not ready and replay event would
-                                                            // set them back to ready
+                                                              // not ready and replay event would
+                                                              // set them back to ready
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }

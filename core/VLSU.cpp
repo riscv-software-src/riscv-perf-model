@@ -187,7 +187,7 @@ namespace olympia
         const InstPtr & inst_ptr = inst_queue_.read(0);
         uint32_t width = data_width_ < inst_ptr->getEew() ? data_width_ : inst_ptr->getEew();
         // Set total number of vector iterations
-        uint32_t total_number_iterations = inst_ptr->getVL() / width;
+        uint32_t total_number_iterations = inst_ptr->getVectorConfig()->getVL() / width;
         inst_ptr->setTotalVLSUIters(total_number_iterations);
         // create N memory request objects, push them down mem_request_queue_
         // if not enough space, break and wait until space opens up in mem_request_queue_

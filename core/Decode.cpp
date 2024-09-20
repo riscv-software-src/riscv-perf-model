@@ -319,7 +319,6 @@ namespace olympia
         // instructions in the queue, schedule another decode session
         if (uop_queue_credits_ > 0 && (fetch_queue_.size() + getNumVecUopsRemaining()) > 0)
         {
-            ILOG("Scheduling decode event, instructions still left")
             ev_decode_insts_event_.schedule(1);
         }
     }

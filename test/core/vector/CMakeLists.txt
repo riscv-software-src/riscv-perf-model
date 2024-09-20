@@ -11,15 +11,17 @@ file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches      
 
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/test_cores   ${CMAKE_CURRENT_BINARY_DIR}/test_cores SYMBOLIC)
 
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vadd_lmul_4.json   ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vadd_lmul_4.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvl_vadd.json            ${CMAKE_CURRENT_BINARY_DIR}/vsetvl_vadd.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vadd_sew_32.json    ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vadd_sew_32.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vl_max_setting.json ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vl_max_setting.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json          ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmul_transfer.json          ${CMAKE_CURRENT_BINARY_DIR}/vmul_transfer.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/undisturbed_checking.json   ${CMAKE_CURRENT_BINARY_DIR}/undisturbed_checking.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vlsu_load.json              ${CMAKE_CURRENT_BINARY_DIR}/vlsu_load.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vlsu_store.json             ${CMAKE_CURRENT_BINARY_DIR}/vlsu_store.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv_e8m4.json        ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vaddvv_e8m4.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vaddvv_e32m1ta.json      ${CMAKE_CURRENT_BINARY_DIR}/vsetvli_vaddvv_e32m1ta.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvl_vaddvv_e64m1ta.json       ${CMAKE_CURRENT_BINARY_DIR}/vsetvl_vaddvv_e64m1ta.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv_tail_e8m8ta.json ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vaddvv_tail_e8m8ta.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json               ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmulvx.out                       ${CMAKE_CURRENT_BINARY_DIR}/vmulvx.out SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmulvv.out                       ${CMAKE_CURRENT_BINARY_DIR}/vmulvv.out SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmseqvv.out                      ${CMAKE_CURRENT_BINARY_DIR}/vmseqvv.out SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/unsupported.out                  ${CMAKE_CURRENT_BINARY_DIR}/unsupported.out SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vlsu_load.json                   ${CMAKE_CURRENT_BINARY_DIR}/vlsu_load.json SYMBOLIC)
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vlsu_store.json                  ${CMAKE_CURRENT_BINARY_DIR}/vlsu_store.json SYMBOLIC)
 
 
 

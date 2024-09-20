@@ -293,14 +293,6 @@ void runTests(int argc, char **argv)
         }
         EXPECT_TRUE(sparta_exception_fired);
     }
-    else if(input_file.find("vlsu_load.json") != std::string::npos)
-    {
-        cls.runSimulator(&sim);
-    }
-    else if(input_file.find("vlsu_store.json") != std::string::npos)
-    {
-        cls.runSimulator(&sim);
-    }
     else
     {
         sparta_assert(false, "Invalid input file: " << input_file);

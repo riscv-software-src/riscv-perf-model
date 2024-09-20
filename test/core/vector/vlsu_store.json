@@ -1,6 +1,6 @@
 [
     {
-        "mnemonic": "vsetvl",
+        "mnemonic": "vsetivli",
         "rs1": 5,
         "rd": 1,
         "vtype": "0x2",

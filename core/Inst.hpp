@@ -226,23 +226,16 @@ namespace olympia
         const VectorConfigPtr getVectorConfig() const { return vector_config_; }
         VectorConfigPtr getVectorConfig() { return vector_config_; }
 
+        void setVectorMemConfig(const VectorMemConfigPtr input_vector_mem_config)
+        {
+            vector_mem_config_ = input_vector_mem_config;
+        }
+
+        const VectorMemConfigPtr getVectorMemConfig() const { return vector_mem_config_; }
+        VectorMemConfigPtr getVectorMemConfig() { return vector_mem_config_; }
+
         void setTail(bool has_tail) { has_tail_ = has_tail; }
         bool hasTail() const { return has_tail_; }
-
-        void setEew(uint32_t eew) { eew_ = eew; }
-        uint32_t getEew() const { return eew_; }
-
-        void setMop(uint32_t mop) { mop_ = mop; }
-        uint32_t getMop() const { return mop_; }
-
-        void setStride(uint32_t stride) { stride_ = stride; }
-        uint32_t getStride() const { return stride_; }
-
-        uint32_t getTotalVLSUIters(){ return vlsu_total_iters_; }
-        uint32_t getCurrVLSUIters(){ return vlsu_curr_iters_; }
-
-        void setTotalVLSUIters(uint32_t vlsu_total_iters){ vlsu_total_iters_ = vlsu_total_iters; }
-        void setCurrVLSUIters(uint32_t vlsu_curr_iters){ vlsu_curr_iters_ = vlsu_curr_iters; }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)
         {
@@ -453,12 +446,8 @@ namespace olympia
         VectorConfigPtr vector_config_{new VectorConfig};
         bool has_tail_ = false; // Does this vector uop have a tail?
 
-        uint32_t eew_ = 0;    // For vector loads and stores, effective element width
-        uint32_t stride_ = 0; // For vector loads and stores, stride
-        uint32_t mop_ = 0;    // For vector loads and stores, memory addressing mode
-
-        uint32_t vlsu_total_iters_ = 0;
-        uint32_t vlsu_curr_iters_ = 0;
+        // Vector memory config for load and store instructions
+        VectorMemConfigPtr vector_mem_config_{new VectorMemConfig};
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing

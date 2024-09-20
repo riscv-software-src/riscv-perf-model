@@ -139,6 +139,8 @@ namespace olympia
 
         const VectorConfigPtr & vector_config = current_inst_->getVectorConfig();
         uop->setVectorConfig(vector_config);
+        const VectorMemConfigPtr & vector_mem_config = current_inst_->getVectorMemConfig();
+        uop->setVectorMemConfig(vector_mem_config);
         uop->setUOpID(num_uops_generated_);
         ++num_uops_generated_;
 

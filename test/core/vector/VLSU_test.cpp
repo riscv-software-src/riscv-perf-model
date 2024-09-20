@@ -46,7 +46,9 @@ public:
 
     void test_mem_request_count(const uint32_t expected_val)
     {
-        EXPECT_TRUE(vlsu_->inst_queue_.read(0)->getCurrVLSUIters() == expected_val);
+        EXPECT_TRUE(vlsu_->inst_queue_.size() > 0);
+        const InstPtr inst_ptr = vlsu_->inst_queue_.read(0);
+        EXPECT_TRUE(inst_ptr->getVectorMemConfig()->getCurrVLSUIter() == expected_val);
     }
 
 private:

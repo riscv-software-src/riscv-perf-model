@@ -131,6 +131,7 @@ namespace olympia
             auto & ex_inst = *ex_inst_ptr;
             sparta_assert(ex_inst.isSpeculative() == false,
                           "Uh, oh!  A speculative instruction is being retired: " << ex_inst);
+
             if (ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
@@ -144,12 +145,14 @@ namespace olympia
 
                 // sending retired instruction to rename
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);
+
                 // All instructions count as 1 uop
                 ++num_uops_retired_;
                 if (ex_inst_ptr->getUOpID() == 0)
                 {
                     ++num_retired_;
                     ++retired_this_cycle;
+
                     ILOG( "\nIncrementing" <<
                         "\n expected: " << expected_program_id_ <<
                         "\n received: " << ex_inst.getProgramID() <<
@@ -170,6 +173,7 @@ namespace olympia
                     // were eliminated and adjusts the progID as needed
                     expected_program_id_ += ex_inst.getProgramIDIncrement();
                 }
+
                 reorder_buffer_.pop();
                 ILOG("retiring " << ex_inst);
 

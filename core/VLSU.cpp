@@ -184,30 +184,36 @@ namespace olympia
 
     void VLSU::memRequestGenerator_()
     {
+        sparta_assert(inst_queue_.size() > 0, "Inst queue is empty!");
         const InstPtr & inst_ptr = inst_queue_.read(0);
-        uint32_t width = data_width_ < inst_ptr->getEew() ? data_width_ : inst_ptr->getEew();
+        VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
+
+        // Get the access width
+        const uint32_t width = std::min(data_width_, vector_mem_config_ptr->getEew());
+        sparta_assert(width != 0, "");
+
         // Set total number of vector iterations
         uint32_t total_number_iterations = inst_ptr->getVectorConfig()->getVL() / width;
-        inst_ptr->setTotalVLSUIters(total_number_iterations);
+        vector_mem_config_ptr->setTotalVLSUIters(total_number_iterations);
+
         // create N memory request objects, push them down mem_request_queue_
         // if not enough space, break and wait until space opens up in mem_request_queue_
-        for (uint32_t i = inst_ptr->getCurrVLSUIters(); i < total_number_iterations; ++i)
+        for (uint32_t i = vector_mem_config_ptr->getCurrVLSUIter(); i < total_number_iterations; ++i)
         {
-
             if (mem_request_queue_.size() < mem_request_queue_size_)
             {
-                // TODO: Address Unroller Class
+                // TODO: Address Unroller Class, strided and indexed loads/stores are not supported
                 sparta::memory::addr_t addr = inst_ptr->getTargetVAddr();
-                // Need to modify for indexed load/stores
-                inst_ptr->setTargetVAddr(addr + inst_ptr->getStride());
+                inst_ptr->setTargetVAddr(addr + vector_mem_config_ptr->getStride());
+
                 LoadStoreInstInfoPtr load_store_info_ptr = createLoadStoreInst_(inst_ptr);
                 load_store_info_ptr->getMemoryAccessInfoPtr()->setVAddr(inst_ptr->getTargetVAddr());
                 const LoadStoreInstIterator & iter =
                     mem_request_queue_.push_back(load_store_info_ptr);
                 load_store_info_ptr->setIssueQueueIterator(iter);
-                uint32_t vector_iter = inst_ptr->getCurrVLSUIters();
+                uint32_t vector_iter = vector_mem_config_ptr->getCurrVLSUIter();
                 // setting current vlsu iteration
-                inst_ptr->setCurrVLSUIters(++vector_iter);
+                vector_mem_config_ptr->setCurrVLSUIter(++vector_iter);
                 load_store_info_ptr->setVLSUStatusState(Inst::Status::DISPATCHED);
                 handleOperandIssueCheck_(load_store_info_ptr);
                 ILOG("Generating request: "
@@ -709,7 +715,8 @@ namespace olympia
             return;
         }
         const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[complete_stage_];
-        uint32_t total_iters = load_store_info_ptr->getInstPtr()->getTotalVLSUIters();
+        const VectorMemConfigPtr vector_mem_config_ptr = load_store_info_ptr->getInstPtr()->getVectorMemConfig();
+        uint32_t total_iters = vector_mem_config_ptr->getTotalVLSUIters();
         // we're done load/storing all vector bits, can complete
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
@@ -724,7 +731,7 @@ namespace olympia
             // Don't complete inst until we get the last memory request
             // For stores, we have to wait for handleCacheLookupReq_ to mark as RETIRED
             // For loads we don't wait for that to process it, so we don't gate on that condition
-            if (inst_ptr->getCurrVLSUIters() >= total_iters && load_store_info_ptr->isLastMemOp()
+            if (vector_mem_config_ptr->getCurrVLSUIter() >= total_iters && load_store_info_ptr->isLastMemOp()
                 && (load_store_info_ptr->getVLSUStatusState() == Inst::Status::RETIRED
                     || !inst_ptr->isStoreInst()))
             {
@@ -837,9 +844,10 @@ namespace olympia
             }
             else
             {
+                const VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
                 ILOG("Not all mem requests for "
                      << inst_ptr << " are done yet "
-                     << " currently waiting on: " << inst_ptr->getCurrVLSUIters() << " of "
+                     << " currently waiting on: " << vector_mem_config_ptr->getCurrVLSUIter() << " of "
                      << total_iters)
                 if (allow_speculative_load_exec_)
                 {
@@ -849,7 +857,7 @@ namespace olympia
                 {
                     popIssueQueue_(load_store_info_ptr);
                 }
-                if (inst_ptr->getCurrVLSUIters() < inst_ptr->getTotalVLSUIters())
+                if (vector_mem_config_ptr->getCurrVLSUIter() < vector_mem_config_ptr->getTotalVLSUIters())
                 {
                     // not done generating all memops
                     uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));

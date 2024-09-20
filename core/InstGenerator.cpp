@@ -210,19 +210,19 @@ namespace olympia
             if (jinst.find("eew") != jinst.end())
             {
                 const uint64_t eew = jinst["eew"].get<uint64_t>();
-                inst->setEew(eew);
+                inst->getVectorMemConfig()->setEew(eew);
             }
 
             if (jinst.find("stride") != jinst.end())
             {
                 const uint64_t stride = jinst["stride"].get<uint64_t>();
-                inst->setStride(stride);
+                inst->getVectorMemConfig()->setStride(stride);
             }
 
             if (jinst.find("mop") != jinst.end())
             {
                 const uint64_t mop = jinst["mop"].get<uint64_t>();
-                inst->setMop(mop);
+                inst->getVectorMemConfig()->setMop(mop);
             }
 
             if (jinst.find("taken") != jinst.end())

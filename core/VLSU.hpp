@@ -152,7 +152,7 @@ namespace olympia
         // L1 Data Cache
         bool cache_busy_ = false;
 
-        uint32_t data_width_;
+        const uint32_t data_width_;
 
         sparta::collection::Collectable<bool> cache_busy_collectable_{getContainer(), "dcache_busy",
                                                                       &cache_busy_};

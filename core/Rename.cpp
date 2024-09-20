@@ -143,7 +143,6 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the inst hasn't retired yet!");
-        // loop through all Uops, mark dest/srcs accordingly
         auto const & dests = inst_ptr->getDestOpInfoList();
         if (dests.size() > 0)
         {

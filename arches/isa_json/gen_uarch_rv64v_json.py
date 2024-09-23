@@ -194,19 +194,19 @@ SUPPORTED_INSTS = {
     "vmv.v.i" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
 
 # Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Saturating Add and Subtract
-    "vsaddu.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
-    "vsaddu.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
-    "vsaddu.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsaddu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vsaddu.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vsaddu.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
 
-    "vsadd.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
-    "vsadd.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
-    "vsadd.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsadd.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vsadd.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vsadd.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
     
-    "vssubu.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
-    "vssubu.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vssubu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vssubu.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
     
-    "vssub.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
-    "vssub.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vssub.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vssub.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
 
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Averaging Add and Subtract
 # Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Fractional Multiply with Rounding and Saturation

@@ -101,9 +101,8 @@ namespace olympia
         sparta::DataOutPort<uint32_t> out_reorder_buffer_credits_{&unit_port_set_, "out_reorder_buffer_credits"};
         sparta::DataInPort<bool>      in_oldest_completed_       {&unit_port_set_, "in_reorder_oldest_completed"};
         sparta::DataOutPort<FlushManager::FlushingCriteria> out_retire_flush_ {&unit_port_set_, "out_retire_flush"};
-        // UPDATE:
         sparta::DataOutPort<InstPtr> out_rob_retire_ack_         {&unit_port_set_, "out_rob_retire_ack"};
-        sparta::DataOutPort<InstPtr> out_rob_retire_ack_vlsu_         {&unit_port_set_, "out_rob_retire_ack_vlsu"};
+        sparta::DataOutPort<InstPtr> out_rob_retire_ack_vlsu_    {&unit_port_set_, "out_rob_retire_ack_vlsu"};
         sparta::DataOutPort<InstPtr> out_rob_retire_ack_rename_  {&unit_port_set_, "out_rob_retire_ack_rename"};
 
         // For flush

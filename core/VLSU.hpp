@@ -237,6 +237,7 @@ namespace olympia
 
         // Perform cache read
         void handleCacheRead_();
+
         // Retire load/store instruction
         void completeInst_();
 
@@ -273,8 +274,6 @@ namespace olympia
         void memRequestGenerator_();
 
         void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
-
-        bool olderStoresExists_(const InstPtr & inst_ptr);
 
         bool allOlderStoresIssued_(const InstPtr & inst_ptr);
 
@@ -321,37 +320,83 @@ namespace olympia
         void flushIssueQueue_(const FlushCriteria &);
 
         // Flush load/store pipeline
-        void flushLSPipeline_(const FlushCriteria &);
+        void flushLSPipeline_(const FlushCriteria & criteria)
+        {
+            uint32_t stage_id = 0;
+            for (auto iter = ldst_pipeline_.begin(); iter != ldst_pipeline_.end(); iter++, stage_id++)
+            {
+                // If the pipe stage is already invalid, no need to criteria
+                if (!iter.isValid())
+                {
+                    continue;
+                }
+
+                auto inst_ptr = (*iter)->getInstPtr();
+                if (criteria.includedInFlush(inst_ptr))
+                {
+                    ldst_pipeline_.flushStage(iter);
+                    DLOG("Flush Pipeline Stage[" << stage_id
+                                                 << "], Instruction ID: " << inst_ptr->getUniqueID());
+                }
+            }
+        }
 
         // Flush Ready Queue
-        void flushReadyQueue_(const FlushCriteria &);
+        void flushReadyQueue_(const FlushCriteria & criteria)
+        {
+            // TODO: Replace with erase_if with c++20
+            auto iter = ready_queue_.begin();
+            while (iter != ready_queue_.end())
+            {
+                auto inst_ptr = (*iter)->getInstPtr();
+                if (criteria.includedInFlush(inst_ptr))
+                {
+                    ready_queue_.erase(++iter);
+                    DLOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+                }
+            }
+        }
 
         // Flush Replay Buffer
-        void flushReplayBuffer_(const FlushCriteria &);
-
-        void checkSQ_();
+        void flushReplayBuffer_(const FlushCriteria & criteria)
+        {
+            // TODO: Replace with erase_if with c++20
+            auto iter = replay_buffer_.begin();
+            while (iter != replay_buffer_.end())
+            {
+                auto inst_ptr = (*iter)->getInstPtr();
+                if (criteria.includedInFlush(inst_ptr))
+                {
+                    replay_buffer_.erase(++iter);
+                    DLOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
+                }
+            }
+        }
 
         // Counters
         sparta::Counter vlsu_insts_dispatched_{getStatisticSet(), "vlsu_insts_dispatched",
                                                "Number of VLSU instructions dispatched",
                                                sparta::Counter::COUNT_NORMAL};
-        sparta::Counter stores_retired_{getStatisticSet(), "stores_retired",
-                                        "Number of stores retired", sparta::Counter::COUNT_NORMAL};
-        sparta::Counter VLSU_insts_issued_{getStatisticSet(), "VLSU_insts_issued",
+        sparta::Counter vlsu_insts_issued_{getStatisticSet(), "vlsu_insts_issued",
                                            "Number of VLSU instructions issued",
                                            sparta::Counter::COUNT_NORMAL};
-        sparta::Counter replay_insts_{getStatisticSet(), "replay_insts_",
-                                      "Number of Replay instructions issued",
-                                      sparta::Counter::COUNT_NORMAL};
-        sparta::Counter VLSU_insts_completed_{getStatisticSet(), "VLSU_insts_completed",
+        sparta::Counter vlsu_mem_reqs_{getStatisticSet(), "vlsu_mem_reqs",
+                                       "Number of memory requests allocated",
+                                       sparta::Counter::COUNT_NORMAL};
+        sparta::Counter vlsu_insts_replayed_{getStatisticSet(), "vlsu_insts_replayed",
+                                             "Number of VLSU instructions replayed",
+                                             sparta::Counter::COUNT_NORMAL};
+        sparta::Counter vlsu_insts_completed_{getStatisticSet(), "vlsu_insts_completed",
                                               "Number of VLSU instructions completed",
                                               sparta::Counter::COUNT_NORMAL};
-        sparta::Counter VLSU_flushes_{getStatisticSet(), "VLSU_flushes",
-                                      "Number of instruction flushes at VLSU",
+        sparta::Counter vlsu_stores_retired_{getStatisticSet(), "vlsu_stores_retired",
+                                             "Number of stores retired in the VLSU",
+                                             sparta::Counter::COUNT_NORMAL};
+        sparta::Counter vlsu_flushes_{getStatisticSet(), "vlsu_flushes",
+                                      "Number of flushes in the VLSU",
                                       sparta::Counter::COUNT_NORMAL};
-
-        sparta::Counter biu_reqs_{getStatisticSet(), "biu_reqs", "Number of BIU reqs",
-                                  sparta::Counter::COUNT_NORMAL};
+        sparta::Counter vlsu_biu_reqs_{getStatisticSet(), "vlsu_biu_reqs", "Number of BIU requests from the VLSU",
+                                       sparta::Counter::COUNT_NORMAL};
 
         friend class VLSUTester;
     };

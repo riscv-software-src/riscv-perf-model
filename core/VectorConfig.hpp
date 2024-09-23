@@ -111,7 +111,7 @@ namespace olympia
         uint32_t mop_ = 0;    // memory addressing mode
 
         uint32_t vlsu_total_iters_ = 0;
-        uint32_t vlsu_curr_iter_ = 0;
+        uint32_t vlsu_curr_iter_ = 1;
     };
 
     using VectorConfigPtr = VectorConfig::PtrType;

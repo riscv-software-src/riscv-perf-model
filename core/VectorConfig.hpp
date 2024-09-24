@@ -99,19 +99,19 @@ namespace olympia
         void setStride(uint32_t stride) { stride_ = stride; }
         uint32_t getStride() const { return stride_; }
 
-        void setTotalVLSUIters(uint32_t vlsu_total_iters) { vlsu_total_iters_ = vlsu_total_iters; }
-        uint32_t getTotalVLSUIters() const { return vlsu_total_iters_; }
+        void setTotalMemReqs(uint32_t vlsu_total_mem_reqs) { vlsu_total_mem_reqs_ = vlsu_total_mem_reqs; }
+        uint32_t getTotalMemReqs() const { return vlsu_total_mem_reqs_; }
 
-        void setCurrVLSUIter(uint32_t  vlsu_curr_iter) { vlsu_curr_iter_ = vlsu_curr_iter; }
-        uint32_t getCurrVLSUIter() const { return vlsu_curr_iter_; }
+        void incrementNumMemReqsGenerated() { ++vlsu_num_mem_reqs_generated_; }
+        uint32_t getNumMemReqsGenerated() const { return vlsu_num_mem_reqs_generated_; }
 
     private:
         uint32_t eew_ = 0;    // effective element width
         uint32_t stride_ = 0; // stride
         uint32_t mop_ = 0;    // memory addressing mode
 
-        uint32_t vlsu_total_iters_ = 0;
-        uint32_t vlsu_curr_iter_ = 1;
+        uint32_t vlsu_total_mem_reqs_ = 0;
+        uint32_t vlsu_num_mem_reqs_generated_ = 0;
     };
 
     using VectorConfigPtr = VectorConfig::PtrType;

@@ -15,9 +15,9 @@ namespace olympia
 
     LSU::LSU(sparta::TreeNode* node, const LSUParameterSet* p) :
         sparta::Unit(node),
-        inst_queue_("lsu_inst_queue", p->inst_queue_size, getClock()),
+        inst_queue_(node->getName() + "_inst_queue", p->inst_queue_size, getClock()),
         inst_queue_size_(p->inst_queue_size),
-        replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
+        replay_buffer_(node->getName() + "_replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
         ready_queue_(),
@@ -169,15 +169,17 @@ namespace olympia
     // Receive new load/store instruction from Dispatch Unit
     void LSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
     {
-        ILOG("New instruction added to the ldst queue " << inst_ptr);
-        allocateInstToIssueQueue_(inst_ptr);
-        handleOperandIssueCheck_(inst_ptr);
+        ILOG("Received instruction from dispatch: " << inst_ptr);
+        const auto lsinst_info_ptr = createLoadStoreInst_(inst_ptr);
+        allocateInstToIssueQueue_(lsinst_info_ptr);
+        handleOperandIssueCheck_(lsinst_info_ptr);
         lsu_insts_dispatched_++;
     }
 
     // Callback from Scoreboard to inform Operand Readiness
-    void LSU::handleOperandIssueCheck_(const InstPtr & inst_ptr)
+    void LSU::handleOperandIssueCheck_(const LoadStoreInstInfoPtr & lsinst_info_ptr)
     {
+        const auto inst_ptr = lsinst_info_ptr->getInstPtr();
         if (inst_ptr->getStatus() == Inst::Status::SCHEDULED)
         {
             ILOG("Instruction was previously ready " << inst_ptr);
@@ -192,8 +194,8 @@ namespace olympia
             const auto & src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
             scoreboard_views_[core_types::RF_INTEGER]->registerReadyCallback(
                 src_bits, inst_ptr->getUniqueID(),
-                [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                { this->handleOperandIssueCheck_(inst_ptr); });
+                [this, lsinst_info_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                { this->handleOperandIssueCheck_(lsinst_info_ptr); });
             ILOG("Instruction NOT ready: " << inst_ptr << " Address Bits needed:"
                                            << sparta::printBitSet(src_bits));
         }
@@ -213,8 +215,8 @@ namespace olympia
                         all_ready = false;
                         scoreboard_views_[rf]->registerReadyCallback(
                             data_bits, inst_ptr->getUniqueID(),
-                            [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                            { this->handleOperandIssueCheck_(inst_ptr); });
+                            [this, lsinst_info_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                            { this->handleOperandIssueCheck_(lsinst_info_ptr); });
                         ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:"
                                                        << sparta::printBitSet(data_bits));
                     }
@@ -236,7 +238,7 @@ namespace olympia
             // Update issue priority & Schedule an instruction issue event
             updateIssuePriorityAfterNewDispatch_(inst_ptr);
 
-            appendToReadyQueue_(inst_ptr);
+            appendToReadyQueue_(lsinst_info_ptr);
 
             // NOTE:
             // It is a bug if instruction status is updated as SCHEDULED in the issueInst_()
@@ -779,7 +781,7 @@ namespace olympia
         // Flush load/store pipeline entry
         flushLSPipeline_(criteria);
 
-        // Flush instruction issue queue
+        // Flush queues and buffers
         flushIssueQueue_(criteria);
         flushReplayBuffer_(criteria);
         flushReadyQueue_(criteria);
@@ -861,11 +863,11 @@ namespace olympia
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call
     ////////////////////////////////////////////////////////////////////////////////
-    LSU::LoadStoreInstInfoPtr LSU::createLoadStoreInst_(const InstPtr & inst_ptr)
+    LSU::LoadStoreInstInfoPtr LSU::createLoadStoreInst_(const InstPtr & lsinst_info_ptr)
     {
         // Create load/store memory access info
         MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(
-            memory_access_allocator_, inst_ptr);
+            memory_access_allocator_, lsinst_info_ptr);
         // Create load/store instruction issue info
         LoadStoreInstInfoPtr inst_info_ptr =
             sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,
@@ -873,17 +875,14 @@ namespace olympia
         return inst_info_ptr;
     }
 
-    void LSU::allocateInstToIssueQueue_(const InstPtr & inst_ptr)
+    void LSU::allocateInstToIssueQueue_(const LoadStoreInstInfoPtr & lsinst_info_ptr)
     {
-        auto inst_info_ptr = createLoadStoreInst_(inst_ptr);
-
         sparta_assert(inst_queue_.size() < inst_queue_size_,
                       "Appending issue queue causes overflows!");
 
         // Always append newly dispatched instructions to the back of issue queue
-        const LoadStoreInstIterator & iter = inst_queue_.push_back(inst_info_ptr);
-        inst_info_ptr->setIssueQueueIterator(iter);
-
+        const LoadStoreInstIterator & iter = inst_queue_.push_back(lsinst_info_ptr);
+        lsinst_info_ptr->setIssueQueueIterator(iter);
         ILOG("Append new load/store instruction to issue queue!");
     }
 
@@ -907,9 +906,9 @@ namespace olympia
     void LSU::readyDependentLoads_(const LoadStoreInstInfoPtr & store_inst_ptr)
     {
         bool found = false;
-        for (auto & inst_ptr : inst_queue_)
+        for (auto & ldst_info_ptr : inst_queue_)
         {
-            auto & inst_ptr = inst_ptr->getInstPtr();
+            auto & inst_ptr = ldst_info_ptr->getInstPtr();
             if (inst_ptr->isStoreInst())
             {
                 continue;
@@ -922,7 +921,7 @@ namespace olympia
             {
                 ILOG("Updating inst to schedule " << inst_ptr << " " << inst_ptr);
                 updateIssuePriorityAfterNewDispatch_(inst_ptr);
-                appendToReadyQueue_(inst_ptr);
+                appendToReadyQueue_(ldst_info_ptr);
                 found = true;
             }
         }
@@ -1070,30 +1069,16 @@ namespace olympia
         ILOG("Append new instruction to replay queue!" << inst_info_ptr);
     }
 
-    void LSU::appendToReadyQueue_(const InstPtr & inst_ptr)
+    void LSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & lsinst_info_ptr)
     {
-        for (const auto & inst : inst_queue_)
-        {
-            if (inst_ptr == inst->getInstPtr())
-            {
-                appendToReadyQueue_(inst);
-                return;
-            }
-        }
-
-        sparta_assert(false, "Instruction not found in the issue queue " << inst_ptr);
-    }
-
-    void LSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & inst_ptr)
-    {
-        ILOG("Appending to Ready queue " << inst_ptr);
+        ILOG("Appending to Ready queue " << lsinst_info_ptr);
         for (const auto & inst : ready_queue_)
         {
             sparta_assert(inst != inst_ptr, "Instruction in ready queue " << inst_ptr);
         }
-        ready_queue_.insert(inst_ptr);
-        inst_ptr->setInReadyQueue(true);
-        inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+        ready_queue_.insert(lsinst_info_ptr);
+        lsinst_info_ptr->setInReadyQueue(true);
+        lsinst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
     }
 
     // Arbitrate instruction issue from inst_queue

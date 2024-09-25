@@ -67,7 +67,7 @@ namespace olympia
         LSU(sparta::TreeNode* node, const LSUParameterSet* p);
 
         //! Destroy the LSU
-        ~LSU();
+        virtual ~LSU();
 
         //! name of this resource.
         static const char name[];
@@ -75,10 +75,8 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
-
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
         using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
-
         using FlushCriteria = FlushManager::FlushingCriteria;
 
       protected:
@@ -129,7 +127,9 @@ namespace olympia
         const uint32_t replay_buffer_size_;
         const uint32_t replay_issue_delay_;
 
+        // Modeling construct for instructions that are ready to be issued
         sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
+
         // MMU unit
         bool mmu_busy_ = false;
 
@@ -190,7 +190,7 @@ namespace olympia
         void getInstsFromDispatch_(const InstPtr &);
 
         // Callback from Scoreboard to inform Operand Readiness
-        void handleOperandIssueCheck_(const InstPtr & inst_ptr);
+        virtual void handleOperandIssueCheck_(const LoadStoreInstInfoPtr &);
 
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
@@ -216,7 +216,7 @@ namespace olympia
         void completeInst_();
 
         // Handle instruction flush in LSU
-        void handleFlush_(const FlushCriteria &);
+        virtual void handleFlush_(const FlushCriteria &);
 
         // Instructions in the replay ready to issue
         void replayReady_(const LoadStoreInstInfoPtr &);
@@ -236,19 +236,18 @@ namespace olympia
 
         // Typically called when the simulator is shutting down due to an exception
         // writes out text to aid debug
-        void dumpDebugContent_(std::ostream & output) const override final;
+        void dumpDebugContent_(std::ostream & output) const override;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
+        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr &);
 
-        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
+        virtual void allocateInstToIssueQueue_(const LoadStoreInstInfoPtr &);
 
-        void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+        bool olderStoresExists_(const InstPtr &);
 
-        bool olderStoresExists_(const InstPtr & inst_ptr);
-
-        bool allOlderStoresIssued_(const InstPtr & inst_ptr);
+        virtual bool allOlderStoresIssued_(const InstPtr &);
 
         void readyDependentLoads_(const LoadStoreInstInfoPtr &);
 
@@ -267,8 +266,6 @@ namespace olympia
         void removeInstFromReplayQueue_(const InstPtr & inst_to_remove);
 
         void appendToReadyQueue_(const LoadStoreInstInfoPtr &);
-
-        void appendToReadyQueue_(const InstPtr &);
 
         // Pop completed load/store instruction out of issue queue
         void popIssueQueue_(const LoadStoreInstInfoPtr &);

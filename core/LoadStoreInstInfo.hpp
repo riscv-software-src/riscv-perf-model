@@ -150,20 +150,12 @@ namespace olympia
             }
         }
 
-        void setVLSUStatusState(Inst::Status vlsu_status_state)
-        {
-            vlsu_status_state_ = vlsu_status_state;
-        }
-
-        Inst::Status getVLSUStatusState() { return vlsu_status_state_; }
-
       private:
         MemoryAccessInfoPtr mem_access_info_ptr_;
         sparta::State<IssuePriority> rank_;
         sparta::State<IssueState> state_;
         bool in_ready_queue_;
         bool is_last_mem_op_ = false;
-        Inst::Status vlsu_status_state_;
     }; // class LoadStoreInstInfo
 
     using LoadStoreInstInfoAllocator = sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo>;

@@ -202,11 +202,11 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         },
         {
             "cpu.core*.dispatch.ports.out_vlsu_write",
-            "cpu.core*.vlsu.ports.in_vlsu_insts"
+            "cpu.core*.vlsu.ports.in_lsu_insts"
         },
         {
             "cpu.core*.dispatch.ports.in_vlsu_credits",
-            "cpu.core*.vlsu.ports.out_vlsu_credits"
+            "cpu.core*.vlsu.ports.out_lsu_credits"
         },
         {
             "cpu.core*.dispatch.ports.out_reorder_buffer_write",

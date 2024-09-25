@@ -16,115 +16,17 @@ namespace olympia
     ////////////////////////////////////////////////////////////////////////////////
 
     VLSU::VLSU(sparta::TreeNode* node, const VLSUParameterSet* p) :
-        sparta::Unit(node),
-        inst_queue_size_(p->inst_queue_size),
-        inst_queue_("VLSUInstQueue", p->inst_queue_size, node->getClock(), &unit_stat_set_),
+        LSU(node, p),
+        mem_req_buffer_(node->getName() + "_mem_req_buffer", p->mem_req_buffer_size, getClock()),
         mem_req_buffer_size_(p->mem_req_buffer_size),
-        mem_req_buffer_("VLSUMemoryRequestBuffer", p->mem_req_buffer_size, getClock()),
-        replay_buffer_("VLSUReplayBuffer", p->replay_buffer_size, getClock()),
-        replay_buffer_size_(p->replay_buffer_size),
-        replay_issue_delay_(p->replay_issue_delay),
-        ready_queue_(),
-        data_width_(p->data_width),
-        load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
-                                       ->load_store_info_allocator),
-        memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
-                                     ->memory_access_allocator),
-        address_calculation_stage_(0),
-        mmu_lookup_stage_(address_calculation_stage_ + p->mmu_lookup_stage_length),
-        cache_lookup_stage_(mmu_lookup_stage_ + p->cache_lookup_stage_length),
-        cache_read_stage_(cache_lookup_stage_
-                          + 1), // Get data from the cache in the cycle after cache lookup
-        complete_stage_(
-            cache_read_stage_
-            + p->cache_read_stage_length), // Complete stage is after the cache read stage
-        ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
-                       getClock()), // complete_stage_ + 1 is number of stages
-        allow_speculative_load_exec_(p->allow_speculative_load_exec)
+        data_width_(p->data_width)
     {
-        sparta_assert(p->mmu_lookup_stage_length > 0,
-                      "MMU lookup stage should atleast be one cycle");
-        sparta_assert(p->cache_read_stage_length > 0,
-                      "Cache read stage should atleast be one cycle");
-        sparta_assert(p->cache_lookup_stage_length > 0,
-                      "Cache lookup stage should atleast be one cycle");
-
-        // Pipeline collection config
-        ldst_pipeline_.enableCollection(node);
-        mem_req_buffer_.enableCollection(node);
-        replay_buffer_.enableCollection(node);
-
-        // Startup handler for sending initial credits
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(VLSU, sendInitialCredits_));
-
-        // Port config
-        in_vlsu_insts_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, getInstsFromDispatch_, InstPtr));
-
-        in_rob_retire_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, getAckFromROB_, InstPtr));
-
-        in_reorder_flush_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, handleFlush_, FlushManager::FlushingCriteria));
-
-        in_mmu_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, handleMMUReadyReq_, MemoryAccessInfoPtr));
-
-        in_mmu_lookup_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, getAckFromMMU_, MemoryAccessInfoPtr));
-
-        in_cache_lookup_req_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, handleCacheReadyReq_, MemoryAccessInfoPtr));
-
-        in_cache_lookup_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(VLSU, getAckFromCache_, MemoryAccessInfoPtr));
-
-        // Allow the pipeline to create events and schedule work
-        ldst_pipeline_.performOwnUpdates();
-
-        // There can be situations where NOTHING is going on in the
-        // simulator but forward progression of the pipeline elements.
-        // In this case, the internal event for the LS pipeline will
-        // be the only event keeping simulation alive.  Sparta
-        // supports identifying non-essential events (by calling
-        // setContinuing to false on any event).
-        ldst_pipeline_.setContinuing(true);
-
-        ldst_pipeline_.registerHandlerAtStage(
-            address_calculation_stage_, CREATE_SPARTA_HANDLER(VLSU, handleAddressCalculation_));
-
-        ldst_pipeline_.registerHandlerAtStage(mmu_lookup_stage_,
-                                              CREATE_SPARTA_HANDLER(VLSU, handleMMULookupReq_));
-
-        ldst_pipeline_.registerHandlerAtStage(cache_lookup_stage_,
-                                              CREATE_SPARTA_HANDLER(VLSU, handleCacheLookupReq_));
-
-        ldst_pipeline_.registerHandlerAtStage(cache_read_stage_,
-                                              CREATE_SPARTA_HANDLER(VLSU, handleCacheRead_));
-
-        ldst_pipeline_.registerHandlerAtStage(complete_stage_,
-                                              CREATE_SPARTA_HANDLER(VLSU, completeInst_));
-
-        // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
-        node->getParent()->registerForNotification<bool, VLSU, &VLSU::onROBTerminate_>(
-            this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
-
-        // NOTE:
-        // To resolve the race condition when:
-        // Both cache and MMU try to drive the single BIU port at the same cycle
-        // Here we give cache the higher priority
-        uev_append_ready_ >> uev_issue_inst_;
     }
 
     VLSU::~VLSU()
     {
-        DLOG(getContainer()->getLocation() << ": " << load_store_info_allocator_.getNumAllocated()
-                                           << " LoadStoreInstInfo objects allocated/created");
-        DLOG(getContainer()->getLocation() << ": " << memory_access_allocator_.getNumAllocated()
-                                           << " MemoryAccessInfo objects allocated/created");
+        LSU::~LSU();
     }
-
-    void VLSU::onROBTerminate_(const bool & val) { rob_stopped_simulation_ = val; }
 
     void VLSU::onStartingTeardown_()
     {
@@ -141,61 +43,12 @@ namespace olympia
     // Callbacks
     ////////////////////////////////////////////////////////////////////////////////
 
-    // Send initial credits (inst_queue_size_) to Dispatch Unit
-    void VLSU::sendInitialCredits_()
-    {
-        setupScoreboard_();
-        out_vlsu_credits_.send(inst_queue_size_);
-
-        ILOG("VLSU initial credits for Dispatch Unit: " << inst_queue_size_);
-    }
-
-    // Setup scoreboard View
-    void VLSU::setupScoreboard_()
-    {
-        // Setup scoreboard view upon register file
-        // if we ever move to multicore, we only want to have resources look for scoreboard in their
-        // cpu if we're running a test where we only have top.rename or top.issue_queue, then we can
-        // just use the root
-        auto cpu_node = getContainer()->findAncestorByName("core.*");
-        if (cpu_node == nullptr)
-        {
-            cpu_node = getContainer()->getRoot();
-        }
-        for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)
-        {
-            scoreboard_views_[rf].reset(new sparta::ScoreboardView(
-                getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
-        }
-    }
-
-    // Receive new load/store instruction from Dispatch Unit
-    void VLSU::getInstsFromDispatch_(const InstPtr & inst_ptr)
-    {
-        ILOG("Received vector instruction from dispatch: " << inst_ptr);
-        sparta_assert(inst_queue_.size() < inst_queue_size_, "Inst queue is full!");
-        inst_queue_.push(inst_ptr);
-        ++vlsu_insts_dispatched_;
-
-        // Schedule memory request generation
-        uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
-    }
-
+    // Generate memory requests for a vector load or store
     void VLSU::genMemoryRequests_()
     {
-        // Find oldest instruction in the queue that hasn't finished generating memory requests
-        sparta_assert(inst_queue_.size() > 0, "Inst queue is empty!");
-        auto inst_queue_iter = std::find_if(inst_queue_.begin(), inst_queue_.end(),
-            [](InstPtr inst_ptr)
-            {
-                const VectorMemConfigPtr vec_mem_cfg_ptr = inst_ptr->getVectorMemConfig();
-                return (vec_mem_cfg_ptr->getTotalMemReqs() == 0) ||
-                    (vec_mem_cfg_ptr->getNumMemReqsGenerated() < vec_mem_cfg_ptr->getTotalMemReqs());
-            }
-        );
-
         // Nothing to do
-        if (inst_queue_iter == inst_queue_.end())
+        // TODO: assert?
+        if (mem_req_ready_queue_.empty())
         {
             return;
         }
@@ -207,16 +60,17 @@ namespace olympia
             return;
         }
 
-        // Get the access width
-        const InstPtr inst_ptr = *inst_queue_iter;
+        const InstPtr & inst_ptr = mem_req_ready_queue_.top()->getInstPtr();
         VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
+
+        // Get the access width
         const uint32_t width = std::min(data_width_, vector_mem_config_ptr->getEew());
         sparta_assert(width != 0, "VLSU data width cannot be zero!");
 
         // TODO: Consider VL when generating memory requests
         if (vector_mem_config_ptr->getTotalMemReqs() == 0)
         {
-            ILOG("Beginning memory request generation for " << inst_ptr);
+            ILOG("Starting memory request generation for " << inst_ptr);
             vector_mem_config_ptr->setTotalMemReqs(VectorConfig::VLEN / width);
         }
 
@@ -233,7 +87,7 @@ namespace olympia
                 // Create LS inst info
                 LoadStoreInstInfoPtr lsinfo_inst_ptr = createLoadStoreInst_(inst_ptr);
                 lsinfo_inst_ptr->getMemoryAccessInfoPtr()->setVAddr(vaddr);
-                lsinfo_inst_ptr->setVLSUStatusState(Inst::Status::DISPATCHED);
+                lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
 
                 // Append to the memory request buffer
                 const LoadStoreInstIterator & iter = mem_req_buffer_.push_back(lsinfo_inst_ptr);
@@ -241,17 +95,19 @@ namespace olympia
 
                 // Increment count of memory requests generated
                 vector_mem_config_ptr->incrementNumMemReqsGenerated();
-                ILOG("Generating request: "
+                DLOG("Generating request: "
                      << mem_req_num << " of " << total_mem_reqs << " for " << inst_ptr
                      << " (vaddr: 0x" << std::hex << vaddr << ")");
 
-                // Do operand ready check
-                handleOperandIssueCheck_(lsinfo_inst_ptr);
+                // Appending to ready queue
+                appendToReadyQueue_(lsinfo_inst_ptr);
 
-                // Set last memory request for completing the instruction
+                // Done generating memory requests for this vector instruction
                 if (mem_req_num == total_mem_reqs)
                 {
+                    ILOG("Done with memory request generation for " << inst_ptr);
                     lsinfo_inst_ptr->setIsLastMemOp(true);
+                    mem_req_ready_queue_.pop();
                 }
             }
             else
@@ -260,13 +116,22 @@ namespace olympia
                 break;
             }
         }
+
+        if (mem_req_ready_queue_.size() > 0)
+        {
+            uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
+        }
+        if (isReadyToIssueInsts_())
+        {
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        }
     }
 
     // Callback from Scoreboard to inform Operand Readiness
-    void VLSU::handleOperandIssueCheck_(const LoadStoreInstInfoPtr & lsinfo_inst_ptr)
+    void VLSU::handleOperandIssueCheck_(const LoadStoreInstInfoPtr & lsinst_info_ptr)
     {
-        const InstPtr & inst_ptr = lsinfo_inst_ptr->getInstPtr();
-        if (lsinfo_inst_ptr->getVLSUStatusState() == Inst::Status::SCHEDULED)
+        const auto inst_ptr = lsinst_info_ptr->getInstPtr();
+        if (inst_ptr->getStatus() == Inst::Status::SCHEDULED)
         {
             ILOG("Instruction was previously ready " << inst_ptr);
             return;
@@ -279,9 +144,9 @@ namespace olympia
             all_ready = false;
             const auto & src_bits = inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER);
             scoreboard_views_[core_types::RF_INTEGER]->registerReadyCallback(
-                src_bits, lsinfo_inst_ptr->getInstPtr()->getUniqueID(),
-                [this, lsinfo_inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                { this->handleOperandIssueCheck_(lsinfo_inst_ptr); });
+                src_bits, inst_ptr->getUniqueID(),
+                [this, lsinst_info_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                { this->handleOperandIssueCheck_(lsinst_info_ptr); });
             ILOG("Instruction NOT ready: " << inst_ptr << " Address Bits needed:"
                                            << sparta::printBitSet(src_bits));
         }
@@ -300,425 +165,37 @@ namespace olympia
                     {
                         all_ready = false;
                         scoreboard_views_[rf]->registerReadyCallback(
-                            data_bits, lsinfo_inst_ptr->getInstPtr()->getUniqueID(),
-                            [this, lsinfo_inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                            { this->handleOperandIssueCheck_(lsinfo_inst_ptr); });
+                            data_bits, inst_ptr->getUniqueID(),
+                            [this, lsinst_info_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                            { this->handleOperandIssueCheck_(lsinst_info_ptr); });
                         ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:"
                                                        << sparta::printBitSet(data_bits));
                     }
                 }
             }
             else if (false == allow_speculative_load_exec_)
-            {
-                // Its a load
+            { // Its a load
                 // Load instruction is ready is when both address and older stores addresses are
                 // known
                 all_ready = allOlderStoresIssued_(inst_ptr);
             }
         }
+
         // Load are ready when operands are ready
         // Stores are ready when both operands and data is ready
         // If speculative loads are allowed older store are not checked for Physical address
         if (all_ready)
         {
             // Update issue priority & Schedule an instruction issue event
-            updateIssuePriorityAfterNewDispatch_(lsinfo_inst_ptr);
+            updateIssuePriorityAfterNewDispatch_(inst_ptr);
 
-            appendToReadyQueue_(lsinfo_inst_ptr);
-
-            // NOTE:
-            // It is a bug if instruction status is updated as SCHEDULED in the issueInst_()
-            // The reason is: when issueInst_() is called, it could be scheduled for
-            // either a new issue event, or a re-issue event
-            // however, we can ONLY update instruction status as SCHEDULED for a new issue event
-            if (isReadyToIssueInsts_())
-            {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-            }
+            // Start generating memory requests
+            mem_req_ready_queue_.insert(lsinst_info_ptr);
+            uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
         }
     }
 
-    // Receive update from ROB whenever store instructions retire
-    void VLSU::getAckFromROB_(const InstPtr & inst_ptr)
-    {
-        sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
-                      "Get ROB Ack, but the store inst hasn't retired yet!");
-
-        if (inst_ptr->isVector())
-        {
-            ++vlsu_stores_retired_;
-
-            // updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
-            if (isReadyToIssueInsts_())
-            {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-            }
-
-            ILOG("ROB Ack: Retired store instruction: " << inst_ptr);
-        }
-    }
-
-    // Issue/Re-issue ready instructions in the issue queue
-    void VLSU::issueInst_()
-    {
-        // Instruction issue arbitration
-        const LoadStoreInstInfoPtr win_ptr = arbitrateInstIssue_();
-        ILOG("Issueing: " << win_ptr->getMemoryAccessInfoPtr()->getVAddr())
-        ldst_pipeline_.append(win_ptr);
-        ++vlsu_insts_issued_;
-
-        // We append to replay queue to prevent ref count of the shared pointer to drop before
-        // calling pop below
-        if (allow_speculative_load_exec_)
-        {
-            ILOG("Appending to replay queue: " << win_ptr);
-            appendToReplayQueue_(win_ptr);
-        }
-
-        // Remove inst from ready queue
-        win_ptr->setInReadyQueue(false);
-
-        // Update instruction issue info
-        win_ptr->setState(LoadStoreInstInfo::IssueState::ISSUED);
-        win_ptr->setPriority(LoadStoreInstInfo::IssuePriority::LOWEST);
-
-        // Schedule another instruction issue event if possible
-        if (isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
-        }
-    }
-
-    void VLSU::handleAddressCalculation_()
-    {
-        auto stage_id = address_calculation_stage_;
-
-        if (!ldst_pipeline_.isValid(stage_id))
-        {
-            return;
-        }
-
-        auto & ldst_info_ptr = ldst_pipeline_[stage_id];
-        auto & inst_ptr = ldst_info_ptr->getInstPtr();
-        // Assume Calculate Address
-
-        ILOG("Address generation: " << inst_ptr << ldst_info_ptr);
-        if (isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // MMU subroutines
-    ////////////////////////////////////////////////////////////////////////////////
-    // Handle MMU access request
-    void VLSU::handleMMULookupReq_()
-    {
-        // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(mmu_lookup_stage_))
-        {
-            return;
-        }
-
-        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[mmu_lookup_stage_];
-        const MemoryAccessInfoPtr & mem_access_info_ptr =
-            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
-
-        const InstPtr & inst_ptr = lsinfo_inst_ptr->getInstPtr();
-
-        const bool mmu_bypass =
-            (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
-
-        if (mmu_bypass)
-        {
-            ILOG("MMU Lookup is skipped (TLB is already hit)! " << lsinfo_inst_ptr);
-            return;
-        }
-
-        // Ready dependent younger loads
-        if (false == allow_speculative_load_exec_)
-        {
-            if (inst_ptr->isStoreInst())
-            {
-                readyDependentLoads_(lsinfo_inst_ptr);
-            }
-        }
-
-        out_mmu_lookup_req_.send(mem_access_info_ptr);
-    }
-
-    void VLSU::getAckFromMMU_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr)
-    {
-        const auto stage_id = mmu_lookup_stage_;
-
-        // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(stage_id))
-        {
-            ILOG("MMU stage not valid");
-            return;
-        }
-        ILOG("MMU Ack: " << std::boolalpha << updated_memory_access_info_ptr->getPhyAddrStatus()
-                         << " " << updated_memory_access_info_ptr);
-        const bool mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrStatus();
-
-        if (updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && mmu_hit_
-            && allow_speculative_load_exec_)
-        {
-            ILOG("Aborting speculative loads " << updated_memory_access_info_ptr);
-            abortYoungerLoads_(updated_memory_access_info_ptr);
-        }
-    }
-
-    void VLSU::handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr)
-    {
-        ILOG("MMU rehandling event is scheduled! " << memory_access_info_ptr);
-        const auto & inst_ptr = memory_access_info_ptr->getInstPtr();
-
-        // Update issue priority & Schedule an instruction (re-)issue event
-        updateIssuePriorityAfterTLBReload_(memory_access_info_ptr);
-
-        if (inst_ptr->getFlushedStatus())
-        {
-            if (isReadyToIssueInsts_())
-            {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-            }
-            return;
-        }
-
-        removeInstFromReplayQueue_(inst_ptr);
-
-        if (isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Cache Subroutine
-    ////////////////////////////////////////////////////////////////////////////////
-    // Handle cache access request
-    void VLSU::handleCacheLookupReq_()
-    {
-        // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(cache_lookup_stage_))
-        {
-            return;
-        }
-
-        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[cache_lookup_stage_];
-        const MemoryAccessInfoPtr & mem_access_info_ptr =
-            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
-        const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
-
-        // If we did not have an MMU hit from previous stage, invalidate and bail
-        if (false == phy_addr_is_ready)
-        {
-            ILOG("Cache Lookup is skipped (Physical address not ready)!" << lsinfo_inst_ptr);
-            if (allow_speculative_load_exec_)
-            {
-                updateInstReplayReady_(lsinfo_inst_ptr);
-            }
-            // There might not be a wake up because the cache cannot handle nay more instruction
-            // Change to nack wakeup when implemented
-            if (!lsinfo_inst_ptr->isInReadyQueue())
-            {
-                appendToReadyQueue_(lsinfo_inst_ptr);
-                lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                if (isReadyToIssueInsts_())
-                {
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                }
-            }
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-            return;
-        }
-
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-
-        // If have passed translation and the instruction is a store,
-        // then it's good to be retired (i.e. mark it completed).
-        // Stores typically do not cause a flush after a successful
-        // translation.  We now wait for the Retire block to "retire"
-        // it, meaning it's good to go to the cache
-        if (inst_ptr->isStoreInst()
-            && (lsinfo_inst_ptr->getVLSUStatusState() == Inst::Status::SCHEDULED))
-        {
-            ILOG("Store marked as completed " << inst_ptr);
-            lsinfo_inst_ptr->setVLSUStatusState(Inst::Status::RETIRED);
-            lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-            updateIssuePriorityAfterStoreInstRetire_(lsinfo_inst_ptr);
-            if (isReadyToIssueInsts_())
-            {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
-            }
-            if (allow_speculative_load_exec_)
-            {
-                updateInstReplayReady_(lsinfo_inst_ptr);
-            }
-            return;
-        }
-
-        // Loads dont perform a cache lookup if there are older stores present in the load store
-        // queue
-        const auto find_older_store = [inst_ptr](LoadStoreInstInfoPtr lsinfo_inst_ptr) {
-            const auto ldst_inst_ptr = lsinfo_inst_ptr->getInstPtr();
-            return ldst_inst_ptr->isStoreInst() &&
-                (ldst_inst_ptr->getUniqueID() < inst_ptr->getUniqueID());
-        };
-        const auto older_store_exists = [find_older_store](LoadStoreIssueQueue & queue) -> bool {
-            const auto iter = std::find_if(queue.begin(), queue.end(), find_older_store);
-            return iter != queue.end();
-        };
-        if (allow_speculative_load_exec_ && !inst_ptr->isStoreInst() &&
-            older_store_exists(mem_req_buffer_))
-        {
-            ILOG("Dropping speculative load " << inst_ptr);
-            lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-            if (allow_speculative_load_exec_)
-            {
-                updateInstReplayReady_(lsinfo_inst_ptr);
-            }
-            return;
-        }
-
-        const bool is_already_hit =
-            (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
-        const bool is_unretired_store =
-            inst_ptr->isStoreInst()
-            && (lsinfo_inst_ptr->getVLSUStatusState() != Inst::Status::RETIRED);
-        const bool cache_bypass = is_already_hit || !phy_addr_is_ready || is_unretired_store;
-
-        if (cache_bypass)
-        {
-            if (is_already_hit)
-            {
-                ILOG("Cache Lookup is skipped (Cache already hit)");
-            }
-            else if (is_unretired_store)
-            {
-                ILOG("Cache Lookup is skipped (store instruction not oldest)");
-            }
-            else
-            {
-                sparta_assert(false, "Cache access is bypassed without a valid reason!");
-            }
-            return;
-        }
-
-        out_cache_lookup_req_.send(mem_access_info_ptr);
-    }
-
-    void VLSU::getAckFromCache_(const MemoryAccessInfoPtr & mem_access_info_ptr)
-    {
-        const LoadStoreInstIterator & iter = mem_access_info_ptr->getIssueQueueIterator();
-        if (!iter.isValid())
-        {
-            return;
-        }
-
-        // Is its a cache miss we dont need to rechedule the instruction
-        if (!mem_access_info_ptr->isCacheHit())
-        {
-            return;
-        }
-
-        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = *(iter);
-
-        // Update issue priority for this outstanding cache miss
-        if (lsinfo_inst_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
-        {
-            lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-        }
-
-        lsinfo_inst_ptr->setPriority(LoadStoreInstInfo::IssuePriority::CACHE_RELOAD);
-        if (!lsinfo_inst_ptr->isInReadyQueue())
-        {
-            uev_append_ready_.preparePayload(lsinfo_inst_ptr)->schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    void VLSU::handleCacheReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr)
-    {
-        auto inst_ptr = memory_access_info_ptr->getInstPtr();
-        if (inst_ptr->getFlushedStatus())
-        {
-            ILOG("BIU Ack for a flushed cache miss is received!");
-
-            // Schedule an instruction (re-)issue event
-            // Note: some younger load/store instruction(s) might have been blocked by
-            // this outstanding miss
-            if (isReadyToIssueInsts_())
-            {
-                uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-            }
-
-            return;
-        }
-
-        ILOG("Cache ready for " << memory_access_info_ptr);
-        updateIssuePriorityAfterCacheReload_(memory_access_info_ptr);
-        removeInstFromReplayQueue_(inst_ptr);
-
-        if (isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    void VLSU::handleCacheRead_()
-    {
-        // Check if flushing event occurred just now
-        if (!ldst_pipeline_.isValid(cache_read_stage_))
-        {
-            return;
-        }
-
-        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[cache_read_stage_];
-        const MemoryAccessInfoPtr & mem_access_info_ptr =
-            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
-
-        if (false == mem_access_info_ptr->isCacheHit())
-        {
-            ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
-            if (allow_speculative_load_exec_)
-            {
-                updateInstReplayReady_(lsinfo_inst_ptr);
-            }
-            // There might not be a wake up because the cache cannot handle nay more instruction
-            // Change to nack wakeup when implemented
-            if (!lsinfo_inst_ptr->isInReadyQueue())
-            {
-                ILOG("Appending to ready queue " << lsinfo_inst_ptr->getInstPtr())
-                appendToReadyQueue_(lsinfo_inst_ptr);
-                lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                if (isReadyToIssueInsts_())
-                {
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                }
-            }
-            ldst_pipeline_.invalidateStage(cache_read_stage_);
-            return;
-        }
-
-        if (mem_access_info_ptr->isDataReady())
-        {
-            ILOG("Instruction had previously had its data ready");
-            return;
-        }
-
-        ILOG("Data ready set for " << mem_access_info_ptr);
-        mem_access_info_ptr->setDataReady(true);
-
-        if (isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
+    /*
     // Retire load/store instruction
     void VLSU::completeInst_()
     {
@@ -732,12 +209,12 @@ namespace olympia
             return;
         }
         const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[complete_stage_];
-        const VectorMemConfigPtr vector_mem_config_ptr = lsinfo_inst_ptr->getInstPtr()->getVectorMemConfig();
+        const MemoryAccessInfoPtr & mem_access_info_ptr = lsinfo_inst_ptr->getMemoryAccessInfoPtr();
+        const InstPtr & inst_ptr = lsinfo_inst_ptr->getInstPtr();
+        const VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
+
         uint32_t total_iters = vector_mem_config_ptr->getTotalMemReqs();
-        // we're done load/storing all vector bits, can complete
-        const MemoryAccessInfoPtr & mem_access_info_ptr =
-            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+
         if (false == mem_access_info_ptr->isDataReady())
         {
             ILOG("Cannot complete inst, cache data is missing: " << mem_access_info_ptr);
@@ -879,128 +356,49 @@ namespace olympia
         }
     }
 
+*/
+
     // Handle instruction flush in VLSU
     void VLSU::handleFlush_(const FlushCriteria & criteria)
     {
-        ILOG("Flushing VLSU");
+        LSU::handleFlush_(criteria);
 
-        vlsu_flushes_++;
-
-        // Flush load/store pipeline entry
-        flushLSPipeline_(criteria);
-
-        // Flush instruction issue queue
-        flushIssueQueue_(criteria);
-        flushReplayBuffer_(criteria);
-        flushReadyQueue_(criteria);
-
-        // Cancel replay events
-        auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool
-        { return criteria.includedInFlush(ldst_info_ptr->getInstPtr()); };
-        uev_append_ready_.cancelIf(flush);
-        uev_replay_ready_.cancelIf(flush);
-
-        // Cancel issue event already scheduled if no ready-to-issue inst left after flush
-        if (!isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.cancel();
-        }
-
-        // NOTE:
-        // Flush is handled at Flush phase (inbetween PortUpdate phase and Tick phase).
-        // This also guarantees that whenever an instruction issue event happens,
-        // instruction issue arbitration should always succeed, even when flush happens.
-        // Otherwise, assertion error is fired inside arbitrateInstIssue_()
+        // Flush memory request ready queue and buffer
+        flushMemoryRequestReadyQueue_(criteria);
+        flushMemoryRequestBuffer_(criteria);
     }
 
     void VLSU::dumpDebugContent_(std::ostream & output) const
     {
         output << "VLSU Contents" << std::endl;
+        std::cout << "Inst Queue:" << std::endl;
+        for (const auto & entry : inst_queue_)
+        {
+            output << '\t' << entry << std::endl;
+        }
+        std::cout << "Memory Request Buffer:" << std::endl;
         for (const auto & entry : mem_req_buffer_)
         {
-            output << '\t' << entry << " " << entry->getMemoryAccessInfoPtr()->getVAddr()
+            output << '\t' << entry << "vaddr: 0x" << std::hex
+                   << entry->getMemoryAccessInfoPtr()->getVAddr()
                    << std::endl;
-        }
-    }
-
-    void VLSU::replayReady_(const LoadStoreInstInfoPtr & lsinfo_inst_ptr)
-    {
-        ILOG("Replay inst ready " << lsinfo_inst_ptr);
-        // We check in the ldst_queue as the instruction may not be in the replay queue
-        if (lsinfo_inst_ptr->getState() == LoadStoreInstInfo::IssueState::NOT_READY)
-        {
-            lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-        }
-        auto issue_priority = lsinfo_inst_ptr->getMemoryAccessInfoPtr()->getPhyAddrStatus()
-                                  ? LoadStoreInstInfo::IssuePriority::CACHE_PENDING
-                                  : LoadStoreInstInfo::IssuePriority::MMU_PENDING;
-        lsinfo_inst_ptr->setPriority(issue_priority);
-        uev_append_ready_.preparePayload(lsinfo_inst_ptr)->schedule(sparta::Clock::Cycle(0));
-
-        if (isReadyToIssueInsts_())
-        {
-            ILOG("replay ready issue");
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    void VLSU::updateInstReplayReady_(const LoadStoreInstInfoPtr & lsinfo_inst_ptr)
-    {
-        ILOG("Scheduled replay " << lsinfo_inst_ptr << " after " << replay_issue_delay_
-                                 << " cycles");
-        lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::NOT_READY);
-        uev_replay_ready_.preparePayload(lsinfo_inst_ptr)
-            ->schedule(sparta::Clock::Cycle(replay_issue_delay_));
-        removeInstFromReplayQueue_(lsinfo_inst_ptr);
-
-        vlsu_insts_replayed_++;
-    }
-
-    void VLSU::appendReady_(const LoadStoreInstInfoPtr & lsinfo_inst_ptr)
-    {
-        if (lsinfo_inst_ptr->isInReadyQueue())
-        {
-            return;
-        }
-
-        ILOG("Appending to ready queue " << lsinfo_inst_ptr);
-        sparta_assert(lsinfo_inst_ptr->getReplayQueueIterator().isValid() == false,
-                      "Instruction is already in the ready queue: " << lsinfo_inst_ptr);
-        appendToReadyQueue_(lsinfo_inst_ptr);
-
-        if (isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call
     ////////////////////////////////////////////////////////////////////////////////
-    VLSU::LoadStoreInstInfoPtr VLSU::createLoadStoreInst_(const InstPtr & inst_ptr)
+    void VLSU::removeFromMemoryRequestBuffer_(const LoadStoreInstInfoPtr & inst_to_remove)
     {
-        // Create load/store memory access info
-        MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(
-            memory_access_allocator_, inst_ptr);
-        // Create load/store instruction issue info
-        LoadStoreInstInfoPtr lsinfo_inst_ptr =
-            sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,
-                                                                      mem_info_ptr);
-        return lsinfo_inst_ptr;
-    }
+        ILOG("Removing memory request from the memory request buffer: " << inst_to_remove);
+        mem_req_buffer_.erase(inst_to_remove->getIssueQueueIterator());
+        // Invalidate the iterator manually
+        inst_to_remove->setIssueQueueIterator(LoadStoreInstIterator());
 
-    void VLSU::allocateInstToIssueQueue_(const InstPtr & inst_ptr)
-    {
-        auto lsinfo_inst_ptr = createLoadStoreInst_(inst_ptr);
-
-        sparta_assert(mem_req_buffer_.size() < mem_req_buffer_size_,
-                      "Appending issue queue causes overflows!");
-
-        // Always append newly dispatched instructions to the back of issue queue
-        const LoadStoreInstIterator & iter = mem_req_buffer_.push_back(lsinfo_inst_ptr);
-        lsinfo_inst_ptr->setIssueQueueIterator(iter);
-        ILOG("Append new load/store instruction to issue queue!");
-        ++vlsu_mem_reqs_;
+        if (mem_req_ready_queue_.size() > 0)
+        {
+            uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
+        }
     }
 
     bool VLSU::allOlderStoresIssued_(const InstPtr & inst_ptr)
@@ -1020,219 +418,37 @@ namespace olympia
         return true;
     }
 
-    // Only called if allow_spec_load_exec is true
-    void VLSU::readyDependentLoads_(const LoadStoreInstInfoPtr & store_inst_ptr)
+    void VLSU::flushMemoryRequestReadyQueue_(const FlushCriteria & criteria)
     {
-        bool found = false;
-        for (auto & ldst_inst_ptr : mem_req_buffer_)
+        // TODO: Replace with erase_if with c++20
+        auto iter = ready_queue_.begin();
+        while (iter != ready_queue_.end())
         {
-            auto & inst_ptr = ldst_inst_ptr->getInstPtr();
-            if (inst_ptr->isStoreInst())
+            auto inst_ptr = (*iter)->getInstPtr();
+            if (criteria.includedInFlush(inst_ptr))
             {
-                continue;
-            }
-
-            // Only ready loads which have register operands ready
-            // We only care of the instructions which are still not ready
-            // Instruction have a status of SCHEDULED if they are ready to be issued
-            if (store_inst_ptr->getVLSUStatusState() == Inst::Status::DISPATCHED
-                && instOperandReady_(inst_ptr))
-            {
-                ILOG("Updating inst to schedule " << inst_ptr << " " << ldst_inst_ptr);
-                updateIssuePriorityAfterNewDispatch_(store_inst_ptr);
-                appendToReadyQueue_(ldst_inst_ptr);
-                found = true;
-            }
-        }
-
-        if (found && isReadyToIssueInsts_())
-        {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    bool VLSU::instOperandReady_(const InstPtr & inst_ptr)
-    {
-        return scoreboard_views_[core_types::RF_INTEGER]->isSet(
-            inst_ptr->getSrcRegisterBitMask(core_types::RF_INTEGER));
-    }
-
-    void VLSU::abortYoungerLoads_(const olympia::MemoryAccessInfoPtr & memory_access_info_ptr)
-    {
-        auto & inst_ptr = memory_access_info_ptr->getInstPtr();
-        uint64_t min_inst_age = UINT64_MAX;
-        // Find oldest instruction age with the same Virtual address
-        for (auto iter = replay_buffer_.begin(); iter != replay_buffer_.end(); iter++)
-        {
-            auto & queue_inst = (*iter)->getInstPtr();
-            //  Skip stores or the instruction being compared against
-            if (queue_inst->isStoreInst() || queue_inst == inst_ptr)
-            {
-                continue;
-            }
-            // Find loads which have the same address
-            // Record the oldest age to abort instructions younger than it
-            if (queue_inst->getTargetVAddr() == inst_ptr->getTargetVAddr()
-                && queue_inst->getUniqueID() < min_inst_age)
-            {
-                min_inst_age = queue_inst->getUniqueID();
-            }
-        }
-
-        if (min_inst_age == UINT64_MAX)
-        {
-            ILOG("No younger instruction to deallocate");
-            return;
-        }
-
-        ILOG("Age of the oldest instruction " << min_inst_age << " for " << inst_ptr
-                                              << inst_ptr->getTargetVAddr());
-
-        // Remove instructions younger than the oldest load that was removed
-        auto iter = replay_buffer_.begin();
-        while (iter != replay_buffer_.end())
-        {
-            auto replay_inst_iter(iter++);
-            auto & replay_inst = *replay_inst_iter;
-            // Apply to loads only
-            if (replay_inst->getInstPtr()->isStoreInst())
-            {
-                continue;
-            }
-
-            if (replay_inst->getInstUniqueID() >= min_inst_age)
-            {
-                (replay_inst)->setState(LoadStoreInstInfo::IssueState::READY);
-                appendToReadyQueue_(replay_inst);
-
-                ILOG("Aborted younger load "
-                     << replay_inst << replay_inst->getInstPtr()->getTargetVAddr() << inst_ptr);
-                dropInstFromPipeline_(replay_inst);
-                removeInstFromReplayQueue_(replay_inst);
+                DLOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+                ready_queue_.erase(++iter);
             }
         }
     }
 
-    // Drop instruction from the pipeline
-    // Pipeline stages might be multi cycle hence we have check all the stages
-    void VLSU::dropInstFromPipeline_(const LoadStoreInstInfoPtr & load_store_lsinfo_inst_ptr)
+    void VLSU::flushMemoryRequestBuffer_(const FlushCriteria & criteria)
     {
-        ILOG("Dropping instruction from pipeline " << load_store_lsinfo_inst_ptr);
-
-        for (int stage = 0; stage <= complete_stage_; stage++)
+        // TODO: Replace with erase_if with c++20
+        auto iter = mem_req_buffer_.begin();
+        while (iter != mem_req_buffer_.end())
         {
-            if (ldst_pipeline_.isValid(stage))
+            auto inst_ptr = (*iter)->getInstPtr();
+            if (criteria.includedInFlush(inst_ptr))
             {
-                const auto & pipeline_inst = ldst_pipeline_[stage];
-                if (pipeline_inst == load_store_lsinfo_inst_ptr)
-                {
-                    ldst_pipeline_.invalidateStage(stage);
-                    return;
-                }
+                DLOG("Flushing from memory request buffer: " << *iter);
+                mem_req_buffer_.erase(++iter);
             }
         }
     }
 
-    void VLSU::removeInstFromReplayQueue_(const InstPtr & inst_to_remove)
-    {
-        ILOG("Removing Inst from replay queue " << inst_to_remove);
-        for (const auto & ldst_inst : mem_req_buffer_)
-        {
-            if (ldst_inst->getInstPtr() == inst_to_remove)
-            {
-                if (ldst_inst->getReplayQueueIterator().isValid())
-                {
-                    removeInstFromReplayQueue_(ldst_inst);
-                }
-                else
-                {
-                    // Handle situations when replay delay completes before mmu/cache is ready
-                    ILOG("Invalid Replay queue entry " << inst_to_remove);
-                }
-            }
-        }
-    }
-
-    void VLSU::removeInstFromReplayQueue_(const LoadStoreInstInfoPtr & inst_to_remove)
-    {
-        ILOG("Removing instruction from replay queue: " << inst_to_remove);
-        if (inst_to_remove->getReplayQueueIterator().isValid())
-        {
-            replay_buffer_.erase(inst_to_remove->getReplayQueueIterator());
-        }
-        // Invalidate the iterator manually
-        inst_to_remove->setReplayQueueIterator(LoadStoreInstIterator());
-    }
-
-    // Pop completed load/store instruction out of issue queue
-    void VLSU::removeFromMemoryRequestBuffer_(const LoadStoreInstInfoPtr & inst_to_remove)
-    {
-        ILOG("Removing memory request from the memory request buffer: " << inst_to_remove);
-        const bool was_mem_req_buffer_full = mem_req_buffer_.size() == mem_req_buffer_size_;
-        mem_req_buffer_.erase(inst_to_remove->getIssueQueueIterator());
-        // Invalidate the iterator manually
-        inst_to_remove->setIssueQueueIterator(LoadStoreInstIterator());
-
-        // If memory request buffer was full, might have an instruction waiting to generate its
-        // memory requests
-        if (was_mem_req_buffer_full)
-        {
-            uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
-        }
-    }
-
-    void VLSU::appendToReplayQueue_(const LoadStoreInstInfoPtr & lsinfo_inst_ptr)
-    {
-        sparta_assert(replay_buffer_.size() < replay_buffer_size_,
-                      "Appending load queue causes overflows!");
-        // Always append newly dispatched instructions to the back of issue queue
-        const auto & iter = replay_buffer_.push_back(lsinfo_inst_ptr);
-        lsinfo_inst_ptr->setReplayQueueIterator(iter);
-
-        ILOG("Append new instruction to replay queue!" << lsinfo_inst_ptr);
-    }
-
-    void VLSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & ldst_inst_ptr)
-    {
-        for (const auto & inst : mem_req_buffer_)
-        {
-            if (ldst_inst_ptr->getMemoryAccessInfoPtr()->getVAddr()
-                    == inst->getMemoryAccessInfoPtr()->getVAddr()
-                && ldst_inst_ptr->getInstPtr() == inst->getInstPtr())
-            {
-                ILOG("Appending to Ready queue " << ldst_inst_ptr);
-                // appendToReadyQueue_(inst);
-                ready_queue_.insert(ldst_inst_ptr);
-                ldst_inst_ptr->setInReadyQueue(true);
-                ldst_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                return;
-            }
-        }
-        sparta_assert(false, "Instruction not found in the issue queue " << ldst_inst_ptr);
-    }
-
-    // Arbitrate instruction issue from ldst_inst_queue
-    VLSU::LoadStoreInstInfoPtr VLSU::arbitrateInstIssue_()
-    {
-        sparta_assert(ready_queue_.size() > 0, "Arbitration fails: issue is empty!");
-
-        LoadStoreInstInfoPtr ready_inst_ = ready_queue_.top();
-        ILOG("Arbitrating instruction, popping from queue: " << ready_inst_->getInstPtr());
-        ready_queue_.pop();
-
-        return ready_inst_;
-    }
-
-    // Check for ready to issue instructions
-    bool VLSU::isReadyToIssueInsts_() const
-    {
-        if (allow_speculative_load_exec_ && replay_buffer_.size() >= replay_buffer_size_)
-        {
-            return false;
-        }
-        return ready_queue_.empty() == false;
-    }
-
+    /*
     // Update issue priority when newly dispatched instruction comes in
     void VLSU::updateIssuePriorityAfterNewDispatch_(
         const LoadStoreInstInfoPtr & load_store_lsinfo_inst_ptr)
@@ -1365,41 +581,5 @@ namespace olympia
                 "Attempt to update issue priority for instruction not yet in the issue queue!");
         }
     }
-
-    // Flush instruction issue queue
-    void VLSU::flushIssueQueue_(const FlushCriteria & criteria)
-    {
-        uint32_t credits_to_send = 0;
-        auto iter = mem_req_buffer_.begin();
-        while (iter != mem_req_buffer_.end())
-        {
-            auto inst_ptr = (*iter)->getInstPtr();
-            auto delete_iter = iter++;
-
-            if (criteria.includedInFlush(inst_ptr))
-            {
-                mem_req_buffer_.erase(delete_iter);
-
-                // Clear any scoreboard callback
-                std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
-                                                              core_types::RF_FLOAT};
-                for (const auto rf : reg_files)
-                {
-                    scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
-                }
-
-                // NOTE:
-                // We cannot increment iter after erase because it's already invalidated by then
-
-                ++credits_to_send;
-
-                DLOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
-            }
-        }
-
-        if (credits_to_send > 0)
-        {
-            out_vlsu_credits_.send(credits_to_send);
-        }
-    }
+    */
 } // namespace olympia

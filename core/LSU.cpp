@@ -851,9 +851,12 @@ namespace olympia
     {
         ILOG("Appending to Ready ready queue event " << replay_inst_ptr->isInReadyQueue() << " "
                                                      << replay_inst_ptr);
-        if (!replay_inst_ptr->isInReadyQueue()
-            && !replay_inst_ptr->getReplayQueueIterator().isValid())
+        if (!replay_inst_ptr->isInReadyQueue() &&
+            !replay_inst_ptr->getReplayQueueIterator().isValid())
+        {
             appendToReadyQueue_(replay_inst_ptr);
+        }
+
         if (isReadyToIssueInsts_())
         {
             uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -1071,11 +1074,10 @@ namespace olympia
 
     void LSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & lsinst_info_ptr)
     {
-        ILOG("Appending to Ready queue " << lsinst_info_ptr);
-        for (const auto & inst : ready_queue_)
-        {
-            sparta_assert(inst != inst_ptr, "Instruction in ready queue " << inst_ptr);
-        }
+        ILOG("Appending to ready queue " << lsinst_info_ptr);
+        const auto iter = std::find(ready_queue_.begin(), ready_queue_.end(), lsinst_info_ptr);
+        sparta_assert(iter == ready_queue_.end(),
+                      "Instruction already in ready queue: " << lsinst_info_ptr->getInstPtr());
         ready_queue_.insert(lsinst_info_ptr);
         lsinst_info_ptr->setInReadyQueue(true);
         lsinst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);

@@ -260,7 +260,6 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
-        sparta_assert(!inst_ptr->isVector(), "Vector instruction is being processed by LSU, error!")
         ++stores_retired_;
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
@@ -866,11 +865,11 @@ namespace olympia
     ////////////////////////////////////////////////////////////////////////////////
     // Regular Function/Subroutine Call
     ////////////////////////////////////////////////////////////////////////////////
-    LSU::LoadStoreInstInfoPtr LSU::createLoadStoreInst_(const InstPtr & lsinst_info_ptr)
+    LSU::LoadStoreInstInfoPtr LSU::createLoadStoreInst_(const InstPtr & inst_ptr)
     {
         // Create load/store memory access info
         MemoryAccessInfoPtr mem_info_ptr = sparta::allocate_sparta_shared_pointer<MemoryAccessInfo>(
-            memory_access_allocator_, lsinst_info_ptr);
+            memory_access_allocator_, inst_ptr);
         // Create load/store instruction issue info
         LoadStoreInstInfoPtr inst_info_ptr =
             sparta::allocate_sparta_shared_pointer<LoadStoreInstInfo>(load_store_info_allocator_,
@@ -895,9 +894,8 @@ namespace olympia
         {
             const auto & inst_ptr = ldst_info_ptr->getInstPtr();
             const auto & mem_info_ptr = ldst_info_ptr->getMemoryAccessInfoPtr();
-            if (inst_ptr->isStoreInst()
-                && inst_ptr->getUniqueID() < inst_ptr->getUniqueID()
-                && !mem_info_ptr->getPhyAddrStatus() && ldst_info_ptr->getInstPtr() != inst_ptr)
+            if (inst_ptr->isStoreInst() && (inst_ptr->getUniqueID() < inst_ptr->getUniqueID())
+                && !mem_info_ptr->getPhyAddrStatus() && (ldst_info_ptr->getInstPtr() != inst_ptr))
             {
                 return false;
             }
@@ -1213,7 +1211,6 @@ namespace olympia
     // Update issue priority after store instruction retires
     void LSU::updateIssuePriorityAfterStoreInstRetire_(const InstPtr & inst_ptr)
     {
-        sparta_assert(!inst_ptr->isVector(), "Vector Instruction got into LSU, error!")
         for (auto & inst_info_ptr : inst_queue_)
         {
             if (inst_info_ptr->getInstPtr() == inst_ptr)

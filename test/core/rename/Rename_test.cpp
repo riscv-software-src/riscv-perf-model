@@ -151,10 +151,10 @@ public:
   }
 
   void clear_entries(olympia::LSU &lsu) {
-    auto iter = lsu.ldst_inst_queue_.begin();
-    while (iter != lsu.ldst_inst_queue_.end()) {
+    auto iter = lsu.inst_queue_.begin();
+    while (iter != lsu.inst_queue_.end()) {
       auto x(iter++);
-      lsu.ldst_inst_queue_.erase(x);
+      lsu.inst_queue_.erase(x);
     }
   }
 };

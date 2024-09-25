@@ -15,8 +15,8 @@ namespace olympia
 
     LSU::LSU(sparta::TreeNode* node, const LSUParameterSet* p) :
         sparta::Unit(node),
-        ldst_inst_queue_("lsu_inst_queue", p->ldst_inst_queue_size, getClock()),
-        ldst_inst_queue_size_(p->ldst_inst_queue_size),
+        inst_queue_("lsu_inst_queue", p->inst_queue_size, getClock()),
+        inst_queue_size_(p->inst_queue_size),
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
@@ -46,7 +46,7 @@ namespace olympia
 
         // Pipeline collection config
         ldst_pipeline_.enableCollection(node);
-        ldst_inst_queue_.enableCollection(node);
+        inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
@@ -126,7 +126,7 @@ namespace olympia
     {
         // If ROB has not stopped the simulation &
         // the ldst has entries to process we should fail
-        if ((false == rob_stopped_simulation_) && (false == ldst_inst_queue_.empty()))
+        if ((false == rob_stopped_simulation_) && (false == inst_queue_.empty()))
         {
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
@@ -137,13 +137,13 @@ namespace olympia
     // Callbacks
     ////////////////////////////////////////////////////////////////////////////////
 
-    // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
+    // Send initial credits (inst_queue_size_) to Dispatch Unit
     void LSU::sendInitialCredits_()
     {
         setupScoreboard_();
-        out_lsu_credits_.send(ldst_inst_queue_size_);
+        out_lsu_credits_.send(inst_queue_size_);
 
-        ILOG("LSU initial credits for Dispatch Unit: " << ldst_inst_queue_size_);
+        ILOG("LSU initial credits for Dispatch Unit: " << inst_queue_size_);
     }
 
     // Setup scoreboard View
@@ -806,7 +806,7 @@ namespace olympia
     void LSU::dumpDebugContent_(std::ostream & output) const
     {
         output << "LSU Contents" << std::endl;
-        for (const auto & entry : ldst_inst_queue_)
+        for (const auto & entry : inst_queue_)
         {
             output << '\t' << entry << std::endl;
         }
@@ -877,11 +877,11 @@ namespace olympia
     {
         auto inst_info_ptr = createLoadStoreInst_(inst_ptr);
 
-        sparta_assert(ldst_inst_queue_.size() < ldst_inst_queue_size_,
+        sparta_assert(inst_queue_.size() < inst_queue_size_,
                       "Appending issue queue causes overflows!");
 
         // Always append newly dispatched instructions to the back of issue queue
-        const LoadStoreInstIterator & iter = ldst_inst_queue_.push_back(inst_info_ptr);
+        const LoadStoreInstIterator & iter = inst_queue_.push_back(inst_info_ptr);
         inst_info_ptr->setIssueQueueIterator(iter);
 
         ILOG("Append new load/store instruction to issue queue!");
@@ -889,12 +889,12 @@ namespace olympia
 
     bool LSU::allOlderStoresIssued_(const InstPtr & inst_ptr)
     {
-        for (const auto & ldst_info_ptr : ldst_inst_queue_)
+        for (const auto & ldst_info_ptr : inst_queue_)
         {
-            const auto & ldst_inst_ptr = ldst_info_ptr->getInstPtr();
+            const auto & inst_ptr = ldst_info_ptr->getInstPtr();
             const auto & mem_info_ptr = ldst_info_ptr->getMemoryAccessInfoPtr();
-            if (ldst_inst_ptr->isStoreInst()
-                && ldst_inst_ptr->getUniqueID() < inst_ptr->getUniqueID()
+            if (inst_ptr->isStoreInst()
+                && inst_ptr->getUniqueID() < inst_ptr->getUniqueID()
                 && !mem_info_ptr->getPhyAddrStatus() && ldst_info_ptr->getInstPtr() != inst_ptr)
             {
                 return false;
@@ -907,9 +907,9 @@ namespace olympia
     void LSU::readyDependentLoads_(const LoadStoreInstInfoPtr & store_inst_ptr)
     {
         bool found = false;
-        for (auto & ldst_inst_ptr : ldst_inst_queue_)
+        for (auto & inst_ptr : inst_queue_)
         {
-            auto & inst_ptr = ldst_inst_ptr->getInstPtr();
+            auto & inst_ptr = inst_ptr->getInstPtr();
             if (inst_ptr->isStoreInst())
             {
                 continue;
@@ -920,9 +920,9 @@ namespace olympia
             // Instruction have a status of SCHEDULED if they are ready to be issued
             if (inst_ptr->getStatus() == Inst::Status::DISPATCHED && instOperandReady_(inst_ptr))
             {
-                ILOG("Updating inst to schedule " << inst_ptr << " " << ldst_inst_ptr);
+                ILOG("Updating inst to schedule " << inst_ptr << " " << inst_ptr);
                 updateIssuePriorityAfterNewDispatch_(inst_ptr);
-                appendToReadyQueue_(ldst_inst_ptr);
+                appendToReadyQueue_(inst_ptr);
                 found = true;
             }
         }
@@ -1019,13 +1019,13 @@ namespace olympia
     void LSU::removeInstFromReplayQueue_(const InstPtr & inst_to_remove)
     {
         ILOG("Removing Inst from replay queue " << inst_to_remove);
-        for (const auto & ldst_inst : ldst_inst_queue_)
+        for (const auto & inst : inst_queue_)
         {
-            if (ldst_inst->getInstPtr() == inst_to_remove)
+            if (inst->getInstPtr() == inst_to_remove)
             {
-                if (ldst_inst->getReplayQueueIterator().isValid())
+                if (inst->getReplayQueueIterator().isValid())
                 {
-                    removeInstFromReplayQueue_(ldst_inst);
+                    removeInstFromReplayQueue_(inst);
                 }
                 else
                 {
@@ -1049,7 +1049,7 @@ namespace olympia
     void LSU::popIssueQueue_(const LoadStoreInstInfoPtr & inst_ptr)
     {
         ILOG("Removing Inst from issue queue " << inst_ptr);
-        ldst_inst_queue_.erase(inst_ptr->getIssueQueueIterator());
+        inst_queue_.erase(inst_ptr->getIssueQueueIterator());
         // Invalidate the iterator manually
         inst_ptr->setIssueQueueIterator(LoadStoreInstIterator());
     }
@@ -1072,7 +1072,7 @@ namespace olympia
 
     void LSU::appendToReadyQueue_(const InstPtr & inst_ptr)
     {
-        for (const auto & inst : ldst_inst_queue_)
+        for (const auto & inst : inst_queue_)
         {
             if (inst_ptr == inst->getInstPtr())
             {
@@ -1084,19 +1084,19 @@ namespace olympia
         sparta_assert(false, "Instruction not found in the issue queue " << inst_ptr);
     }
 
-    void LSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & ldst_inst_ptr)
+    void LSU::appendToReadyQueue_(const LoadStoreInstInfoPtr & inst_ptr)
     {
-        ILOG("Appending to Ready queue " << ldst_inst_ptr);
+        ILOG("Appending to Ready queue " << inst_ptr);
         for (const auto & inst : ready_queue_)
         {
-            sparta_assert(inst != ldst_inst_ptr, "Instruction in ready queue " << ldst_inst_ptr);
+            sparta_assert(inst != inst_ptr, "Instruction in ready queue " << inst_ptr);
         }
-        ready_queue_.insert(ldst_inst_ptr);
-        ldst_inst_ptr->setInReadyQueue(true);
-        ldst_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+        ready_queue_.insert(inst_ptr);
+        inst_ptr->setInReadyQueue(true);
+        inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
     }
 
-    // Arbitrate instruction issue from ldst_inst_queue
+    // Arbitrate instruction issue from inst_queue
     LSU::LoadStoreInstInfoPtr LSU::arbitrateInstIssue_()
     {
         sparta_assert(ready_queue_.size() > 0, "Arbitration fails: issue is empty!");
@@ -1130,7 +1130,7 @@ namespace olympia
     void LSU::updateIssuePriorityAfterNewDispatch_(const InstPtr & inst_ptr)
     {
         ILOG("Issue priority new dispatch " << inst_ptr);
-        for (auto & inst_info_ptr : ldst_inst_queue_)
+        for (auto & inst_info_ptr : inst_queue_)
         {
             if (inst_info_ptr->getInstPtr() == inst_ptr)
             {
@@ -1157,7 +1157,7 @@ namespace olympia
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
         bool is_found = false;
-        for (auto & inst_info_ptr : ldst_inst_queue_)
+        for (auto & inst_info_ptr : inst_queue_)
         {
             const MemoryAccessInfoPtr & mem_info_ptr = inst_info_ptr->getMemoryAccessInfoPtr();
             if (mem_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::MISS)
@@ -1227,7 +1227,7 @@ namespace olympia
     void LSU::updateIssuePriorityAfterStoreInstRetire_(const InstPtr & inst_ptr)
     {
         sparta_assert(!inst_ptr->isVector(), "Vector Instruction got into LSU, error!")
-        for (auto & inst_info_ptr : ldst_inst_queue_)
+        for (auto & inst_info_ptr : inst_queue_)
         {
             if (inst_info_ptr->getInstPtr() == inst_ptr)
             {
@@ -1252,11 +1252,11 @@ namespace olympia
 
     bool LSU::olderStoresExists_(const InstPtr & inst_ptr)
     {
-        for (const auto & ldst_inst : ldst_inst_queue_)
+        for (const auto & inst : inst_queue_)
         {
-            const auto & ldst_inst_ptr = ldst_inst->getInstPtr();
-            if (ldst_inst_ptr->isStoreInst()
-                && ldst_inst_ptr->getUniqueID() < inst_ptr->getUniqueID())
+            const auto & inst_ptr = inst->getInstPtr();
+            if (inst_ptr->isStoreInst()
+                && inst_ptr->getUniqueID() < inst_ptr->getUniqueID())
             {
                 return true;
             }
@@ -1268,17 +1268,14 @@ namespace olympia
     void LSU::flushIssueQueue_(const FlushCriteria & criteria)
     {
         uint32_t credits_to_send = 0;
-
-        auto iter = ldst_inst_queue_.begin();
-        while (iter != ldst_inst_queue_.end())
+        auto iter = inst_queue_.begin();
+        while (iter != inst_queue_.end())
         {
             auto inst_ptr = (*iter)->getInstPtr();
-
-            auto delete_iter = iter++;
-
             if (criteria.includedInFlush(inst_ptr))
             {
-                ldst_inst_queue_.erase(delete_iter);
+                DLOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
+                inst_queue_.erase(++iter);
 
                 // Clear any scoreboard callback
                 std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
@@ -1288,19 +1285,13 @@ namespace olympia
                     scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
                 }
 
-                // NOTE:
-                // We cannot increment iter after erase because it's already invalidated by then
-
                 ++credits_to_send;
-
-                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
 
         if (credits_to_send > 0)
         {
             out_lsu_credits_.send(credits_to_send);
-
             ILOG("Flush " << credits_to_send << " instructions in issue queue!");
         }
     }
@@ -1321,8 +1312,7 @@ namespace olympia
             if (criteria.includedInFlush(inst_ptr))
             {
                 ldst_pipeline_.flushStage(iter);
-
-                ILOG("Flush Pipeline Stage[" << stage_id
+                DLOG("Flush Pipeline Stage[" << stage_id
                                              << "], Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
@@ -1330,34 +1320,30 @@ namespace olympia
 
     void LSU::flushReadyQueue_(const FlushCriteria & criteria)
     {
+        // TODO: Replace with erase_if with c++20
         auto iter = ready_queue_.begin();
         while (iter != ready_queue_.end())
         {
             auto inst_ptr = (*iter)->getInstPtr();
-
-            auto delete_iter = iter++;
-
             if (criteria.includedInFlush(inst_ptr))
             {
-                ready_queue_.erase(delete_iter);
-                ILOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+                DLOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+                ready_queue_.erase(++iter);
             }
         }
     }
 
     void LSU::flushReplayBuffer_(const FlushCriteria & criteria)
     {
+        // TODO: Replace with erase_if with c++20
         auto iter = replay_buffer_.begin();
         while (iter != replay_buffer_.end())
         {
             auto inst_ptr = (*iter)->getInstPtr();
-
-            auto delete_iter = iter++;
-
             if (criteria.includedInFlush(inst_ptr))
             {
-                replay_buffer_.erase(delete_iter);
-                ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
+                DLOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
+                replay_buffer_.erase(++iter);
             }
         }
     }

@@ -174,25 +174,25 @@ namespace olympia
         switch (rank)
         {
         case LoadStoreInstInfo::IssuePriority::HIGHEST:
-            os << "(highest)";
+            os << "HIGHEST";
             break;
         case LoadStoreInstInfo::IssuePriority::CACHE_RELOAD:
-            os << "($_reload)";
+            os << "$RELOAD";
             break;
         case LoadStoreInstInfo::IssuePriority::CACHE_PENDING:
-            os << "($_pending)";
+            os << "$PENDING";
             break;
         case LoadStoreInstInfo::IssuePriority::MMU_RELOAD:
-            os << "(mmu_reload)";
+            os << "MMU_RELOAD";
             break;
         case LoadStoreInstInfo::IssuePriority::MMU_PENDING:
-            os << "(mmu_pending)";
+            os << "MMU_PENDING";
             break;
         case LoadStoreInstInfo::IssuePriority::NEW_DISP:
-            os << "(new_disp)";
+            os << "NEW_DISP";
             break;
         case LoadStoreInstInfo::IssuePriority::LOWEST:
-            os << "(lowest)";
+            os << "LOWEST";
             break;
         case LoadStoreInstInfo::IssuePriority::NUM_OF_PRIORITIES:
             throw sparta::SpartaException("NUM_OF_PRIORITIES cannot be a valid enum state.");
@@ -207,13 +207,13 @@ namespace olympia
         switch (state)
         {
         case LoadStoreInstInfo::IssueState::READY:
-            os << "(ready)";
+            os << "READY";
             break;
         case LoadStoreInstInfo::IssueState::ISSUED:
-            os << "(issued)";
+            os << "ISSUED";
             break;
         case LoadStoreInstInfo::IssueState::NOT_READY:
-            os << "(not_ready)";
+            os << "NOT_READY";
             break;
         case LoadStoreInstInfo::IssueState::NUM_STATES:
             throw sparta::SpartaException("NUM_STATES cannot be a valid enum state.");
@@ -223,9 +223,9 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::LoadStoreInstInfo & ls_info)
     {
-        os << "lsinfo: "
-           << "uid: " << ls_info.getInstUniqueID() << " pri:" << ls_info.getPriority()
-           << "uopid: " << ls_info.getInstUOpID() << " state: " << ls_info.getState();
+        os << "lsinfo["
+           << "uid: " << ls_info.getInstUniqueID() << " uopid: " << ls_info.getInstUOpID()
+           << " pri:" << ls_info.getPriority() << " state: " << ls_info.getState() << "]";
         return os;
     }
 

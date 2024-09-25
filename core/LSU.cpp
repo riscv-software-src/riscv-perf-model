@@ -1215,11 +1215,9 @@ namespace olympia
         {
             if (inst_info_ptr->getInstPtr() == inst_ptr)
             {
-
-                if (inst_info_ptr->getState()
-                    != LoadStoreInstInfo::IssueState::ISSUED) // Speculative misses are marked as
-                                                              // not ready and replay event would
-                                                              // set them back to ready
+                // Speculative misses are marked as not ready and replay event would set them back
+                // to ready
+                if (inst_info_ptr->getState() != LoadStoreInstInfo::IssueState::ISSUED)
                 {
                     inst_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 }
@@ -1230,8 +1228,8 @@ namespace olympia
             }
         }
 
-        sparta_assert(
-            false, "Attempt to update issue priority for instruction not yet in the issue queue!");
+        sparta_assert(false,
+            "Attempt to update issue priority for instruction not yet in the issue queue!");
     }
 
     bool LSU::olderStoresExists_(const InstPtr & inst_ptr)

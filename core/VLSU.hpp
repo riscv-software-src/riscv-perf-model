@@ -58,7 +58,7 @@ namespace olympia
         VLSU(sparta::TreeNode* node, const VLSUParameterSet* p);
 
         //! Destroy the VLSU
-        ~VLSU();
+        ~VLSU() {}
 
         //! name of this resource.
         static const char name[];

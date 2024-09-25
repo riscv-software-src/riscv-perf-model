@@ -321,10 +321,6 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.lsu.ports.in_rob_retire_ack"
         },
         {
-            "cpu.core*.rob.ports.out_rob_retire_ack",
-            "cpu.core*.vlsu.ports.in_rob_retire_ack"
-        },
-        {
             "cpu.core*.rob.ports.out_rob_retire_ack_vlsu",
             "cpu.core*.vlsu.ports.in_rob_retire_ack"
         },

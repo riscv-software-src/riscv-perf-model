@@ -23,11 +23,6 @@ namespace olympia
     {
     }
 
-    VLSU::~VLSU()
-    {
-        LSU::~LSU();
-    }
-
     void VLSU::onStartingTeardown_()
     {
         // If ROB has not stopped the simulation &

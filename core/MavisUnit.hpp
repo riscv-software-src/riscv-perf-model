@@ -38,6 +38,9 @@ namespace olympia
     // Handy UIDs that the modeler can assign to an instruction for
     // compare
     constexpr mavis::InstructionUniqueID MAVIS_UID_NOP        = 1;
+    constexpr mavis::InstructionUniqueID MAVIS_UID_VSETIVLI   = 4;
+    constexpr mavis::InstructionUniqueID MAVIS_UID_VSETVLI    = 3;
+    constexpr mavis::InstructionUniqueID MAVIS_UID_VSETVL     = 2;
 
     // This is a sparta tree node wrapper around the Mavis facade object
     // Used to provide global access to the facade
@@ -86,7 +89,10 @@ namespace olympia
         //! Mavis Instruction ID's that we want to use in Olympia
         static inline mavis::InstUIDList mavis_uid_list_ {
             { "nop",             MAVIS_UID_NOP },
-                };
+            { "vsetivli",        MAVIS_UID_VSETIVLI },
+            { "vsetvli",         MAVIS_UID_VSETVLI },
+            { "vsetvl",          MAVIS_UID_VSETVL },
+        };
 
         const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
         std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object

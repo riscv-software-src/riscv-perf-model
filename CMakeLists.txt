@@ -35,12 +35,14 @@ include_directories(${SPARTA_INCLUDE_DIRS})
 # Set up STF library
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
+set (DISABLE_STF_TESTS ON)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)
-  include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
-  setup_stf_linker(false)
 endif()
+include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
+setup_stf_linker(false)
+
 
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)
@@ -60,13 +62,19 @@ set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Include directories
 include_directories (core mss sim)
+include_directories (SYSTEM fsl)
 include_directories (SYSTEM mavis)
 include_directories (SYSTEM stf_lib)
 
-# Mavis, the Core, MSS, and the simulator
+# Mavis, the Core, MSS, the simulator and Fusion
+
 add_subdirectory (mavis)
 add_subdirectory (core)
 add_subdirectory (mss)
+
+# Tell FSL to use the top mavis submodule, instead of fsl's submodule
+set(FSL_MAVIS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/mavis")
+add_subdirectory (fsl)
 
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})

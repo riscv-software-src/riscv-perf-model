@@ -35,8 +35,7 @@ namespace olympia
         {
             cpu_node = getContainer()->getRoot();
         }
-        std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER, core_types::RF_FLOAT};
-        for (const auto rf : reg_files)
+        for (uint32_t rf = 0; rf < core_types::RegFile::N_REGFILES; ++rf)
         {
             scoreboard_views_[rf].reset(new sparta::ScoreboardView(
                 getContainer()->getName(), core_types::regfile_names[rf], cpu_node));
@@ -98,32 +97,60 @@ namespace olympia
 
     void IssueQueue::handleOperandIssueCheck_(const InstPtr & ex_inst)
     {
-        // FIXME: Now every source operand should be ready
-        auto reg_file = core_types::RegFile::RF_INTEGER;
         const auto srcs = ex_inst->getRenameData().getSourceList();
-        if (srcs.size() > 0)
+
+        // Lambda function to check if a source is ready.
+        // Returns true if source is ready.
+        // Returns false and registers a callback if source is not ready.
+        auto check_src_ready = [this, ex_inst](const Inst::RenameData::Reg & src)
         {
-            reg_file = srcs[0].rf;
+            // vector-scalar operations have 1 vector src and 1 scalar src that
+            // need to be checked, so can't assume the register files are the
+            // same for every source
+            auto reg_file = src.rf;
+            const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file);
+            if (scoreboard_views_[reg_file]->isSet(src_bits))
+            {
+                return true;
+            }
+            else
+            {
+                // temporary fix for clearCallbacks not working
+                scoreboard_views_[reg_file]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
+                    [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
+                    {
+                        this->handleOperandIssueCheck_(ex_inst);
+                    }
+                );
+                return false;
+            }
+        };
+
+        bool all_srcs_ready = true;
+        for (const auto & src : srcs)
+        {
+            const bool src_ready = check_src_ready(src);
+
+            if (!src_ready)
+            {
+                ILOG("Instruction NOT ready: " << ex_inst <<
+                     " Bits needed:" << sparta::printBitSet(ex_inst->getSrcRegisterBitMask(src.rf)) <<
+                     " rf: " << src.rf);
+                all_srcs_ready = false;
+                // we break to prevent multiple callbacks from being sent out
+                break;
+            }
         }
-        const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file);
-        if (scoreboard_views_[reg_file]->isSet(src_bits))
+
+        // we wait till the final callback comes back and checks in the case where both RF are ready at the same time
+        if (all_srcs_ready)
         {
-            // Insert at the end if we are doing in order issue or if the scheduler is
-            // empty
+            // all register file types are ready
             ILOG("Sending to issue queue " << ex_inst);
             // will insert based on if in_order_issue_ is set
             // if it is, will be first in first out, if not it'll be by age, so by UniqueID (UID)
             ready_queue_.insert(ex_inst);
             ev_issue_ready_inst_.schedule(sparta::Clock::Cycle(0));
-        }
-        else
-        {
-            scoreboard_views_[reg_file]->registerReadyCallback(
-                src_bits, ex_inst->getUniqueID(),
-                [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
-                { this->handleOperandIssueCheck_(ex_inst); });
-            ILOG("Instruction NOT ready: " << ex_inst
-                                           << " Bits needed:" << sparta::printBitSet(src_bits));
         }
     }
 

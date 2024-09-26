@@ -18,9 +18,10 @@ top.cpu.core0.extension.core_extensions:
   # targets of: "int" and "div"
   pipelines:
   [
-      ["int", "mul", "i2f", "cmov", "div"], # exe0
+      ["sys", "int", "mul", "i2f", "cmov", "div"], # exe0
       ["float", "faddsub", "fmac", "f2i"], # exe1
-      ["br"] # exe2
+      ["br"], # exe2
+      ["vint", "vset", "vdiv", "vmul"] # exe3
   ]
   # this is used to set how many units per queue
   # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
@@ -32,7 +33,8 @@ top.cpu.core0.extension.core_extensions:
   [ 
     ["0"], # iq0 -> exe0
     ["1"], # iq1 -> exe1
-    ["2"]  # iq2 -> exe2
+    ["2"], # iq2 -> exe2
+    ["3"], # iq3 -> exe3
   ]
 
 top.cpu.core0.rename.scoreboards:
@@ -40,14 +42,23 @@ top.cpu.core0.rename.scoreboards:
   # |
   # V
   integer.params.latency_matrix: |
-      [["",      "lsu", "iq0", "iq1", "iq2"],
-      ["lsu",    1,     1,     1,     1],
-      ["iq0",    1,     1,     1,     1],
-      ["iq1",    1,     1,     1,     1],
-      ["iq2",    1,     1,     1,     1]]
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]
   float.params.latency_matrix: |
-      [["",      "lsu", "iq0", "iq1", "iq2"],
-      ["lsu",    1,     1,     1,     1],
-      ["iq0",    1,     1,     1,     1],
-      ["iq1",    1,     1,     1,     1],
-      ["iq2",    1,     1,     1,     1]]
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]
+  vector.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
+      ["lsu",    1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1]]

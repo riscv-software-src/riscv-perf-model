@@ -21,12 +21,13 @@ top.cpu.core0.extension.core_extensions:
   # targets of: "int" and "div"
   pipelines:
   [
-      ["int", "mul", "i2f", "cmov"], # exe0
+      ["sys", "int", "mul", "i2f", "cmov"], # exe0
       ["int", "div"], # exe1
       ["int"], # exe2
       ["float", "faddsub", "fmac"], # exe3
       ["float", "f2i"], # exe4
-      ["br"] # exe5
+      ["br"], # exe5
+      ["vint", "vset", "vdiv", "vmul"] # exe6
   ]
   
   # this is used to set how many units per queue
@@ -40,7 +41,8 @@ top.cpu.core0.extension.core_extensions:
     ["0"], # iq0 -> exe0
     ["1", "2"], # iq1 -> exe1, exe2
     ["3", "4"], # iq2 -> exe3, exe4
-    ["5"] # iq3 -> exe5
+    ["5"], # iq3 -> exe5
+    ["6"]
   ]
 
 top.cpu.core0.rename.scoreboards:
@@ -48,16 +50,26 @@ top.cpu.core0.rename.scoreboards:
   # |
   # V
   integer.params.latency_matrix: |
-      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
-      ["lsu",    1,     1,     1,     1,     1],
-      ["iq0",    1,     1,     1,     1,     1],
-      ["iq1",    1,     1,     1,     1,     1],
-      ["iq2",    1,     1,     1,     1,     1],
-      ["iq3",    1,     1,     1,     1,     1]]
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]
   float.params.latency_matrix: |
-      [["",      "lsu", "iq0", "iq1", "iq2", "iq3"],
-      ["lsu",    1,     1,     1,     1,     1],
-      ["iq0",    1,     1,     1,     1,     1],
-      ["iq1",    1,     1,     1,     1,     1],
-      ["iq2",    1,     1,     1,     1,     1],
-      ["iq3",    1,     1,     1,     1,     1]]
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]
+  vector.params.latency_matrix: |
+      [["",      "lsu", "iq0", "iq1", "iq2", "iq3", "iq4"],
+      ["lsu",    1,     1,     1,     1,     1,     1],
+      ["iq0",    1,     1,     1,     1,     1,     1],
+      ["iq1",    1,     1,     1,     1,     1,     1],
+      ["iq2",    1,     1,     1,     1,     1,     1],
+      ["iq3",    1,     1,     1,     1,     1,     1],
+      ["iq4",    1,     1,     1,     1,     1,     1]]

@@ -18,9 +18,14 @@ namespace olympia
 
     class MemoryAccessInfoPairDef;
     class MemoryAccessInfo;
+    class MSHREntryInfo;
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
     using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
+
+    using MSHREntryInfoPtr = sparta::SpartaSharedPointer<MSHREntryInfo>;
+    using MSHREntryInfoIterator = sparta::Buffer<MSHREntryInfoPtr>::const_iterator;
+    using MSHREntryInfoAllocator = sparta::SpartaSharedPointerAllocator<MSHREntryInfo>;
 
     class MemoryAccessInfo
     {
@@ -89,6 +94,7 @@ namespace olympia
             // Construct the State object here
             cache_access_state_(CacheState::NO_ACCESS),
             cache_data_ready_(false),
+            is_refill_(false),
             src_(ArchUnit::NO_ACCESS),
             dest_(ArchUnit::NO_ACCESS),
             vaddr_(inst_ptr->getTargetVAddr()),
@@ -155,6 +161,10 @@ namespace olympia
 
         const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
 
+        bool isRefill() const { return is_refill_; }
+
+        void setIsRefill(bool is_refill) { is_refill_ = is_refill; }
+
         void setIssueQueueIterator(const LoadStoreInstIterator & iter)
         {
             issue_queue_iterator_ = iter;
@@ -168,6 +178,16 @@ namespace olympia
         void setReplayQueueIterator(const LoadStoreInstIterator & iter)
         {
             replay_queue_iterator_ = iter;
+        }
+
+        const MSHREntryInfoIterator & getMSHRInfoIterator() const
+        {
+            return mshr_entry_info_iterator_;
+        }
+
+        void setMSHREntryInfoIterator(const MSHREntryInfoIterator & iter)
+        {
+            mshr_entry_info_iterator_ = iter;
         }
 
       private:
@@ -184,6 +204,8 @@ namespace olympia
         CacheState cache_access_state_;
 
         bool cache_data_ready_;
+
+        bool is_refill_;
         // Src and destination unit name for the packet
         ArchUnit src_ = ArchUnit::NO_ACCESS;
         ArchUnit dest_ = ArchUnit::NO_ACCESS;
@@ -205,6 +227,7 @@ namespace olympia
 
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
+        MSHREntryInfoIterator mshr_entry_info_iterator_;
     };
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;

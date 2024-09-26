@@ -16,13 +16,20 @@ namespace olympia
     std::vector<std::string> getISAFiles(sparta::TreeNode *n, const std::string & isa_file_path,
                                          const std::string& pseudo_file_path)
     {
-        std::vector<std::string> isa_files = {isa_file_path + "/isa_rv64g.json",
+        std::vector<std::string> isa_files = {isa_file_path + "/isa_rv64i.json",
+                                              isa_file_path + "/isa_rv64m.json",
+                                              isa_file_path + "/isa_rv64a.json",
+                                              isa_file_path + "/isa_rv64f.json",
+                                              isa_file_path + "/isa_rv64d.json",
                                               isa_file_path + "/isa_rv64zba.json",
                                               isa_file_path + "/isa_rv64zbb.json",
                                               isa_file_path + "/isa_rv64zbs.json",
+                                              isa_file_path + "/isa_rv64zicsr.json",
                                               isa_file_path + "/isa_rv64c.json",
                                               isa_file_path + "/isa_rv64cf.json",
-                                              isa_file_path + "/isa_rv64cd.json"};
+                                              isa_file_path + "/isa_rv64cd.json",
+                                              isa_file_path + "/isa_rv64v.json",
+                                              isa_file_path + "/isa_rv64vf.json"};
         return isa_files;
     }
 
@@ -31,7 +38,8 @@ namespace olympia
     {
         std::vector<std::string> uarch_files = {uarch_file_path + "/olympia_uarch_rv64g.json",
                                                 uarch_file_path + "/olympia_uarch_rv64c.json",
-                                                uarch_file_path + "/olympia_uarch_rv64b.json"};
+                                                uarch_file_path + "/olympia_uarch_rv64b.json",
+                                                uarch_file_path + "/olympia_uarch_rv64v.json"};
 
         if(false == std::string(p->uarch_overrides_json).empty()) {
             uarch_files.emplace_back(p->uarch_overrides_json);

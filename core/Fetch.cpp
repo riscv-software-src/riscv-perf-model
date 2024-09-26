@@ -17,10 +17,9 @@
 
 namespace olympia
 {
-    const char * Fetch::name = "fetch";
+    const char* Fetch::name = "fetch";
 
-    Fetch::Fetch(sparta::TreeNode * node,
-                 const FetchParameterSet * p) :
+    Fetch::Fetch(sparta::TreeNode* node, const FetchParameterSet* p) :
         sparta::Unit(node),
         my_clk_(getClock()),
         num_insts_to_fetch_(p->num_to_fetch),
@@ -31,11 +30,11 @@ namespace olympia
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                      ->memory_access_allocator)
     {
-        in_fetch_queue_credits_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
+        in_fetch_queue_credits_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
 
-        in_fetch_flush_redirect_.
-            registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, FlushManager::FlushingCriteria));
+        in_fetch_flush_redirect_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, flushFetch_, FlushManager::FlushingCriteria));
 
         in_icache_fetch_resp_.
             registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveCacheResponse_, MemoryAccessInfoPtr));
@@ -221,7 +220,8 @@ namespace olympia
     }
 
     // Called when decode has room
-    void Fetch::receiveFetchQueueCredits_(const uint32_t & dat) {
+    void Fetch::receiveFetchQueueCredits_(const uint32_t & dat)
+    {
         credits_inst_queue_ += dat;
 
         ILOG("Fetch: receive num_decode_credits=" << dat

@@ -1,0 +1,54 @@
+[
+    {
+        "mnemonic": "vsetvli",
+        "rs1": 0,
+        "vtype": "0x10",
+        "rd": 1,
+        "vl": 128
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 8,
+        "vs2": 9,
+        "vd": 10
+    },
+    {
+        "mnemonic": "vsetvli",
+        "rs1": 0,
+        "vtype": "0x1",
+        "rd": 1,
+        "vl": 256
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 8,
+        "vs2": 10,
+        "vd": 12
+    },
+    {
+        "mnemonic": "vsetvli",
+        "rs1": 0,
+        "vtype": "0x2",
+        "rd": 1,
+        "vl": 512
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 8,
+        "vs2": 12,
+        "vd": 16
+    },
+    {
+        "mnemonic": "vsetvli",
+        "rs1": 2,
+        "vtype": "0x3",
+        "rd": 1,
+        "vl": 1024
+    },
+    {
+        "mnemonic": "vadd.vv",
+        "vs1": 8,
+        "vs2": 16,
+        "vd": 24
+    }
+]

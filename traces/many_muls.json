@@ -1,0 +1,446 @@
+[
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    },
+    {
+        "mnemonic": "mul",
+        "rs1": 5,
+        "rs2": 2,
+        "rd": 3
+    }
+]

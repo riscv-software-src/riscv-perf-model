@@ -1645,39 +1645,39 @@
     },
     {
         "mnemonic": "vsadd.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsadd.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsaddu.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsaddu.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsaddu.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsbc.vvm",
@@ -1945,27 +1945,27 @@
     },
     {
         "mnemonic": "vssub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vssub.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vssubu.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vssubu.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vsub.vv",

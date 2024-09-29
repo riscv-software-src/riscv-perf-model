@@ -17,8 +17,7 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmulvx_e8m4.json                 ${
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vwmulvv_e8m4.json                ${CMAKE_CURRENT_BINARY_DIR}/vwmulvv_e8m4.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmseqvv_e8m4.json                ${CMAKE_CURRENT_BINARY_DIR}/vmseqvv_e8m4.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vrgather.json                    ${CMAKE_CURRENT_BINARY_DIR}/vrgather.json SYMBOLIC)
-
-
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsadd.json                       ${CMAKE_CURRENT_BINARY_DIR}/vsadd.json SYMBOLIC)
 
 sparta_named_test(Vector_test_vsetivli      Vector_test -l top info vsetivli.out      -c test_cores/test_big_core.yaml --input-file vsetivli_vaddvv_e8m4.json)
 sparta_named_test(Vector_test_vsetvli       Vector_test -l top info vsetvli.out       -c test_cores/test_big_core.yaml --input-file vsetvli_vaddvv_e32m1ta.json)
@@ -28,4 +27,5 @@ sparta_named_test(Vector_test_multiple_vset Vector_test -l top info mulitple_vse
 sparta_named_test(Vector_test_vmulvx        Vector_test -l top info vmulvx.out        -c test_cores/test_big_core.yaml --input-file vmulvx_e8m4.json)
 sparta_named_test(Vector_test_vmulvv        Vector_test -l top info vmulvv.out        -c test_cores/test_big_core.yaml --input-file vwmulvv_e8m4.json)
 sparta_named_test(Vector_test_vmseqvv       Vector_test -l top info vmseqvv.out       -c test_cores/test_big_core.yaml --input-file vmseqvv_e8m4.json)
+sparta_named_test(Vector_test_vsadd         Vector_test -l top info vsadd.out         -c test_cores/test_big_core.yaml --input-file vsadd.json)
 sparta_named_test(Vector_unsupported_test   Vector_test -l top info unsupported.out   -c test_cores/test_big_core.yaml --input-file vrgather.json)

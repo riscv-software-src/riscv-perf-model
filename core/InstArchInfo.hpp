@@ -49,6 +49,7 @@ namespace olympia
             LSU,
             MUL,
             VINT,
+            VFIXED,
             VMASK,
             VMUL,
             VDIV,

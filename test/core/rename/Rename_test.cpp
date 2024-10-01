@@ -426,7 +426,7 @@ void runTest(int argc, char **argv) {
         root_node->getChild("cpu.core0.execute.iq1")
             ->getResourceAs<olympia::IssueQueue *>();
     olympia::IssueQueueTester issuequeue_tester;
-    cls.runSimulator(&sim, 7);
+    cls.runSimulator(&sim, 8);
     issuequeue_tester.test_dependent_integer_first_instruction(*my_issuequeue);
     issuequeue_tester.test_dependent_integer_second_instruction(
         *my_issuequeue1);
@@ -437,7 +437,9 @@ void runTest(int argc, char **argv) {
                                      ->getResourceAs<olympia::Rename *>();
 
     olympia::RenameTester rename_tester;
-    cls.runSimulator(&sim, 4);
+    // Must stop the simulation before it retires the i2f instructions,
+    // otherwise the register would have been moved back into the freelist
+    cls.runSimulator(&sim, 8);
     rename_tester.test_float(*my_rename);
   } else if (input_file == "raw_int_lsu.json") {
     // testing RAW dependency for address operand
@@ -451,7 +453,7 @@ void runTest(int argc, char **argv) {
         root_node->getChild("cpu.core0.execute.iq0")
             ->getResourceAs<olympia::IssueQueue *>();
     olympia::IssueQueueTester issuequeue_tester;
-    cls.runSimulator(&sim, 7);
+    cls.runSimulator(&sim, 8);
     issuequeue_tester.test_dependent_integer_first_instruction(*my_issuequeue);
     lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     lsu_tester.clear_entries(*my_lsu);
@@ -468,7 +470,7 @@ void runTest(int argc, char **argv) {
         root_node->getChild("cpu.core0.execute.iq1")
             ->getResourceAs<olympia::IssueQueue *>();
     olympia::IssueQueueTester issuequeue_tester;
-    cls.runSimulator(&sim, 6);
+    cls.runSimulator(&sim, 8);
     issuequeue_tester.test_dependent_integer_first_instruction(*my_issuequeue);
     lsu_tester.test_dependent_lsu_instruction(*my_lsu);
     lsu_tester.clear_entries(*my_lsu);

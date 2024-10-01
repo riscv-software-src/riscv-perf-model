@@ -27,6 +27,8 @@ namespace olympia_mss
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BIU, sendInitialCredits_));
         ILOG("BIU construct: #" << node->getGroupIdx());
+
+        ev_handle_mss_ack_ >> ev_handle_biu_req_;
     }
 
 
@@ -36,7 +38,7 @@ namespace olympia_mss
 
     // Sending Initial credits to L2Cache
     void BIU::sendInitialCredits_() {
-        out_biu_ack_.send(biu_req_queue_size_);
+        out_biu_credits_.send(biu_req_queue_size_);
         ILOG("Sending initial credits to L2Cache : " << biu_req_queue_size_);
     }
 
@@ -64,28 +66,24 @@ namespace olympia_mss
     }
 
     // Handle BIU request
-    void BIU::handle_BIU_Req_()
+    void BIU::handleBIUReq_()
     {
         biu_busy_ = true;
         out_mss_req_sync_.send(biu_req_queue_.front(), biu_latency_);
-
-        if (biu_req_queue_.size() < biu_req_queue_size_) {
-            // Send out the ack to L2Cache if there is space in biu_req_queue_
-            ev_handle_biu_l2cache_ack_.schedule(sparta::Clock::Cycle(0));
-        }
 
         ILOG("BIU request is sent to MSS!");
     }
 
     // Handle MSS Ack
-    void BIU::handle_MSS_Ack_()
+    void BIU::handleMSSAck_()
     {
         out_biu_resp_.send(biu_req_queue_.front(), biu_latency_);
 
         biu_req_queue_.pop_front();
 
-        // Send out the ack to L2Cache through , we just created space in biu_req_queue_
-        ev_handle_biu_l2cache_ack_.schedule(sparta::Clock::Cycle(0));
+        // Send out a credit to L2Cache, as we just created space in biu_req_queue_
+        out_biu_credits_.send(1);
+
         biu_busy_ = false;
 
         // Schedule BIU request handling event only when:
@@ -94,7 +92,7 @@ namespace olympia_mss
             ev_handle_biu_req_.schedule(sparta::Clock::Cycle(0));
         }
 
-        ILOG("MSS Ack is sent to LSU!");
+        ILOG("BIU response sent back!");
     }
 
     // Receive MSS access acknowledge
@@ -110,15 +108,6 @@ namespace olympia_mss
 
         // Right now we expect MSS ack is always true
         sparta_assert(false, "MSS is NOT done!");
-    }
-
-    // Handle ack backto L2Cache
-    void BIU::handle_BIU_L2Cache_Ack_()
-    {
-        uint32_t available_slots = biu_req_queue_size_ - biu_req_queue_.size();
-        out_biu_ack_.send(available_slots);
-
-        ILOG("BIU->L2Cache :  Ack is sent.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////

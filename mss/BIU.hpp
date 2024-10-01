@@ -67,8 +67,8 @@ namespace olympia_mss
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
 
-        sparta::DataOutPort<uint32_t> out_biu_ack_
-            {&unit_port_set_, "out_biu_ack"};
+        sparta::DataOutPort<uint32_t> out_biu_credits_
+            {&unit_port_set_, "out_biu_credits"};
 
         sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_biu_resp_
             {&unit_port_set_, "out_biu_resp"};
@@ -96,16 +96,11 @@ namespace olympia_mss
 
         // Event to handle BIU request from L2Cache
         sparta::UniqueEvent<> ev_handle_biu_req_
-            {&unit_event_set_, "handle_biu_req", CREATE_SPARTA_HANDLER(BIU, handle_BIU_Req_)};
+            {&unit_event_set_, "handle_biu_req", CREATE_SPARTA_HANDLER(BIU, handleBIUReq_)};
 
         // Event to handle MSS Ack
         sparta::UniqueEvent<> ev_handle_mss_ack_
-            {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handle_MSS_Ack_)};
-
-        // Event to handleBIU ack for L2Cache
-        sparta::UniqueEvent<> ev_handle_biu_l2cache_ack_
-            {&unit_event_set_, "ev_handle_biu_l2cache_ack", CREATE_SPARTA_HANDLER(BIU, handle_BIU_L2Cache_Ack_)};
-
+            {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handleMSSAck_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -115,13 +110,10 @@ namespace olympia_mss
         void receiveReqFromL2Cache_(const olympia::MemoryAccessInfoPtr &);
 
         // Handle BIU request
-        void handle_BIU_Req_();
+        void handleBIUReq_();
 
         // Handle MSS Ack
-        void handle_MSS_Ack_();
-
-        // Handle ack backto L2Cache
-        void handle_BIU_L2Cache_Ack_();
+        void handleMSSAck_();
 
         // Receive MSS access acknowledge
         // Q: Does the argument list has to be "const DataType &" ?

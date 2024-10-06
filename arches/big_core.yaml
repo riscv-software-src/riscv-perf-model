@@ -63,8 +63,8 @@ top.cpu.core0.extension.core_extensions:
       ["exe5", "alu5_pipe"],
       ["exe6", "fpu0_pipe"],
       ["exe7", "fpu1_pipe"],
-      ["exe8", "br_pipe"],
-      ["exe9", "br_pipe"],
+      ["exe8", "br0_pipe"],
+      ["exe9", "br1_pipe"],
       ["exe10", "vint_pipe"]
     ]
 

@@ -14,6 +14,7 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/Unit.hpp"
+#include "sparta/pevents/PeventCollector.hpp"
 
 #include "sparta/resources/PriorityQueue.hpp"
 
@@ -137,6 +138,10 @@ namespace olympia
                                             sparta::Counter::COUNT_NORMAL};
         bool rob_stopped_simulation_ = false;
         friend class IssueQueueTester;
+
+        // For correlation activities
+        sparta::pevents::PeventCollector<InstPEventPairs> issue_event_{"ISSUE", getContainer(), getClock()};
+
     };
 
     using IssueQueueFactory =

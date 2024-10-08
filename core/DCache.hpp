@@ -97,7 +97,7 @@ namespace olympia
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_{&unit_port_set_,
-                                                                   "in_lsu_lookup_req", 1};
+                                                                   "in_lsu_lookup_req", 0};
 
         sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
 

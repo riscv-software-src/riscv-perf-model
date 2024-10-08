@@ -82,7 +82,7 @@ foreach(ARCH_FULL_PATH ${TEST_YAML})
   sparta_named_test(olympia_arch_${ARCH_NAME}_random_branch_misprediction_test olympia
     -i500K --workload traces/dhry_riscv.zstf
     --arch ${ARCH_NAME}
-    -p top.cpu.core0.execute.exe*.params.enable_random_misprediction 1)
+    -p top.cpu.core0.execute.br*.params.enable_random_misprediction 1)
 endforeach()
 
 set(test_params_list)

@@ -29,21 +29,32 @@ top.cpu.core0.extension.core_extensions:
       ["br"], # exe5
       ["vint", "vset", "vdiv", "vmul"] # exe6
   ]
-  
+
   # this is used to set how many units per queue
   # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
   # if you want just one execution unit to issue queue you can do:
   # ["0"] which would result in iq0 -> exe0
-  # *note if you change the number of issue queues, 
+  # *note if you change the number of issue queues,
   # you need to add it to latency matrix below
   issue_queue_to_pipe_map:
-  [ 
+  [
     ["0"], # iq0 -> exe0
     ["1", "2"], # iq1 -> exe1, exe2
     ["3", "4"], # iq2 -> exe3, exe4
     ["5"], # iq3 -> exe5
     ["6"]
   ]
+
+  exe_pipe_rename:
+    [
+      ["exe0", "alu0_pipe"],
+      ["exe1", "alu1_pipe"],
+      ["exe2", "alu2_pipe"],
+      ["exe3", "fpu0_pipe"],
+      ["exe4", "fpu1_pipe"],
+      ["exe5", "br_pipe"],
+      ["exe6", "vint_pipe"]
+    ]
 
 top.cpu.core0.rename.scoreboards:
   # From

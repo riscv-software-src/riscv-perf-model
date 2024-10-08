@@ -188,6 +188,7 @@ namespace olympia
                     ready_queue_.erase(delete_iter);
                     popIssueQueue_(inst);
                     ++total_insts_issued_;
+                    issue_event_.collect(*inst);
                     break;
                 }
             }

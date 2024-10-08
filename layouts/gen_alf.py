@@ -61,6 +61,7 @@ layout.setSpacing(ALFLayout.Spacing(height         = general_height,
 
 sl_grp = layout.createScheduleLineGroup(default_color=[192,192,192],
                                         include_detail_column = True,
+                                        content_width=750,
                                         margins=ALFLayout.Margin(top = 2, left = 10))
 
 #-------------------------------------------------- Fetch/Decode
@@ -72,12 +73,9 @@ sl_grp.addScheduleLine('.*rename.rename_uop_queue.rename_uop_queue', ["Rename"],
 #-------------------------------------------------- Dispatch
 sl_grp.addScheduleLine('.*dispatch.dispatch_queue.dispatch_queue', ["Dispatch"], mini_split=[80,20], space=True)
 
-sl_grp.addScheduleLine('.*dispatch.in_alu([0-9])_credits', [r"ALU[\1] cred"], nomunge=True)
-sl_grp.addScheduleLine('.*dispatch.in_fpu([0-9])_credits', [r"FPU[\1] cred"], nomunge=True)
-
-sl_grp.addScheduleLine('.*dispatch.in_br([0-9])_credits',      [r"BR[\1] cred"], nomunge=True)
-sl_grp.addScheduleLine('.*dispatch.in_lsu_credits',            ["LSU  cred"], nomunge=True)
-sl_grp.addScheduleLine('.*dispatch.in_reorder_buffer_credits', ["ROB  cred"], nomunge=True, space=True)
+#sl_grp.addScheduleLine('.*dispatch.in_iq([0-9])_credits', [r"ALU[\1] cred"], nomunge=True)
+#sl_grp.addScheduleLine('.*dispatch.in_lsu_credits',            ["LSU  cred"], nomunge=True)
+#sl_grp.addScheduleLine('.*dispatch.in_reorder_buffer_credits', ["ROB  cred"], nomunge=True, space=True)
 
 #-------------------------------------------------- Exe Blocks
 for block in ['alu','fpu','br']:
@@ -89,10 +87,10 @@ for block in ['alu','fpu','br']:
         num += 1
 
 #-------------------------------------------------- LSU
-sl_grp.addScheduleLine('.*lsu.lsu_inst_queue.lsu_inst_queue([0-9]+)', [r"LSU IQ[\1]"], mini_split=[80,20])
+sl_grp.addScheduleLine('.*lsu.lsu_inst_queue.lsu_inst_queue([0-9]+)', [r"LSU IQ[\1]"], mini_split=[80,20], space=True)
 #sl_grp.addScheduleLine('.*lsu.replay_buffer.replay_buffer([0-9]+)', ["LSU Replay[\1]"], mini_split=[80,20])
 
-sl_grp.addScheduleLine('.*lsu.LoadStorePipeline.LoadStorePipeline', ["LSU Pipe"], space=True, reverse=False)
+sl_grp.addScheduleLine('.*lsu.LoadStorePipeline.LoadStorePipeline([0-9]+)', ["AGEN", "MMU", "D$L", "D$R", "WB"], space=True, reverse=False)
 sl_grp.addScheduleLine('.*lsu.dcache_busy', ["DL1 busy"], nomunge=True)
 
 #-------------------------------------------------- Retire

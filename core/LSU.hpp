@@ -200,6 +200,7 @@ namespace olympia
 
         // Calculate memory load/store address
         void handleAddressCalculation_();
+
         // Handle MMU access request
         void handleMMULookupReq_();
         void handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
@@ -212,8 +213,9 @@ namespace olympia
 
         // Perform cache read
         void handleCacheRead_();
+
         // Retire load/store instruction
-        void completeInst_();
+        virtual void completeInst_();
 
         // Handle instruction flush in LSU
         virtual void handleFlush_(const FlushCriteria &);

@@ -124,9 +124,9 @@ namespace olympia
 
     void LSU::onStartingTeardown_()
     {
-        // If ROB has not stopped the simulation &
-        // the ldst has entries to process we should fail
-        if ((false == rob_stopped_simulation_) && (false == inst_queue_.empty()))
+        // If the ROB did not stop the simulation and the LSU instructioin queue still has entries
+        // to process then we should fail
+        if (!rob_stopped_simulation_ && (inst_queue_.empty() == false))
         {
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
@@ -342,17 +342,17 @@ namespace olympia
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[mmu_lookup_stage_];
+        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[mmu_lookup_stage_];
         const MemoryAccessInfoPtr & mem_access_info_ptr =
-            load_store_info_ptr->getMemoryAccessInfoPtr();
-        const InstPtr & inst_ptr = load_store_info_ptr->getInstPtr();
+            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
+        const InstPtr & inst_ptr = lsinfo_inst_ptr->getInstPtr();
 
         const bool mmu_bypass =
             (mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT);
 
         if (mmu_bypass)
         {
-            ILOG("MMU Lookup is skipped (TLB is already hit)! " << load_store_info_ptr);
+            ILOG("MMU Lookup is skipped (TLB is already hit)! " << lsinfo_inst_ptr);
             return;
         }
 
@@ -361,12 +361,12 @@ namespace olympia
         {
             if (inst_ptr->isStoreInst())
             {
-                readyDependentLoads_(load_store_info_ptr);
+                readyDependentLoads_(lsinfo_inst_ptr);
             }
         }
 
         out_mmu_lookup_req_.send(mem_access_info_ptr);
-        ILOG(mem_access_info_ptr << load_store_info_ptr);
+        ILOG(mem_access_info_ptr << lsinfo_inst_ptr);
     }
 
     void LSU::getAckFromMMU_(const MemoryAccessInfoPtr & updated_memory_access_info_ptr)
@@ -429,25 +429,25 @@ namespace olympia
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[cache_lookup_stage_];
+        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[cache_lookup_stage_];
         const MemoryAccessInfoPtr & mem_access_info_ptr =
-            load_store_info_ptr->getMemoryAccessInfoPtr();
+            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
         const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
 
         // If we did not have an MMU hit from previous stage, invalidate and bail
         if (false == phy_addr_is_ready)
         {
-            ILOG("Cache Lookup is skipped (Physical address not ready)!" << load_store_info_ptr);
+            ILOG("Cache Lookup is skipped (Physical address not ready)!" << lsinfo_inst_ptr);
             if (allow_speculative_load_exec_)
             {
-                updateInstReplayReady_(load_store_info_ptr);
+                updateInstReplayReady_(lsinfo_inst_ptr);
             }
             // There might not be a wake up because the cache cannot handle nay more instruction
             // Change to nack wakeup when implemented
-            if (!load_store_info_ptr->isInReadyQueue())
+            if (!lsinfo_inst_ptr->isInReadyQueue())
             {
-                appendToReadyQueue_(load_store_info_ptr);
-                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                appendToReadyQueue_(lsinfo_inst_ptr);
+                lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 if (isReadyToIssueInsts_())
                 {
                     uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -458,7 +458,7 @@ namespace olympia
         }
 
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        ILOG(load_store_info_ptr << " " << mem_access_info_ptr);
+        ILOG(lsinfo_inst_ptr << " " << mem_access_info_ptr);
 
         // If have passed translation and the instruction is a store,
         // then it's good to be retired (i.e. mark it completed).
@@ -469,11 +469,11 @@ namespace olympia
         {
             ILOG("Store marked as completed " << inst_ptr);
             inst_ptr->setStatus(Inst::Status::COMPLETED);
-            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
             {
-                updateInstReplayReady_(load_store_info_ptr);
+                updateInstReplayReady_(lsinfo_inst_ptr);
             }
             return;
         }
@@ -484,11 +484,11 @@ namespace olympia
             && allow_speculative_load_exec_)
         {
             ILOG("Dropping speculative load " << inst_ptr);
-            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
             {
-                updateInstReplayReady_(load_store_info_ptr);
+                updateInstReplayReady_(lsinfo_inst_ptr);
             }
             return;
         }
@@ -585,9 +585,9 @@ namespace olympia
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[cache_read_stage_];
+        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[cache_read_stage_];
         const MemoryAccessInfoPtr & mem_access_info_ptr =
-            load_store_info_ptr->getMemoryAccessInfoPtr();
+            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
         ILOG(mem_access_info_ptr);
 
         if (false == mem_access_info_ptr->isCacheHit())
@@ -595,14 +595,14 @@ namespace olympia
             ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
             if (allow_speculative_load_exec_)
             {
-                updateInstReplayReady_(load_store_info_ptr);
+                updateInstReplayReady_(lsinfo_inst_ptr);
             }
             // There might not be a wake up because the cache cannot handle nay more instruction
             // Change to nack wakeup when implemented
-            if (!load_store_info_ptr->isInReadyQueue())
+            if (!lsinfo_inst_ptr->isInReadyQueue())
             {
-                appendToReadyQueue_(load_store_info_ptr);
-                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                appendToReadyQueue_(lsinfo_inst_ptr);
+                lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
                 if (isReadyToIssueInsts_())
                 {
                     uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
@@ -637,9 +637,9 @@ namespace olympia
             return;
         }
 
-        const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[complete_stage_];
+        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[complete_stage_];
         const MemoryAccessInfoPtr & mem_access_info_ptr =
-            load_store_info_ptr->getMemoryAccessInfoPtr();
+            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
 
         if (false == mem_access_info_ptr->isDataReady())
         {
@@ -674,14 +674,14 @@ namespace olympia
                 ILOG("Complete issue");
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
             }
-            if (load_store_info_ptr->isRetired()
+            if (lsinfo_inst_ptr->isRetired()
                 || inst_ptr->getStatus() == Inst::Status::COMPLETED)
             {
-                ILOG("Load was previously completed or retired " << load_store_info_ptr);
+                ILOG("Load was previously completed or retired " << lsinfo_inst_ptr);
                 if (allow_speculative_load_exec_)
                 {
                     ILOG("Removed replay " << inst_ptr);
-                    removeInstFromReplayQueue_(load_store_info_ptr);
+                    removeInstFromReplayQueue_(lsinfo_inst_ptr);
                 }
                 return;
             }
@@ -691,12 +691,12 @@ namespace olympia
 
             // Remove completed instruction from queues
             ILOG("Removed issue queue " << inst_ptr);
-            popIssueQueue_(load_store_info_ptr);
+            popIssueQueue_(lsinfo_inst_ptr);
 
             if (allow_speculative_load_exec_)
             {
                 ILOG("Removed replay " << inst_ptr);
-                removeInstFromReplayQueue_(load_store_info_ptr);
+                removeInstFromReplayQueue_(lsinfo_inst_ptr);
             }
 
             lsu_insts_completed_++;
@@ -715,7 +715,7 @@ namespace olympia
             sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
                           "Store instruction cannot complete when TLB is still a miss!");
 
-            ILOG("Store was completed but waiting for retire " << load_store_info_ptr);
+            ILOG("Store was completed but waiting for retire " << lsinfo_inst_ptr);
 
             if (isReadyToIssueInsts_())
             {
@@ -737,24 +737,24 @@ namespace olympia
                 uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
             }
 
-            if (!load_store_info_ptr->getIssueQueueIterator().isValid())
+            if (!lsinfo_inst_ptr->getIssueQueueIterator().isValid())
             {
-                ILOG("Inst was already retired " << load_store_info_ptr);
+                ILOG("Inst was already retired " << lsinfo_inst_ptr);
                 if (allow_speculative_load_exec_)
                 {
-                    ILOG("Removed replay " << load_store_info_ptr);
-                    removeInstFromReplayQueue_(load_store_info_ptr);
+                    ILOG("Removed replay " << lsinfo_inst_ptr);
+                    removeInstFromReplayQueue_(lsinfo_inst_ptr);
                 }
                 return;
             }
 
             ILOG("Removed issue queue " << inst_ptr);
-            popIssueQueue_(load_store_info_ptr);
+            popIssueQueue_(lsinfo_inst_ptr);
 
             if (allow_speculative_load_exec_)
             {
-                ILOG("Removed replay " << load_store_info_ptr);
-                removeInstFromReplayQueue_(load_store_info_ptr);
+                ILOG("Removed replay " << lsinfo_inst_ptr);
+                removeInstFromReplayQueue_(lsinfo_inst_ptr);
             }
 
             lsu_insts_completed_++;
@@ -834,14 +834,14 @@ namespace olympia
         }
     }
 
-    void LSU::updateInstReplayReady_(const LoadStoreInstInfoPtr & load_store_info_ptr)
+    void LSU::updateInstReplayReady_(const LoadStoreInstInfoPtr & lsinfo_inst_ptr)
     {
-        ILOG("Scheduled replay " << load_store_info_ptr << " after " << replay_issue_delay_
+        ILOG("Scheduled replay " << lsinfo_inst_ptr << " after " << replay_issue_delay_
                                  << " cycles");
-        load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::NOT_READY);
-        uev_replay_ready_.preparePayload(load_store_info_ptr)
+        lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::NOT_READY);
+        uev_replay_ready_.preparePayload(lsinfo_inst_ptr)
             ->schedule(sparta::Clock::Cycle(replay_issue_delay_));
-        removeInstFromReplayQueue_(load_store_info_ptr);
+        removeInstFromReplayQueue_(lsinfo_inst_ptr);
 
         replay_insts_++;
     }
@@ -1250,14 +1250,18 @@ namespace olympia
     void LSU::flushIssueQueue_(const FlushCriteria & criteria)
     {
         uint32_t credits_to_send = 0;
+
         auto iter = inst_queue_.begin();
         while (iter != inst_queue_.end())
         {
             auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
             if (criteria.includedInFlush(inst_ptr))
             {
-                DLOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
-                inst_queue_.erase(++iter);
+                ILOG("Flush Instruction ID: " << inst_ptr->getUniqueID());
+                inst_queue_.erase(delete_iter);
 
                 // Clear any scoreboard callback
                 std::vector<core_types::RegFile> reg_files = {core_types::RF_INTEGER,
@@ -1267,6 +1271,9 @@ namespace olympia
                     scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
                 }
 
+                // NOTE:
+                // We cannot increment iter after erase because it's already invalidated by then
+
                 ++credits_to_send;
             }
         }
@@ -1274,6 +1281,7 @@ namespace olympia
         if (credits_to_send > 0)
         {
             out_lsu_credits_.send(credits_to_send);
+
             ILOG("Flush " << credits_to_send << " instructions in issue queue!");
         }
     }
@@ -1294,7 +1302,8 @@ namespace olympia
             if (criteria.includedInFlush(inst_ptr))
             {
                 ldst_pipeline_.flushStage(iter);
-                DLOG("Flush Pipeline Stage[" << stage_id
+
+                ILOG("Flush Pipeline Stage[" << stage_id
                                              << "], Instruction ID: " << inst_ptr->getUniqueID());
             }
         }
@@ -1302,32 +1311,35 @@ namespace olympia
 
     void LSU::flushReadyQueue_(const FlushCriteria & criteria)
     {
-        // TODO: Replace with erase_if with c++20
         auto iter = ready_queue_.begin();
         while (iter != ready_queue_.end())
         {
             auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
             if (criteria.includedInFlush(inst_ptr))
             {
-                DLOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
-                ready_queue_.erase(++iter);
+                ILOG("Flushing from ready queue - Instruction ID: " << inst_ptr->getUniqueID());
+                ready_queue_.erase(delete_iter);
             }
         }
     }
 
     void LSU::flushReplayBuffer_(const FlushCriteria & criteria)
     {
-        // TODO: Replace with erase_if with c++20
         auto iter = replay_buffer_.begin();
         while (iter != replay_buffer_.end())
         {
             auto inst_ptr = (*iter)->getInstPtr();
+
+            auto delete_iter = iter++;
+
             if (criteria.includedInFlush(inst_ptr))
             {
-                DLOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
-                replay_buffer_.erase(++iter);
+                ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
+                replay_buffer_.erase(delete_iter);
             }
         }
     }
-
 } // namespace olympia

@@ -21,13 +21,16 @@ namespace olympia
         mem_req_buffer_size_(p->mem_req_buffer_size),
         data_width_(p->data_width)
     {
+        // Generated memory requests are appended directly to the ready queue
+        uev_gen_mem_ops_ >> uev_issue_inst_;
     }
 
     void VLSU::onStartingTeardown_()
     {
         // If ROB has not stopped the simulation &
         // the ldst has entries to process we should fail
-        if ((false == rob_stopped_simulation_) && (false == mem_req_buffer_.empty()))
+        if (!rob_stopped_simulation_ &&
+            ((mem_req_buffer_.empty() == false) || (inst_queue_.empty() == false)))
         {
             dumpDebugContent_(std::cerr);
             sparta_assert(false, "Issue queue has pending instructions");
@@ -101,7 +104,6 @@ namespace olympia
                 if (mem_req_num == total_mem_reqs)
                 {
                     ILOG("Done with memory request generation for " << inst_ptr);
-                    lsinfo_inst_ptr->setIsLastMemOp(true);
                     mem_req_ready_queue_.pop();
                 }
             }
@@ -114,7 +116,7 @@ namespace olympia
 
         if (mem_req_ready_queue_.size() > 0)
         {
-            uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
+            uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(1));
         }
         if (isReadyToIssueInsts_())
         {
@@ -190,168 +192,87 @@ namespace olympia
         }
     }
 
-    /*
     // Retire load/store instruction
     void VLSU::completeInst_()
     {
-        // For VLSU, the condition for completing an instruction
-        // is for all memory requests are done.
-        // Once done we then pop it from inst_queue as well and send to ROB for retiring
-
         // Check if flushing event occurred just now
         if (!ldst_pipeline_.isValid(complete_stage_))
         {
             return;
         }
-        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[complete_stage_];
-        const MemoryAccessInfoPtr & mem_access_info_ptr = lsinfo_inst_ptr->getMemoryAccessInfoPtr();
-        const InstPtr & inst_ptr = lsinfo_inst_ptr->getInstPtr();
-        const VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
 
-        uint32_t total_iters = vector_mem_config_ptr->getTotalMemReqs();
+        const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[complete_stage_];
+        const MemoryAccessInfoPtr & mem_access_info_ptr =
+            lsinfo_inst_ptr->getMemoryAccessInfoPtr();
 
         if (false == mem_access_info_ptr->isDataReady())
         {
             ILOG("Cannot complete inst, cache data is missing: " << mem_access_info_ptr);
             return;
         }
+
+        const InstPtr & inst_ptr = lsinfo_inst_ptr->getInstPtr();
+        ILOG("Completing vector memory request " << lsinfo_inst_ptr << " for inst " << inst_ptr);
+        ILOG(mem_access_info_ptr)
+
+        // Remove from memory request buffer and schedule memory request gen event if needed
+        removeFromMemoryRequestBuffer_(lsinfo_inst_ptr);
+
+        const bool is_store_inst = inst_ptr->isStoreInst();
+        if(!is_store_inst && allow_speculative_load_exec_)
+        {
+            removeInstFromReplayQueue_(lsinfo_inst_ptr);
+        }
+
+        VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
+        vector_mem_config_ptr->incrementNumMemReqsCompleted();
+        DLOG("Completed " << vector_mem_config_ptr->getNumMemReqsCompleted() << "/" << vector_mem_config_ptr->getNumMemReqsGenerated());
+        if (vector_mem_config_ptr->getNumMemReqsGenerated() != vector_mem_config_ptr->getNumMemReqsCompleted())
+        {
+            return;
+        }
+
+        sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
+                      "Inst cannot finish when cache is still a miss! " << inst_ptr);
+        sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
+                      "Inst cannot finish when cache is still a miss! " << inst_ptr);
+
+        ILOG("Completing vector inst: " << inst_ptr);
+        inst_ptr->setStatus(Inst::Status::COMPLETED);
+        lsu_insts_completed_++;
+        out_lsu_credits_.send(1, 0);
+
+        // Complete load instruction
+        if (!is_store_inst)
+        {
+            core_types::RegFile reg_file = core_types::RF_VECTOR;
+            const auto & dests = inst_ptr->getDestOpInfoList();
+            sparta_assert(dests.size() == 1,
+                "Load inst should have 1 dest! " << inst_ptr);
+            reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
+            const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
+            scoreboard_views_[reg_file]->setReady(dest_bits);
+
+            ILOG("Complete Load Instruction: " << inst_ptr->getMnemonic() << " uid("
+                                               << inst_ptr->getUniqueID() << ")");
+        }
+        // Complete vector store instruction
         else
         {
-            // Don't complete inst until we get the last memory request
-            // For stores, we have to wait for handleCacheLookupReq_ to mark as RETIRED
-            // For loads we don't wait for that to process it, so we don't gate on that condition
-            if (vector_mem_config_ptr->getNumMemReqsGenerated() >= total_iters && lsinfo_inst_ptr->isLastMemOp()
-                && (lsinfo_inst_ptr->getVLSUStatusState() == Inst::Status::RETIRED
-                    || !inst_ptr->isStoreInst()))
-            {
-                const bool is_store_inst = inst_ptr->isStoreInst();
-                ILOG("Completing inst: " << inst_ptr);
-                inst_queue_.pop(); // pop inst_ptr
-                if (inst_queue_.size() > 0)
-                {
-                    uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
-                }
+            ILOG("Complete Store Instruction: " << inst_ptr->getMnemonic() << " uid("
+                                                << inst_ptr->getUniqueID() << ")");
+        }
 
-                core_types::RegFile reg_file = core_types::RF_INTEGER;
-                const auto & dests = inst_ptr->getDestOpInfoList();
-                if (dests.size() > 0)
-                {
-                    sparta_assert(dests.size() == 1); // we should only have one destination
-                    reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
-                    const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
-                    scoreboard_views_[reg_file]->setReady(dest_bits);
-                }
-
-                // Complete load instruction
-                if (!is_store_inst)
-                {
-                    sparta_assert(mem_access_info_ptr->getCacheState()
-                                      == MemoryAccessInfo::CacheState::HIT,
-                                  "Load instruction cannot complete when cache is still a miss! "
-                                      << mem_access_info_ptr);
-
-                    if (isReadyToIssueInsts_())
-                    {
-                        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                    }
-                    if (lsinfo_inst_ptr->isRetired()
-                        || lsinfo_inst_ptr->getVLSUStatusState() == Inst::Status::COMPLETED)
-                    {
-                        ILOG("Load was previously completed or retired " << lsinfo_inst_ptr);
-                        if (allow_speculative_load_exec_)
-                        {
-                            removeInstFromReplayQueue_(lsinfo_inst_ptr);
-                        }
-                        return;
-                    }
-
-                    // Mark instruction as completed
-                    inst_ptr->setStatus(Inst::Status::COMPLETED);
-                    // Remove completed instruction from queues
-                    removeFromMemoryRequestBuffer_(lsinfo_inst_ptr);
-                    if (allow_speculative_load_exec_)
-                    {
-                        removeInstFromReplayQueue_(lsinfo_inst_ptr);
-                    }
-
-                    vlsu_insts_completed_++;
-                    out_vlsu_credits_.send(1, 0);
-
-                    ILOG("Complete Load Instruction: " << inst_ptr->getMnemonic() << " uid("
-                                                       << inst_ptr->getUniqueID() << ")");
-
-                    return;
-                }
-
-                sparta_assert(mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT,
-                              "Store inst cannot finish when cache is still a miss! " << inst_ptr);
-                sparta_assert(mem_access_info_ptr->getMMUState() == MemoryAccessInfo::MMUState::HIT,
-                              "Store inst cannot finish when cache is still a miss! " << inst_ptr);
-
-                inst_ptr->setStatus(Inst::Status::COMPLETED);
-                if (isReadyToIssueInsts_())
-                {
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                }
-
-                if (!lsinfo_inst_ptr->getIssueQueueIterator().isValid())
-                {
-                    ILOG("Inst was already retired " << lsinfo_inst_ptr);
-                    if (allow_speculative_load_exec_)
-                    {
-                        removeInstFromReplayQueue_(lsinfo_inst_ptr);
-                    }
-                    return;
-                }
-
-                removeFromMemoryRequestBuffer_(lsinfo_inst_ptr);
-
-                if (allow_speculative_load_exec_)
-                {
-                    removeInstFromReplayQueue_(lsinfo_inst_ptr);
-                }
-
-                vlsu_insts_completed_++;
-                out_vlsu_credits_.send(1, 0);
-
-                ILOG("Complete Store Instruction: " << inst_ptr->getMnemonic() << " uid("
-                                                    << inst_ptr->getUniqueID() << ")");
-
-                // NOTE:
-                // Checking whether an instruction is ready to complete could be non-trivial
-                // Right now we simply assume:
-                // (1)Load inst is ready to complete as long as both MMU and cache access finish
-                // (2)Store inst is ready to complete as long as MMU (address translation) is done
-            }
-            else
-            {
-                const VectorMemConfigPtr vector_mem_config_ptr = inst_ptr->getVectorMemConfig();
-                ILOG("Not all mem requests for "
-                     << inst_ptr << " are done yet "
-                     << " currently waiting on: " << vector_mem_config_ptr->getNumMemReqsGenerated() << " of "
-                     << total_iters)
-                if (allow_speculative_load_exec_)
-                {
-                    removeInstFromReplayQueue_(lsinfo_inst_ptr);
-                }
-                if (lsinfo_inst_ptr->getIssueQueueIterator().isValid())
-                {
-                    removeFromMemoryRequestBuffer_(lsinfo_inst_ptr);
-                }
-                if (vector_mem_config_ptr->getNumMemReqsGenerated() < vector_mem_config_ptr->getTotalMemReqs())
-                {
-                    // not done generating all memops
-                    uev_gen_mem_ops_.schedule(sparta::Clock::Cycle(0));
-                }
-                if (isReadyToIssueInsts_())
-                {
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                }
-            }
+        // NOTE:
+        // Checking whether an instruction is ready to complete could be non-trivial
+        // Right now we simply assume:
+        // (1)Load inst is ready to complete as long as both MMU and cache access finish
+        // (2)Store inst is ready to complete as long as MMU (address translation) is done
+        if (isReadyToIssueInsts_())
+        {
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
     }
-
-*/
 
     // Handle instruction flush in VLSU
     void VLSU::handleFlush_(const FlushCriteria & criteria)

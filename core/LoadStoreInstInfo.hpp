@@ -98,10 +98,6 @@ namespace olympia
 
         bool isRetired() const { return getInstPtr()->getStatus() == Inst::Status::RETIRED; }
 
-        void setIsLastMemOp(bool is_last_mem_op) { is_last_mem_op_ = is_last_mem_op; }
-
-        bool isLastMemOp() const { return is_last_mem_op_; }
-
         bool winArb(const LoadStoreInstInfoPtr & that) const
         {
             if (that == nullptr)
@@ -155,7 +151,6 @@ namespace olympia
         sparta::State<IssuePriority> rank_;
         sparta::State<IssueState> state_;
         bool in_ready_queue_;
-        bool is_last_mem_op_ = false;
     }; // class LoadStoreInstInfo
 
     using LoadStoreInstInfoAllocator = sparta::SpartaSharedPointerAllocator<LoadStoreInstInfo>;

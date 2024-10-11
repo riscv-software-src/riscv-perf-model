@@ -89,6 +89,9 @@ namespace olympia
         // Callback from Scoreboard to inform Operand Readiness
         void handleOperandIssueCheck_(const LoadStoreInstInfoPtr &) override;
 
+        // Retire load/store instruction
+        void completeInst_() override;
+
         // Handle instruction flush in LSU
         void handleFlush_(const FlushCriteria &) override;
 

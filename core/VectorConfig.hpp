@@ -105,6 +105,8 @@ namespace olympia
         void incrementNumMemReqsGenerated() { ++vlsu_num_mem_reqs_generated_; }
         uint32_t getNumMemReqsGenerated() const { return vlsu_num_mem_reqs_generated_; }
 
+        void incrementNumMemReqsCompleted() { ++vlsu_num_mem_reqs_completed_; }
+        uint32_t getNumMemReqsCompleted() const { return vlsu_num_mem_reqs_completed_; }
     private:
         uint32_t eew_ = 0;    // effective element width
         uint32_t stride_ = 0; // stride
@@ -112,6 +114,7 @@ namespace olympia
 
         uint32_t vlsu_total_mem_reqs_ = 0;
         uint32_t vlsu_num_mem_reqs_generated_ = 0;
+        uint32_t vlsu_num_mem_reqs_completed_ = 0;
     };
 
     using VectorConfigPtr = VectorConfig::PtrType;

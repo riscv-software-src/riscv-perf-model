@@ -27,15 +27,24 @@ top.cpu.core0.extension.core_extensions:
   # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
   # if you want just one execution unit to issue queue you can do:
   # ["0"] which would result in iq0 -> exe0
-  # *note if you change the number of issue queues, 
+  # *note if you change the number of issue queues,
   # you need to add it to latency matrix below
   issue_queue_to_pipe_map:
-  [ 
+  [
     ["0"], # iq0 -> exe0
     ["1"], # iq1 -> exe1
     ["2"], # iq2 -> exe2
     ["3"], # iq3 -> exe3
   ]
+
+  exe_pipe_rename:
+    [
+      ["exe0", "alu0_pipe"],
+      ["exe1", "fpu0_pipe"],
+      ["exe2", "br_pipe"],
+      ["exe3", "vint_pipe"]
+    ]
+
 
 top.cpu.core0.rename.scoreboards:
   # From

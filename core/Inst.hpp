@@ -517,9 +517,9 @@ namespace olympia
     //   - any changes here will break EXPECT
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst)
     {
-        os << "uid: " << inst.getUniqueID() << " " << std::setw(10) << inst.getStatus() << " "
-           << std::hex << inst.getPC() << std::dec << " pid: " << inst.getProgramID()
-           << " uopid: " << inst.getUOpID() << " '" << inst.getDisasm() << "' ";
+        os << "uid:" << inst.getUniqueID() << std::setw(10) << inst.getStatus() << " "
+           << std::hex << inst.getPC() << std::dec << " pid:" << inst.getProgramID()
+           << " uopid:" << inst.getUOpID() << " '" << inst.getDisasm() << "' ";
         return os;
     }
 

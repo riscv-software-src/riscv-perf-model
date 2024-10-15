@@ -272,7 +272,6 @@ namespace olympia
     void DCache::receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received memory access request from LSU " << memory_access_info_ptr);
-        out_lsu_lookup_ack_.send(memory_access_info_ptr);
         in_l2_cache_resp_receive_event_.schedule();
         lsu_mem_access_info_ = memory_access_info_ptr;
     }

@@ -126,6 +126,8 @@ namespace olympia
         {
             auto & fGrp = fgPair.second;
             size_t grpSize = fGrp.uids().size();
+
+            sparta_assert(inputUids.size() > grpSize);
             hcache_.buildHashCacheEntry(inputUids, grpSize);
         }
 

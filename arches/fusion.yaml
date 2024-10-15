@@ -3,7 +3,7 @@ top.cpu.core0:
   decode:
     params:
       num_to_decode: 8
-      fusion_enable: false
+      fusion_enable: true
       fusion_debug:  false
       fusion_enable_register: 0xFFFFFFFF
       fusion_max_latency:     8

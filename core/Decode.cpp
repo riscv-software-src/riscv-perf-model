@@ -276,10 +276,7 @@ namespace olympia
             }
         }
 
-        // fuse instructions only when uids.size() is large enough
-        // to not cause problems with matchFusionGroups_()
-        // hardcoded lower bound as 4 for now
-        if (fusion_enable_ && uids.size() > 4)
+        if (fusion_enable_)
         {
             MatchInfoListType matches;
             uint32_t max_itrs = 0;

@@ -127,7 +127,12 @@ namespace olympia
             auto & fGrp = fgPair.second;
             size_t grpSize = fGrp.uids().size();
 
-            sparta_assert(inputUids.size() > grpSize);
+            // grpSize should be less than the input for matching fusion pairs
+            if(grpSize > inputUids.size())
+            {
+                continue;
+            }
+
             hcache_.buildHashCacheEntry(inputUids, grpSize);
         }
 

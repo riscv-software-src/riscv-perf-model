@@ -195,8 +195,8 @@ namespace olympia
     inline std::ostream & operator<<(std::ostream & os, const olympia::LoadStoreInstInfo & ls_info)
     {
         os << "lsinfo: "
-           << "uid: " << ls_info.getInstUniqueID() << " pri:" << ls_info.getPriority()
-           << " state: " << ls_info.getState();
+           << "uid:" << ls_info.getInstUniqueID() << " pri:" << ls_info.getPriority()
+           << " state:" << ls_info.getState();
         return os;
     }
 

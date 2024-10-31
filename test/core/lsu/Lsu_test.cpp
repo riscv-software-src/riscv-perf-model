@@ -107,7 +107,7 @@ void runTest(int argc, char **argv)
     olympia::LSU *my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
     olympia::LSUTester lsupipe_tester;
     lsupipe_tester.test_pipeline_stages(*my_lsu);
-    cls.runSimulator(&sim, 7);
+    cls.runSimulator(&sim, 9);
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
     cls.runSimulator(&sim, 52);
     lsupipe_tester.test_replay_issue_abort(*my_lsu, 3); // Loads operand dependency meet

@@ -3,6 +3,7 @@ add_library(core
   FusionDecode.cpp
   Core.cpp
   SimpleBranchPred.cpp
+  ICache.cpp
   Fetch.cpp
   Decode.cpp
   VectorUopGenerator.cpp

@@ -78,7 +78,7 @@ class DCacheSim : public sparta::app::Simulation
         sparta::bind(root_node->getChildAs<sparta::Port>("next_lvl.ports.out_biu_resp"),
                      root_node->getChildAs<sparta::Port>("dcache.ports.in_l2cache_resp"));
         sparta::bind(root_node->getChildAs<sparta::Port>("next_lvl.ports.out_biu_ack"),
-                     root_node->getChildAs<sparta::Port>("dcache.ports.in_l2cache_ack"));
+                     root_node->getChildAs<sparta::Port>("dcache.ports.in_l2cache_credits"));
     }
 
     std::unique_ptr<olympia::OlympiaAllocators> allocators_tn_;

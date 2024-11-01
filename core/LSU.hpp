@@ -50,6 +50,7 @@ namespace olympia
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
+            PARAMETER(uint32_t, store_buffer_size, ldst_inst_queue_size, "Size of the store buffer")
             // LSU microarchitecture parameters
             PARAMETER(
                 bool, allow_speculative_load_exec, true,
@@ -167,6 +168,10 @@ namespace olympia
         using LoadStorePipeline = sparta::Pipeline<LoadStoreInstInfoPtr>;
         LoadStorePipeline ldst_pipeline_;
 
+        // Store Buffer
+        sparta::Buffer<InstPtr> store_buffer_;
+        const uint32_t store_buffer_size_;
+
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
 
@@ -258,6 +263,15 @@ namespace olympia
 
         void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
 
+        // allocate store inst to store buffer
+        void allocateInstToStoreBuffer_(const InstPtr & inst_ptr);
+
+        // Search store buffer in FIFO order for youngest matching store
+        InstPtr findYoungestMatchingStore_(uint64_t addr);
+
+        // get oldest store
+        InstPtr getOldestStore_() const;
+
         bool olderStoresExists_(const InstPtr & inst_ptr);
 
         bool allOlderStoresIssued_(const InstPtr & inst_ptr);
@@ -314,6 +328,8 @@ namespace olympia
 
         // Flush Replay Buffer
         void flushReplayBuffer_(const FlushCriteria &);
+
+        void flushStoreBuffer_(const FlushCriteria &);
 
         // Counters
         sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",

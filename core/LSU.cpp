@@ -20,9 +20,9 @@ namespace olympia
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
-        ready_queue_(),
         store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
         store_buffer_size_(p->ldst_inst_queue_size),  
+        ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
@@ -33,7 +33,7 @@ namespace olympia
         cache_read_stage_(cache_lookup_stage_
                           + 1), // Get data from the cache in the cycle after cache lookup
         complete_stage_(
-            cache_read_stage_
+            cache_read_stage_  
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
         ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
                        getClock()), // complete_stage_ + 1 is number of stages
@@ -277,15 +277,14 @@ namespace olympia
         if (inst_ptr->isStoreInst())
         {
             auto oldest_store = getOldestStore_();
-            sparta_assert(oldest_store && oldest_store->getUniqueID() == inst_ptr->getUniqueID(),
+            sparta_assert(oldest_store && oldest_store->getInstPtr()->getUniqueID() == inst_ptr->getUniqueID(),
                      "Attempting to retire store out of order! Expected: " 
-                     << (oldest_store ? oldest_store->getUniqueID() : 0)
+                     << (oldest_store ? oldest_store->getInstPtr()->getUniqueID() : 0)
                      << " Got: " << inst_ptr->getUniqueID());
         
             // Remove from store buffer and commit to cache
-            auto store_info_ptr_ = createLoadStoreInst_(inst_ptr);
+            out_cache_lookup_req_.send(oldest_store->getMemoryAccessInfoPtr());
             store_buffer_.erase(store_buffer_.begin());;
-            out_cache_lookup_req_.send(store_info_ptr_->getMemoryAccessInfoPtr());
             ++stores_retired_;
         }
 
@@ -631,7 +630,7 @@ namespace olympia
             {
                 mem_access_info_ptr->setDataReady(true);
                 ILOG("Load using forwarded data from store buffer: " << inst_ptr 
-                 << " from store: " << forwarding_store);
+                 << " from store: " << forwarding_store->getInstPtr());
             }
             else
             {
@@ -948,14 +947,14 @@ namespace olympia
         ILOG("Store added to store buffer: " << inst_ptr);
     }
 
-    InstPtr LSU::findYoungestMatchingStore_(uint64_t addr)
+    LoadStoreInstInfoPtr LSU::findYoungestMatchingStore_(uint64_t addr)
     {
-        InstPtr matching_store = nullptr;
+        LoadStoreInstInfoPtr matching_store = nullptr;
 
         for (auto it = store_buffer_.begin(); it != store_buffer_.end(); ++it)
         {
             auto & store = *it;
-            if (store->getTargetVAddr() == addr)
+            if (store->getInstPtr()->getTargetVAddr() == addr)
             {
                 matching_store = store;
             }
@@ -963,7 +962,7 @@ namespace olympia
         return matching_store;
     }
 
-    InstPtr LSU::getOldestStore_() const
+    LoadStoreInstInfoPtr  LSU::getOldestStore_() const
     {
         if(store_buffer_.empty()) {
             return nullptr;
@@ -1449,11 +1448,11 @@ namespace olympia
     {
         auto sb_iter = store_buffer_.begin();
         while(sb_iter != store_buffer_.end()) {
-            auto store_ptr = *sb_iter;
-            if(criteria.includedInFlush(store_ptr)) {
+            auto inst_ptr = (*sb_iter)->getInstPtr();
+            if(criteria.includedInFlush(inst_ptr)) {
                 auto delete_iter = sb_iter++;
                 store_buffer_.erase(delete_iter);
-                ILOG("Flushed store from store buffer: " << store_ptr);
+                ILOG("Flushed store from store buffer: " << inst_ptr);
             } else {
                 ++sb_iter;
             }

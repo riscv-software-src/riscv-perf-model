@@ -21,6 +21,8 @@ namespace olympia
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
         ready_queue_(),
+        store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
+        store_buffer_size_(p->ldst_inst_queue_size),  
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
@@ -48,6 +50,7 @@ namespace olympia
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
+        store_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
@@ -177,6 +180,12 @@ namespace olympia
     {
         ILOG("New instruction added to the ldst queue " << inst_ptr);
         allocateInstToIssueQueue_(inst_ptr);
+        // allocate to Store buffer
+        if (inst_ptr->isStoreInst())
+        {
+            allocateInstToStoreBuffer_(inst_ptr);
+        }
+
         handleOperandIssueCheck_(inst_ptr);
         lsu_insts_dispatched_++;
     }
@@ -265,7 +274,21 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
 
-        ++stores_retired_;
+        if (inst_ptr->isStoreInst())
+        {
+            auto oldest_store = getOldestStore_();
+            sparta_assert(oldest_store && oldest_store->getUniqueID() == inst_ptr->getUniqueID(),
+                     "Attempting to retire store out of order! Expected: " 
+                     << (oldest_store ? oldest_store->getUniqueID() : 0)
+                     << " Got: " << inst_ptr->getUniqueID());
+        
+            // Remove from store buffer and commit to cache
+            auto store_info_ptr_ = createLoadStoreInst_(inst_ptr);
+            store_buffer_.erase(store_buffer_.begin());;
+            out_cache_lookup_req_.send(store_info_ptr_->getMemoryAccessInfoPtr());
+            ++stores_retired_;
+        }
+
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         if (isReadyToIssueInsts_())
@@ -592,41 +615,60 @@ namespace olympia
         }
 
         const LoadStoreInstInfoPtr & load_store_info_ptr = ldst_pipeline_[cache_read_stage_];
+        const InstPtr & inst_ptr = load_store_info_ptr->getInstPtr();
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         ILOG(mem_access_info_ptr);
 
-        if (false == mem_access_info_ptr->isCacheHit())
-        {
-            ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
-            if (allow_speculative_load_exec_)
+        if (!inst_ptr->isStoreInst())
+        {   
+            // for load we check whether we could use store forwarding
+            // checking whether there are address match in store buffer
+            uint64_t load_addr = inst_ptr->getTargetVAddr();
+            auto forwarding_store = findYoungestMatchingStore_(load_addr);
+
+            if (forwarding_store)
             {
-                updateInstReplayReady_(load_store_info_ptr);
+                mem_access_info_ptr->setDataReady(true);
+                ILOG("Load using forwarded data from store buffer: " << inst_ptr 
+                 << " from store: " << forwarding_store);
             }
-            // There might not be a wake up because the cache cannot handle nay more instruction
-            // Change to nack wakeup when implemented
-            if (!load_store_info_ptr->isInReadyQueue())
+            else
             {
-                appendToReadyQueue_(load_store_info_ptr);
-                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                if (isReadyToIssueInsts_())
+                if (false == mem_access_info_ptr->isCacheHit())
                 {
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                    ILOG("Cannot complete inst, cache miss: " << mem_access_info_ptr);
+                    if (allow_speculative_load_exec_)
+                    {
+                        updateInstReplayReady_(load_store_info_ptr);
+                    }
+                    // There might not be a wake up because the cache cannot handle nay more instruction
+                    // Change to nack wakeup when implemented
+                    if (!load_store_info_ptr->isInReadyQueue())
+                    {
+                        appendToReadyQueue_(load_store_info_ptr);
+                        load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                        if (isReadyToIssueInsts_())
+                        {
+                            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                        }
+                    }
+                    ldst_pipeline_.invalidateStage(cache_read_stage_);
+                    return;
                 }
+
+                if (mem_access_info_ptr->isDataReady())
+                {
+                    ILOG("Instruction had previously had its data ready");
+                    return;
+                }
+
+                ILOG("Data ready set for " << mem_access_info_ptr);
+                mem_access_info_ptr->setDataReady(true);
+
             }
-            ldst_pipeline_.invalidateStage(cache_read_stage_);
-            return;
         }
-
-        if (mem_access_info_ptr->isDataReady())
-        {
-            ILOG("Instruction had previously had its data ready");
-            return;
-        }
-
-        ILOG("Data ready set for " << mem_access_info_ptr);
-        mem_access_info_ptr->setDataReady(true);
-
+        
         if (isReadyToIssueInsts_())
         {
             ILOG("Cache read issue");
@@ -790,6 +832,7 @@ namespace olympia
         flushIssueQueue_(criteria);
         flushReplayBuffer_(criteria);
         flushReadyQueue_(criteria);
+        flushStoreBuffer_(criteria);
 
         // Cancel replay events
         auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool
@@ -892,6 +935,40 @@ namespace olympia
         inst_info_ptr->setIssueQueueIterator(iter);
 
         ILOG("Append new load/store instruction to issue queue!");
+    }
+
+    void LSU::allocateInstToStoreBuffer_(const InstPtr & inst_ptr)
+    {
+        auto store_info_ptr = createLoadStoreInst_(inst_ptr);
+
+        sparta_assert(store_buffer_.size() < ldst_inst_queue_size_,
+                      "Appending store buffer causes overflows!");
+
+        store_buffer_.push_back(store_info_ptr);
+        ILOG("Store added to store buffer: " << inst_ptr);
+    }
+
+    InstPtr LSU::findYoungestMatchingStore_(uint64_t addr)
+    {
+        InstPtr matching_store = nullptr;
+
+        for (auto it = store_buffer_.begin(); it != store_buffer_.end(); ++it)
+        {
+            auto & store = *it;
+            if (store->getTargetVAddr() == addr)
+            {
+                matching_store = store;
+            }
+        }
+        return matching_store;
+    }
+
+    InstPtr LSU::getOldestStore_() const
+    {
+        if(store_buffer_.empty()) {
+            return nullptr;
+        }
+        return store_buffer_.read(0);
     }
 
     bool LSU::allOlderStoresIssued_(const InstPtr & inst_ptr)
@@ -1364,6 +1441,21 @@ namespace olympia
             {
                 replay_buffer_.erase(delete_iter);
                 ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
+            }
+        }
+    }
+
+    void LSU::flushStoreBuffer_(const FlushCriteria & criteria)
+    {
+        auto sb_iter = store_buffer_.begin();
+        while(sb_iter != store_buffer_.end()) {
+            auto store_ptr = *sb_iter;
+            if(criteria.includedInFlush(store_ptr)) {
+                auto delete_iter = sb_iter++;
+                store_buffer_.erase(delete_iter);
+                ILOG("Flushed store from store buffer: " << store_ptr);
+            } else {
+                ++sb_iter;
             }
         }
     }

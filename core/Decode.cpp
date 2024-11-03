@@ -52,7 +52,10 @@ namespace olympia
         vector_config_(new VectorConfig(p->init_vl, p->init_sew, p->init_lmul, p->init_vta)),
         vset_blocking_count_(&unit_stat_set_, "vset_blocking_count",
                              "Number of times that the Decode unit blocks execution",
-                             sparta::Counter::COUNT_NORMAL)
+                             sparta::Counter::COUNT_NORMAL),
+        vset_blocking_stall_latency_(&unit_stat_set_, "vset_blocking_stall_latency",
+                                     "Accumulated between roundtrip vset decode and processing",
+                                     sparta::Counter::COUNT_NORMAL)
     {
         initializeFusion_();
 
@@ -157,6 +160,8 @@ namespace olympia
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
         {
+            const auto vset_block_end = getClock()->currentCycle();
+            vset_blocking_stall_latency_ += (vset_block_end - vset_block_start_);
             // schedule decode, because we've been stalled on vset
             waiting_on_vset_ = false;
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
@@ -230,6 +235,8 @@ namespace olympia
                 else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
                     vset_blocking_count_++;
+
+                    vset_block_start_ = getClock()->currentCycle();
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                     waiting_on_vset_ = true;
                     // need to indicate we want a signal sent back at execute

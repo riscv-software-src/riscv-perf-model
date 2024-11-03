@@ -20,6 +20,7 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <map>
 #include <memory>
@@ -342,6 +343,9 @@ namespace olympia
         uint32_t getNumVecUopsRemaining() const;
 
         sparta::Counter vset_blocking_count_;
+        sparta::Counter vset_blocking_stall_latency_;
+
+        uint64_t vset_block_start_;
 
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks

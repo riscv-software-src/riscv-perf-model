@@ -81,10 +81,13 @@ namespace olympia
                 // FIXME: Consider uop id
                 sparta::memory::addr_t vaddr = inst_ptr->getTargetVAddr() +
                     (mem_req_num * vector_mem_config_ptr->getStride());
+                sparta::memory::addr_t paddr = inst_ptr->getPAddr() +
+                    (mem_req_num * vector_mem_config_ptr->getStride());
 
                 // Create LS inst info
                 LoadStoreInstInfoPtr lsinfo_inst_ptr = createLoadStoreInst_(inst_ptr);
                 lsinfo_inst_ptr->getMemoryAccessInfoPtr()->setVAddr(vaddr);
+                lsinfo_inst_ptr->getMemoryAccessInfoPtr()->setPAddr(paddr);
                 lsinfo_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
 
                 // Append to the memory request buffer
@@ -325,7 +328,7 @@ namespace olympia
             const auto & mem_info_ptr = ldst_info_ptr->getMemoryAccessInfoPtr();
             if (ldst_inst_ptr->isStoreInst()
                 && ldst_inst_ptr->getUniqueID() < inst_ptr->getUniqueID()
-                && !mem_info_ptr->getPhyAddrStatus() && ldst_info_ptr->getInstPtr() != inst_ptr
+                && !mem_info_ptr->getPAddrStatus() && ldst_info_ptr->getInstPtr() != inst_ptr
                 && ldst_inst_ptr->getUOpID() < inst_ptr->getUOpID())
             {
                 return false;

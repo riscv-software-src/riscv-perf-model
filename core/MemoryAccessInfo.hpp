@@ -98,7 +98,7 @@ namespace olympia
             src_(ArchUnit::NO_ACCESS),
             dest_(ArchUnit::NO_ACCESS),
             vaddr_(inst_ptr->getTargetVAddr()),
-            paddr_(inst_ptr->getRAdr())
+            paddr_(inst_ptr->getPAddr())
         {
         }
 
@@ -131,9 +131,9 @@ namespace olympia
 
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
-        bool getPhyAddrStatus() const { return phy_addr_ready_; }
+        bool getPAddrStatus() const { return phy_addr_ready_; }
 
-        sparta::memory::addr_t getPhyAddr() const { return paddr_; }
+        sparta::memory::addr_t getPAddr() const { return paddr_; }
 
         void setPAddr(sparta::memory::addr_t paddr) { paddr_ = paddr; }
 
@@ -320,7 +320,7 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        os << "memptr: " << std::hex << mem.getPhyAddr() << std::dec;
+        os << "memptr: " << std::hex << mem.getPAddr() << std::dec;
         if (mem.getInstPtr() != nullptr) {
             os << " " << mem.getInstPtr();
         }

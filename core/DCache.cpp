@@ -70,8 +70,7 @@ namespace olympia
     // Access L1Cache
     bool DCache::dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t phyAddr = inst_ptr->getRAdr();
+        const uint64_t phyAddr = mem_access_info_ptr->getPAddr();
 
         bool cache_hit = false;
 
@@ -205,8 +204,7 @@ namespace olympia
 
     uint64_t DCache::getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const
     {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto & inst_target_addr = inst_ptr->getRAdr();
+        const auto & inst_target_addr = mem_access_info_ptr->getPAddr();
         return addr_decoder_->calcBlockAddr(inst_target_addr);
     }
 
@@ -219,7 +217,7 @@ namespace olympia
         ILOG(mem_access_info_ptr << " in read stage");
         if (mem_access_info_ptr->isRefill())
         {
-            reloadCache_(mem_access_info_ptr->getPhyAddr());
+            reloadCache_(mem_access_info_ptr->getPAddr());
             return;
         }
 

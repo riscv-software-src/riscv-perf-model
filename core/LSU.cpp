@@ -385,9 +385,9 @@ namespace olympia
             ILOG("MMU stage not valid");
             return;
         }
-        ILOG("MMU Ack: " << std::boolalpha << updated_memory_access_info_ptr->getPhyAddrStatus()
+        ILOG("MMU Ack: " << std::boolalpha << updated_memory_access_info_ptr->getPAddrStatus()
                          << " " << updated_memory_access_info_ptr);
-        const bool mmu_hit_ = updated_memory_access_info_ptr->getPhyAddrStatus();
+        const bool mmu_hit_ = updated_memory_access_info_ptr->getPAddrStatus();
 
         if (updated_memory_access_info_ptr->getInstPtr()->isStoreInst() && mmu_hit_
             && allow_speculative_load_exec_)
@@ -438,7 +438,7 @@ namespace olympia
         const LoadStoreInstInfoPtr & lsinfo_inst_ptr = ldst_pipeline_[cache_lookup_stage_];
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             lsinfo_inst_ptr->getMemoryAccessInfoPtr();
-        const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
+        const bool phy_addr_is_ready = mem_access_info_ptr->getPAddrStatus();
 
         // If we did not have an MMU hit from previous stage, invalidate and bail
         if (false == phy_addr_is_ready)
@@ -828,7 +828,7 @@ namespace olympia
         {
             replay_inst_ptr->setState(LoadStoreInstInfo::IssueState::READY);
         }
-        auto issue_priority = replay_inst_ptr->getMemoryAccessInfoPtr()->getPhyAddrStatus()
+        auto issue_priority = replay_inst_ptr->getMemoryAccessInfoPtr()->getPAddrStatus()
                                   ? LoadStoreInstInfo::IssuePriority::CACHE_PENDING
                                   : LoadStoreInstInfo::IssuePriority::MMU_PENDING;
         replay_inst_ptr->setPriority(issue_priority);
@@ -902,7 +902,7 @@ namespace olympia
             const auto & inst_ptr = ldst_info_ptr->getInstPtr();
             const auto & mem_info_ptr = ldst_info_ptr->getMemoryAccessInfoPtr();
             if (inst_ptr->isStoreInst() && (inst_ptr->getUniqueID() < inst_ptr->getUniqueID())
-                && !mem_info_ptr->getPhyAddrStatus() && (ldst_info_ptr->getInstPtr() != inst_ptr))
+                && !mem_info_ptr->getPAddrStatus() && (ldst_info_ptr->getInstPtr() != inst_ptr))
             {
                 return false;
             }

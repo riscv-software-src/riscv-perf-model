@@ -76,7 +76,8 @@ namespace olympia
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
-        using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
+        using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
+        using LoadStoreInstIterator = LoadStoreIssueQueue::const_iterator;
         using FlushCriteria = FlushManager::FlushingCriteria;
 
       protected:
@@ -118,7 +119,6 @@ namespace olympia
         // Internal States
         ////////////////////////////////////////////////////////////////////////////////
         // Issue Queue
-        using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
         LoadStoreIssueQueue inst_queue_;
         const uint32_t inst_queue_size_;
 

@@ -53,7 +53,7 @@ namespace olympia {
     // Access ICache
     bool ICache::lookupCache_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
-        uint64_t phyAddr = mem_access_info_ptr->getPhyAddr();
+        uint64_t phyAddr = mem_access_info_ptr->getPAddr();
 
         bool cache_hit = false;
 
@@ -90,7 +90,7 @@ namespace olympia {
     {
 
         auto const decoder = l1_cache_->getAddrDecoder();
-        auto const reload_addr = mem_access_info_ptr->getPhyAddr();
+        auto const reload_addr = mem_access_info_ptr->getPAddr();
         auto const reload_block = decoder->calcBlockAddr(reload_addr);
 
         auto l1_cache_line = &l1_cache_->getLineForReplacementWithInvalidCheck(reload_addr);
@@ -102,7 +102,7 @@ namespace olympia {
         while (iter != pending_miss_buffer_.end()) {
             auto delete_iter = iter++;
 
-            if (decoder->calcBlockAddr((*delete_iter)->getPhyAddr()) == reload_block) {
+            if (decoder->calcBlockAddr((*delete_iter)->getPAddr()) == reload_block) {
                 DLOG("scheduling for replay " << *delete_iter);
                 replay_buffer_.emplace_back(*delete_iter);
                 pending_miss_buffer_.erase(delete_iter);
@@ -161,9 +161,9 @@ namespace olympia {
     {
         // Don't make requests to cachelines that are already pending
         auto const decoder = l1_cache_->getAddrDecoder();
-        auto missed_block = decoder->calcBlockAddr(mem_access_info_ptr->getPhyAddr());
+        auto missed_block = decoder->calcBlockAddr(mem_access_info_ptr->getPAddr());
         auto same_line = [decoder, missed_block] (auto other) {
-            return decoder->calcBlockAddr(other->getPhyAddr()) == missed_block;
+            return decoder->calcBlockAddr(other->getPAddr()) == missed_block;
         };
         auto it = std::find_if(pending_miss_buffer_.begin(), pending_miss_buffer_.end(), same_line);
         if (it == pending_miss_buffer_.end()) {

@@ -328,7 +328,7 @@ namespace olympia
 
         InstArchInfo::UopGenType getUopGenType() const { return inst_arch_info_->getUopGenType(); }
 
-        uint64_t getRAdr() const { return target_vaddr_ | 0x8000000; } // faked
+        uint64_t getPAddr() const { return target_vaddr_ | 0x8000000000000000; } // faked
 
         bool isSpeculative() const { return is_speculative_; }
 
@@ -585,7 +585,7 @@ namespace olympia
                               SPARTA_ADDPAIR("complete", &Inst::getCompletedStatus),
                               SPARTA_ADDPAIR("pipe", &Inst::getPipe),
                               SPARTA_ADDPAIR("latency", &Inst::getExecuteTime),
-                              SPARTA_ADDPAIR("raddr", &Inst::getRAdr, std::ios::hex),
+                              SPARTA_ADDPAIR("raddr", &Inst::getPAddr, std::ios::hex),
                               SPARTA_ADDPAIR("tgt_vaddr", &Inst::getTargetVAddr, std::ios::hex))
     };
 

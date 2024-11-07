@@ -195,7 +195,7 @@ namespace olympia
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_vset_busy", "VSET busy",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
-                sparta::CycleCounter(getStatisticSet(), "stall_sys_busy", "No credits from ROB",
+                sparta::CycleCounter(getStatisticSet(), "stall_rob_full", "No credits from ROB",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
                                      "Dispatch not stalled, all instructions dispatched",

@@ -135,13 +135,17 @@ namespace olympia
             {
                 // UPDATE:
                 ex_inst.setStatus(Inst::Status::RETIRED);
-                if (ex_inst.isStoreInst() && !ex_inst.isVector()) {
-                    // We don't send signal back for vector because
-                    // statuses are held by load_store_info_ptr, not inst_ptr
-                    // like in LSU
-                    out_rob_retire_ack_.send(ex_inst_ptr);
+                if (ex_inst.isStoreInst())
+                {
+                    if(ex_inst.isVector())
+                    {
+                        out_rob_retire_ack_vlsu_.send(ex_inst_ptr);
+                    }
+                    else
+                    {
+                        out_rob_retire_ack_.send(ex_inst_ptr);
+                    }
                 }
-
                 // sending retired instruction to rename
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);
 
@@ -152,12 +156,6 @@ namespace olympia
                     ++num_retired_;
                     ++retired_this_cycle;
 
-                    ILOG( "\nIncrementing" <<
-                        "\n expected: " << expected_program_id_ <<
-                        "\n received: " << ex_inst.getProgramID() <<
-                        "\n UID: " << ex_inst_ptr->getMavisUid() <<
-                        "\n incr: " << ex_inst_ptr->getProgramIDIncrement() <<
-                        "\n inst " << ex_inst)
                     // Use the program ID to verify that the program order has been maintained.
                     sparta_assert(ex_inst.getProgramID() == expected_program_id_,
                         "\nUnexpected program ID when retiring instruction" <<

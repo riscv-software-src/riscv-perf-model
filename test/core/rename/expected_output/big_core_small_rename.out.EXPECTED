@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Thursday Thu Nov  7 14:25:56 2024
-#Elapsed:  0.006857s
+#Start:    Saturday Sat Oct 19 16:27:18 2024
+#Elapsed:  0.003002s
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: DIViq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq1
@@ -71,7 +71,6 @@
 {0000000003 00000003 top.execute.iq0 info} handleOperandIssueCheck_: Sending to issue queue uid:0 DISPATCHED 0 pid:1 uopid:0 'add	3,1,2' 
 {0000000003 00000003 top.rob info} robAppended_: retire appended: uid:0 DISPATCHED 0 pid:1 uopid:0 'add	3,1,2' 
 {0000000003 00000003 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(1)  PID(2)  add
-{0000000003 00000003 top.rob info} retireInstructions_: Retiring
 {0000000003 00000003 top.rob info} retireInstructions_: num to retire: 1
 {0000000003 00000003 top.rob info} retireInstructions_: set oldest: uid:0 DISPATCHED 0 pid:1 uopid:0 'add	3,1,2' 
 {0000000003 00000003 top.execute.iq0 info} sendReadyInsts_: Sending instruction uid:0 DISPATCHED 0 pid:1 uopid:0 'add	3,1,2'  to exe_pipe exe0
@@ -91,7 +90,6 @@
 {0000000004 00000004 top.rob info} robAppended_: retire appended: uid:1 DISPATCHED 0 pid:2 uopid:0 'add	4,3,2' 
 {0000000004 00000004 top.dispatch info} dispatchQueueAppended_: queue appended: 0x00000000 UID(2)  PID(3)  mul
 {0000000004 00000004 top.execute.exe0 info} executeInst_: Executed inst: uid:0  SCHEDULED 0 pid:1 uopid:0 'add	3,1,2' 
-{0000000004 00000004 top.rob info} retireInstructions_: Retiring
 {0000000004 00000004 top.rob info} retireInstructions_: num to retire: 2
 {0000000004 00000004 top.dispatch info} dispatchInstructions_: Num to dispatch: 1
 {0000000004 00000004 top.dispatch info} acceptInst: iq1: dispatching uid:2    RENAMED 0 pid:3 uopid:0 'mul	13,12,11' 

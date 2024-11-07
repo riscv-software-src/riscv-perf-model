@@ -22,8 +22,8 @@ namespace olympia
         in_l2cache_resp_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveRespFromL2Cache_, MemoryAccessInfoPtr));
 
-        in_l2cache_ack_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveAckFromL2Cache_, uint32_t));
+        in_l2cache_credits_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getCreditsFromL2Cache_, uint32_t));
 
         in_lsu_lookup_req_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
         in_l2cache_resp_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
@@ -307,14 +307,6 @@ namespace olympia
     void DCache::receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received memory access request from LSU " << memory_access_info_ptr);
-        if(memory_access_info_ptr->getInstPtr()->isVector())
-        {
-            out_vlsu_lookup_ack_.send(memory_access_info_ptr);
-        }
-        else
-        {
-            out_lsu_lookup_ack_.send(memory_access_info_ptr);
-        }
         in_l2_cache_resp_receive_event_.schedule();
         lsu_mem_access_info_ = memory_access_info_ptr;
     }
@@ -334,14 +326,8 @@ namespace olympia
         in_l2_cache_resp_receive_event_.schedule();
     }
 
-    void DCache::receiveAckFromL2Cache_(const uint32_t & ack)
-    {
-        // When DCache sends the request to L2Cache for a miss,
-        // This bool will be set to false, and Dcache should wait for ack from
-        // L2Cache notifying DCache that there is space in it's dcache request buffer
-        //
-        // Set it to true so that the following misses from DCache can be sent out to L2Cache.
-        dcache_l2cache_credits_ = ack;
+    void DCache::getCreditsFromL2Cache_(const uint32_t &ack) {
+        dcache_l2cache_credits_ += ack;
     }
 
     // MSHR Entry allocation in case of miss

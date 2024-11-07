@@ -212,7 +212,8 @@ namespace olympia
     {
         os << "lsinfo["
            << "uid: " << ls_info.getInstUniqueID() << " uopid: " << ls_info.getInstUOpID()
-           << " pri:" << ls_info.getPriority() << " state: " << ls_info.getState() << "]";
+           << " pri:" << ls_info.getPriority()
+           << " state: " << ls_info.getState() << "]";
         return os;
     }
 

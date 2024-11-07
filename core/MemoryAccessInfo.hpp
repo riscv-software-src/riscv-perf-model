@@ -8,6 +8,7 @@
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "Inst.hpp"
+#include "InstGroup.hpp"
 
 namespace olympia
 {
@@ -72,6 +73,19 @@ namespace olympia
 
         MemoryAccessInfo(const MemoryAccessInfo &rhs) = default;
 
+        MemoryAccessInfo(const uint64_t addr) :
+            ldst_inst_ptr_(nullptr),
+            phy_addr_ready_(true),
+            mmu_access_state_(MMUState::NO_ACCESS),
+            cache_access_state_(CacheState::NO_ACCESS),
+            cache_data_ready_(false),
+            src_(ArchUnit::NO_ACCESS),
+            dest_(ArchUnit::NO_ACCESS),
+            vaddr_(addr),
+            paddr_(addr)
+        {}
+
+
         MemoryAccessInfo(const InstPtr & inst_ptr) :
             ldst_inst_ptr_(inst_ptr),
             phy_addr_ready_(false),
@@ -82,7 +96,9 @@ namespace olympia
             cache_data_ready_(false),
             is_refill_(false),
             src_(ArchUnit::NO_ACCESS),
-            dest_(ArchUnit::NO_ACCESS)
+            dest_(ArchUnit::NO_ACCESS),
+            vaddr_(inst_ptr->getTargetVAddr()),
+            paddr_(inst_ptr->getRAdr())
         {
         }
 
@@ -117,7 +133,9 @@ namespace olympia
 
         bool getPhyAddrStatus() const { return phy_addr_ready_; }
 
-        uint64_t getPhyAddr() const { return ldst_inst_ptr_->getRAdr(); }
+        sparta::memory::addr_t getPhyAddr() const { return paddr_; }
+
+        void setPAddr(sparta::memory::addr_t paddr) { paddr_ = paddr; }
 
         sparta::memory::addr_t getVAddr() const { return vaddr_; }
 
@@ -148,6 +166,9 @@ namespace olympia
         bool isDataReady() const { return cache_data_ready_; }
 
         void setDataReady(bool is_ready) { cache_data_ready_ = is_ready; }
+
+        void setFetchGroup(const InstGroupPtr &group) { fetch_group_ = group; }
+        const InstGroupPtr & getFetchGroup() const { return fetch_group_; }
 
         const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
 
@@ -183,7 +204,7 @@ namespace olympia
         bool isVector(){ return getInstPtr()->isVector(); }
       private:
         // load/store instruction pointer
-        InstPtr ldst_inst_ptr_;
+        const InstPtr ldst_inst_ptr_;
 
         // Indicate MMU address translation status
         bool phy_addr_ready_;
@@ -201,16 +222,24 @@ namespace olympia
         ArchUnit src_ = ArchUnit::NO_ACCESS;
         ArchUnit dest_ = ArchUnit::NO_ACCESS;
 
+        // Virtual Address
+        sparta::memory::addr_t vaddr_;
+
+        // Physical Address
+        sparta::memory::addr_t paddr_;
+
         // Pointer to next request for DEBUG/TRACK
         // (Note : Currently used only to track request with same cacheline in L2Cache
         // Not for functional/performance purpose)
         MemoryAccessInfoPtr next_req_ = nullptr;
 
+        // Instructions that this memory access is fetching
+        // *USED* only for instruction fetch
+        InstGroupPtr fetch_group_;
+
         LoadStoreInstIterator issue_queue_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
         MSHREntryInfoIterator mshr_entry_info_iterator_;
-
-        sparta::memory::addr_t vaddr_;
     };
 
     using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
@@ -291,13 +320,9 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        if(mem.getInstPtr()->isVector())
-        {
-            os << "memptr: " << mem.getInstPtr() << " vaddr: " << mem.getVAddr();
-        }
-        else
-        {
-            os << "memptr: " << mem.getInstPtr();
+        os << "memptr: " << std::hex << mem.getPhyAddr() << std::dec;
+        if (mem.getInstPtr() != nullptr) {
+            os << " " << mem.getInstPtr();
         }
         return os;
     }

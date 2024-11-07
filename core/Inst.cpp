@@ -6,6 +6,7 @@
 namespace olympia
 {
     const std::unordered_map<Inst::Status,std::string> Inst::status2String = {
+        { Inst::Status::BEFORE_FETCH,"BEFORE_FETCH" },
         { Inst::Status::FETCHED,     "FETCHED"      },
         { Inst::Status::DECODED,     "DECODED"      },
         { Inst::Status::RENAMED,     "RENAMED"      },
@@ -71,7 +72,7 @@ namespace olympia
         is_vector_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::VECTOR)),
         is_return_(isReturnInstruction(opcode_info)),
         has_immediate_(opcode_info_->hasImmediate()),
-        status_state_(Status::FETCHED)
+        status_state_(Status::BEFORE_FETCH)
     {
         sparta_assert(inst_arch_info_ != nullptr,
                       "Mavis decoded the instruction, but Olympia has no uarch data for it: "

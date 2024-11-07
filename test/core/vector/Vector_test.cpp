@@ -293,6 +293,14 @@ void runTests(int argc, char **argv)
         }
         EXPECT_TRUE(sparta_exception_fired);
     }
+    else if (input_file.find("vsadd.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        rob_tester.test_num_insts_retired(2);
+        rob_tester.test_num_uops_retired(5);
+        rob_tester.test_last_inst_has_tail(false);
+    }
     else
     {
         sparta_assert(false, "Invalid input file: " << input_file);

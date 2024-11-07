@@ -47,13 +47,14 @@ namespace olympia
             F2I,
             INT,
             LSU,
+            VLSU,
             MUL,
             VINT,
+            VFIXED,
             VMASK,
             VMUL,
             VDIV,
             VSET,
-            VLSU,
             SYS,
             UNKNOWN
         };

@@ -312,6 +312,7 @@ namespace olympia
                 // For misaligns, more than 1 address is provided
                 // inst->setVAddrVector(std::move(addrs));
             }
+            inst->setCoF(next_it_->isCoF());
             if (next_it_->isBranch())
             {
                 inst->setTakenBranch(next_it_->isTakenBranch());

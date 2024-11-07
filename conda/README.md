@@ -13,9 +13,9 @@ If `conda` is not already set up or the preference is to have a local
 
 ## Create a New Environment or Update Existing Conda Environment
 
-** If these steps do no work, follow the directions on
-   [Map/Sparta](https://github.com/sparcians/map/tree/master#building-map)
-   instead **
+**If these steps do no work, follow the directions on
+  [Map/Sparta](https://github.com/sparcians/map/tree/master#building-map)
+  instead**
 
 A new environment can be created using `environment.yaml` file as follows:
 
@@ -31,4 +31,8 @@ If an environment named `riscv_perf_model` exists, it can be updated as follows:
 conda env update --file environment.yml  --prune
 ```
 
-Thw file `environment_from_history.yml` provides a minimal specification, in case, there is a need to build the conda environment from scratch.
+The file `environment_for_macos.yml` provides an alternative specification if encountering problems
+while building the conda environement for macOS.
+
+The file `environment_from_history.yml` provides a minimal specification, in case, there is a need
+to build the conda environment from scratch.

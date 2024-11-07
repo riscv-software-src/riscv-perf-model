@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/resources/Pipeline.hpp"
@@ -34,6 +35,16 @@ namespace olympia
         DCache(sparta::TreeNode* n, const CacheParameterSet* p);
 
       private:
+        bool dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr);
+
+        void reloadCache_(uint64_t phy_addr);
+
+        void getInstsFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+
+        void getCreditsFromL2Cache_(const uint32_t &);
+
+        void getRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+
         ////////////////////////////////////////////////////////////////////////////////
         // L1 Data Cache Handling
         ////////////////////////////////////////////////////////////////////////////////
@@ -48,10 +59,6 @@ namespace olympia
         const uint32_t num_mshr_entries_;
 
         void setupL1Cache_(const CacheParameterSet* p);
-
-        bool dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr);
-
-        void reloadCache_(uint64_t phy_addr);
 
         uint64_t getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const;
 
@@ -97,12 +104,12 @@ namespace olympia
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_{&unit_port_set_,
-                                                                   "in_lsu_lookup_req", 1};
+                                                                   "in_lsu_lookup_req", 0};
 
-        sparta::DataInPort<uint32_t> in_l2cache_ack_{&unit_port_set_, "in_l2cache_ack", 1};
+        sparta::DataInPort<uint32_t> in_l2cache_credits_{&unit_port_set_, "in_l2cache_credits", 1};
 
-        sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_, "in_l2cache_resp",
-                                                                 1};
+        sparta::DataInPort<MemoryAccessInfoPtr> in_l2cache_resp_{&unit_port_set_,
+                                                                 "in_l2cache_resp", 1};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports

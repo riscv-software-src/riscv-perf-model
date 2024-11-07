@@ -104,6 +104,12 @@ namespace olympia
         node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
             this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
 
+
+        auto & events = ldst_pipeline_.getEventsAtStage(cache_read_stage_);
+        for (auto & event : events) {
+            in_cache_lookup_ack_.registerConsumerEvent(event->getScheduleable());
+        }
+
         uev_append_ready_ >> uev_issue_inst_;
         // NOTE:
         // To resolve the race condition when:
@@ -246,7 +252,7 @@ namespace olympia
             // either a new issue event, or a re-issue event
             // however, we can ONLY update instruction status as SCHEDULED for a new issue event
 
-            ILOG("Another issue event scheduled " << inst_ptr);
+            ILOG("Inst fully readdy: " << inst_ptr);
 
             if (isReadyToIssueInsts_())
             {
@@ -530,6 +536,7 @@ namespace olympia
         // Is its a cache miss we dont need to rechedule the instruction
         if (!mem_access_info_ptr->isCacheHit())
         {
+            ILOG("ma cache miss: " << mem_access_info_ptr);
             return;
         }
 

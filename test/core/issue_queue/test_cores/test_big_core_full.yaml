@@ -1,3 +1,6 @@
+top.cpu.core0.icache.params.l1_always_hit: true
+top.cpu.core0.icache.params.cache_latency: 0
+
 #
 # Set up the pipeline for a 8-wide machine
 #
@@ -10,14 +13,14 @@ top.cpu.core0.extension.core_extensions:
     ["int", "mul", "i2f", "cmov"],
     ["int"],
     ["int"],
-    ["float", "faddsub", "fmac"], 
+    ["float", "faddsub", "fmac"],
     ["float", "f2i"],
     ["br"],
     ["br"],
     ["vint", "vset", "vdiv", "vmul"]
   ]
   issue_queue_to_pipe_map:
-  [ 
+  [
     ["0", "1"],
     ["2", "3"],
     ["4", "5"],

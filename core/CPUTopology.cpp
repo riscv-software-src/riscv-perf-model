@@ -28,6 +28,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->flushmanager_rf
         },
         {
+            "icache",
+            "cpu.core*",
+            "Instruction Cache Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->icache_rf
+        },
+        {
             "fetch",
             "cpu.core*",
             "Fetch Unit",
@@ -169,6 +177,18 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
     //! Instantiating ports of this topology
     port_connections = {
         {
+            "cpu.core*.fetch.ports.out_fetch_icache_req",
+            "cpu.core*.icache.ports.in_fetch_req"
+        },
+        {
+            "cpu.core*.fetch.ports.in_icache_fetch_resp",
+            "cpu.core*.icache.ports.out_fetch_resp"
+        },
+        {
+            "cpu.core*.fetch.ports.in_icache_fetch_credits",
+            "cpu.core*.icache.ports.out_fetch_credit"
+        },
+        {
             "cpu.core*.fetch.ports.out_fetch_queue_write",
             "cpu.core*.decode.ports.in_fetch_queue_write"
         },
@@ -253,20 +273,32 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             "cpu.core*.l2cache.ports.in_dcache_l2cache_req"
         },
         {
-            "cpu.core*.dcache.ports.in_l2cache_ack",
-            "cpu.core*.l2cache.ports.out_l2cache_dcache_ack"
+            "cpu.core*.dcache.ports.in_l2cache_credits",
+            "cpu.core*.l2cache.ports.out_l2cache_dcache_credits"
         },
         {
             "cpu.core*.dcache.ports.in_l2cache_resp",
             "cpu.core*.l2cache.ports.out_l2cache_dcache_resp"
         },
         {
+            "cpu.core*.icache.ports.out_l2cache_req",
+            "cpu.core*.l2cache.ports.in_icache_l2cache_req"
+        },
+        {
+            "cpu.core*.icache.ports.in_l2cache_credits",
+            "cpu.core*.l2cache.ports.out_l2cache_icache_credits"
+        },
+        {
+            "cpu.core*.icache.ports.in_l2cache_resp",
+            "cpu.core*.l2cache.ports.out_l2cache_icache_resp"
+        },
+        {
             "cpu.core*.l2cache.ports.out_l2cache_biu_req",
             "cpu.core*.biu.ports.in_biu_req"
         },
         {
-            "cpu.core*.biu.ports.out_biu_ack",
-            "cpu.core*.l2cache.ports.in_biu_l2cache_ack"
+            "cpu.core*.biu.ports.out_biu_credits",
+            "cpu.core*.l2cache.ports.in_biu_l2cache_credits"
         },
         {
             "cpu.core*.biu.ports.out_biu_resp",

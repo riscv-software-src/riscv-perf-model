@@ -210,7 +210,7 @@ SUPPORTED_INSTS = {
 
 # Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Averaging Add and Subtract
     "vaaddu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
-    "vaaddu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+    "vaaddu.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
     "vaadd.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
     "vaadd.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
     "vasubu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
@@ -230,7 +230,13 @@ SUPPORTED_INSTS = {
     "vssra.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
     "vssra.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
 
-# TODO: Vector Fixed-Point Arithmetic Instructions: Vector Narrowing Fixed-Point Clip Instructions
+# Vector Fixed-Point Arithmetic Instructions: Vector Narrowing Fixed-Point Clip Instructions
+    "vnclipu.wv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 2},
+    "vnclipu.wx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 2},
+    "vnclipu.wi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 2},
+    "vnclip.wv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 2},
+    "vnclip.wx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 2},
+    "vnclip.wi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 2},
 
 # TODO: Vector Floating-Point Instructions: Vector Floating-Point Exception Flags
 # TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions

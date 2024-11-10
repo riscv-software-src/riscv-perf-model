@@ -19,9 +19,9 @@
     },
     {
         "mnemonic": "vaaddu.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vadc.vim",
@@ -1393,39 +1393,39 @@
     },
     {
         "mnemonic": "vnclip.wi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vnclip.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vnclip.wx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vnclipu.wi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vnclipu.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vnclipu.wx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vnmsac.vv",

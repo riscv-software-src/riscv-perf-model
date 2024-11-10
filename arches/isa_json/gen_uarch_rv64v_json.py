@@ -194,19 +194,19 @@ SUPPORTED_INSTS = {
     "vmv.v.i" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
 
 # Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Saturating Add and Subtract
-    "vsaddu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
-    "vsaddu.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
-    "vsaddu.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vsaddu.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsaddu.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsaddu.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
 
-    "vsadd.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
-    "vsadd.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
-    "vsadd.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vsadd.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsadd.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vsadd.vi" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
     
-    "vssubu.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
-    "vssubu.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vssubu.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vssubu.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
     
-    "vssub.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
-    "vssub.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 1},
+    "vssub.vv" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
+    "vssub.vx" : {"pipe" : "vint", "uop_gen" : "ARITH", "latency" : 1},
 
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Averaging Add and Subtract
 # Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Fractional Multiply with Rounding and Saturation
@@ -217,24 +217,165 @@ SUPPORTED_INSTS = {
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Narrowing Fixed-Point Clip Instructions
 
 # TODO: Vector Floating-Point Instructions: Vector Floating-Point Exception Flags
-# TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
-# TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Add/Subtract Instructions
-# TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Multiply/Divide Instructions
-# TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Multiply
-# TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Fused Multiply-Add Instructions
-# TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Fused Multiply-Add Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Square-Root Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Square-Root Estimate Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Estimate Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point MIN/MAX Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Sign-Injection Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Compare Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Classify Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Merge Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Move Instruction
-# TODO: Vector Floating-Point Instructions: Single-Width Floating-Point/Integer Type-Convert Instructions
-# TODO: Vector Floating-Point Instructions: Widening Floating-Point/Integer Type-Convert Instructions
-# TODO: Vector Floating-Point Instructions: Narrowing Floating-Point/Integer Type-Convert Instructions
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
+    "vfadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfadd.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    
+    "vfsub.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfrsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Widening Floating-Point Add/Subtract Instructions
+    "vfwadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwadd.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwsub.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwadd.wv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwadd.wf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwsub.wv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwsub.wf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Multiply/Divide Instructions
+    "vfmul.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfmul.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfdiv.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 25},
+    "vfdiv.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 25},
+
+    "vfrdiv.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" :25},
+
+# Vector Floating-Point Instructions: Vector Widening Floating-Point Multiply
+    "vfwmul.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfwmul.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Fused Multiply-Add Instructions
+    "vfmacc.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfmacc.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfnmacc.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfnmacc.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfmsac.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfmsac.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfnmsac.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfnmsac.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfmadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfmadd.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfnmadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfnmadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfmsub.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfmsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfnmsub.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfnmsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Widening Floating-Point Fused Multiply-Add Instructions
+    "vfwmacc.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwmacc.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwnmacc.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwnmacc.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwmsac.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwmsac.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwnmsac.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwnmsac.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Square-Root Instruction
+    "vfsqrt.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 25},
+
+# TODO: support variable length latency
+# Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Square-Root Estimate Instruction
+    "vfrsqrt7.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Estimate Instruction
+    "vfrec7.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+# Vector Floating-Point Instructions: Vector Floating-Point MIN/MAX Instructions
+    "vfmin.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+    "vfmin.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+    "vfmax.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+    "vfmax.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Sign-Injection Instructions
+    "vfsgnj.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+    "vfsgnj.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+    "vfsgnjn.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+    "vfsgnjn.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+    "vfsgnjx.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+    "vfsgnjx.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Compare Instructions
+    "vmfeq.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+    "vmfeq.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+    "vmfne.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+    "vmfne.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+    "vmflt.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+    "vmflt.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+    "vmfle.vv" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+    "vmfle.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+    "vmfgt.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+    "vmfgte.vf" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 2},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Classify Instruction
+    "vfclass.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Merge Instruction
+    "vfmerge.vfm" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Move Instruction
+    "vfmv.v.f" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 1},
+
+# Vector Floating-Point Instructions: Single-Width Floating-Point/Integer Type-Convert Instructions
+    "vfcvt.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfcvt.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+    "vfcvt.rtz.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfcvt.rtz.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+    "vfcvt.f.xu.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfcvt.f.x.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+# Vector Floating-Point Instructions: Widening Floating-Point/Integer Type-Convert Instructions
+    "vfwcvt.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwcvt.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwcvt.rtz.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwcvt.rtz.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwcvt.f.xu.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+    "vfwcvt.f.xu.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+    "vfwcvt.f.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 6},
+
+# Vector Floating-Point Instructions: Narrowing Floating-Point/Integer Type-Convert Instructions
+    "vfncvt.xu.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfncvt.x.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+    "vfncvt.rtz.xu.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfncvt.rtz.x.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+    "vfncvt.f.xu.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfncvt.f.x.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+
+    "vfncvt.f.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
+    "vfncvt.rod.f.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ARITH", "latency" : 3},
 
 # TODO: Vector Reduction Operations: Vector Single-Width Integer Reduction Instructions
 # TODO: Vector Reduction Operations: Vector Widening Integer Reduction Instructions
@@ -305,4 +446,3 @@ for opcode in mavis_rv64v_json:
 with open(JSON, "w") as f:
     print("Writing rv64v uarch json to "+JSON)
     json.dump(uarch_json, f, indent=4)
-

@@ -133,69 +133,69 @@
     },
     {
         "mnemonic": "vfadd.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfclass.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfcvt.f.x.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.f.xu.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.rtz.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.rtz.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfdiv.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 25
     },
     {
         "mnemonic": "vfdiv.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 25
     },
     {
         "mnemonic": "vfdot.vv",
@@ -211,93 +211,93 @@
     },
     {
         "mnemonic": "vfmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmadd.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmax.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfmax.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfmerge.vfm",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfmin.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfmin.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmul.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmul.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfmv.f.s",
@@ -313,69 +313,69 @@
     },
     {
         "mnemonic": "vfmv.v.f",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfncvt.f.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.f.x.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.f.xu.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.rod.f.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.rtz.x.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.rtz.xu.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.x.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.xu.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfnmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmadd.vf",
@@ -385,45 +385,45 @@
     },
     {
         "mnemonic": "vfnmadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfrdiv.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 25
     },
     {
         "mnemonic": "vfrec7.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vfredmax.vs",
@@ -451,51 +451,51 @@
     },
     {
         "mnemonic": "vfrsqrt7.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vfrsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfsgnj.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnj.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjn.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjn.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjx.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjx.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 1
     },
     {
         "mnemonic": "vfslide1down.vf",
@@ -511,51 +511,51 @@
     },
     {
         "mnemonic": "vfsqrt.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 25
     },
     {
         "mnemonic": "vfsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.wf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.f.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.f.x.v",
@@ -565,93 +565,93 @@
     },
     {
         "mnemonic": "vfwcvt.f.xu.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.rtz.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.rtz.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmul.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfwmul.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 3
     },
     {
         "mnemonic": "vfwnmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwnmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwnmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwnmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwredosum.vs",
@@ -667,27 +667,27 @@
     },
     {
         "mnemonic": "vfwsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwsub.wf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vfwsub.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vid.v",
@@ -1021,15 +1021,15 @@
     },
     {
         "mnemonic": "vmfeq.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmfeq.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmfge.vf",
@@ -1039,45 +1039,45 @@
     },
     {
         "mnemonic": "vmfgt.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmfle.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmfle.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmflt.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmflt.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmfne.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmfne.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ARITH",
+        "latency": 2
     },
     {
         "mnemonic": "vmin.vv",

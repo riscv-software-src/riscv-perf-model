@@ -50,6 +50,7 @@ namespace olympia
             MUL,
             VINT,
             VFIXED,
+            VFLOAT,
             VMASK,
             VMUL,
             VDIV,

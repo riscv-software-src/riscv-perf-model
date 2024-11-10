@@ -1909,39 +1909,39 @@
     },
     {
         "mnemonic": "vssra.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vssra.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vssra.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vssrl.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vssrl.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vssrl.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vssub.vv",

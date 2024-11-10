@@ -222,7 +222,14 @@ SUPPORTED_INSTS = {
     "vsmul.vx" :   {"pipe" : "vmul", "uop_gen" : "ARITH", "latency" : 3},
     "vsmul.vv" :   {"pipe" : "vmul", "uop_gen" : "ARITH", "latency" : 3},
 
-# TODO: Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Scaling Shift Instructions
+# Vector Fixed-Point Arithmetic Instructions: Vector Single-Width Scaling Shift Instructions
+    "vssrl.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+    "vssrl.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+    "vssrl.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+    "vssra.vv" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+    "vssra.vx" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+    "vssra.vi" : {"pipe" : "vfixed", "uop_gen" : "ARITH", "latency" : 6},
+
 # TODO: Vector Fixed-Point Arithmetic Instructions: Vector Narrowing Fixed-Point Clip Instructions
 
 # TODO: Vector Floating-Point Instructions: Vector Floating-Point Exception Flags

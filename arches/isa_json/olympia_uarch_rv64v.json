@@ -1,21 +1,21 @@
 [
     {
         "mnemonic": "vaadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vaadd.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vaaddu.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vaaddu.vx",
@@ -79,27 +79,27 @@
     },
     {
         "mnemonic": "vasub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vasub.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vasubu.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vasubu.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ARITH",
+        "latency": 6
     },
     {
         "mnemonic": "vcompress.vm",

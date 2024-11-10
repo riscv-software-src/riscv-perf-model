@@ -1645,39 +1645,39 @@
     },
     {
         "mnemonic": "vsadd.vi",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsadd.vv",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsadd.vx",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsaddu.vi",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsaddu.vv",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsaddu.vx",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsbc.vvm",
@@ -1945,27 +1945,27 @@
     },
     {
         "mnemonic": "vssub.vv",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vssub.vx",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vssubu.vv",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vssubu.vx",
-        "pipe": "vint",
+        "pipe": "vfixed",
         "uop_gen": "ARITH",
-        "latency": 1
+        "latency": 6
     },
     {
         "mnemonic": "vsub.vv",

@@ -44,11 +44,14 @@ public:
         vlsu_(vlsu)
     {}
 
-    void test_mem_request_count(const uint32_t expected_val)
+    void test_num_insts_completed(const uint32_t expected_val)
     {
-        EXPECT_TRUE(vlsu_->inst_queue_.size() > 0);
-        const InstPtr inst_ptr = vlsu_->inst_queue_.read(0);
-        EXPECT_TRUE(inst_ptr->getVectorMemConfig()->getCurrVLSUIter() == expected_val);
+        EXPECT_EQUAL(vlsu_->lsu_insts_completed_.get(), expected_val);
+    }
+
+    void test_num_mem_reqs(const uint32_t expected_val)
+    {
+        EXPECT_EQUAL(vlsu_->memory_requests_generated_.get(), expected_val);
     }
 
 private:
@@ -94,14 +97,17 @@ void runTests(int argc, char **argv) {
     if (input_file.find("vlsu_load.json") != std::string::npos)
     {
         // Test VLSU
-        cls.runSimulator(&sim, 68);
-        vlsu_tester.test_mem_request_count(12);
+        cls.runSimulator(&sim);
+        vlsu_tester.test_num_insts_completed(2);
+        // First load: vle64.v with LMUL = 4 (64 mem reqs)
+        // Second load: vle8.v with LMUL = 1 (128 reqs)
+        vlsu_tester.test_num_mem_reqs(64 + 128);
     }
     else if (input_file.find("vlsu_store.json") != std::string::npos)
     {
         // Test VLSU
-        cls.runSimulator(&sim, 41);
-        vlsu_tester.test_mem_request_count(16);
+        vlsu_tester.test_num_insts_completed(2);
+        vlsu_tester.test_num_mem_reqs(128);
     }
     else
     {

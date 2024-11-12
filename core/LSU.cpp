@@ -659,12 +659,12 @@ namespace olympia
         ILOG("Completing inst: " << inst_ptr);
         ILOG(mem_access_info_ptr);
 
-        core_types::RegFile reg_file = core_types::RF_INTEGER;
         const auto & dests = inst_ptr->getDestOpInfoList();
         if (dests.size() > 0)
         {
-            sparta_assert(dests.size() == 1); // we should only have one destination
-            reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
+            sparta_assert(dests.size() == 1,
+                "Load inst should have 1 dest! " << inst_ptr);
+            const core_types::RegFile reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
             const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
             scoreboard_views_[reg_file]->setReady(dest_bits);
         }

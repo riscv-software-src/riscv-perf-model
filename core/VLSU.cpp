@@ -73,7 +73,7 @@ namespace olympia
         }
 
         const uint32_t total_mem_reqs = vector_mem_config_ptr->getTotalMemReqs();
-        for (uint32_t mem_req_num = vector_mem_config_ptr->getNumMemReqsGenerated() + 1; mem_req_num <= total_mem_reqs; ++mem_req_num)
+        for (uint32_t mem_req_num = vector_mem_config_ptr->getNumMemReqsGenerated(); mem_req_num < total_mem_reqs; ++mem_req_num)
         {
             if (mem_req_buffer_.size() < mem_req_buffer_size_)
             {
@@ -92,7 +92,7 @@ namespace olympia
 
                 // Append to the memory request buffer
                 const LoadStoreInstIterator & iter = mem_req_buffer_.push_back(lsinfo_inst_ptr);
-                lsinfo_inst_ptr->setIssueQueueIterator(iter);
+                lsinfo_inst_ptr->setMemoryRequestBufferIterator(iter);
 
                 // Increment count of memory requests generated
                 vector_mem_config_ptr->incrementNumMemReqsGenerated();
@@ -104,7 +104,7 @@ namespace olympia
                 appendToReadyQueue_(lsinfo_inst_ptr);
 
                 // Done generating memory requests for this vector instruction
-                if (mem_req_num == total_mem_reqs)
+                if (mem_req_num + 1 == total_mem_reqs)
                 {
                     ILOG("Done with memory request generation for " << inst_ptr);
                     mem_req_ready_queue_.pop();
@@ -248,11 +248,10 @@ namespace olympia
         // Complete load instruction
         if (!is_store_inst)
         {
-            core_types::RegFile reg_file = core_types::RF_VECTOR;
             const auto & dests = inst_ptr->getDestOpInfoList();
             sparta_assert(dests.size() == 1,
                 "Load inst should have 1 dest! " << inst_ptr);
-            reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
+            const core_types::RegFile reg_file = olympia::coreutils::determineRegisterFile(dests[0]);
             const auto & dest_bits = inst_ptr->getDestRegisterBitMask(reg_file);
             scoreboard_views_[reg_file]->setReady(dest_bits);
 
@@ -310,9 +309,11 @@ namespace olympia
     void VLSU::removeFromMemoryRequestBuffer_(const LoadStoreInstInfoPtr & inst_to_remove)
     {
         ILOG("Removing memory request from the memory request buffer: " << inst_to_remove);
-        mem_req_buffer_.erase(inst_to_remove->getIssueQueueIterator());
+        sparta_assert(inst_to_remove->getMemoryRequestBufferIterator().isValid(),
+            "Memory Request Buffer iterator is not valid!");
+        mem_req_buffer_.erase(inst_to_remove->getMemoryRequestBufferIterator());
         // Invalidate the iterator manually
-        inst_to_remove->setIssueQueueIterator(LoadStoreInstIterator());
+        inst_to_remove->setMemoryRequestBufferIterator(LoadStoreInstIterator());
 
         if (mem_req_ready_queue_.size() > 0)
         {

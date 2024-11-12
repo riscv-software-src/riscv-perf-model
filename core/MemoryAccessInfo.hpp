@@ -170,8 +170,6 @@ namespace olympia
         void setFetchGroup(const InstGroupPtr &group) { fetch_group_ = group; }
         const InstGroupPtr & getFetchGroup() const { return fetch_group_; }
 
-        const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
-
         bool isRefill() const { return is_refill_; }
 
         void setIsRefill(bool is_refill) { is_refill_ = is_refill; }
@@ -180,6 +178,15 @@ namespace olympia
         {
             issue_queue_iterator_ = iter;
         }
+
+        const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
+
+        void setMemoryRequestBufferIterator(const LoadStoreInstIterator & iter)
+        {
+            memory_request_buffer_iterator_ = iter;
+        }
+
+        const LoadStoreInstIterator getMemoryRequestBufferIterator() const { return memory_request_buffer_iterator_; }
 
         const LoadStoreInstIterator & getReplayQueueIterator() const
         {
@@ -238,6 +245,7 @@ namespace olympia
         InstGroupPtr fetch_group_;
 
         LoadStoreInstIterator issue_queue_iterator_;
+        LoadStoreInstIterator memory_request_buffer_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
         MSHREntryInfoIterator mshr_entry_info_iterator_;
     };

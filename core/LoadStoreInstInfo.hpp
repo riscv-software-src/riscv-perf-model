@@ -119,6 +119,16 @@ namespace olympia
             mem_access_info_ptr_->setIssueQueueIterator(iter);
         }
 
+        const LoadStoreInstIterator getMemoryRequestBufferIterator() const
+        {
+            return mem_access_info_ptr_->getMemoryRequestBufferIterator();
+        }
+
+        void setMemoryRequestBufferIterator(const LoadStoreInstIterator & iter)
+        {
+            mem_access_info_ptr_->setMemoryRequestBufferIterator(iter);
+        }
+
         const LoadStoreInstIterator & getReplayQueueIterator() const
         {
             return mem_access_info_ptr_->getReplayQueueIterator();

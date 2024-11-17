@@ -234,7 +234,7 @@ namespace olympia
                 }
                 else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
-                    vset_blocking_count_++;
+                    ++vset_blocking_count_;
 
                     vset_block_start_ = getClock()->currentCycle();
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0

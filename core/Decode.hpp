@@ -20,7 +20,6 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
-#include <cstdint>
 #include <limits>
 #include <map>
 #include <memory>

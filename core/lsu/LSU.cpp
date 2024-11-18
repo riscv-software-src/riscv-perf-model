@@ -21,7 +21,7 @@ namespace olympia
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
         store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
-        store_buffer_size_(p->ldst_inst_queue_size),  
+        store_buffer_size_(p->ldst_inst_queue_size),
         ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
@@ -460,9 +460,80 @@ namespace olympia
         const MemoryAccessInfoPtr & mem_access_info_ptr =
             load_store_info_ptr->getMemoryAccessInfoPtr();
         const bool phy_addr_is_ready = mem_access_info_ptr->getPhyAddrStatus();
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
 
-        // first check physical address and bypass conditions
+        // If we did not have an MMU hit from previous stage, invalidate and bail
+        if (false == phy_addr_is_ready)
+        {
+            ILOG("Cache Lookup is skipped (Physical address not ready)!" << load_store_info_ptr);
+            if (allow_speculative_load_exec_)
+            {
+                updateInstReplayReady_(load_store_info_ptr);
+            }
+            // There might not be a wake up because the cache cannot handle any more instruction
+            // Change to nack wakeup when implemented
+            if (!load_store_info_ptr->isInReadyQueue())
+            {
+                appendToReadyQueue_(load_store_info_ptr);
+                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+                if (isReadyToIssueInsts_())
+                {
+                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+                }
+            }
+            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            return;
+        }
+
+        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
+        ILOG(load_store_info_ptr << " " << mem_access_info_ptr);
+
+        // If have passed translation and the instruction is a store,
+        // then it's good to be retired (i.e. mark it completed).
+        // Stores typically do not cause a flush after a successful
+        // translation. We now wait for the Retire block to "retire"
+        // it, meaning it's good to go to the cache
+        if (inst_ptr->isStoreInst() && (inst_ptr->getStatus() == Inst::Status::SCHEDULED))
+        {
+            ILOG("Store marked as completed " << inst_ptr);
+            inst_ptr->setStatus(Inst::Status::COMPLETED);
+            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            if (allow_speculative_load_exec_)
+            {
+                updateInstReplayReady_(load_store_info_ptr);
+            }
+            return;
+        }
+
+        // Loads dont perform a cache lookup if there are older stores haven't issued in the load store queue
+        if (!inst_ptr->isStoreInst() && !allOlderStoresIssued_(inst_ptr)
+            && allow_speculative_load_exec_)
+        {
+            ILOG("Dropping speculative load " << inst_ptr);
+            load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
+            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            if (allow_speculative_load_exec_)
+            {
+                updateInstReplayReady_(load_store_info_ptr);
+            }
+            return;
+        }
+
+        // Add store forwarding check here for loads
+        if (!inst_ptr->isStoreInst())
+        {
+            const uint64_t load_addr = inst_ptr->getTargetVAddr();
+            auto forwarding_store = findYoungestMatchingStore_(load_addr);
+
+            if (forwarding_store)
+            {
+                ILOG("Found forwarding store for load " << inst_ptr);
+                mem_access_info_ptr->setDataReady(true);
+                mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+                return;
+            }
+        }
+
         const bool is_already_hit =
             (mem_access_info_ptr->getCacheState() == MemoryAccessInfo::CacheState::HIT);
         const bool is_unretired_store =
@@ -486,82 +557,7 @@ namespace olympia
             return;
         }
 
-        // If we did not have an MMU hit from previous stage, invalidate and bail
-        if (false == phy_addr_is_ready)
-        {
-            ILOG("Cache Lookup is skipped (Physical address not ready)!" << load_store_info_ptr);
-            if (allow_speculative_load_exec_)
-            {
-                updateInstReplayReady_(load_store_info_ptr);
-            }
-            // There might not be a wake up because the cache cannot handle nay more instruction
-            // Change to nack wakeup when implemented
-            if (!load_store_info_ptr->isInReadyQueue())
-            {
-                appendToReadyQueue_(load_store_info_ptr);
-                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                if (isReadyToIssueInsts_())
-                {
-                    uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-                }
-            }
-            ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-            return;
-        }
-
-
-        // If have passed translation and the instruction is a store,
-        // then it's good to be retired (i.e. mark it completed).
-        // Stores typically do not cause a flush after a successful
-        // translation.  We now wait for the Retire block to "retire"
-        // it, meaning it's good to go to the cache
-        if (inst_ptr->isStoreInst())
-        {
-            if (inst_ptr->getStatus() == Inst::Status::SCHEDULED)
-            {
-                ILOG("Store marked as completed " << inst_ptr);
-                inst_ptr->setStatus(Inst::Status::COMPLETED);
-                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-                if (allow_speculative_load_exec_)
-                {
-                    updateInstReplayReady_(load_store_info_ptr);
-                }
-                return;
-            }
-        }
-        else // Loads handling
-        {
-            // Check for speculative execution constraints
-            // since we use data forwarding, we only need to check whether all older store was issued
-            if (allow_speculative_load_exec_ && !allOlderStoresIssued_(inst_ptr))
-            {
-                ILOG("Dropping speculative load " << inst_ptr << " due to unissued older stores");
-                load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
-                ldst_pipeline_.invalidateStage(cache_lookup_stage_);
-                updateInstReplayReady_(load_store_info_ptr);
-                return;
-            }
-
-            //check if we can forward from store buffer first
-            uint64_t load_addr = inst_ptr->getTargetVAddr();
-            auto forwarding_store = findYoungestMatchingStore_(load_addr);
-
-            if (forwarding_store)
-            {
-                ILOG("Found forwarding store for load " << inst_ptr);
-                mem_access_info_ptr->setDataReady(true);
-                mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-                return;
-            }
-
-            // No forwarding possible - need cache access
-            if (!mem_access_info_ptr->isCacheHit()) {
-                out_cache_lookup_req_.send(mem_access_info_ptr);
-            }
-        }
-
-
+        out_cache_lookup_req_.send(mem_access_info_ptr);
     }
 
     void LSU::getAckFromCache_(const MemoryAccessInfoPtr & mem_access_info_ptr)
@@ -946,19 +942,15 @@ namespace olympia
         ILOG("Store added to store buffer: " << inst_ptr);
     }
 
-    LoadStoreInstInfoPtr LSU::findYoungestMatchingStore_(uint64_t addr)
+    LoadStoreInstInfoPtr LSU::findYoungestMatchingStore_(const uint64_t addr) const
     {
         LoadStoreInstInfoPtr matching_store = nullptr;
 
-        for (auto it = store_buffer_.begin(); it != store_buffer_.end(); ++it)
-        {
-            auto & store = *it;
-            if (store->getInstPtr()->getTargetVAddr() == addr)
-            {
-                matching_store = store;
-            }
-        }
-        return matching_store;
+        auto it = std::find_if(store_buffer_.rbegin(), store_buffer_.rend(),
+                                [addr](const auto& store) {
+                                    return store->getInstPtr()->getTargetVAddr() == addr;
+                                });
+        return (it != store_buffer_.rend()) ? *it : nullptr;
     }
 
     LoadStoreInstInfoPtr  LSU::getOldestStore_() const
@@ -1450,6 +1442,7 @@ namespace olympia
             auto inst_ptr = (*sb_iter)->getInstPtr();
             if(criteria.includedInFlush(inst_ptr)) {
                 auto delete_iter = sb_iter++;
+                // store buffer didn't return an iterator
                 store_buffer_.erase(delete_iter);
                 ILOG("Flushed store from store buffer: " << inst_ptr);
             } else {

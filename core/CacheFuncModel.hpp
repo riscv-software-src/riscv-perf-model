@@ -102,16 +102,18 @@ namespace olympia
         // @param cache_size_kb Size of the cache in KB
         // @param line_size Cache line size in bytes
         // @param replacement_policy Name of the replacement policy to use
+        // @param associativity Number of ways in the cache
         CacheFuncModel(sparta::TreeNode* parent,
                       uint64_t cache_size_kb,
                       uint64_t line_size,
-                      const std::string& replacement_policy) :
+                      const std::string& replacement_policy,
+                      uint32_t associativity) :
             sparta::cache::SimpleCache2<SimpleCacheLine>(
                 cache_size_kb,
                 line_size,
                 line_size,
                 SimpleCacheLine(line_size),
-                *ReplacementFactory::selectReplacementPolicy(replacement_policy, cache_size_kb/line_size)),
+                *ReplacementFactory::selectReplacementPolicy(replacement_policy, associativity)),
             sparta::TreeNode(parent, "l1cache", "Simple L1 DCache"),
             sparta::cache::PreloadableIF(),
             sparta::cache::PreloadDumpableIF(),

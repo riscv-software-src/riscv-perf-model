@@ -36,13 +36,10 @@ namespace olympia {
         // IL1 cache config
         const uint32_t l1_line_size = p->l1_line_size;
         const uint32_t l1_size_kb = p->l1_size_kb;
-        const uint32_t l1_associativity = p->l1_associativity;
-        std::unique_ptr<sparta::cache::ReplacementIF> repl(new sparta::cache::TreePLRUReplacement
-                                                                   (l1_associativity));
-        l1_cache_.reset(new CacheFuncModel(getContainer(), l1_size_kb, l1_line_size, *repl));
+        const std::string& replacement_policy = p->l1_replacement_policy;
+        l1_cache_.reset(new CacheFuncModel(getContainer(), l1_size_kb, l1_line_size, replacement_policy));
+
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ICache, sendInitialCredits_));
-
-
     }
 
     void ICache::sendInitialCredits_()

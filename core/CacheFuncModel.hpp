@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "sparta/utils/SpartaAssert.hpp"
@@ -8,6 +7,7 @@
 #include "cache/ReplacementIF.hpp"
 #include "cache/preload/PreloadableIF.hpp"
 #include "cache/preload/PreloadableNode.hpp"
+#include "ReplacementFactory.hpp"
 
 using namespace std::placeholders;
 namespace olympia
@@ -39,7 +39,6 @@ namespace olympia
             BasicCacheItem::operator=(rhs);
             line_size_ = rhs.line_size_;
             valid_ = rhs.valid_;
-
             return *this;
         }
 
@@ -91,28 +90,35 @@ namespace olympia
     }; // class SimpleCacheLine
 
     class CacheFuncModel : public sparta::cache::SimpleCache2<SimpleCacheLine>,
-                      public sparta::TreeNode,
-                      public sparta::cache::PreloadableIF,
-                      public sparta::cache::PreloadDumpableIF
-
+                          public sparta::TreeNode,
+                          public sparta::cache::PreloadableIF,
+                          public sparta::cache::PreloadDumpableIF
     {
     public:
         using Handle = std::shared_ptr<CacheFuncModel>;
+        
+        // Constructor for the cache functional model
+        // @param parent The parent tree node
+        // @param cache_size_kb Size of the cache in KB
+        // @param line_size Cache line size in bytes
+        // @param replacement_policy Name of the replacement policy to use
         CacheFuncModel(sparta::TreeNode* parent,
-                  uint64_t cache_size_kb,
-                  uint64_t line_size,
-                  const sparta::cache::ReplacementIF& rep) :
-            sparta::cache::SimpleCache2<SimpleCacheLine> (cache_size_kb,
-                                                        line_size,
-                                                        line_size,
-                                                        SimpleCacheLine(line_size),
-                                                        rep),
+                      uint64_t cache_size_kb,
+                      uint64_t line_size,
+                      const std::string& replacement_policy) :
+            sparta::cache::SimpleCache2<SimpleCacheLine>(
+                cache_size_kb,
+                line_size,
+                line_size,
+                SimpleCacheLine(line_size),
+                *ReplacementFactory::selectReplacementPolicy(replacement_policy, cache_size_kb/line_size)),
             sparta::TreeNode(parent, "l1cache", "Simple L1 DCache"),
             sparta::cache::PreloadableIF(),
             sparta::cache::PreloadDumpableIF(),
             preloadable_(this, std::bind(&CacheFuncModel::preloadPkt_, this, _1),
-                         std::bind(&CacheFuncModel::preloadDump_, this, _1))
+                        std::bind(&CacheFuncModel::preloadDump_, this, _1))
         {}
+
     private:
         /**
          * Implement a preload by just doing a fill to the va in the packet.
@@ -132,7 +138,6 @@ namespace olympia
                 sparta_assert(getLine(va) != nullptr);
             }
             return true;
-
         }
 
         void preloadDump_(sparta::cache::PreloadEmitter& emitter) const override
@@ -160,6 +165,7 @@ namespace olympia
             emitter << sparta::cache::PreloadEmitter::EndSeq;
             emitter << sparta::cache::PreloadEmitter::EndMap;
         }
+
         //! Provide a preloadable node that hangs off and just returns
         //! the preloadPkt call to us.
         sparta::cache::PreloadableNode preloadable_;

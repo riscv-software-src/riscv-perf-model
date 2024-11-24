@@ -118,8 +118,9 @@ namespace olympia_mss
 
         // L2 cache config
         const uint32_t l2_size_kb = p->l2_size_kb;
+        const uint32_t l2_associativity = p->l2_associativity;
         const std::string& replacement_policy = p->l2_replacement_policy;
-        l2_cache_.reset(new olympia::CacheFuncModel(getContainer(), l2_size_kb, l2_lineSize_, replacement_policy));
+        l2_cache_.reset(new olympia::CacheFuncModel(getContainer(), l2_size_kb, l2_lineSize_, replacement_policy, l2_associativity));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(L2Cache, sendInitialCredits_));
         ILOG("L2Cache construct: #" << node->getGroupIdx());

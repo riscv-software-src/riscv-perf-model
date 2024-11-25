@@ -43,8 +43,8 @@ namespace l2cache_test
 
             in_source_resp_.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveInst_, olympia::MemoryAccessInfoPtr));
-            in_source_ack_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveAck_, uint32_t));
+            in_source_credits_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveCredits_, uint32_t));
 
             if(params->input_file != "") {
                 inst_generator_ = olympia::InstGenerator::createGenerator(mavis_facade_, params->input_file, false);
@@ -58,7 +58,7 @@ namespace l2cache_test
 
         void onStartingTeardown_() override {
             sparta_assert(unit_enable_ == true && pending_reqs_ == 0, "pending_reqs remaining in the L2SourceUnit");
-            sparta_assert(unit_enable_ == true && pending_acks_ == 0, "pending_acks remaining in the L2SourceUnit");
+            sparta_assert(unit_enable_ == true && pending_credits_ == 0, "pending_credits remaining in the L2SourceUnit");
         }
 
     private:
@@ -88,7 +88,7 @@ namespace l2cache_test
             ILOG("Instruction: '" << req_inst_queue_.front()->getInstPtr() << "' Requested");
 
             pending_reqs_++;
-            pending_acks_++;
+            pending_credits_++;
 
             out_source_req_.send(req_inst_queue_.front());
             req_inst_queue_.erase(req_inst_queue_.begin());
@@ -99,18 +99,17 @@ namespace l2cache_test
             ILOG("Instruction: '" << mem_info_ptr->getInstPtr() << "' Received");
         }
 
-        void ReceiveAck_(const uint32_t & ack) {
-            pending_acks_--;
-            ILOG("Ack: '" << ack << "' Received");
+        void ReceiveCredits_(const uint32_t & credits) {
+            pending_credits_--;
+            ILOG("Ack: '" << credits << "' Received");
         }
 
-        sparta::DataInPort<olympia::MemoryAccessInfoPtr>  in_source_resp_ {&unit_port_set_, "in_source_resp",
+        sparta::DataInPort<olympia::MemoryAccessInfoPtr>  in_source_resp_    {&unit_port_set_, "in_source_resp",
                 sparta::SchedulingPhase::Tick, 1};
-        sparta::DataInPort<uint32_t>                      in_source_ack_  {&unit_port_set_, "in_source_ack"};
+        sparta::DataInPort<uint32_t>                      in_source_credits_ {&unit_port_set_, "in_source_credits"};
+        sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_source_req_    {&unit_port_set_, "out_source_req"};
 
-        sparta::DataOutPort<olympia::MemoryAccessInfoPtr> out_source_req_ {&unit_port_set_, "out_source_req"};
-
-        uint32_t pending_acks_ = 1;
+        uint32_t pending_credits_ = 1;
         uint32_t pending_reqs_ = 0;
 
         uint32_t unique_id_ = 0;

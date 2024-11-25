@@ -5,6 +5,7 @@
 
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "Core.hpp"
+#include "ICache.hpp"
 #include "Fetch.hpp"
 #include "Decode.hpp"
 #include "VectorUopGenerator.hpp"
@@ -40,6 +41,10 @@ namespace olympia{
         sparta::ResourceFactory<olympia::Core,
                                 olympia::Core::CoreParameterSet> core_rf;
 
+        //! \brief Resource Factory to build an Instruction Cache Unit
+        sparta::ResourceFactory<olympia::ICache,
+                olympia::ICache::ICacheParameterSet> icache_rf;
+
         //! \brief Resource Factory to build a Fetch Unit
         sparta::ResourceFactory<olympia::Fetch,
                                 olympia::Fetch::FetchParameterSet> fetch_rf;
@@ -61,7 +66,7 @@ namespace olympia{
         //! \brief Resource Factory to build a Execute Unit
         ExecuteFactory  execute_rf;
 
-        //! \brief Resource Factory to build a MMU Unit
+        //! \brief Resource Factory to build a Data Cache Unit
         sparta::ResourceFactory<olympia::DCache,
                 olympia::DCache::CacheParameterSet> dcache_rf;
 
@@ -104,7 +109,7 @@ namespace olympia{
         // //! \brief Resource Factory to build a IssueQueue Unit
         // sparta::ResourceFactory<olympia::IssueQueue,
         //                         olympia::IssueQueue::IssueQueueParameterSet> issue_queue_rf;
-                            
+
         //! \brief Set up the Mavis Decode functional unit
         MavisFactory  mavis_rf;
     }; // struct CPUFactories

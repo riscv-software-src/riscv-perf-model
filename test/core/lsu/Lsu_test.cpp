@@ -148,7 +148,6 @@ void runTest(int argc, char **argv)
     olympia::LSU *my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
     olympia::LSUTester lsupipe_tester;
     lsupipe_tester.test_pipeline_stages(*my_lsu);
-
    // First store and store buffer
    cls.runSimulator(&sim, 7);
    lsupipe_tester.test_store_address_match(*my_lsu, 0xdeeebeef, true);
@@ -173,6 +172,7 @@ void runTest(int argc, char **argv)
 
    // Final state
    cls.runSimulator(&sim);
+
 }
 
 int main(int argc, char **argv)

@@ -85,8 +85,9 @@ namespace olympia
 
         enum class Status : std::uint16_t
         {
-            FETCHED = 0,
-            __FIRST = FETCHED,
+            BEFORE_FETCH = 0,
+            __FIRST = BEFORE_FETCH,
+            FETCHED,
             DECODED,
             RENAMED,
             DISPATCHED,
@@ -116,6 +117,12 @@ namespace olympia
         // implement it and let the compiler do it for us for speed.
         Inst(const Inst & other) = default;
 
+        const Status & getStatus() const { return status_state_; }
+
+        bool getCompletedStatus() const { return getStatus() == olympia::Inst::Status::COMPLETED; }
+
+        bool getFlushedStatus() const { return getStatus() == olympia::Inst::Status::FLUSHED; }
+
         void setStatus(Status status)
         {
             sparta_assert(status_state_ != status,
@@ -132,17 +139,6 @@ namespace olympia
                 }
             }
         }
-
-        const Status & getStatus() const { return status_state_; }
-
-        bool getCompletedStatus() const { return getStatus() == olympia::Inst::Status::COMPLETED; }
-
-        bool getFlushedStatus() const { return getStatus() == olympia::Inst::Status::FLUSHED; }
-
-        void setMispredicted() { is_mispredicted_ = true; }
-
-        // Is this branch instruction mispredicted?
-        bool isMispredicted() const { return is_mispredicted_; }
 
         const Status & getExtendedStatus() const { return extended_status_state_; }
 
@@ -216,6 +212,7 @@ namespace olympia
 
         // Set the instruction's target PC (branch target or load/store target)
         void setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
+
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
         void setVectorConfig(const VectorConfigPtr input_vector_config)
@@ -238,8 +235,16 @@ namespace olympia
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
 
+        // Is this branch instruction mispredicted?
+        bool isMispredicted()  const { return is_mispredicted_; }
+        void setMispredicted()       { is_mispredicted_ = true; }
+
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
+
+        // Last instruction within the cache block fetched from the ICache
+        void setLastInFetchBlock(bool last) { last_in_fetch_block_ = last; }
+        bool isLastInFetchBlock() const { return last_in_fetch_block_; }
 
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
@@ -339,6 +344,9 @@ namespace olympia
 
         bool isVector() const { return is_vector_; }
 
+        void setCoF(const bool &cof) { is_cof_ = cof; }
+        bool isCoF() const { return is_cof_; }
+
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
         {
@@ -432,6 +440,8 @@ namespace olympia
         const bool is_csr_;
         const bool is_vector_;
         const bool is_return_;
+        // Is this instruction a change of flow?
+        bool is_cof_ = false;
         const bool has_immediate_;
 
         VectorConfigPtr vector_config_{new VectorConfig};
@@ -446,6 +456,7 @@ namespace olympia
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;
         bool is_taken_branch_ = false;
+        bool last_in_fetch_block_ = false; // This is the last instruction in the fetch block
         sparta::Scheduleable* ev_retire_ = nullptr;
         Status status_state_;
         Status extended_status_state_{Inst::Status::UNMOD};
@@ -471,6 +482,9 @@ namespace olympia
     {
         switch (status)
         {
+        case Inst::Status::BEFORE_FETCH:
+            os << "BEFORE_FETCH";
+            break;
         case Inst::Status::FETCHED:
             os << "FETCHED";
             break;
@@ -517,7 +531,7 @@ namespace olympia
     //   - any changes here will break EXPECT
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst)
     {
-        os << "uid:" << inst.getUniqueID() << std::setw(10) << inst.getStatus() << " "
+        os << "uid:" << inst.getUniqueID() << " " << std::setw(10) << inst.getStatus() << " "
            << std::hex << inst.getPC() << std::dec << " pid:" << inst.getProgramID()
            << " uopid:" << inst.getUOpID() << " '" << inst.getDisasm() << "' ";
         return os;

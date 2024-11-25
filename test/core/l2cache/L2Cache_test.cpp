@@ -134,22 +134,22 @@ private:
                      root_node->getChildAs<sparta::Port>("l2cache.ports.in_dcache_l2cache_req"));
         sparta::bind(root_node->getChildAs<sparta::Port>("dcache.ports.in_source_resp"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_dcache_resp"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("dcache.ports.in_source_ack"),
-                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_dcache_ack"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("dcache.ports.in_source_credits"),
+                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_dcache_credits"));
 
         sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.out_source_req"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.in_icache_l2cache_req"));
         sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_resp"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_resp"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_ack"),
-                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_ack"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("icache.ports.in_source_credits"),
+                     root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_icache_credits"));
 
         sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.in_biu_req"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.out_l2cache_biu_req"));
         sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.out_biu_resp"),
                      root_node->getChildAs<sparta::Port>("l2cache.ports.in_biu_l2cache_resp"));
-        sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.out_biu_ack"),
-                     root_node->getChildAs<sparta::Port>("l2cache.ports.in_biu_l2cache_ack"));
+        sparta::bind(root_node->getChildAs<sparta::Port>("biu.ports.out_biu_credits"),
+                     root_node->getChildAs<sparta::Port>("l2cache.ports.in_biu_l2cache_credits"));
     }
     // Allocators.  Last thing to delete
     std::unique_ptr<olympia::OlympiaAllocators> allocators_tn_;

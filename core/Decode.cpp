@@ -5,6 +5,7 @@
 #include "fsl_api/FusionTypes.h"
 
 #include "sparta/events/StartupEvent.hpp"
+#include "sparta/statistics/Counter.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include <algorithm>
 #include <iostream>
@@ -48,7 +49,13 @@ namespace olympia
         fusion_summary_report_(p->fusion_summary_report),
         fusion_group_definitions_(p->fusion_group_definitions),
         vector_enabled_(true),
-        vector_config_(new VectorConfig(p->init_vl, p->init_sew, p->init_lmul, p->init_vta))
+        vector_config_(new VectorConfig(p->init_vl, p->init_sew, p->init_lmul, p->init_vta)),
+        vset_blocking_count_(&unit_stat_set_, "vset_blocking_count",
+                             "Number of times that the Decode unit blocks execution",
+                             sparta::Counter::COUNT_NORMAL),
+        vset_blocking_stall_latency_(&unit_stat_set_, "vset_blocking_stall_latency",
+                                     "Accumulated between roundtrip vset decode and processing",
+                                     sparta::Counter::COUNT_NORMAL)
     {
         initializeFusion_();
 
@@ -77,9 +84,9 @@ namespace olympia
         fetch_queue_credits_outp_.send(fetch_queue_.capacity());
 
         // Get pointer to the vector uop generator
-        sparta::TreeNode * root_node = getContainer()->getRoot();
-        vec_uop_gen_ = \
-            root_node->getChild("cpu.core0.decode.vec_uop_gen")->getResourceAs<olympia::VectorUopGenerator*>();
+        sparta::TreeNode* root_node = getContainer()->getRoot();
+        vec_uop_gen_ = root_node->getChild("cpu.core0.decode.vec_uop_gen")
+                           ->getResourceAs<olympia::VectorUopGenerator*>();
     }
 
     // -------------------------------------------------------------------
@@ -135,9 +142,9 @@ namespace olympia
         const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
         if ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource())
         {
-            const uint32_t new_vl = \
-                inst->hasZeroRegDest() ? std::min(vector_config_->getVL(), vector_config_->getVLMAX())
-                                       : vector_config_->getVLMAX();
+            const uint32_t new_vl = inst->hasZeroRegDest() ? std::min(vector_config_->getVL(),
+                                                                      vector_config_->getVLMAX())
+                                                           : vector_config_->getVLMAX();
             vector_config_->setVL(new_vl);
         }
 
@@ -153,6 +160,8 @@ namespace olympia
         // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
         if (waiting_on_vset_)
         {
+            const auto vset_block_end = getClock()->currentCycle();
+            vset_blocking_stall_latency_ += (vset_block_end - vset_block_start_);
             // schedule decode, because we've been stalled on vset
             waiting_on_vset_ = false;
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
@@ -192,8 +201,7 @@ namespace olympia
         InstUidListType uids;
 
         // Send instructions on their way to rename
-        InstGroupPtr insts =
-            sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         // if we have a waiting on vset followed by more instructions, we decode
         // vset and stall anything else
         while ((insts->size() < num_to_decode) && !waiting_on_vset_)
@@ -207,7 +215,7 @@ namespace olympia
             else if (fetch_queue_.size() > 0)
             {
                 sparta_assert(fetch_queue_.size() > 0,
-                     "Cannot read from the fetch queue because it is empty!");
+                              "Cannot read from the fetch queue because it is empty!");
                 auto & inst = fetch_queue_.read(0);
 
                 // for vector instructions, we block on vset and do not allow any other
@@ -219,13 +227,16 @@ namespace olympia
                 // vsetvli only blocks if rs1 is not x0
                 // vsetivli never blocks
                 const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
-                if ((uid == MAVIS_UID_VSETIVLI) ||
-                   ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource()))
+                if ((uid == MAVIS_UID_VSETIVLI)
+                    || ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource()))
                 {
                     updateVectorConfig_(inst);
                 }
                 else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
+                    ++vset_blocking_count_;
+
+                    vset_block_start_ = getClock()->currentCycle();
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
                     waiting_on_vset_ = true;
                     // need to indicate we want a signal sent back at execute
@@ -246,7 +257,8 @@ namespace olympia
                 // Even if LMUL == 1, we need the vector uop generator to create a uop for us
                 // because some generators will add additional sources and destinations to the
                 // instruction (e.g. widening, multiply-add, slides).
-                if (inst->isVector() && !inst->isVset() && (inst->getUopGenType() != InstArchInfo::UopGenType::NONE))
+                if (inst->isVector() && !inst->isVset()
+                    && (inst->getUopGenType() != InstArchInfo::UopGenType::NONE))
                 {
                     ILOG("Vector uop gen: " << inst);
                     vec_uop_gen_->setInst(inst);

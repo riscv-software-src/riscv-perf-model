@@ -68,26 +68,29 @@ class olympia::LSUTester
         EXPECT_EQUAL(found, should_match);
     }
 
-    // Helper to verify store forwarding for a specific load/store pair
-    void test_store_forwarding(olympia::LSU &lsu) {
-        // Check store buffer has the expected store
-        EXPECT_TRUE(lsu.store_buffer_.size() > 0);
-
-        // Get store and load from issue queue that should match
-        bool found_pair = false;
+    void test_forwarding_occurred(olympia::LSU &lsu, uint64_t addr) {
+        bool found = false;
         for(const auto& ldst_inst : lsu.ldst_inst_queue_) {
-            auto inst = ldst_inst->getInstPtr();
-            if(!inst->isStoreInst()) {
-                // Found a load - check if it got forwarded data
+            if(!ldst_inst->getInstPtr()->isStoreInst() &&
+            ldst_inst->getInstPtr()->getTargetVAddr() == addr) {
                 auto mem_info = ldst_inst->getMemoryAccessInfoPtr();
-                if(mem_info->isDataReady() &&
-                   mem_info->getCacheState() == MemoryAccessInfo::CacheState::HIT) {
-                    found_pair = true;
-                    break;
-                }
+                found = mem_info->isDataReady() &&
+                    mem_info->getCacheState() == MemoryAccessInfo::CacheState::HIT;
+                break;
             }
         }
-        EXPECT_TRUE(found_pair);
+        EXPECT_TRUE(found);
+    }
+
+    void test_completion_time(olympia::LSU &lsu, int expected_cycles, uint64_t addr) {
+        uint64_t start_cycle = lsu.getClock()->currentCycle();
+
+        // Run until instruction completes
+        while(!lsu.lsu_insts_completed_ &&
+            (lsu.getClock()->currentCycle() - start_cycle) < static_cast<uint64_t>(expected_cycles)) {
+            // Continue simulation
+        }
+        EXPECT_EQUAL(lsu.getClock()->currentCycle() - start_cycle, expected_cycles);
     }
 };
 
@@ -149,16 +152,30 @@ void runTest(int argc, char **argv)
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
     lsupipe_tester.test_store_address_match(*my_lsu, 0xdeeebeef, true);
 
-    // Run for second load (no match at 0xdeebbeef)
-    cls.runSimulator(&sim, 5);
-    lsupipe_tester.test_store_address_match(*my_lsu, 0xdeebbeef, false);
+   // First store and store buffer
+   cls.runSimulator(&sim, 7);
+   lsupipe_tester.test_store_address_match(*my_lsu, 0xdeeebeef, true);
+//    lsupipe_tester.test_inst_issue(*my_lsu, 1);
 
-    cls.runSimulator(&sim, 47);
-    lsupipe_tester.test_replay_issue_abort(*my_lsu, 3);
-    // Loads operand dependency meet
-    lsupipe_tester.test_store_address_match(*my_lsu, 0xdeadbeef, true);
+   // First load - forwarding case
+   auto start_cycle = my_lsu->getClock()->currentCycle();
+   cls.runSimulator(&sim, 3);
+//    lsupipe_tester.test_inst_issue(*my_lsu, 2);
+   EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 3);
 
-    cls.runSimulator(&sim);
+   // Second load - no forwarding
+   start_cycle = my_lsu->getClock()->currentCycle();
+   cls.runSimulator(&sim, 7);
+   EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 7);
+   lsupipe_tester.test_store_address_match(*my_lsu, 0xdeebbeef, false);
+
+   // Replay mechanism
+   cls.runSimulator(&sim, 47);
+   lsupipe_tester.test_replay_issue_abort(*my_lsu, 2);
+   lsupipe_tester.test_store_address_match(*my_lsu, 0xdeadbeef, true);
+
+   // Final state
+   cls.runSimulator(&sim);
 }
 
 int main(int argc, char **argv)

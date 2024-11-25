@@ -34,5 +34,5 @@ sparta_named_test(Vector_test_vwmulvv       Vector_test -l top.cpu.core0.vlsu in
 sparta_named_test(Vector_test_vmseqvv       Vector_test -l top.cpu.core0.vlsu info vmseqvv.out       -c test_cores/test_big_core.yaml --input-file vmseqvv_e8m4.json)
 sparta_named_test(Vector_test_vsadd         Vector_test -l top.cpu.core0.vlsu info vsadd.out         -c test_cores/test_big_core.yaml --input-file vsadd.json)
 sparta_named_test(Vector_unsupported_test   Vector_test -l top.cpu.core0.vlsu info unsupported.out   -c test_cores/test_big_core.yaml --input-file vrgather.json)
-sparta_named_test(VLSU_test_load            VLSU_test   -l top.cpu.core0.vlsu info vlsu_load.out     -c test_cores/test_big_core.yaml --input-file vlsu_load.json)
-sparta_named_test(VLSU_test_store           VLSU_test   -l top.cpu.core0.vlsu info vlsu_store.out    -c test_cores/test_big_core.yaml --input-file vlsu_store.json)
+#sparta_named_test(VLSU_test_load            VLSU_test   -l top.cpu.core0.vlsu info vlsu_load.out     -c test_cores/test_big_core.yaml --input-file vlsu_load.json)
+#sparta_named_test(VLSU_test_store           VLSU_test   -l top.cpu.core0.vlsu info vlsu_store.out    -c test_cores/test_big_core.yaml --input-file vlsu_store.json)

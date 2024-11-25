@@ -25,14 +25,13 @@ the Olympia simulator
 [width="100%",cols="17%,83%",options="header",]
 |===
 |Label |Description
-|BIM | A bi-modal table which stores the 2 bit counters of different branch
-history patterns
+|PHT | Pattern history table indexed by a hash of (part of) branch history and
+current PC. Stores 2 bit counters to predict Taken/Not-Taken
 |BTB| Branch target buffer
 |RAS| Return address stack
-|IRQ| Intermediate response queue to store the response obtained from
-SimplePredictor until it is not allocated to FTQ
-|FTQ| Fetch target queue to store information related to in-flight branches
-which are used to update the BPU.
+|FTQ| Fetch target queue stores information related to in-flight branches
+which are used to update the BPU once instructions are finally committed.
+|GHR| Global history register stores last several bits of branch history records.
 |===
 
 [[Related_Documents]]
@@ -63,8 +62,9 @@ outcomes and branch targets before branch instructions are actually
 resolved in the pipeline in order to reduce latency between a branch and a
 subsequent instruction.
 
-It receives input in the form of FetchPC from the Fetch unit in order to
-predict the target address from which Fetch unit has to get next instruction.
+It receives prediction input in the form of PC and instruction type from the
+Fetch unit and predicts the direction and target address from which Fetch unit
+has to get the next instruction.
 
 
 [[Overview_Block_Diagram]]
@@ -77,32 +77,55 @@ Figure 1 - Overview of BPU in reference to Fetch unit
 [[Functional_Description]]
 == Functional Description
 
-Branch Prediction Unit in Olympia consists mainly of two parts -
-First one is a simple predictor which is intended to provide a very
-fast prediction, although it may not be able to correctly predict
-complex branches. The second part consists of a more complex
-predictor which predicts even complex branches with better accuracy.
+Branch Prediction Unit in Olympia is a two-tiered branch predictor where the
+first tier provides a simple but fast prediction. The second tier consists
+of a more accurate predictor which can predict even complex branches.
 
-[[Input_Ports]]
-=== Input Ports
+[[Input_Ports_BPU]]
+=== Input Ports in BPU
 
-**  in_fetch_prediction_credits - To receive credits from Fetch unit to indicate availability
+**  `in_fetch_prediction_credits` - To receive credits from Fetch unit to indicate availability
     of slots
-**  in_fetch_prediction_req - To receive prediction requests from Fetch unit
-**  TODO: input port to receive de-allocated FTQ entry once that instruction packet is committed.
+**  `in_fetch_prediction_req` - To receive prediction requests from Fetch unit
+
+**  `TODO`: input port to receive de-allocated FTQ entry once that instruction packet is committed.
 
 
-[[Output_Ports]]
-=== Output Ports
+[[Output_Ports_BPU]]
+=== Output Ports in BPU
 
-** out_fetch_prediction_res - To send prediction result to Fetch unit
+** `out_fetch_prediction_res` - To send prediction result to Fetch unit
 
 [[Counters]]
 === Counters
 
-** pred_req_num - Total number of prediction requests made to BPU
-** num_mispred - Total number of mis-predictions
-** mispred_perc - Percentage of mis-predictions
+** `pred_req_num` - Total number of prediction requests made to BPU
+** `num_mispred` - Total number of mis-predictions
+** `mispred_perc` - Percentage of mis-predictions
+
+[[Operation_of_BPU]]
+=== Operation of BPU
+
+image:media/bpu_process_flowchart.png[image,width=578, height=366]
+
+** If the instruction type is a "call", the current PC is pushed to the
+RAS, and is also sent to the BTB. If it is a hit, then the target is
+sent out. Otherwise, an entry is made to the BTB.
+
+** If the instruction type is a "ret", then the PC is simply popped from
+the RAS, and the PC is sent out.
+
+** If the instruction type is a branch then the PC is sent simultaneously
+to the BTB, BasePredictor and the TAGE_SC_L-Predictor.
+    *** If it is a hit on BTB, and the BasePredictor predicts a taken
+         branch, then the output is sent to Fetch unit
+    *** If it is a hit on BTB, but
+    *** If it is not a hit on BTB, but the BasePredictor predicts a taken
+        branch, then an entry is allocated to the BTB.
+** Pattern History Table (PHT) is indexed by the XOR hash of the last several
+    bits of global history and the PC.
+
+
 
 [[Unit_Block_Diagram]]
 === Unit Block Diagram
@@ -114,183 +137,445 @@ Figure 2 - Unit block diagram of BPU
 [[Block_Diagram_Description]]
 === Block Diagram Description
 
-BPU consists of a Simple-Predictor (which is accessed in the
-first fetch cycle), a more Complex-Predictor (which is also accessed
-in the first fetch cycle), an IRQ (a simple queue) which stores the
-response obtained from the simple-predictor, and a FTQ (a simple
+BPU consists of a BasePredictor (which is accessed in the
+first fetch cycle), a TAGE_SC_L-Predictor (which is also accessed
+in the first fetch cycle), and an FTQ (a simple
 queue) which stores the information of all in-flight branch instructions
-and is required in order to update the BPU on mis-prediction.
+and is required in order to update the BPU once instruction are finally
+committed.
 
-[[Description_of_Simple_Predictor]]
-== Description of SimplePredictor
+[[Description_of_PredictionInput]]
+== Description of PredictionInput
 
-The SimplePredictor consists of a Bi-modal table (BIM), a Branch
-Target Buffer (BTB) and a Return Address Stack (RAS).
+Olympia's Branch Predictor API intends the implementation of Branch Predictor to
+define custom PredictionInput
+
+[[Overview_of_PredictionInput]]
+===  Overview
+PredictionInput is received by the BPU from the Fetch unit whenever a request for
+the prediction is made. Based on the data provided by this input, BPU makes the
+prediction.
+
+[[Structure_of_PredictionInput]]
+===  Structure of PredictionInput
+
+**  Program counter
+**  instruction type (branch, jump, or ret)
+
+[[Class_Description]]
+===  Class Description
+
+**  `uint64_t PC`
+**  -:
+[[enum_to_describe_instruction_type]]
+----
+enum instType {
+    InstructionType::Branch,
+    InstructionType::Jump,
+    InstructionType::Ret,
+    .....
+}
+----
+
+[[Description_of_PredictionOutput]]
+== Description of PredictionOutput
+
+Olympia's Branch Predictor API intends the implementation of Branch Predictor to
+define custom PredictionOutput
+
+[[Overview_of_PredictionOutput]]
+===  Overview
+PredictionOutput is the format in which predictions made by the BPU is sent out
+to the Fetch unit.
+
+[[Structure_of_PredictionOutput]]
+===  Structure of PredictionOutput
+
+** bool pred
+** uint64_t predPC
+
+[[Description_of_UpdateInput]]
+== Description of UpdateInput
+
+Olympia's Branch Predictor API intends the implementation of Branch Predictor to
+define custom UpdateInput
+
+[[Overview_of_UpdateInput]]
+===  Overview
+
+Once the instructions are committed, UpdateInput is sent to the BPU in order to
+update BPU's internal state in case of mis-prediction.
+
+The entry of FTQ, is the `UpdateInput` object. Once instructions are finally
+committed, the entries are deallocated from FTQ and sent back to BPU.
+
+? - ftq entries are update at the time of commit and then sent back to reflect correctedPC, etc?
+
+
+[[Structure_of_UpdateInput]]
+===  Structure of UpdateInput
+
+** uint64_t PC
+** bool branchTaken
+** uint64_t correctedPC
+
+
+[[Description_of_BPU]]
+== Description of BPU
+This section describes the overview and description for the top level class
+which bolts the Branch Prediction Unit into the Olympia simulator.
+
+[[Parameterization_of_BPU]]
+=== Parameterization of BPU
+1. `ghr_size` - Maximum number of branch history bits stored in Global
+History Register
+
+===  C++ Class Description
+* Inherits Olympia's Branch Prediction API
+* Implements `getPrediction()` and `updatePrediction()` operations.
+* Inherits `BasePredictor` and `TAGE_SC_L` class.
+
+=== Function list
+***   `void recievePredictionRequest(PredictionInput predInput)`
+        ** receives PredictionInput from Fetch
+        ** store requests in temporary input buffer to be utilised by
+           BasePredictor and TAGE-SC-L
+
+***   `void recievePredictionUpdate()`
+        ** receives prediction update once instructions are committed
+        ** store deallocated FTQ entries in internal buffer in order to be
+           used by BasePredictor and TAGE-SC-L to update itself.
+
+***   `UpdateInput getPrediction()`
+        ** sends prediction to Fetch unit
+        ** makes entry in FTQ(?)
+        ** handle any potential prediction override between TAGE and BasePredictor
+
+
+[[Description_of_Base_Predictor]]
+== Description of BasePredictor
+
+The BasePredictor consists of a Pattern History Table (PHT) indexed by a GShare hash
+of PC and some specific number of global branch history bits, a Branch Target
+Buffer (BTB), and a Return Address Stack (RAS).
 
 [[Operation]]
 === Operation
 
-For every prediction request made to SimplePredictor, first a Bi-modal
-table indexed by the last N global history bits is used to determine if
-the branch is Taken or Not-Taken.
+**Some points to note**
 
-1. if branch is Taken
-* if instruction type = branch, use BTB
-* if instruction type = jump or call, use BTB
-* if instruction type = ret, use RAS
+** BTB only tells the target a branch can take if branch is taken, whether the
+branch is actually (predicted) taken is a different question.
 
-2. if branch is Not-Taken
-* return PC + Instruction-Width
+** Direction of branch is predicted by PHT and TAGE-SC-L
 
-Response of every prediction made by the SimplePredictor is stored in the
-Intermediate Response Queue (IRQ).
-
-=== C++ Class Description
-
-Implemented as a subclass within the top level BPU class
+** Unconditional jumps require entry to be allocated to BTB if not already present,
+and pushing the current PC to RAS.
 
 [[Parameterization]]
 === Parameterization
 
-1.  ghr_size  -  Maximum number of history bits stored and utilised to
-index into bi-modal table.
-2.  btb_queue_size - Maximum number of entries which can be allocated to
+1.  `ghr_bits_for_hash` - Number of history bits from PHT utilized for hashing with
+PC, to finally index into PHT.
+2.  `pht_size` - Maximum number of entries stored in Pattern History Table.
+3.  `btb_queue_size` - Maximum number of entries which can be allocated to
 the BTB.
-3.  ras_stack_size - Maximum number of entries which can be pushed to the RAS.
-4.  ras_enable_overwrite - Boolean flag to set whether newer entries to
+4.  `ras_stack_size` - Maximum number of entries which can be pushed to the RAS.
+5.  `ras_enable_overwrite` - Boolean flag to set whether newer entries to
 RAS on maximum capacity should overwrite or not.
 
-[[BIM]]
-=== 1. Bi-modal table
 
-A bi-modal table which stores the 2 bit counters of different branch history patterns
+=== C++ Class Description
+
+** Inherits `PHTEntry`, `BTBEntry`, and `RASEntry` class
+
+** Initializes PHT as an array of PHTEntry
+
+** Initializes BTB as a hashmap of PC and BTBEntry
+
+** Initializes RAS as an empty stack of type RASEntry.
+
+[[Pattern_History_Table]]
+=== 1. Pattern History Table
+
+An array of 2 bit counters to predict direction of branches. It is indexed by a
+GShare hash (XOR) of PC and some specific number of last few branch history bits.
 
 [[operation]]
 ==== Operation
 
-Pattern of last N history bits are used to index to the entry in the table which provides the direction
-of the branch
+Whenever a PC is received by the BPU, the PC and the last several bits of global history
+registers are hashed to index into the PHT. The counter at this particular index provides
+the prediction that whether the branch will be taken or not.
 
-==== C++ Class Description
+[[Parameterization_of_PHT]]
+==== Parameterization
 
-Implemented as a subclass within the SimplePredictor class
+1.  `pht_size` - Maximum number of entries stored in Pattern History Table.
+2.  `ghr_bits_for_hash` - Number of history bits from GHR utilized for hashing with
+    PC, to finally index into PHT.
 
-Utilises a hash table
+==== C++ Class Description for PHTEntry
+
+consists of `uint64_t predCtr`
 
 [[Branch_Target_Buffer]]
 === 2. Branch Target Buffer
 
 Tagged entry table in which a PC is used to find a matching target.
 
-[[operation]]
+[[operation_of_BTB]]
 ==== Operation
 
-PC is used to index into the table, which contains the target address of the branch instruction
+Whenever a PC is received by the BPU, it is used to index into the BTB,
+which contains the target address of the branch instruction.
 
-==== C++ Class Description
+** If the prediction suggests that branch was not taken, but a branch was
+actually taken, then add the entry into the BTB.
 
-Implemented as a subclass within the SimplePredictor class
+** If the prediction suggests that branch was taken, but a branch was actually
+not-taken, then remove the entry from the BTB.
 
-Utilizes a hash table to store target address for corresponding PC
+** If there is no BTB entry corresponding to the taken branch or jump, a new
+entry is allocated for it.
 
+[[Parameterization_of_BTB]]
+==== Parameterization
+1.  `btb_size` - Maximum number of entries which can be allocated to the BTB.
+
+[[BTB_Class_Description_of_BTBEntry]]
+==== C++ Class Description of BTBEntry
+
+** uint64_t targetPC
+
+[[BTB_Functions_List]]
+==== Functions List
+1. `bool addEntry(uint64_t PC, uint64_t targetPC)` - allocates a BTB entry into the
+BTB table
+
+2. `bool removeEntry(uint64_t PC)` - deallocates a BTB entry corresponding to a
+particular PC.
+
+3. `uint64_t getPredictedPC(uint64_t PC)` - returns the target PC corresponding to the
+PC
 
 [[Return_Address_Stack]]
 === 3. Return Address Stack
 
-Stack used to track function calls.
+RAS is a small separate predictor used to predict returns.
 
-[[operation]]
+[[Operation_of_RAS]]
 ==== Operation
 
 ** Push the PC on the stack whenever a "call" is made
 ** Return the PC whenever "ret" is called and pop the entry from RAS
 
 
-==== C++ Class Description
+[[Parameterization_of_RAS]]
+==== Parameterization
+1. `ras_stack_size` - Maximum number of entries which can be pushed to the RAS.
 
-Implemented as a subclass within the SimplePredictor class
-
-Utilizes a stack
-
-[[Description_of_Complex_Predictor]]
-== Description of ComplexPredictor
-
-The ComplexPredictor implements a TAGE-SC-L predictor in order to predict complex branches with better
-accuracy than is possible with a simple combination of BIM, BTB and RAS.
-
-This part of the BPU only predicts the direction of the branch, and relies on
-BTB or Decode stage to resolve target address.
-
-Prediction request to the ComplexPredictor is made simultaneously with the
-prediction request made to the SimplePredictor.
-
-=== C++ Class Description
-
-Implemented as a subclass within the top level BPU class
+2. `ras_enable_overwrite` - Boolean flag to set whether newer entries to RAS on
+   maximum capacity should overwrite or not.
 
 
-[[Parameterization]]
-=== Parameterization
+==== C++ Class Description of RASEntry
 
-1. base_pred_table_size - Maximum number of possible entries in the base predictor
-2. tage_pred_table_num - Number of prediction tables of different history lengths
-3. tage_tag_width - Width of tag parameter of tagged component of TAGE
-4. pred_bits
-5. useful_bits
+* `uint64_t PC`
+
+[[RAS_Functions_List]]
+==== Functions List
+
+1. `pushEntry()` - Whenever a JAL (call) instruction is executed, the PC is
+pushed to the RAS stack. If the RAS is already full, then depending on the value
+of `ras_enable_overwrite` parameter, overwrite the older entry.
+
+2. `popEntry()` - Whenever a JALR (ret) instruction is being executed, the topmost
+element of the RAS is popped and returned to the Fetch unit.
+
+
+[[Description_of_TAGE-SC-L]]
+== Description of TAGE_SC_L
+
+The second level predictor implements a TAGE-SC-L predictor in order to predict
+complex branches with better accuracy than is possible with a simple combination of
+PHT and RAS.
 
 === 1. TAGE
 
-TAGE consists of a base predictor (a simple PC indexed 2-bit counter table), backed by
+TAGE consists of a Bimodal table (a simple PC indexed 2-bit counter table), backed by
 a number of tagged predictor components which uses geometrically increasing history lengths.
 
-Each entry in a tagged component consists of a "pred" which provides the prediction, a partial "tag",
-and a useful counter "u".
+Each entry in a tagged component consists of 3 fields -
+
+    **  pred - represents the direction branch will take
+    **  u    - represents if the prediction made by same component turned out to be correct
+        last time or not.
+    **  tag
+
+image:media/TAGE.png[image,width=500,height=300]
 
 ==== Operations
 
-When prediction is requested, the base predictor and tagged components are accessed simultaneously.
-The base predictor provides a default prediction. The tagged components provide a prediction only on
-a tag match. The overall prediction is provided by the hitting tagged predictor component that uses the
-longest history. In case of no matching tagged predictor component, the prediction given by default
-predictor is used. [1]
+When prediction is requested, the Bi-Modal table (T0) and tagged components (Ti; 1 < i < M) are
+accessed simultaneously. The Bi-modal table (base predictor) provides the default prediction.
+Whereas the tagged components provide a prediction only on a tag match. The overall prediction is
+provided by the hitting tagged predictor component that uses the longest history length. In case of
+no matching tagged predictor component, the prediction given by default predictor is used. [1]
 
-==== C++ Class Description
+[[Parameterization_of_TAGE]]
+==== Parameterization of TAGE
+1.  uint16_t Index
+2.  uint64_t Path
+3.  uint64_t History
+4.  tage_max_idx_bits -
+5.  tage_num_components -
+6. tage_global_hist_buff_len -
+7. tage_folded_hist_buff_len -
+8. tage_path_hist_buff_len -
+9. tage_min_hist_len
+10. tage_hist_alpha -
+11. tage_reset_useful_interval
 
-A subclass within the ComplexPredictor class
+[[Parameterization_of_TAGE_BIM]]
+==== Parameterization of TAGE-BIM
+1. tage_bim_table_size -
+2. tage_base_ctr_bits -
 
-Utilizes hash-table to store PC-indexed 2 bit branch history
+[[Parameterization_of_Tagged_Component]]
+==== Parameterization of Tagged Component
+1. uint16_t Tag
+2. tage_ctr_bits -
+3. tage_useful_bits -
 
-Utilizes a vector of vectors to store tagged predictor component tables
+
+[[Class_Description_of_TAGE]]
+==== C++ Class Description of TAGE
+
+** Inherits two separate classes to represent bimodal table and tagged component table each.
+
+** Initializes an array of tagged components indexed by the hash of PC and history lengths
+
+==== 1.a. Bimodal Table
+A table indexed by PC containing 2 bit counters to predict direct of branch
+
+C+++ Class Description of BimodalTableEntry
+
+`uint8_t predCountr;`
+
+==== 1.b. Tagged Component
+A table indexed by the hash of PC and geometrically increasing history length
+
+===== 1.b.1 Tagged Component Entry
+`pred` - represents the direction branch will take
+
+`u` - represents if the prediction made by same component turnmed out to be correct or not last time.
+
+`tag`
+
+C++ Class Description
+
 
 
 === 2. SC
-TODO: Statistical Corrector is an associative table used to monitor the mis-prediction from TAGE.
 
+Input - Prediction + (Address, History) pair
+
+To decide - whether to invert the prediction or not?
+
+Since in most cases the prediction provided by the TAGE predictor is correct,
+the Statistical Corrector predictor agrees most of the time with the
+TAGE predictor, therefore a relatively small Statistical Corrector
+predictor performs close to an unlimited size Statistical Corrector
+predictor [2].
+
+[[Parameterization_of_Statistical_Corrector]]
+==== Parameterization
+
+1. `num_of_logical_table` - Describes the number of logical tables indexed with same number
+of shortest history lengths
+
+[[Class_Description_of_SC]]
+==== Class Description of Statistical Corrector
+
+
+[[Description_of_Loop_Predictor]]
 === 3. Loop Predictor
-TODO: Loop predictor
+
+A loop predictor can simply identify regular loops with constant number of
+iterations. The loop predictor will provide the global prediction when it
+identifies the branch as a loop with a constant iteration number and when this
+identification has reached a high confidence, i.e. when the loop has been
+executed several times with the same number of iterations.
+
+It uses a Loop Predictor table which is essentially a k-way set associative table
+whose entries is used to predict loops.
+
+[[Parameterization_of_loop_predictor_table]]
+==== Parameterization of Loop Predictor Table
+
+1. `loop_pred_table_size` - Defines the maximum number of possible entries in the
+loop predictor table
+
+2. `loop_pred_table_way` - Defines the Way size of the loop predictor table
+
+[[Class_Description_of_loop_predictor_entry]]
+==== Class Description of LoopPredictorEntry
+1. `uint16_t past_iter` - Stores the 14-bit count for the number of iterations seen in past
+
+2. `uint16_t current_iter` - stores the 14-bit count for the number of iterations seen currently
+
+3. `uint16_t tag` - Stores the 14-bit tag for the entry
+
+4. `uint8_t confidence` - 2-bit counter signifying confidence in prediction
+
+5. `uint8_t age` - 8-bit counter signifying age of entry
+
+6. `bool direction` - Stores the direction bit
+
+[[Functions_list_of_loop_predictor]]
+==== Functions List of LoopPredictor
+
+1. `addEntry()`
+
+2. `removeEntry()`
+
+[[Fetch_Target_Queue]]
+==  Fetch Target Queue
+
+Fetch Target Queue stores information related to in-flight branches which are used to update
+the BPU, once instructions are finally committed.
+
+Similar to ROB, but it is decoupled from it.
+
+It is a wrapper around a simple Queue.
+
+[[Class_Description]]
+===  Class Description
+
 
 
 [[Test_Bench_Description]]
-== Test Bench Description
+== Test Bench Descriptions
 
 [[Description_of_Test_1]]
-=== Basic branch prediction accuracy test
+=== 1. Basic branch prediction accuracy test
 
 Verifies that the BPU correctly predicts simple highly biased branches
 
 [[Description_of_Test_2]]
-=== Branch prediction warm up test
+=== 2. Branch prediction warm up test
 
 On start-up, BPU takes several iterations to start predicting correctly. This test verifies
 that on reset BPU is initialized properly.
 
 [[Description_of_Test_3]]
-===  Branch mis-prediction recovery test
+===  3. Branch mis-prediction recovery test
 
 On mis-prediction, test that BPU is updated and pipeline are flushed properly.
 
 [[Description_of_Test_4]]
-===  Dynamic branch prediction test
+===  4. Dynamic branch prediction test
 
 Tests that BPU properly predicts a mix of simple and complex branches.
 
@@ -298,9 +583,12 @@ Tests that BPU properly predicts a mix of simple and complex branches.
 [[Future_Work_or_Features]]
 == Future Work or Features
 
-<forward looking statements>
+Devise the mechanism to override the prediction in case of mismatch between the prediction
+made by BasePredictor and TAGE_SC_L-Predictor
 
 [[References_Citations]]
 == References/Citations
 
-[1] Andre Seznec, The L-TAGE Branch Predictor, 2007
+[1] André Seznec, The L-TAGE Branch Predictor, 2007
+
+[2] André Seznec, A New Case for the TAGE Branch Predictor

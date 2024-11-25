@@ -282,8 +282,7 @@ namespace olympia
                      << (oldest_store ? oldest_store->getInstPtr()->getUniqueID() : 0)
                      << " Got: " << inst_ptr->getUniqueID());
         
-            // Remove from store buffer and commit to cache
-            out_cache_lookup_req_.send(oldest_store->getMemoryAccessInfoPtr());
+            // Remove from store buffer -> don't actually need to send cache request
             store_buffer_.erase(store_buffer_.begin());;
             ++stores_retired_;
         }

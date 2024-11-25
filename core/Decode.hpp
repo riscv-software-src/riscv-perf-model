@@ -341,6 +341,11 @@ namespace olympia
 
         uint32_t getNumVecUopsRemaining() const;
 
+        sparta::Counter vset_blocking_count_;
+        sparta::Counter vset_blocking_stall_latency_;
+
+        uint64_t vset_block_start_;
+
         //////////////////////////////////////////////////////////////////////
         // Decoder callbacks
         void sendInitialCredits_();

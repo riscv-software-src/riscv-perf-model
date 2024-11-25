@@ -51,6 +51,44 @@ class olympia::LSUTester
         EXPECT_EQUAL(lsu.cache_read_stage_, 4);
         EXPECT_EQUAL(lsu.complete_stage_, 6);
     }
+
+    void test_store_address_match(olympia::LSU &lsu, uint64_t addr, bool should_match) {
+        auto& store_buffer = lsu.store_buffer_;  // Friend class can access private members
+        if(store_buffer.empty()) {
+            EXPECT_FALSE(should_match);
+            return;
+        }
+        bool found = false;
+        for(const auto& store : store_buffer) {
+            if(store->getInstPtr()->getTargetVAddr() == addr) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_EQUAL(found, should_match);
+    }
+
+    // Helper to verify store forwarding for a specific load/store pair
+    void test_store_forwarding(olympia::LSU &lsu) {
+        // Check store buffer has the expected store
+        EXPECT_TRUE(lsu.store_buffer_.size() > 0);
+
+        // Get store and load from issue queue that should match
+        bool found_pair = false;
+        for(const auto& ldst_inst : lsu.ldst_inst_queue_) {
+            auto inst = ldst_inst->getInstPtr();
+            if(!inst->isStoreInst()) {
+                // Found a load - check if it got forwarded data
+                auto mem_info = ldst_inst->getMemoryAccessInfoPtr();
+                if(mem_info->isDataReady() &&
+                   mem_info->getCacheState() == MemoryAccessInfo::CacheState::HIT) {
+                    found_pair = true;
+                    break;
+                }
+            }
+        }
+        EXPECT_TRUE(found_pair);
+    }
 };
 
 const char USAGE[] =
@@ -109,8 +147,17 @@ void runTest(int argc, char **argv)
     lsupipe_tester.test_pipeline_stages(*my_lsu);
     cls.runSimulator(&sim, 9);
     lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
-    cls.runSimulator(&sim, 52);
-    lsupipe_tester.test_replay_issue_abort(*my_lsu, 3); // Loads operand dependency meet
+    lsupipe_tester.test_store_address_match(*my_lsu, 0xdeeebeef, true);
+
+    // Run for second load (no match at 0xdeebbeef)
+    cls.runSimulator(&sim, 5);
+    lsupipe_tester.test_store_address_match(*my_lsu, 0xdeebbeef, false);
+
+    cls.runSimulator(&sim, 47);
+    lsupipe_tester.test_replay_issue_abort(*my_lsu, 3);
+    // Loads operand dependency meet
+    lsupipe_tester.test_store_address_match(*my_lsu, 0xdeadbeef, true);
+
     cls.runSimulator(&sim);
 }
 

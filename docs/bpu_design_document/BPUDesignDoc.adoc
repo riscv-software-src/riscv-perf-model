@@ -203,6 +203,7 @@ which bolts the Branch Prediction Unit into the Olympia simulator.
 History Register (GHR)
 
 ===  C++ Class Description
+* Inherits `sparta::Unit`
 * Inherits Olympia's Branch Prediction API
 * Inherits `BasePredictor` and `TAGE_SC_L` class.
 
@@ -275,13 +276,13 @@ RAS on maximum capacity should overwrite or not.
 
 === C++ Class Description
 
-** Inherits `PHTEntry`, `BTBEntry`, and `RASEntry` class
+** Inherits `PHTEntry` and `BTBEntry` class
 
-** Initializes PHT as an array of PHTEntry
+** Initializes PHT as a hashmap of PC and `PHTEntry`
 
-** Initializes BTB as a hashmap of PC and BTBEntry
+** Initializes BTB as a hashmap of PC and `BTBEntry`
 
-** Initializes RAS as an empty stack of type RASEntry.
+** Initializes RAS as an empty stack of `uint64_t`
 
 [[Pattern_History_Table]]
 === 1. Pattern History Table
@@ -324,6 +325,7 @@ which contains the target address of the next instruction.
 ==== Class Description of BTBEntry
 
 ** `uint64_t targetPC`
+
 
 [[BTB_Functions_List]]
 ==== Functions List
@@ -378,6 +380,7 @@ The second level predictor implements a TAGE-SC-L predictor in order to predict
 complex branches with better accuracy than is possible with a simple combination of
 PHT and RAS.
 
+[[Description_of_TAGE]]
 === 1. TAGE
 
 TAGE consists of a Bimodal table (a simple PC indexed n-bit counter table), backed by
@@ -392,7 +395,8 @@ Each entry in a tagged component consists of 3 fields -
 
 image:media/TAGE.png[image,width=700,height=300]
 
-==== Operations
+[[Operation_of_TAGE]]
+==== Operation of TAGE
 
 When prediction is requested, the Bi-Modal table (T0) and tagged components (Ti; 1 < i < M) are
 accessed simultaneously. The Bi-modal table (base predictor) provides the default prediction.
@@ -421,13 +425,13 @@ no matching tagged predictor component, the prediction given by default predicto
 
 [[Parameterization_of_Tagged_Component]]
 ==== Parameterization of Tagged Component
-1. uint16_t Tag
-2. tage_ctr_bits -
-3. tage_useful_bits -
+1. `uint16_t Tag` -
+2. `tage_ctr_bits` -
+3. `tage_useful_bits` - Number of bits which represents useful value
 
 
 [[Class_Description_of_TAGE]]
-==== C++ Class Description of TAGE
+==== Class Description of TAGE
 
 ** Inherits two separate classes to represent bimodal table and tagged component table each.
 
@@ -436,29 +440,25 @@ no matching tagged predictor component, the prediction given by default predicto
 ==== 1.a. Bimodal Table
 A table indexed by PC containing 2 bit counters to predict direct of branch
 
-C+++ Class Description of BimodalTableEntry
+==== Class Description of TAGE_BIMEntry
 
 `uint8_t predCountr;`
 
 ==== 1.b. Tagged Component
 A table indexed by the hash of PC and geometrically increasing history length
 
-===== 1.b.1 Tagged Component Entry
+==== 1.b.1 Tagged Component Entry
 `pred` - represents the direction branch will take
 
 `u` - represents if the prediction made by same component turnmed out to be correct or not last time.
 
 `tag`
 
-C++ Class Description
-
-
-
 === 2. SC
 
-Input - Prediction + (Address, History) pair
+**Input** - Prediction + (Address, History) pair
 
-To decide - whether to invert the prediction or not?
+**To decide** - whether to invert the prediction or not?
 
 Since in most cases the prediction provided by the TAGE predictor is correct,
 the Statistical Corrector predictor agrees most of the time with the
@@ -523,15 +523,30 @@ loop predictor table
 Fetch Target Queue stores information related to in-flight branches which are used to update
 the BPU, once instructions are finally committed.
 
-Similar to ROB, but it is decoupled from it.
+Similar to ROB, but it is decoupled from it. Implemented using a Queue.
 
-Implemented using a simple Queue.
+Entries are allocated to FTQ when predictions are sent to Fetch.
+Upon retirement of instructions, the `correctedPC` and `actuallyTaken` values are written,
+and then sent to BPU to update its internal state.
 
 [[Class_Description_of_FTQ]]
 ===  Class Description of FTQ
 
+** Initialises a Queue of `FTQEntry`
+
+[[Class_Description_of_FTQEntry]]
+==== Class Description of FTQEntry
+
+** `uint64_t targetPC`
+
+** `uint64_t correctedPC`
+
+** `bool pred`
+
+** `bool actuallyTaken`
+
 [[Functions_list_of_FTQ]]
-=== Functions list
+==== Functions list
 ** `addEntry()` -
 ** `removeEntry()` -
 

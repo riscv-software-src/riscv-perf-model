@@ -178,7 +178,7 @@ namespace olympia
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_vint_busy", "VINT busy",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
-             sparta::CycleCounter(getStatisticSet(), "stall_vfixed_busy", "VFIXED busy",
+                sparta::CycleCounter(getStatisticSet(), "stall_vfixed_busy", "VFIXED busy",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_vmask_busy", "VMASK busy",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
@@ -222,7 +222,7 @@ namespace olympia
                                 sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vint_insts", "Total VINT insts",
                              sparta::Counter::COUNT_NORMAL),
-             sparta::Counter(getStatisticSet(), "count_vfixed_insts", "Total VFIXED insts",
+                sparta::Counter(getStatisticSet(), "count_vfixed_insts", "Total VFIXED insts",
                                 sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vmask_insts", "Total VMASK insts",
                                 sparta::Counter::COUNT_NORMAL),
@@ -280,6 +280,8 @@ namespace olympia
             "count_cmov_insts + count_div_insts + count_faddsub_insts + count_float_insts + "
             "count_fmac_insts + count_i2f_insts + count_f2i_insts + count_int_insts + "
             "count_lsu_insts + count_mul_insts + count_br_insts"};
+
+        friend class DispatchTester;
     };
 
     using DispatchFactory =
@@ -305,5 +307,8 @@ namespace olympia
         }
 
         return os;
+
     }
+
+    class DispatchTester;
 } // namespace olympia

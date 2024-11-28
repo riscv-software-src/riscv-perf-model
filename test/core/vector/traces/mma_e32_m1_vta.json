@@ -1,0 +1,33 @@
+[
+  {
+    "mnemonic": "li",
+    "rs1": 10,
+    "imm": 32
+  },
+  {
+    "mnemonic": "vsetvli",
+    "rs1": 10,
+    "vtype": "0x10",
+    "rd": 0,
+    "vl": 32,
+    "vta": 1
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 15,
+    "rs1": 11,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 16,
+    "rs1": 17,
+    "imm": 0
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 8,
+    "fs1": 15,
+    "vs1": 16
+  }
+]

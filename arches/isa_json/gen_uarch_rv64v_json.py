@@ -243,7 +243,7 @@ SUPPORTED_INSTS = {
     "vnclip.wx" : {"pipe" : "vfixed", "uop_gen" : "NARROWING", "latency" : 2},
     "vnclip.wi" : {"pipe" : "vfixed", "uop_gen" : "NARROWING", "latency" : 2},
 
-    # Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
     "vfadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     "vfadd.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     

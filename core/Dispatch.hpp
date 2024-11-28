@@ -238,6 +238,7 @@ namespace olympia
                 sparta::Counter(getStatisticSet(), "count_vfmul_insts", "Total VFMUL insts",
                                 sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vfdiv_insts", "Total VFDIV insts",
+
                                 sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vmask_insts", "Total VMASK insts",
                                 sparta::Counter::COUNT_NORMAL),

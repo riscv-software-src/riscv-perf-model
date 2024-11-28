@@ -25,7 +25,7 @@ top.cpu.core0.extension.core_extensions:
     ["float", "f2i"],
     ["br"],
     ["br"],
-    ["vint", "vset", "vdiv", "vmul"]
+    ["vint", "vset", "vdiv", "vmul", "vfixed"]
   ]
   issue_queue_to_pipe_map:
   [ 

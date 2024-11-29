@@ -53,8 +53,11 @@ namespace olympia
             // PARAMETER(uint32_t, store_buffer_size, ldst_inst_queue_size, "Size of the store buffer")
             // LSU microarchitecture parameters
             PARAMETER(
-                bool, allow_speculative_load_exec, true,
+                bool, allow_speculative_load_exec, false,
                 "Allow loads to proceed speculatively before all older store addresses are known")
+            PARAMETER(
+                bool, allow_data_forwarding_, true,
+                "Allow data forwarding to bypass the cache look up / memory access")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
@@ -174,6 +177,7 @@ namespace olympia
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
+        const bool allow_data_forwarding_;
 
         // ROB stopped simulation early, transactions could still be inflight.
         bool rob_stopped_simulation_ = false;

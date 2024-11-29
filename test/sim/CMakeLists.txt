@@ -91,6 +91,8 @@ list(APPEND test_params_list "top.cpu.core0.lsu.params.cache_lookup_stage_length
 list(APPEND test_params_list "top.cpu.core0.lsu.params.cache_read_stage_length 3")
 list(APPEND test_params_list "top.cpu.core0.lsu.params.allow_speculative_load_exec false")
 list(APPEND test_params_list "top.cpu.core0.lsu.params.allow_speculative_load_exec true")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.allow_data_forwarding false")
+list(APPEND test_params_list "top.cpu.core0.lsu.params.allow_data_forwarding true")
 list(APPEND test_params_list "top.cpu.core0.lsu.params.replay_issue_delay 5")
 
 # Used to set a custom name for each test

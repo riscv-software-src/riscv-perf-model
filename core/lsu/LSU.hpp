@@ -56,7 +56,7 @@ namespace olympia
                 bool, allow_speculative_load_exec, false,
                 "Allow loads to proceed speculatively before all older store addresses are known")
             PARAMETER(
-                bool, allow_data_forwarding_, true,
+                bool, allow_data_forwarding, true,
                 "Allow data forwarding to bypass the cache look up / memory access")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")

@@ -37,7 +37,8 @@ namespace olympia
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
         ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
                        getClock()), // complete_stage_ + 1 is number of stages
-        allow_speculative_load_exec_(p->allow_speculative_load_exec)
+        allow_speculative_load_exec_(p->allow_speculative_load_exec),
+        allow_data_forwarding_(p->allow_data_forwarding)
     {
         sparta_assert(p->mmu_lookup_stage_length > 0,
                       "MMU lookup stage should atleast be one cycle");
@@ -520,7 +521,7 @@ namespace olympia
         }
 
         // Add store forwarding check here for loads
-        if (!inst_ptr->isStoreInst())
+        if (!inst_ptr->isStoreInst() && enable_store_forwarding_)
         {
             const uint64_t load_addr = inst_ptr->getTargetVAddr();
             auto forwarding_store = findYoungestMatchingStore_(load_addr);

@@ -79,7 +79,7 @@ namespace olympia
 
         // return allow_data_forwarding for test
         bool allow_data_forwarding_ex() {
-            return this.allow_data_forwarding_;
+            return allow_data_forwarding_;
         }
 
         ////////////////////////////////////////////////////////////////////////////////

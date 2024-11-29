@@ -521,7 +521,7 @@ namespace olympia
         }
 
         // Add store forwarding check here for loads
-        if (!inst_ptr->isStoreInst() && allow_data_forwarding)
+        if (!inst_ptr->isStoreInst() && allow_data_forwarding_)
         {
             const uint64_t load_addr = inst_ptr->getTargetVAddr();
             auto forwarding_store = findYoungestMatchingStore_(load_addr);

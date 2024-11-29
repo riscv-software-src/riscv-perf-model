@@ -77,6 +77,11 @@ namespace olympia
         //! name of this resource.
         static const char name[];
 
+        // return allow_data_forwarding for test
+        bool allow_data_forwarding_ex() {
+            return this.allow_data_forwarding_;
+        }
+
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////

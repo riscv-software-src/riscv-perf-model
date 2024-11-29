@@ -53,17 +53,7 @@ class olympia::LSUTester
     }
 
     void test_store_size(olympia::LSU &lsu, uint64_t size) {
-        auto& store_buffer = lsu.store_buffer_;  
-        
-        std::cout << "Store buffer size: " << store_buffer.size() << std::endl;
-        
-        if(!store_buffer.empty()) {
-            std::cout << "First store addr: 0x" << std::hex 
-                      << store_buffer.front()->getInstPtr()->getTargetVAddr() << std::endl;
-        }
-    
-        // Simply check if store was added to buffer
-        EXPECT_EQUAL(store_buffer.size(), 1);
+        EXPECT_EQUAL(lsu.store_buffer_.size(), 1);
     }
 };
 

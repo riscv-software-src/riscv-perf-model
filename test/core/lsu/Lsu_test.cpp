@@ -52,8 +52,8 @@ class olympia::LSUTester
         EXPECT_EQUAL(lsu.complete_stage_, 6);
     }
 
-    void test_store_size(olympia::LSU &lsu, uint64_t size) {
-        EXPECT_EQUAL(lsu.store_buffer_.size(), 1);
+    void test_store_size(olympia::LSU &lsu, int size) {
+        EXPECT_EQUAL(lsu.store_buffer_.size(), size);
     }
 };
 

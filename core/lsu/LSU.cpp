@@ -934,7 +934,7 @@ namespace olympia
 
     void LSU::allocateInstToStoreBuffer_(const InstPtr & inst_ptr)
     {
-        auto store_info_ptr = createLoadStoreInst_(inst_ptr);
+        const auto & store_info_ptr = createLoadStoreInst_(inst_ptr);
 
         sparta_assert(store_buffer_.size() < ldst_inst_queue_size_,
                       "Appending store buffer causes overflows!");

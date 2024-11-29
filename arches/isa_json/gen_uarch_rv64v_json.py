@@ -243,25 +243,165 @@ SUPPORTED_INSTS = {
     "vnclip.wx" : {"pipe" : "vfixed", "uop_gen" : "NARROWING", "latency" : 2},
     "vnclip.wi" : {"pipe" : "vfixed", "uop_gen" : "NARROWING", "latency" : 2},
 
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Exception Flags
-# TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
-# TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Add/Subtract Instructions
-# TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Multiply/Divide Instructions
-# TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Multiply
-# TODO: Vector Floating-Point Instructions: Vector Single-Width Floating-Point Fused Multiply-Add Instructions
-# TODO: Vector Floating-Point Instructions: Vector Widening Floating-Point Fused Multiply-Add Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Square-Root Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Square-Root Estimate Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Estimate Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point MIN/MAX Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Sign-Injection Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Compare Instructions
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Classify Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Merge Instruction
-# TODO: Vector Floating-Point Instructions: Vector Floating-Point Move Instruction
-# TODO: Vector Floating-Point Instructions: Single-Width Floating-Point/Integer Type-Convert Instructions
-# TODO: Vector Floating-Point Instructions: Widening Floating-Point/Integer Type-Convert Instructions
-# TODO: Vector Floating-Point Instructions: Narrowing Floating-Point/Integer Type-Convert Instructions
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Add/Subtract Instructions
+    "vfadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfadd.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    
+    "vfsub.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfrsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Widening Floating-Point Add/Subtract Instructions
+    "vfwadd.vv" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwadd.vf" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
+
+    "vfwsub.vv" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwsub.vf" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
+
+    "vfwadd.wv" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING_MIXED", "latency" : 6},
+    "vfwadd.wf" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING_MIXED", "latency" : 6},
+
+    "vfwsub.wv" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING_MIXED", "latency" : 6},
+    "vfwsub.wf" :  {"pipe" : "vfloat", "uop_gen" : "WIDENING_MIXED", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Multiply/Divide Instructions
+    "vfmul.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfmul.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfdiv.vv" :  {"pipe" : "vfdiv", "uop_gen" : "ELEMENTWISE", "latency" : 25},
+    "vfdiv.vf" :  {"pipe" : "vfdiv", "uop_gen" : "ELEMENTWISE", "latency" : 25},
+
+    "vfrdiv.vf" :  {"pipe" : "vfdiv", "uop_gen" : "ELEMENTWISE", "latency" :25},
+
+# Vector Floating-Point Instructions: Vector Widening Floating-Point Multiply
+    "vfwmul.vv" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 3},
+    "vfwmul.vf" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 3},
+
+# Vector Floating-Point Instructions: Vector Single-Width Floating-Point Fused Multiply-Add Instructions
+    "vfmacc.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfmacc.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfnmacc.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfnmacc.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfmsac.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfmsac.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfnmsac.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfnmsac.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfmadd.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfmadd.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfnmadd.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfnmadd.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfmsub.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfmsub.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfnmsub.vv" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfnmsub.vf" :  {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Widening Floating-Point Fused Multiply-Add Instructions
+    "vfwmacc.vv" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwmacc.vf" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+
+    "vfwnmacc.vv" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwnmacc.vf" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+
+    "vfwmsac.vv" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwmsac.vf" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+
+    "vfwnmsac.vv" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwnmsac.vf" :  {"pipe" : "vfmul", "uop_gen" : "WIDENING", "latency" : 6},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Square-Root Instruction
+    "vfsqrt.v" :  {"pipe" : "vfdiv", "uop_gen" : "ELEMENTWISE", "latency" : 25},
+
+# TODO: support variable length latency
+# Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Square-Root Estimate Instruction
+    "vfrsqrt7.v" :  {"pipe" : "vfdiv", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Reciprocal Estimate Instruction
+    "vfrec7.v" :  {"pipe" : "vfdiv", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+# Vector Floating-Point Instructions: Vector Floating-Point MIN/MAX Instructions
+    "vfmin.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vfmin.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+    "vfmax.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vfmax.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Sign-Injection Instructions
+    "vfsgnj.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vfsgnj.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+    "vfsgnjn.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vfsgnjn.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+    "vfsgnjx.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vfsgnjx.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Compare Instructions
+    "vmfeq.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+    "vmfeq.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+    "vmfne.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+    "vmfne.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+    "vmflt.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+    "vmflt.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+    "vmfle.vv" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+    "vmfle.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+    "vmfgt.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+    "vmfgte.vf" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Classify Instruction
+    "vfclass.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Merge Instruction
+    "vfmerge.vfm" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+# Vector Floating-Point Instructions: Vector Floating-Point Move Instruction
+    "vfmv.v.f" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+
+# Vector Floating-Point Instructions: Single-Width Floating-Point/Integer Type-Convert Instructions
+    "vfcvt.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfcvt.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+
+    "vfcvt.rtz.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfcvt.rtz.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+
+    "vfcvt.f.xu.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfcvt.f.x.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+
+# Vector Floating-Point Instructions: Widening Floating-Point/Integer Type-Convert Instructions
+    "vfwcvt.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfwcvt.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfwcvt.rtz.xu.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfwcvt.rtz.x.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfwcvt.f.xu.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfwcvt.f.xu.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+    "vfwcvt.f.f.v" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+
+# Vector Floating-Point Instructions: Narrowing Floating-Point/Integer Type-Convert Instructions
+    "vfncvt.xu.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfncvt.x.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+
+    "vfncvt.rtz.xu.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfncvt.rtz.x.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+
+    "vfncvt.f.xu.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfncvt.f.x.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+
+    "vfncvt.f.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
+    "vfncvt.rod.f.f.w" :  {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
 
 # TODO: Vector Reduction Operations: Vector Single-Width Integer Reduction Instructions
 # TODO: Vector Reduction Operations: Vector Widening Integer Reduction Instructions

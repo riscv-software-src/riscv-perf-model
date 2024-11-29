@@ -14,7 +14,8 @@ top.extension.core_extensions:
     ["float", "f2i"],
     ["br"],
     ["br"],
-    ["vint", "vset", "vdiv", "vmul"]
+    ["vint", "vset", "vdiv", "vmul"],
+    ["vfloat", "fvmul", "vfdiv"]
   ]
   issue_queue_to_pipe_map:
   [ 

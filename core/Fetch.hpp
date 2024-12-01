@@ -20,6 +20,7 @@
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
 #include "MemoryAccessInfo.hpp"
+#include "BPU.hpp"
 
 namespace olympia
 {
@@ -102,6 +103,13 @@ namespace olympia
         // Instruction Cache Credit
         sparta::DataInPort<uint32_t> in_icache_fetch_credits_
             {&unit_port_set_, "in_icache_fetch_credits", sparta::SchedulingPhase::Tick, 0};
+
+        sparta::DataOutPort<uint32_t> out_bpu_prediction_credits_ {&unit_port_set_,
+                                                                    "out_bpu_prediction_credits", 0};
+
+        // verify cycle delay required
+        sparta::DataOutPort<BPU::PredictionInput> out_bpu_prediction_req_ {&unit_port_set_,
+                                                                     "out_bpu_prediction_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Instruction fetch

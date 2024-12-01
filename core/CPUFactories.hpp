@@ -7,6 +7,7 @@
 #include "Core.hpp"
 #include "ICache.hpp"
 #include "Fetch.hpp"
+#include "BPU.hpp"
 #include "Decode.hpp"
 #include "VectorUopGenerator.hpp"
 #include "Rename.hpp"
@@ -48,6 +49,10 @@ namespace olympia{
         //! \brief Resource Factory to build a Fetch Unit
         sparta::ResourceFactory<olympia::Fetch,
                                 olympia::Fetch::FetchParameterSet> fetch_rf;
+
+        //! \brief Resource Factory to build a BPU Unit
+        sparta::ResourceFactory<olympia::BPU,
+                                olympia::BPU::BPUParameterSet> bpu_rf;
 
         //! \brief Resource Factory to build a Decode Unit
         sparta::ResourceFactory<olympia::Decode,

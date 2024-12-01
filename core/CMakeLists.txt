@@ -5,6 +5,7 @@ add_library(core
   SimpleBranchPred.cpp
   ICache.cpp
   Fetch.cpp
+  BPU.cpp
   Decode.cpp
   VectorUopGenerator.cpp
   Rename.cpp

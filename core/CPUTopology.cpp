@@ -44,6 +44,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->fetch_rf
         },
         {
+            "bpu",
+            "cpu.core*",
+            "BPU Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->bpu_rf
+        },
+        {
             "decode",
             "cpu.core*",
             "Decode Unit",
@@ -187,6 +195,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.fetch.ports.in_fetch_queue_credits",
             "cpu.core*.decode.ports.out_fetch_queue_credits"
+        },
+        {
+            "cpu.core*.fetch.ports.out_bpu_prediction_credits",
+            "cpu.core*.bpu.ports.in_fetch_prediction_credits"
+        },
+        {
+            "cpu.core*.fetch.ports.out_bpu_prediction_req",
+            "cpu.core*.bpu.ports.in_fetch_prediction_req"
         },
         {
             "cpu.core*.decode.ports.out_uop_queue_write",

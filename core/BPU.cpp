@@ -7,7 +7,8 @@ namespace olympia
 {
     BPU::name = "bpu"; 
     BPU::BPU(sparta::TreeNode* node, BPUParameterSet* p) :
-        sparta::Unit(node)
+        sparta::Unit(node),
+        ghr_size_(p->ghr_size)
 
         {
             in_fetch_prediction_credits_.createConsumerHandler(
@@ -23,6 +24,16 @@ namespace olympia
 
     void BPU::recievePredictionInput(PredictionInput) {
         std::cout << "hello" << std::endl;
+    }
+
+    void BPU::updateGHRTaken() {
+        ghr_ = ghr_ << 1;
+        ghr_ = ghr_ | 0b1;
+    }
+
+    void BPU::updateGHRNotTaken() {
+        ghr_ = ghr_ << 1;
+        ghr_ = ghr_ & 0b0; 
     }
 }
 

@@ -24,4 +24,10 @@ namespace olympia
             uint64_t correctedPC;
     };
 
+    enum class branchType {
+        CONDITIONAL_BRANCH,
+        JMP,
+        RET
+    };
+
 }

@@ -13,8 +13,6 @@
 
 namespace olympia
 {
-namespace BPU
-{
     class BPU : public sparta::Unit 
     {
         public:
@@ -24,6 +22,8 @@ namespace BPU
                     BPUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
                     // Parameters for the Branch Prediction Unit
+                    PARAMETER(uint32_t, ghr_size, 1024, "Number of history bits in GHR");
+                    
                     
             };
             static const char name[];
@@ -33,6 +33,16 @@ namespace BPU
             void receivePredictionCredits_(uint32_t);
             void recievePredictionInput(PredictionInput);
 
+            // update GHR when last branch is taken
+            void updateGHRTaken();
+            // update GHR when last branch is not taken
+            void updateGHRNotTaken();
+
+            // Number of history bits in GHR
+            uint32_t ghr_size_;
+
+            // Global History Register(GHR)
+            uint32_t ghr_ = 0;;
 
             // input ports
             // verify cycle delay required
@@ -65,5 +75,4 @@ namespace BPU
                                                 "misprediction/total_prediction", getStatisticSet(),
                                                 "pred_req_num/mispred_num"};
     };
-}
 }

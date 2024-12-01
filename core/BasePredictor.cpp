@@ -1,35 +1,41 @@
-//
-// Created by shobhit on 12/1/24.
-//
-
 #include "BasePredictor.hpp"
 
 namespace olympia
 {
-// PHT
+// Pattern History Table
 void PatternHistoryTable::incrementCounter(uint32_t idx) {
-    if(pattern_history_table_[idx] == ctr_bits_val_) {
+    if(pattern_history_table_.at(idx) == ctr_bits_val_) {
         return;
     }
     else {
-        pattern_history_table_[idx]++;
+        pattern_history_table_.at(idx)++;
     }
 }
 
 void PatternHistoryTable::decrementCounter(uint32_t idx) {
-    if(pattern_history_table_[idx] == 0) {
+    if(pattern_history_table_.at(idx) == 0) {
         return;
     }
     else {
-        pattern_history_table_[idx]--;
+        pattern_history_table_.at(idx)--;
     }
 }
 
 uint8_t PatternHistoryTable::getPrediction(uint32_t idx) {
-    return pattern_history_table_[idx];
+    return pattern_history_table_.at(idx);
 }
 
-// BTB
+// Branch Target Buffer
+bool BranchTargetBuffer::isHit(uint64_t PC) {
+    if(branch_target_buffer_.count(PC)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+
 uint64_t BranchTargetBuffer::getPredictedPC(uint64_t PC) {
     if(branch_target_buffer_.count(PC)) {
         return branch_target_buffer_[PC];
@@ -60,7 +66,7 @@ bool BranchTargetBuffer::removeEntry(uint64_t PC) {
     }
 }
 
-// RAS
+// Return Address Stack
 bool ReturnAddressStack::pushAddress(uint64_t address) {
     if(return_address_stack_.size() == ras_size_) {
         return false;
@@ -83,28 +89,32 @@ uint64_t ReturnAddressStack::popAddress() {
 }
 
 // BasePredictor
-void BasePredictor::handlePredictionReq() {
-    return;
+void BasePredictor::handlePredictionReq(PredictionInput predIn) {
+    if(predIn.instType == branchType.JMP) {
+       handleJMP(predIn);
+    }
+    else if(predIn.instType == branchType.RET ||
+        predIn.instType == branchType.CONDITIONAL_BRANCH) {
+        // make prediction 
+        // event to send prediction to fetch
+    }
 }
 
-PredictionOutput BasePredictor::makePrediction(PredictionInput predInput) {
+void BasePredictor::handleJMP(PredictionInput predInput) {
+    // push PC to RAS
+    returnAddressStack.pushAddress(predInput.PC);
 
-    PredictionOutput predOutput;
+    // PC hit on BTB?
+    if(branchTargetBuffer.isHit(predInput.PC)) {
+        // event to send PC
+    }
+    else {
+        // allocate entry in BTB
+    }
 
-    // branch instruction
-    if(predInput.instType == 1) {
-        predOutput.predDirection = false;
-        predOutput.predPC = 5;
-    }
-    // call instructions
-    //else if(predInput.instType == 2) {
-        // in this case no prediction is made, only data is stored for future reference
-    //}
-    // ret instruction
-    else if(predInput.instType == 3) {
-        predOutput.predDirection = true;
-        predOutput.predPC = returnAddressStack.popAddress();
-    }
-    return predOutput;
 }
+
+void BasePredictor::handleRET(PredictionInput predInput);
+void BasePredictor::handleBRANCH(PredictionInput predInput);
+
 }

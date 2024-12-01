@@ -1,5 +1,8 @@
 #pragma once
 
+#include <map>
+#include "BPTypes.hpp"
+
 namespace olympia
 {
     class PatternHistoryTable
@@ -21,7 +24,7 @@ namespace olympia
             const uint8_t  ctr_bits_;
             const uint8_t  ctr_bits_val_;
 
-            uint8_t pattern_history_table_[pht_size_];
+            std::map<uint64_t, uint8_t> pattern_history_table_;
              
     };
 
@@ -30,13 +33,14 @@ namespace olympia
         public:
             BranchTargetBuffer(uint32_t btb_size) : btb_size_(btb_size) {}
 
+            bool isHit(uint64_t PC);
             uint64_t getPredictedPC(uint64_t PC);
             bool addEntry(uint64_t PC, uint64_t targetPC);
             bool removeEntry(uint64_t PC);
 
         private:
             const uint32_t btb_size_;
-            std::map <uint64_t, uint64_t> branch_target_buffer_; // define size of this map too
+            std::map <uint64_t, uint64_t> branch_target_buffer_;
     };
 
     class ReturnAddressStack
@@ -58,15 +62,21 @@ namespace olympia
     {
         public:
             BasePredictor(uint32_t pht_size, uint8_t ctr_bits, 
-                uint32_t btb_size, uint32_t ras_size) 
-            {
-                PatternHistoryTable patternHistoryTable(pht_size, ctr_bits);
-                BranchTargetBuffer  branchTargetBuffer(btb_size);
-                ReturnAddressStack  returnAddressStack(ras_size);
-            }
+                uint32_t btb_size, uint32_t ras_size) : 
+                patternHistoryTable(pht_size, ctr_bits),
+                branchTargetBuffer(bht_size),
+                returnAddressStack(ras_size);
+            {}
+
+            PatternHistoryTable patternHistoryTable;
+            BranchTargetBuffer  branchTargetBuffer;
+            ReturnAddressStack  returnAddressStack;
 
             void receivedPredictionReq();
             PredictionOutput makePrediction(PredictionInput predInput);
+            void handleJMP(PredictionInput predInput);
+            void handleRET(PredictionInput predInput);
+            void handleBRANCH(PredictionInput predInput);
 
     };
 }

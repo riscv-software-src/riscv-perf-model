@@ -81,11 +81,24 @@ additional cycle.
 
 **  `TODO-`: input port to receive de-allocated FTQ entry once that instruction packet is committed.
 
+[[Corresponding_output_ports]]
+==== Corresponding Output Ports
+
+** `out_bpu_prediction_credits` - in Fetch.cpp. To send credits to BPU to indicate availability of
+   slots.
+
+** `out_bpu_prediction_req` - in Fetch.cpp. To send PredictionInput to BPU.
+
 
 [[Output_Ports_BPU]]
 === Output Ports in BPU
 
 ** `out_fetch_prediction_res` - To send prediction result to Fetch unit
+
+[[Corresponding_input_ports]]
+==== Corresponding Input Ports
+
+** `in_bpu_prediction_res` - in Fetch.cpp. To receive prediction result from BPU.
 
 [[Counters]]
 === Counters
@@ -157,7 +170,7 @@ to the Fetch unit.
 [[Class_Description_of_PredictionOutput]]
 ===  Class Description of PredictionOutput
 
-** `bool predBranchTaken`
+** `bool predDirection`
 ** `uint64_t predPC`
 
 [[Description_of_UpdateInput]]
@@ -185,9 +198,9 @@ update BPU's internal state in case of mis-prediction.
 [[Class_Description_of_UpdateInput]]
 ===  Class Description of UpdateInput
 
-** `uint64_t PC`
+** `uint64_t instrPC`
 
-** `bool actualBranchTaken`
+** `bool correctedDirection`
 
 ** `uint64_t correctedTargetPC`
 

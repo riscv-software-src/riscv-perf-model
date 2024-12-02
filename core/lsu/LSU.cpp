@@ -284,7 +284,8 @@ namespace olympia
                      << " Got: " << inst_ptr->getUniqueID());
         
             // Remove from store buffer -> don't actually need to send cache request
-            store_buffer_.erase(store_buffer_.begin());;
+            sparta_assert(store_buffer_.size() > 0, "Store buffer empty on retiring store");
+            store_buffer_.pop_front();
             ++stores_retired_;
         }
 

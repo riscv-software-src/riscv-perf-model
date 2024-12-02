@@ -147,9 +147,8 @@ namespace olympia
         const uint32_t replay_issue_delay_;
 
         // Store Buffer
-        std::deque<LoadStoreInstInfoPtr> store_buffer_;
-        // sparta::Buffer<LoadStoreInstInfoPtr> store_buffer_;
-        // const uint32_t store_buffer_size_;
+        sparta::Buffer<LoadStoreInstInfoPtr> store_buffer_;
+        const uint32_t store_buffer_size_;
 
         sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
         // MMU unit

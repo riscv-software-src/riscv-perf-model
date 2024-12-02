@@ -20,9 +20,8 @@ namespace olympia
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
-        // store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
-        // store_buffer_size_(p->ldst_inst_queue_size),
-        store_buffer_(),
+        store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
+        store_buffer_size_(p->ldst_inst_queue_size),
         ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
@@ -52,7 +51,7 @@ namespace olympia
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
-        // store_buffer_.enableCollection(node);
+        store_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
@@ -185,8 +184,6 @@ namespace olympia
         // allocate to Store buffer
         if (inst_ptr->isStoreInst())
         {
-            std::cout << "Dispatch: Inst type: " << (inst_ptr->isStoreInst() ? "Store" : "Load") 
-                    << " Buffer size: " << store_buffer_.size() << "\n";
             allocateInstToStoreBuffer_(inst_ptr);
         }
 
@@ -278,14 +275,8 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
 
-        if(inst_ptr->getStatus() != Inst::Status::RETIRED) {
-            return;
-        }
-
         if (inst_ptr->isStoreInst())
         {
-            // std::cout << "RETIRE: Buffer size before:" << store_buffer_.size() 
-            //         << " UID:" << inst_ptr->getUniqueID() << "\n";
             auto oldest_store = getOldestStore_();
             sparta_assert(oldest_store && oldest_store->getInstPtr()->getUniqueID() == inst_ptr->getUniqueID(),
                      "Attempting to retire store out of order! Expected: " 
@@ -293,8 +284,7 @@ namespace olympia
                      << " Got: " << inst_ptr->getUniqueID());
         
             // Remove from store buffer -> don't actually need to send cache request
-            sparta_assert(store_buffer_.size() > 0, "Store buffer empty on retiring store");
-            store_buffer_.pop_front();
+            store_buffer_.erase(store_buffer_.begin());;
             ++stores_retired_;
         }
 
@@ -969,7 +959,7 @@ namespace olympia
         if(store_buffer_.empty()) {
             return nullptr;
         }
-        return store_buffer_.front();
+        return store_buffer_.read(0);
     }
 
     bool LSU::allOlderStoresIssued_(const InstPtr & inst_ptr)
@@ -1448,7 +1438,6 @@ namespace olympia
 
     void LSU::flushStoreBuffer_(const FlushCriteria & criteria)
     {
-        // std::cout << "FLUSH: Store buffer size before:" << store_buffer_.size() << "\n";
         auto sb_iter = store_buffer_.begin();
         while(sb_iter != store_buffer_.end()) {
             auto inst_ptr = (*sb_iter)->getInstPtr();
@@ -1461,7 +1450,6 @@ namespace olympia
                 ++sb_iter;
             }
         }
-        // std::cout << "FLUSH: Store buffer size after:" << store_buffer_.size() << "\n";
     }
 
 } // namespace olympia

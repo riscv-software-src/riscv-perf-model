@@ -20,8 +20,8 @@ namespace olympia
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
-        store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
-        store_buffer_size_(p->ldst_inst_queue_size),
+        // store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
+        // store_buffer_size_(p->ldst_inst_queue_size),
         ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
@@ -51,7 +51,7 @@ namespace olympia
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
-        store_buffer_.enableCollection(node);
+        // store_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
@@ -960,7 +960,7 @@ namespace olympia
         if(store_buffer_.empty()) {
             return nullptr;
         }
-        return store_buffer_.read(0);
+        return store_buffer_.front();
     }
 
     bool LSU::allOlderStoresIssued_(const InstPtr & inst_ptr)

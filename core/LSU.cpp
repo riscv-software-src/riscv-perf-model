@@ -185,6 +185,8 @@ namespace olympia
         // allocate to Store buffer
         if (inst_ptr->isStoreInst())
         {
+            std::cout << "Dispatch: Inst type: " << (inst_ptr->isStoreInst() ? "Store" : "Load") 
+                    << " Buffer size: " << store_buffer_.size() << "\n";
             allocateInstToStoreBuffer_(inst_ptr);
         }
 

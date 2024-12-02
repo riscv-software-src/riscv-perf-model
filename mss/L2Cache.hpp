@@ -54,7 +54,7 @@ namespace olympia_mss
             PARAMETER(uint32_t, l2_line_size, 64, "L2 line size (power of 2)")
             PARAMETER(uint32_t, l2_size_kb, 512, "Size of L2 in KB (power of 2)")
             PARAMETER(uint32_t, l2_associativity, 16, "L2 associativity (power of 2)")
-            PARAMETER(std::string, l2_replacement_policy, "TreePLRU", "L2 cache replacement policy")
+            PARAMETER(std::string, replacement_policy, "TreePLRU", "L2 cache replacement policy")
             PARAMETER(bool, l2_always_hit, false, "L2 will always hit")
 
             PARAMETER(uint32_t, l2cache_latency, 10, "Cache Lookup HIT latency")

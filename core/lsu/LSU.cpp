@@ -282,8 +282,8 @@ namespace olympia
 
         if (inst_ptr->isStoreInst())
         {
-            std::cout << "RETIRE: Buffer size before:" << store_buffer_.size() 
-                    << " UID:" << inst_ptr->getUniqueID() << "\n";
+            // std::cout << "RETIRE: Buffer size before:" << store_buffer_.size() 
+            //         << " UID:" << inst_ptr->getUniqueID() << "\n";
             auto oldest_store = getOldestStore_();
             sparta_assert(oldest_store && oldest_store->getInstPtr()->getUniqueID() == inst_ptr->getUniqueID(),
                      "Attempting to retire store out of order! Expected: " 
@@ -1446,7 +1446,7 @@ namespace olympia
 
     void LSU::flushStoreBuffer_(const FlushCriteria & criteria)
     {
-        std::cout << "FLUSH: Store buffer size before:" << store_buffer_.size() << "\n";
+        // std::cout << "FLUSH: Store buffer size before:" << store_buffer_.size() << "\n";
         auto sb_iter = store_buffer_.begin();
         while(sb_iter != store_buffer_.end()) {
             auto inst_ptr = (*sb_iter)->getInstPtr();
@@ -1459,7 +1459,7 @@ namespace olympia
                 ++sb_iter;
             }
         }
-        std::cout << "FLUSH: Store buffer size after:" << store_buffer_.size() << "\n";
+        // std::cout << "FLUSH: Store buffer size after:" << store_buffer_.size() << "\n";
     }
 
 } // namespace olympia

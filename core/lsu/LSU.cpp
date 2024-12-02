@@ -277,6 +277,8 @@ namespace olympia
 
         if (inst_ptr->isStoreInst())
         {
+            std::cout << "RETIRE: Buffer size before:" << store_buffer_.size() 
+                    << " UID:" << inst_ptr->getUniqueID() << "\n";
             auto oldest_store = getOldestStore_();
             sparta_assert(oldest_store && oldest_store->getInstPtr()->getUniqueID() == inst_ptr->getUniqueID(),
                      "Attempting to retire store out of order! Expected: " 
@@ -935,9 +937,7 @@ namespace olympia
 
     void LSU::allocateInstToStoreBuffer_(const InstPtr & inst_ptr)
     {
-        std::cout << "Creating store info for UID: " << inst_ptr->getUniqueID() << "\n";
         const auto & store_info_ptr = createLoadStoreInst_(inst_ptr);
-        std::cout << "Store info created: " << (store_info_ptr != nullptr) << "\n";
 
         sparta_assert(store_buffer_.size() < ldst_inst_queue_size_,
                       "Appending store buffer causes overflows!");
@@ -1441,6 +1441,7 @@ namespace olympia
 
     void LSU::flushStoreBuffer_(const FlushCriteria & criteria)
     {
+        std::cout << "FLUSH: Store buffer size before:" << store_buffer_.size() << "\n";
         auto sb_iter = store_buffer_.begin();
         while(sb_iter != store_buffer_.end()) {
             auto inst_ptr = (*sb_iter)->getInstPtr();
@@ -1453,6 +1454,7 @@ namespace olympia
                 ++sb_iter;
             }
         }
+        std::cout << "FLUSH: Store buffer size after:" << store_buffer_.size() << "\n";
     }
 
 } // namespace olympia

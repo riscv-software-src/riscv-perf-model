@@ -23,6 +23,7 @@ namespace olympia
         // store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
         // store_buffer_size_(p->ldst_inst_queue_size),
         ready_queue_(),
+        store_buffer_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
@@ -274,6 +275,10 @@ namespace olympia
     {
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
+
+        if(inst_ptr->getStatus() != Inst::Status::RETIRED) {
+            return;
+        }
 
         if (inst_ptr->isStoreInst())
         {

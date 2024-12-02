@@ -22,8 +22,8 @@ namespace olympia
         replay_issue_delay_(p->replay_issue_delay),
         // store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
         // store_buffer_size_(p->ldst_inst_queue_size),
-        ready_queue_(),
         store_buffer_(),
+        ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))

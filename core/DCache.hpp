@@ -29,6 +29,7 @@ namespace olympia
             PARAMETER(uint32_t, l1_associativity, 8, "DL1 associativity (power of 2)")
             PARAMETER(bool, l1_always_hit, false, "DL1 will always hit")
             PARAMETER(uint32_t, mshr_entries, 8, "Number of MSHR Entries")
+            PARAMETER(std::string, replacement_policy, "TreePLRU", "Cache Replacement Policy")
         };
 
         static const char name[];

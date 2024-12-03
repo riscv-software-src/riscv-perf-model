@@ -421,7 +421,7 @@ Each entry in a tagged component consists of 3 fields -
     **  pred - represents the direction branch will take
     **  u    - represents if the prediction made by same component turned out to be correct
         last time or not.
-    **  tag
+    **  tag - used for verifying that the entry corresponds to the current branch instruction.
 
 image:media/TAGE.png[image,width=700,height=300]
 
@@ -434,19 +434,24 @@ Whereas the tagged components provide a prediction only on a tag match. The over
 provided by the hitting tagged predictor component that uses the longest history length. In case of
 no matching tagged predictor component, the prediction given by default predictor is used. [1]
 
-[[Parameterization_of_TAGE]]
-==== Parameterization of TAGE
-1.  uint16_t Index
-2.  uint64_t Path
-3.  uint64_t History
-4.  tage_max_idx_bits -
-5.  tage_num_components -
-6. tage_global_hist_buff_len -
-7. tage_folded_hist_buff_len -
-8. tage_path_hist_buff_len -
-9. tage_min_hist_len
-10. tage_hist_alpha -
-11. tage_reset_useful_interval
+[[Parameters_of_TAGE]]
+==== Parameters of TAGE
+// start from here
+1.  `uint32_t tage_bim_table_size` - Size of bimodal table used in TAGE.
+2.  `uint16_t tage_max_index_bits` - Maximum number of bits used to index the predictor tables of TAGE.
+3.  `uint16_t tage_num_components` - Number of tagged components used in TAGE.
+4.  `uint8_t  tage_bim_counter_bits` - Number of counter bits used in bimodal table of TAGE to make prediction.
+5.  `uint8_t  tage_counter_bits` - Number of counter bits used in tagged components of TAGE to make prediction.
+6. `uint8_t  tage_useful_bits` - Number of bits used in the 'useful' component of tagged entry.
+
+7. `uint32_t tage_global_hist_buff_len` - Length of the global history buffer used by TAGE.
+8. `uint32_t tage_folded_hist_buff_len` - Length of the history buffer used for folded history entries.
+
+9. `uint32_t tage_path_hist_buff_len` - Length of the path history buffer
+
+10. `uint32_t tage_min_hist_len` - Minimum length of history used in TAGE.
+11. `uint8_t tage_hist_alpha` - Common ratio of geometric progression with which history length increases. 
+12. `uint32_t tage_reset_useful_interval` - Interval after which useful bits are reset.
 
 [[Bimodal_table_of_TAGE]]
 ==== Bimodal Table of TAGE
@@ -469,7 +474,7 @@ Tagged components of TAGE predictor provides prediction for different history le
 ===== Class description of Tagged Component of TAGE
 
 
-1. `uint16_t Tag`
+1. `uint16_t Tag` - used for verifying that the entry corresponds to the current branch instruction.
 2. `uint8_t tage_ctr_bits` - represents the direction branch will take
 3. `uint8_t tage_useful_bits` - Number of bits which represents useful value
 
@@ -483,7 +488,12 @@ Tagged components of TAGE predictor provides prediction for different history le
 lengths
 
 ** constructor - `Tage(uint16_t tage_bim_size, uint8_t tage_bim_ctr_bits,
-uint16_t tage_tagged_table_num, uint8_t tagged_ctr_bits, uint8_t tage_u_bits, uint8_t tage_hist_alpha)`
+uint16_t tage_tagged_table_num, uint8_t tagged_ctr_bits, uint8_t tage_u_bits, uint32_t min_hist_len, uint8_t tage_hist_alpha, uint32_t tage_max_idx_bits, uint32_t global_hist_buff_len, uint32_t global_hist_folded_buff_len, uint32_t useful_reset_interval)`
+
+[[Functions_list_of_TAGE]]
+==== Functions list
+
+** `uint8_t predict(uint64_t ip)` - return the prediction from TAGE
 
 
 

@@ -143,6 +143,9 @@ namespace olympia
             MUL_BUSY =       InstArchInfo::TargetPipe::MUL,
             VINT_BUSY =      InstArchInfo::TargetPipe::VINT,
             VFIXED_BUSY =    InstArchInfo::TargetPipe::VFIXED,
+            VFLOAT_BUSY =    InstArchInfo::TargetPipe::VFLOAT,
+            VFMUL_BUSY =     InstArchInfo::TargetPipe::VFMUL,
+            VFDIV_BUSY =     InstArchInfo::TargetPipe::VFDIV,
             VMASK_BUSY =     InstArchInfo::TargetPipe::VMASK,
             VMUL_BUSY =      InstArchInfo::TargetPipe::VMUL,
             VDIV_BUSY =      InstArchInfo::TargetPipe::VDIV,
@@ -186,6 +189,12 @@ namespace olympia
                 sparta::CycleCounter(getStatisticSet(), "stall_vint_busy", "VINT busy",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_vfixed_busy", "VFIXED busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_vfloat_busy", "VFLOAT busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_vfmul_busy", "VFMUL busy",
+                                     sparta::Counter::COUNT_NORMAL, getClock()),
+                sparta::CycleCounter(getStatisticSet(), "stall_vfdiv_busy", "VFDIV busy",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
                 sparta::CycleCounter(getStatisticSet(), "stall_vmask_busy", "VMASK busy",
                                      sparta::Counter::COUNT_NORMAL, getClock()),
@@ -233,6 +242,12 @@ namespace olympia
                                 sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vfixed_insts", "Total VFIXED insts",
                                 sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_vfloat_insts", "Total VFLOAT insts",
+                                sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_vfmul_insts", "Total VFMUL insts",
+                                sparta::Counter::COUNT_NORMAL),
+                sparta::Counter(getStatisticSet(), "count_vfdiv_insts", "Total VFDIV insts",
+                                  sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vmask_insts", "Total VMASK insts",
                                 sparta::Counter::COUNT_NORMAL),
                 sparta::Counter(getStatisticSet(), "count_vmul_insts", "Total VMUL insts",
@@ -289,6 +304,8 @@ namespace olympia
             "count_cmov_insts + count_div_insts + count_faddsub_insts + count_float_insts + "
             "count_fmac_insts + count_i2f_insts + count_f2i_insts + count_int_insts + "
             "count_lsu_insts + count_mul_insts + count_br_insts"};
+
+        friend class DispatchTester;
     };
 
     using DispatchFactory =
@@ -314,5 +331,8 @@ namespace olympia
         }
 
         return os;
+
     }
+
+    class DispatchTester;
 } // namespace olympia

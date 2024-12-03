@@ -19,6 +19,9 @@ namespace olympia
         {"mul",     InstArchInfo::TargetPipe::MUL},
         {"vint",    InstArchInfo::TargetPipe::VINT},
         {"vfixed",  InstArchInfo::TargetPipe::VFIXED},
+        {"vfloat",  InstArchInfo::TargetPipe::VFLOAT},
+        {"vfmul",   InstArchInfo::TargetPipe::VFMUL},
+        {"vfdiv",   InstArchInfo::TargetPipe::VFDIV},
         {"vmask",   InstArchInfo::TargetPipe::VMASK},
         {"vset",    InstArchInfo::TargetPipe::VSET},
         {"vmul",    InstArchInfo::TargetPipe::VMUL},
@@ -43,6 +46,9 @@ namespace olympia
         {InstArchInfo::TargetPipe::MUL,     "MUL"},
         {InstArchInfo::TargetPipe::VINT,    "VINT"},
         {InstArchInfo::TargetPipe::VFIXED,  "VFIXED"},
+        {InstArchInfo::TargetPipe::VFLOAT,  "VFLOAT"},
+        {InstArchInfo::TargetPipe::VFMUL,   "VFMUL"},
+        {InstArchInfo::TargetPipe::VFDIV,   "VFDIV"},
         {InstArchInfo::TargetPipe::VMASK,   "VMASK"},
         {InstArchInfo::TargetPipe::VSET,    "VSET"},
         {InstArchInfo::TargetPipe::VMUL,    "VMUL"},
@@ -52,12 +58,14 @@ namespace olympia
     };
 
     const InstArchInfo::UopGenMap InstArchInfo::uop_gen_type_map = {
-        {"ARITH",               InstArchInfo::UopGenType::ARITH},
-        {"ARITH_SINGLE_DEST",   InstArchInfo::UopGenType::ARITH_SINGLE_DEST},
-        {"ARITH_WIDE_DEST",     InstArchInfo::UopGenType::ARITH_WIDE_DEST},
-        {"ARITH_MAC",           InstArchInfo::UopGenType::ARITH_MAC},
-        {"ARITH_MAC_WIDE_DEST", InstArchInfo::UopGenType::ARITH_MAC_WIDE_DEST},
-        {"NONE",                InstArchInfo::UopGenType::NONE}
+        {"ELEMENTWISE",    InstArchInfo::UopGenType::ELEMENTWISE},
+        {"SINGLE_DEST",    InstArchInfo::UopGenType::SINGLE_DEST},
+        {"WIDENING",       InstArchInfo::UopGenType::WIDENING},
+        {"WIDENING_MIXED", InstArchInfo::UopGenType::WIDENING_MIXED},
+        {"NARROWING",      InstArchInfo::UopGenType::NARROWING},
+        {"MAC",            InstArchInfo::UopGenType::MAC},
+        {"MAC_WIDE",       InstArchInfo::UopGenType::MAC_WIDE},
+        {"NONE",           InstArchInfo::UopGenType::NONE}
     };
 
     void InstArchInfo::update(const nlohmann::json & jobj)

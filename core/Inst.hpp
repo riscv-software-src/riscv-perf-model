@@ -223,6 +223,14 @@ namespace olympia
         const VectorConfigPtr getVectorConfig() const { return vector_config_; }
         VectorConfigPtr getVectorConfig() { return vector_config_; }
 
+        void setVectorMemConfig(const VectorMemConfigPtr input_vector_mem_config)
+        {
+            vector_mem_config_ = input_vector_mem_config;
+        }
+
+        const VectorMemConfigPtr getVectorMemConfig() const { return vector_mem_config_; }
+        VectorMemConfigPtr getVectorMemConfig() { return vector_mem_config_; }
+
         void setTail(bool has_tail) { has_tail_ = has_tail; }
         bool hasTail() const { return has_tail_; }
 
@@ -320,7 +328,7 @@ namespace olympia
 
         InstArchInfo::UopGenType getUopGenType() const { return inst_arch_info_->getUopGenType(); }
 
-        uint64_t getRAdr() const { return target_vaddr_ | 0x8000000; } // faked
+        uint64_t getPAddr() const { return target_vaddr_ | 0x8000000000000000; } // faked
 
         bool isSpeculative() const { return is_speculative_; }
 
@@ -444,8 +452,12 @@ namespace olympia
         bool is_cof_ = false;
         const bool has_immediate_;
 
+        // Vector config set by vset{i}vl{i} instructions
         VectorConfigPtr vector_config_{new VectorConfig};
         bool has_tail_ = false; // Does this vector uop have a tail?
+
+        // Vector memory config for load and store instructions
+        VectorMemConfigPtr vector_mem_config_{new VectorMemConfig};
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing
@@ -573,7 +585,7 @@ namespace olympia
                               SPARTA_ADDPAIR("complete", &Inst::getCompletedStatus),
                               SPARTA_ADDPAIR("pipe", &Inst::getPipe),
                               SPARTA_ADDPAIR("latency", &Inst::getExecuteTime),
-                              SPARTA_ADDPAIR("raddr", &Inst::getRAdr, std::ios::hex),
+                              SPARTA_ADDPAIR("raddr", &Inst::getPAddr, std::ios::hex),
                               SPARTA_ADDPAIR("tgt_vaddr", &Inst::getTargetVAddr, std::ios::hex))
     };
 

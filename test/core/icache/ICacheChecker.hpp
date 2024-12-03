@@ -91,11 +91,11 @@ namespace icache_test
             const auto fetch_req = std::find(fetch_pending_queue_.begin(), fetch_pending_queue_.end(), mem_access_info_ptr);
             sparta_assert(fetch_req != fetch_pending_queue_.end(), "response received without a corresponding request");
 
-            auto tag = getTag(mem_access_info_ptr->getPhyAddr());
-            auto set = getSetIdx(mem_access_info_ptr->getPhyAddr());
+            auto tag = getTag(mem_access_info_ptr->getPAddr());
+            auto set = getSetIdx(mem_access_info_ptr->getPAddr());
 
             if (cache_state == olympia::MemoryAccessInfo::CacheState::HIT) {
-                auto block = getBlockAddress(mem_access_info_ptr->getPhyAddr());
+                auto block = getBlockAddress(mem_access_info_ptr->getPAddr());
 
                 // Check that we don't have an outstanding L2 request on this block
                 sparta_assert(pending_l2cache_reqs_.count(block) == 0);
@@ -124,8 +124,8 @@ namespace icache_test
         void getRequestToL2Cache_(const olympia::MemoryAccessInfoPtr & mem_access_info_ptr)
         {
 
-            auto block = getBlockAddress(mem_access_info_ptr->getPhyAddr());
-            auto matches_block = [this, block](auto req) { return block == getBlockAddress(req->getPhyAddr()); };
+            auto block = getBlockAddress(mem_access_info_ptr->getPAddr());
+            auto matches_block = [this, block](auto req) { return block == getBlockAddress(req->getPAddr()); };
 
             // Check that fetch has tried to request this address
             const auto fetch_req = std::find_if(fetch_pending_queue_.begin(), fetch_pending_queue_.end(), matches_block);
@@ -139,7 +139,7 @@ namespace icache_test
         void getResponseFromL2Cache_(const olympia::MemoryAccessInfoPtr & mem_access_info_ptr)
         {
             if (mem_access_info_ptr->getCacheState() == olympia::MemoryAccessInfo::CacheState::HIT) {
-                auto block = getBlockAddress(mem_access_info_ptr->getPhyAddr());
+                auto block = getBlockAddress(mem_access_info_ptr->getPAddr());
 
                 // Flag that we've filled this block atleast once
                 filled_blocks_.insert(block);

@@ -98,7 +98,7 @@ namespace olympia
             src_(ArchUnit::NO_ACCESS),
             dest_(ArchUnit::NO_ACCESS),
             vaddr_(inst_ptr->getTargetVAddr()),
-            paddr_(inst_ptr->getRAdr())
+            paddr_(inst_ptr->getPAddr())
         {
         }
 
@@ -122,13 +122,24 @@ namespace olympia
             return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
         }
 
+        // This is a function which will be added in the SPARTA_ADDPAIRs API.
+        uint64_t getInstUOpID() const
+        {
+            const InstPtr & inst_ptr = getInstPtr();
+            return inst_ptr == nullptr ? 0 : inst_ptr->getUOpID();
+        }
+
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
-        bool getPhyAddrStatus() const { return phy_addr_ready_; }
+        bool getPAddrStatus() const { return phy_addr_ready_; }
 
-        uint64_t getPhyAddr() const { return paddr_; }
+        sparta::memory::addr_t getPAddr() const { return paddr_; }
+
+        void setPAddr(sparta::memory::addr_t paddr) { paddr_ = paddr; }
 
         sparta::memory::addr_t getVAddr() const { return vaddr_; }
+
+        void setVAddr(sparta::memory::addr_t vaddr) { vaddr_ = vaddr; }
 
         void setSrcUnit(const ArchUnit & src_unit) { src_ = src_unit; }
 
@@ -159,8 +170,6 @@ namespace olympia
         void setFetchGroup(const InstGroupPtr &group) { fetch_group_ = group; }
         const InstGroupPtr & getFetchGroup() const { return fetch_group_; }
 
-        const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
-
         bool isRefill() const { return is_refill_; }
 
         void setIsRefill(bool is_refill) { is_refill_ = is_refill; }
@@ -169,6 +178,15 @@ namespace olympia
         {
             issue_queue_iterator_ = iter;
         }
+
+        const LoadStoreInstIterator getIssueQueueIterator() const { return issue_queue_iterator_; }
+
+        void setMemoryRequestBufferIterator(const LoadStoreInstIterator & iter)
+        {
+            memory_request_buffer_iterator_ = iter;
+        }
+
+        const LoadStoreInstIterator getMemoryRequestBufferIterator() const { return memory_request_buffer_iterator_; }
 
         const LoadStoreInstIterator & getReplayQueueIterator() const
         {
@@ -190,6 +208,7 @@ namespace olympia
             mshr_entry_info_iterator_ = iter;
         }
 
+        bool isVector(){ return getInstPtr()->isVector(); }
       private:
         // load/store instruction pointer
         const InstPtr ldst_inst_ptr_;
@@ -211,10 +230,10 @@ namespace olympia
         ArchUnit dest_ = ArchUnit::NO_ACCESS;
 
         // Virtual Address
-        const uint64_t vaddr_;
+        sparta::memory::addr_t vaddr_;
 
         // Physical Address
-        const uint64_t paddr_;
+        sparta::memory::addr_t paddr_;
 
         // Pointer to next request for DEBUG/TRACK
         // (Note : Currently used only to track request with same cacheline in L2Cache
@@ -226,6 +245,7 @@ namespace olympia
         InstGroupPtr fetch_group_;
 
         LoadStoreInstIterator issue_queue_iterator_;
+        LoadStoreInstIterator memory_request_buffer_iterator_;
         LoadStoreInstIterator replay_queue_iterator_;
         MSHREntryInfoIterator mshr_entry_info_iterator_;
     };
@@ -308,7 +328,7 @@ namespace olympia
 
     inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
     {
-        os << "memptr: " << std::hex << mem.getPhyAddr() << std::dec;
+        os << "memptr: " << std::hex << mem.getPAddr() << std::dec;
         if (mem.getInstPtr() != nullptr) {
             os << " " << mem.getInstPtr();
         }

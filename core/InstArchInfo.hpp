@@ -47,6 +47,7 @@ namespace olympia
             F2I,
             INT,
             LSU,
+            VLSU,
             MUL,
             VINT,
             VFIXED,

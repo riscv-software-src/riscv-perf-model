@@ -137,7 +137,14 @@ namespace olympia
                 ex_inst.setStatus(Inst::Status::RETIRED);
                 if (ex_inst.isStoreInst())
                 {
-                    out_rob_retire_ack_.send(ex_inst_ptr);
+                    if(ex_inst.isVector())
+                    {
+                        out_rob_retire_ack_vlsu_.send(ex_inst_ptr);
+                    }
+                    else
+                    {
+                        out_rob_retire_ack_.send(ex_inst_ptr);
+                    }
                 }
                 // sending retired instruction to rename
                 out_rob_retire_ack_rename_.send(ex_inst_ptr);

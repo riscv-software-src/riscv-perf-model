@@ -266,7 +266,7 @@ namespace olympia_mss
             const olympia::MemoryAccessInfoPtr &memory_access_info_ptr = biu_resp_queue_.front();
 
             // Function to check if the request to the given cacheline is present in the miss_pending_buffer_
-            auto getCacheLine = [this] (auto memory_access_info_ptr) { return memory_access_info_ptr->getPhyAddr() >> shiftBy_; };
+            auto getCacheLine = [this] (auto memory_access_info_ptr) { return memory_access_info_ptr->getPAddr() >> shiftBy_; };
             auto const inst_cl = getCacheLine(memory_access_info_ptr);
 
             auto is_cl_present = [inst_cl, getCacheLine] (auto req)
@@ -395,9 +395,9 @@ namespace olympia_mss
             if (cacheLookUpResult == L2CacheState::MISS) {
 
                 // Reload cache line
-                reloadCache_(req->getPhyAddr());
+                reloadCache_(req->getPAddr());
 
-                ILOG("Reload Complete: phyAddr=0x" << std::hex << req->getPhyAddr());
+                ILOG("Reload Complete: phyAddr=0x" << std::hex << req->getPAddr());
             }
 
             req->setCacheState(L2CacheState::HIT);
@@ -444,7 +444,7 @@ namespace olympia_mss
             }
 
             // Function to check if the request to the given cacheline is present in the miss_pending_buffer_
-            auto getCacheLine = [this] (auto reqPtr) { return reqPtr->getPhyAddr() >> shiftBy_; };
+            auto getCacheLine = [this] (auto reqPtr) { return reqPtr->getPAddr() >> shiftBy_; };
             const auto req_cl = getCacheLine(req);
 
             auto is_cl_present = [&req, req_cl, getCacheLine] (auto reqPtr)
@@ -610,7 +610,7 @@ namespace olympia_mss
 
     // Cache lookup for a HIT or MISS on a given request
     L2Cache::L2CacheState L2Cache::cacheLookup_(olympia::MemoryAccessInfoPtr mem_access_info_ptr) {
-        uint64_t phyAddr = mem_access_info_ptr->getPhyAddr();
+        uint64_t phyAddr = mem_access_info_ptr->getPAddr();
 
         bool cache_hit = false;
 

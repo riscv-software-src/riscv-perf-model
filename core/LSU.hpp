@@ -46,9 +46,8 @@ namespace olympia
             //! Constructor for LSUParameterSet
             LSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
-            // Parameters for ldst_inst_queue
-            PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
-            PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
+            PARAMETER(uint32_t, inst_queue_size, 8, "LSU ldst inst queue size")
+            PARAMETER(uint32_t, replay_buffer_size, inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
             // LSU microarchitecture parameters
             PARAMETER(
@@ -68,7 +67,7 @@ namespace olympia
         LSU(sparta::TreeNode* node, const LSUParameterSet* p);
 
         //! Destroy the LSU
-        ~LSU();
+        virtual ~LSU();
 
         //! name of this resource.
         static const char name[];
@@ -76,68 +75,61 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
         ////////////////////////////////////////////////////////////////////////////////
-
         using LoadStoreInstInfoPtr = sparta::SpartaSharedPointer<LoadStoreInstInfo>;
-        using LoadStoreInstIterator = sparta::Buffer<LoadStoreInstInfoPtr>::const_iterator;
-
+        using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
+        using LoadStoreInstIterator = LoadStoreIssueQueue::const_iterator;
         using FlushCriteria = FlushManager::FlushingCriteria;
 
-      private:
+      protected:
+        ////////////////////////////////////////////////////////////////////////////////
+        // Scoreboards
+        ////////////////////////////////////////////////////////////////////////////////
         using ScoreboardViews =
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
-
         ScoreboardViews scoreboard_views_;
+
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
-
         sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
-
         sparta::DataInPort<FlushCriteria> in_reorder_flush_{&unit_port_set_, "in_reorder_flush",
                                                             sparta::SchedulingPhase::Flush, 1};
-
         sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_req_{&unit_port_set_,
                                                                    "in_mmu_lookup_req", 1};
-
         sparta::DataInPort<MemoryAccessInfoPtr> in_mmu_lookup_ack_{&unit_port_set_,
                                                                    "in_mmu_lookup_ack", 0};
-
         sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_req_{&unit_port_set_,
                                                                      "in_cache_lookup_req", 1};
-
         sparta::DataInPort<MemoryAccessInfoPtr> in_cache_lookup_ack_{&unit_port_set_,
                                                                      "in_cache_lookup_ack", 0};
-
         sparta::SignalInPort in_cache_free_req_{&unit_port_set_, "in_cache_free_req", 0};
-
         sparta::SignalInPort in_mmu_free_req_{&unit_port_set_, "in_mmu_free_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataOutPort<uint32_t> out_lsu_credits_{&unit_port_set_, "out_lsu_credits"};
-
         sparta::DataOutPort<MemoryAccessInfoPtr> out_mmu_lookup_req_{&unit_port_set_,
                                                                      "out_mmu_lookup_req", 0};
-
         sparta::DataOutPort<MemoryAccessInfoPtr> out_cache_lookup_req_{&unit_port_set_,
                                                                        "out_cache_lookup_req", 0};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
         ////////////////////////////////////////////////////////////////////////////////
-
         // Issue Queue
-        using LoadStoreIssueQueue = sparta::Buffer<LoadStoreInstInfoPtr>;
-        LoadStoreIssueQueue ldst_inst_queue_;
-        const uint32_t ldst_inst_queue_size_;
+        LoadStoreIssueQueue inst_queue_;
+        const uint32_t inst_queue_size_;
 
+        // Replay Buffer
         sparta::Buffer<LoadStoreInstInfoPtr> replay_buffer_;
         const uint32_t replay_buffer_size_;
         const uint32_t replay_issue_delay_;
 
+        // Modeling construct for instructions that are ready to be issued
         sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
+
         // MMU unit
         bool mmu_busy_ = false;
 
@@ -176,15 +168,11 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Event Handlers
         ////////////////////////////////////////////////////////////////////////////////
-
-        // Event to issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                                               CREATE_SPARTA_HANDLER(LSU, issueInst_)};
-
         sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_replay_ready_{
             &unit_event_set_, "replay_ready",
             CREATE_SPARTA_HANDLER_WITH_DATA(LSU, replayReady_, LoadStoreInstInfoPtr)};
-
         sparta::PayloadEvent<LoadStoreInstInfoPtr> uev_append_ready_{
             &unit_event_set_, "append_ready",
             CREATE_SPARTA_HANDLER_WITH_DATA(LSU, appendReady_, LoadStoreInstInfoPtr)};
@@ -192,7 +180,7 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
-        // Send initial credits (ldst_inst_queue_size_) to Dispatch Unit
+        // Send initial credits (inst_queue_size_) to Dispatch Unit
         void sendInitialCredits_();
 
         // Setup Scoreboard Views
@@ -202,7 +190,7 @@ namespace olympia
         void getInstsFromDispatch_(const InstPtr &);
 
         // Callback from Scoreboard to inform Operand Readiness
-        void handleOperandIssueCheck_(const InstPtr & inst_ptr);
+        virtual void handleOperandIssueCheck_(const LoadStoreInstInfoPtr &);
 
         // Receive update from ROB whenever store instructions retire
         void getAckFromROB_(const InstPtr &);
@@ -212,6 +200,7 @@ namespace olympia
 
         // Calculate memory load/store address
         void handleAddressCalculation_();
+
         // Handle MMU access request
         void handleMMULookupReq_();
         void handleMMUReadyReq_(const MemoryAccessInfoPtr & memory_access_info_ptr);
@@ -224,11 +213,12 @@ namespace olympia
 
         // Perform cache read
         void handleCacheRead_();
+
         // Retire load/store instruction
-        void completeInst_();
+        virtual void completeInst_();
 
         // Handle instruction flush in LSU
-        void handleFlush_(const FlushCriteria &);
+        virtual void handleFlush_(const FlushCriteria &);
 
         // Instructions in the replay ready to issue
         void replayReady_(const LoadStoreInstInfoPtr &);
@@ -248,19 +238,18 @@ namespace olympia
 
         // Typically called when the simulator is shutting down due to an exception
         // writes out text to aid debug
-        void dumpDebugContent_(std::ostream & output) const override final;
+        void dumpDebugContent_(std::ostream & output) const override;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Regular Function/Subroutine Call
         ////////////////////////////////////////////////////////////////////////////////
+        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr &);
 
-        LoadStoreInstInfoPtr createLoadStoreInst_(const InstPtr & inst_ptr);
+        virtual void allocateInstToIssueQueue_(const LoadStoreInstInfoPtr &);
 
-        void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
+        bool olderStoresExists_(const InstPtr &);
 
-        bool olderStoresExists_(const InstPtr & inst_ptr);
-
-        bool allOlderStoresIssued_(const InstPtr & inst_ptr);
+        virtual bool allOlderStoresIssued_(const InstPtr &);
 
         void readyDependentLoads_(const LoadStoreInstInfoPtr &);
 
@@ -280,12 +269,10 @@ namespace olympia
 
         void appendToReadyQueue_(const LoadStoreInstInfoPtr &);
 
-        void appendToReadyQueue_(const InstPtr &);
-
         // Pop completed load/store instruction out of issue queue
         void popIssueQueue_(const LoadStoreInstInfoPtr &);
 
-        // Arbitrate instruction issue from ldst_inst_queue
+        // Arbitrate instruction issue from inst queue
         LoadStoreInstInfoPtr arbitrateInstIssue_();
 
         // Check for ready to issue instructions
@@ -303,6 +290,9 @@ namespace olympia
         // Update issue priority after store instruction retires
         void updateIssuePriorityAfterStoreInstRetire_(const InstPtr &);
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Flush helper methods
+        ////////////////////////////////////////////////////////////////////////////////
         // Flush instruction issue queue
         void flushIssueQueue_(const FlushCriteria &);
 

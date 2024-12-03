@@ -81,7 +81,12 @@ namespace olympia
                 uev_lookup_inst_.schedule(sparta::Clock::Cycle(mmu_latency_));
             }
         }
-        out_lsu_lookup_ack_.send(memory_access_info_ptr);
+        if(memory_access_info_ptr->isVector()){
+            out_vlsu_lookup_ack_.send(memory_access_info_ptr);
+        }
+        else{
+            out_lsu_lookup_ack_.send(memory_access_info_ptr);
+        }
     }
 
     // TLB ready for memory access
@@ -89,7 +94,12 @@ namespace olympia
     {
         busy_ = false;
         reloadTLB_(mmu_pending_inst_->getInstPtr()->getTargetVAddr());
-        out_lsu_lookup_req_.send(mmu_pending_inst_);
+        if(mmu_pending_inst_->isVector()){
+            out_vlsu_lookup_req_.send(mmu_pending_inst_);
+        }
+        else{
+            out_lsu_lookup_req_.send(mmu_pending_inst_);
+        }
     }
 
 } // namespace olympia

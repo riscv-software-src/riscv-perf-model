@@ -25,6 +25,7 @@ namespace olympia
         {"vmask",   InstArchInfo::TargetPipe::VMASK},
         {"vset",    InstArchInfo::TargetPipe::VSET},
         {"vmul",    InstArchInfo::TargetPipe::VMUL},
+        {"vlsu",    InstArchInfo::TargetPipe::VLSU},
         {"vdiv",    InstArchInfo::TargetPipe::VDIV},
         {"sys",     InstArchInfo::TargetPipe::SYS},
         {"?",       InstArchInfo::TargetPipe::UNKNOWN}
@@ -41,6 +42,7 @@ namespace olympia
         {InstArchInfo::TargetPipe::F2I,     "F2I"},
         {InstArchInfo::TargetPipe::INT,     "INT"},
         {InstArchInfo::TargetPipe::LSU,     "LSU"},
+        {InstArchInfo::TargetPipe::VLSU,    "VLSU"},
         {InstArchInfo::TargetPipe::MUL,     "MUL"},
         {InstArchInfo::TargetPipe::VINT,    "VINT"},
         {InstArchInfo::TargetPipe::VFIXED,  "VFIXED"},
@@ -93,7 +95,7 @@ namespace olympia
             uop_gen_ = itr->second;
         }
 
-        is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);
+        is_load_store_ = (tgt_pipe_ == TargetPipe::LSU || tgt_pipe_ == TargetPipe::VLSU);
         is_vset_ = {tgt_pipe_ == TargetPipe::VSET};
     }
 

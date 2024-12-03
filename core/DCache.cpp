@@ -70,8 +70,7 @@ namespace olympia
     // Access L1Cache
     bool DCache::dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t phyAddr = inst_ptr->getRAdr();
+        const uint64_t phyAddr = mem_access_info_ptr->getPAddr();
 
         bool cache_hit = false;
 
@@ -129,7 +128,14 @@ namespace olympia
         if (hit)
         {
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            if(mem_access_info_ptr->getInstPtr()->isVector())
+            {
+                out_vlsu_lookup_ack_.send(mem_access_info_ptr);
+            }
+            else
+            {
+                out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            }
             return;
         }
 
@@ -140,7 +146,14 @@ namespace olympia
         {
             // Should be Nack but miss should work for now
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            if(mem_access_info_ptr->getInstPtr()->isVector())
+            {
+                out_vlsu_lookup_ack_.send(mem_access_info_ptr);
+            }
+            else
+            {
+                out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            }
             return;
         }
 
@@ -179,13 +192,19 @@ namespace olympia
             (*mshr_it)->setMemRequest(mem_access_info_ptr);
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
         }
-        out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        if(mem_access_info_ptr->getInstPtr()->isVector())
+        {
+            out_vlsu_lookup_ack_.send(mem_access_info_ptr);
+        }
+        else
+        {
+            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        }
     }
 
     uint64_t DCache::getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const
     {
-        const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto & inst_target_addr = inst_ptr->getRAdr();
+        const auto & inst_target_addr = mem_access_info_ptr->getPAddr();
         return addr_decoder_->calcBlockAddr(inst_target_addr);
     }
 
@@ -198,7 +217,7 @@ namespace olympia
         ILOG(mem_access_info_ptr << " in read stage");
         if (mem_access_info_ptr->isRefill())
         {
-            reloadCache_(mem_access_info_ptr->getPhyAddr());
+            reloadCache_(mem_access_info_ptr->getPAddr());
             return;
         }
 
@@ -218,7 +237,14 @@ namespace olympia
                 uev_mshr_request_.schedule(sparta::Clock::Cycle(1));
             }
         }
-        out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        if(mem_access_info_ptr->getInstPtr()->isVector())
+        {
+            out_vlsu_lookup_ack_.send(mem_access_info_ptr);
+        }
+        else
+        {
+            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        }
     }
 
     void DCache::mshrRequest_()
@@ -259,7 +285,14 @@ namespace olympia
             if (mshr_it.isValid())
             {
                 MemoryAccessInfoPtr dependant_load_inst = (*mshr_it)->getMemRequest();
-                out_lsu_lookup_ack_.send(dependant_load_inst);
+                if(dependant_load_inst->getInstPtr()->isVector())
+                {
+                    out_vlsu_lookup_ack_.send(dependant_load_inst);
+                }
+                else
+                {
+                    out_lsu_lookup_ack_.send(dependant_load_inst);
+                }
 
                 ILOG("Removing mshr entry for " << mem_access_info_ptr);
                 mshr_file_.erase(mem_access_info_ptr->getMSHRInfoIterator());

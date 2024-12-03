@@ -1,6 +1,5 @@
-#include "sparta/events/StartupEvent.hpp"
-#include "sparta/utils/LogUtils.hpp"
 #include "Dut.hpp"
+#include "sparta/utils/LogUtils.hpp"
 #include <algorithm>
 #include <iostream>
 using namespace std;
@@ -11,31 +10,23 @@ namespace olympia
 
     Dut::Dut(sparta::TreeNode* node, const DutParameterSet* p) :
         sparta::Unit(node),
-        input_queue_("FetchQueue", p->input_queue_size, node->getClock(),
-                     &unit_stat_set_),
+        input_queue_("FetchQueue", p->input_queue_size, node->getClock(), &unit_stat_set_),
         num_to_process_(p->num_to_process)
     {
         input_queue_.enableCollection(node);
 
         i_instgrp_write_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(Dut, inputQueueAppended_,
-                                            InstGroupPtr));
+            CREATE_SPARTA_HANDLER_WITH_DATA(Dut, inputQueueAppended_, InstGroupPtr));
         i_credits_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(Dut, receiveInpQueueCredits_,
-                                            uint32_t));
+            CREATE_SPARTA_HANDLER_WITH_DATA(Dut, receiveInpQueueCredits_, uint32_t));
         i_dut_flush_.registerConsumerHandler(
-            CREATE_SPARTA_HANDLER_WITH_DATA(
-                Dut, handleFlush_, FlushManager::FlushingCriteria));
+            CREATE_SPARTA_HANDLER_WITH_DATA(Dut, handleFlush_, FlushManager::FlushingCriteria));
 
-        sparta::StartupEvent(
-            node, CREATE_SPARTA_HANDLER(Dut, sendInitialCredits_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Dut, sendInitialCredits_));
     }
 
     // Send source the initial credit count
-    void Dut::sendInitialCredits_()
-    {
-        o_restore_credits_.send(input_queue_.capacity());
-    }
+    void Dut::sendInitialCredits_() { o_restore_credits_.send(input_queue_.capacity()); }
 
     // Receive Uop credits from Dispatch
     void Dut::receiveInpQueueCredits_(const uint32_t & credits)
@@ -77,23 +68,21 @@ namespace olympia
 
     void Dut::processInsts_()
     {
-        uint32_t num_process =
-            std::min(inp_queue_credits_, input_queue_.size());
+        uint32_t num_process = std::min(inp_queue_credits_, input_queue_.size());
         num_process = std::min(num_process, num_to_process_);
 
         if (num_process > 0)
         {
             InstGroupPtr insts =
-                sparta::allocate_sparta_shared_pointer<InstGroup>(
-                    instgroup_allocator);
+                sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
 
             // Send instructions on their way to sink unit
             for (uint32_t i = 0; i < num_process; ++i)
             {
                 const auto & inst = input_queue_.read(0);
                 insts->emplace_back(inst);
-                //This is a placeholder, there isn't a more accurate state
-                //defined in the existing Inst.h.
+                // This is a placeholder, there isn't a more accurate state
+                // defined in the existing Inst.h.
                 inst->setStatus(Inst::Status::RENAMED);
                 ILOG("Dut: " << inst);
                 input_queue_.pop();

@@ -5,16 +5,14 @@ namespace core_test
 {
     void Src::injectInsts()
     {
-        sparta_assert(dut_credits_ > 0,
-                      "Can't inject instructions with no credits!");
+        sparta_assert(dut_credits_ > 0, "Can't inject instructions with no credits!");
 
         olympia::InstGroupPtr inst_groups(new olympia::InstGroup);
         olympia::Inst::PtrType dinst;
 
         if (inst_generator_)
         {
-            if (dinst = inst_generator_->getNextInst(getClock()),
-                nullptr != dinst)
+            if (dinst = inst_generator_->getNextInst(getClock()), nullptr != dinst)
             {
                 dinst->setUniqueID(unique_id_++);
                 inst_groups->emplace_back(dinst);
@@ -42,12 +40,10 @@ namespace core_test
             // Otherwise, check pipeline 0 and pipeline 1
             while (dut_credits_ > 0)
             {
-                mavis::ExtractorDirectInfo ex_info{
-                    "add",
-                    {inc_reg_num(inst_cnt_), inc_reg_num(inst_cnt_)},
-                    {inst_cnt_}};
-                dinst =
-                    mavis_facade_->makeInstDirectly(ex_info, getClock());
+                mavis::ExtractorDirectInfo ex_info{"add",
+                                                   {inc_reg_num(inst_cnt_), inc_reg_num(inst_cnt_)},
+                                                   {inst_cnt_}};
+                dinst = mavis_facade_->makeInstDirectly(ex_info, getClock());
                 dinst->setUniqueID(unique_id_++);
                 inst_groups->emplace_back(dinst);
                 --dut_credits_;

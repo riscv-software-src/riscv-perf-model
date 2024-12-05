@@ -105,7 +105,6 @@ if(NOT CLANGFORMAT_EXECUTABLE)
   set(CLANGFORMAT_EXECUTABLE clang-format)
 endif()
 
-# Helper function to collect all .cpp and .h files
 # CPUTopology is pretty clean as it is.  There's an option to NOT
 # collapse the array of structures in clang-format v16, but we're not
 # there yet

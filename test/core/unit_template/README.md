@@ -4,10 +4,8 @@ This is an example of a unit test bench that
 could be used as a starting point for new test benches.
 
 The source here intends to meet the coding guidelines 
-enforced with clang-format, as well as pass clang-tidy.
-
-There is a script to help with this but it does not
-overwrite files automatically.
+enforced with clang-format.  There is a script to help 
+with this but it does not overwrite files automatically.
 
 There some extra documentation and some standardization
 in the port naming conventions.

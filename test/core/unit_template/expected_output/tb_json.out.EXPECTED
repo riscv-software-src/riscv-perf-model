@@ -1,0 +1,21 @@
+#Name:     
+#Cmdline:  
+#Exe:      
+#SimulatorVersion:
+#Repro:    
+#Start:    Tuesday Tue Dec  3 12:50:48 2024
+#Elapsed:  0.00259s
+{0000000000 00000000 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000000 00000000 top.src info} inCredits: Got credits from dut: 10
+{0000000000 00000000 top.src info} Sending group: 0x00000000 UID(0)  PID(1)  add
+{0000000001 00000001 top.dut info} inputQueueAppended_: Received: uid:0 BEFORE_FETCH 0 pid:1 uopid:0 'add	3,1,2' 
+{0000000001 00000001 top.dut info} processInsts_: Dut: uid:0    RENAMED 0 pid:1 uopid:0 'add	3,1,2' 
+{0000000001 00000001 top.src info} inCredits: Got credits from dut: 1
+{0000000001 00000001 top.src info} Sending group: 0x00000000 UID(1)  PID(2)  sub
+{0000000002 00000002 top.dut info} inputQueueAppended_: Received: uid:1 BEFORE_FETCH 0 pid:2 uopid:0 'sub	4,3,2' 
+{0000000002 00000002 top.sink info} sinkInst_: Instruction: 'uid:0    RENAMED 0 pid:1 uopid:0 'add	3,1,2' ' sinked
+{0000000002 00000002 top.dut info} processInsts_: Dut: uid:1    RENAMED 0 pid:2 uopid:0 'sub	4,3,2' 
+{0000000002 00000002 top.src info} inCredits: Got credits from dut: 1
+{0000000003 00000003 top.sink info} sinkInst_: Instruction: 'uid:1    RENAMED 0 pid:2 uopid:0 'sub	4,3,2' ' sinked
+{0000000003 00000003 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
+{0000000004 00000004 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}

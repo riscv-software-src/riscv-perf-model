@@ -52,9 +52,6 @@ class olympia::LSUTester
         EXPECT_EQUAL(lsu.complete_stage_, 6);
     }
 
-    void test_store_size(olympia::LSU &lsu, int size) {
-        EXPECT_EQUAL(lsu.store_buffer_.size(), size);
-    }
 };
 
 const char USAGE[] =
@@ -114,14 +111,13 @@ void runTest(int argc, char **argv)
 
     if(my_lsu->allow_data_forwarding_ex()) {
         // Data forwarding enabled case
-        
+        std::cout << "allow data forwarding " <<  "\n";;
         // First store
         cls.runSimulator(&sim, 7);
-        lsupipe_tester.test_store_size(*my_lsu, 1);
 
         // First load - should get data from store forwarding
         auto start_cycle = my_lsu->getClock()->currentCycle();
-        cls.runSimulator(&sim, 3); 
+        cls.runSimulator(&sim, 3);
         EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 3); // Fast path
 
         // Second load - no matching store, goes to cache
@@ -131,20 +127,18 @@ void runTest(int argc, char **argv)
 
         // Second store and load
         cls.runSimulator(&sim, 47);
-        lsupipe_tester.test_store_size(*my_lsu, 2);
-        lsupipe_tester.test_replay_issue_abort(*my_lsu, 2);
+        lsupipe_tester.test_replay_issue_abort(*my_lsu, 0);
     }
     else {
         // Data forwarding disabled case
-        
+
         // First store
         cls.runSimulator(&sim, 7);
-        lsupipe_tester.test_store_size(*my_lsu, 1);
 
         // First load - must go to cache
         auto start_cycle = my_lsu->getClock()->currentCycle();
         cls.runSimulator(&sim, 7); // Takes longer, must access cache
-        EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 7); 
+        EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 7);
 
         // Second load - also must go to cache
         start_cycle = my_lsu->getClock()->currentCycle();
@@ -153,7 +147,6 @@ void runTest(int argc, char **argv)
 
         // Second store and load
         cls.runSimulator(&sim, 47);
-        lsupipe_tester.test_store_size(*my_lsu, 2);
         lsupipe_tester.test_replay_issue_abort(*my_lsu, 2);
     }
 

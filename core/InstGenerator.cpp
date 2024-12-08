@@ -134,10 +134,28 @@ namespace olympia
                 mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
                 inst = mavis_facade_->makeInstDirectly(ex_info, clk);
             }
+            if (inst->getUopGenType() == InstArchInfo::UopGenType::INT_EXT)
+            {
+                auto modifier = mnemonic.substr(mnemonic.find(".") + 1);
+
+                if (modifier == "vf2")
+                {
+                    inst->addModifier("viext", 2);
+                }
+                else if (modifier == "vf4")
+                {
+                    inst->addModifier("viext", 4);
+                }
+                else if (modifier == "vf8")
+                {
+                    inst->addModifier("viext", 8);
+                }
+            }
 
             if (jinst.find("vaddr") != jinst.end())
             {
-                uint64_t vaddr = std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
+                uint64_t vaddr =
+                    std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
                 inst->setTargetVAddr(vaddr);
             }
 
@@ -145,7 +163,8 @@ namespace olympia
             if (jinst.find("vtype") != jinst.end())
             {
                 // immediate, so decode from hex
-                uint64_t vtype = std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
+                uint64_t vtype =
+                    std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
                 std::string binaryString = std::bitset<32>(vtype).to_string();
                 uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
                 uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
@@ -155,7 +174,7 @@ namespace olympia
 
             if (jinst.find("vta") != jinst.end())
             {
-                const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true: false;
+                const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true : false;
                 vector_config->setVTA(vta);
             }
 

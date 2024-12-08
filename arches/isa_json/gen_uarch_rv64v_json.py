@@ -51,14 +51,12 @@ SUPPORTED_INSTS = {
     "vwsub.wv" :   {"pipe" : "vint", "uop_gen" : "WIDENING_MIXED", "latency" : 1},
     "vwsub.wx" :   {"pipe" : "vint", "uop_gen" : "WIDENING_MIXED", "latency" : 1},
 
-# TODO: Vector Integer Arithmetic Instructions: Vector Integer Extension
-# FIXME: Requires Mavis fix to support correctly
-#    "vzext.vf2" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
-#    "vsext.vf2" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
-#    "vzext.vf4" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
-#    "vsext.vf4" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
-#    "vzext.vf8" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
-#    "vsext.vf8" : {"pipe" : "vint", "uop_gen" : "ARITH_EXT", "latency" : 1},
+    "vzext.vf2" : {"pipe" : "vint", "uop_gen" : "INT_EXT", "latency" : 1},
+    "vsext.vf2" : {"pipe" : "vint", "uop_gen" : "INT_EXT", "latency" : 1},
+    "vzext.vf4" : {"pipe" : "vint", "uop_gen" : "INT_EXT", "latency" : 1},
+    "vsext.vf4" : {"pipe" : "vint", "uop_gen" : "INT_EXT", "latency" : 1},
+    "vzext.vf8" : {"pipe" : "vint", "uop_gen" : "INT_EXT", "latency" : 1},
+    "vsext.vf8" : {"pipe" : "vint", "uop_gen" : "INT_EXT", "latency" : 1},
 
 # Vector Integer Arithmetic Instructions: Vector Integer Add-with-Carry/Subtract-with-Borrow Instructions
 # FIXME: Requires Mavis fix to include vector mask
@@ -188,7 +186,6 @@ SUPPORTED_INSTS = {
      "vwmaccus.vx" : {"pipe" : "vmul", "uop_gen" : "MAC_WIDE", "latency" : 3},
 
 # Vector Integer Arithmetic Instructions: Vector Integer Merge Instructions
-# FIXME: Requires Mavis fix to include vector mask
     "vmerge.vvm" : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},
     "vmerge.vxm" : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},
     "vmerge.vim" : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},

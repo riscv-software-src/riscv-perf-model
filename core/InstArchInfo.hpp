@@ -78,6 +78,7 @@ namespace olympia
             NARROWING,
             MAC,
             MAC_WIDE,
+            INT_EXT,
             NONE,
             UNKNOWN
         };

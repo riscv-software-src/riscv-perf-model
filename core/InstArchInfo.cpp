@@ -63,6 +63,7 @@ namespace olympia
         {"NARROWING",      InstArchInfo::UopGenType::NARROWING},
         {"MAC",            InstArchInfo::UopGenType::MAC},
         {"MAC_WIDE",       InstArchInfo::UopGenType::MAC_WIDE},
+        {"INT_EXT",        InstArchInfo::UopGenType::INT_EXT},
         {"NONE",           InstArchInfo::UopGenType::NONE}
     };
 

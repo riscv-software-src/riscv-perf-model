@@ -242,7 +242,7 @@ namespace olympia
                 {
                     throw sparta::SpartaException("Modifier at current instruction doesnt exist.");
                 }
-                src.field_value += num_uops_generated_ / ext.value();
+                src.field_value += num_uops_generated_ / *ext;
             }
         }
 

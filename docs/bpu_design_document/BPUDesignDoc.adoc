@@ -49,8 +49,7 @@ which are used to update the BPU once instructions are finally committed.
 
 Branch Prediction Unit is the unit responsible for predicting the branch
 outcomes and branch targets before branch instructions are actually
-resolved in the pipeline in order to reduce latency between a branch and a
-subsequent instruction.
+resolved in the pipeline. This prediction allows the processor to prefetch and execute subsequent instructions without waiting to resolve the branch condition, minimizing stalls and maintaining high throughput in the pipeline.
 
 It receives prediction input in the form of PC and instruction type from the
 Fetch unit and predicts the direction and target address from which Fetch unit
@@ -67,8 +66,8 @@ Figure 1 - Overview of BPU in reference to Fetch unit
 [[Functional_Description]]
 == Functional Description
 
-Branch Prediction Unit in Olympia is a two-tiered branch predictor where the
-first tier provides a simple but fast prediction. The second tier consists
+The proposed branch prediction unit is a two-tiered branch predictor where the
+first tier provides a simple but fast prediction, whereas the second tier consists
 of a more accurate predictor which can predict even complex branches but takes an
 additional cycle.
 
@@ -87,7 +86,7 @@ additional cycle.
 ** `out_bpu_prediction_credits` - in Fetch.cpp. To send credits to BPU to indicate availability of
    slots.
 
-** `out_bpu_prediction_req` - in Fetch.cpp. To send PredictionInput to BPU.
+** `out_bpu_prediction_req` - in Fetch.cpp. To send PredictionRequest to BPU.
 
 
 [[Output_Ports_BPU]]
@@ -106,6 +105,13 @@ additional cycle.
 ** `pred_req_num` - Total number of prediction requests made to BPU
 ** `num_mispred` - Total number of mis-predictions
 ** `mispred_perc` - Percentage of mis-predictions
+** `pht_req_num` -
+** `pht_mispred` - 
+** `btb_req_num` -
+** `ras_utilization` -
+** `` -
+** `` -
+** `` -
 
 [[Unit_Block_Diagram]]
 === Unit Block Diagram
@@ -124,20 +130,19 @@ queue) which stores the information of all in-flight branch instructions
 and is required in order to update the BPU once instruction are finally
 committed.
 
-[[Description_of_PredictionInput]]
-== Description of PredictionInput
+[[Description_of_PredictionRequest]]
+== Description of PredictionRequest
 
-Olympia's Branch Predictor API intends the implementation of Branch Predictor to
-define custom PredictionInput
+Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of a prediction input.
 
-[[Overview_of_PredictionInput]]
+[[Overview_of_PredictionRequest]]
 ===  Overview
-PredictionInput is received by the BPU from the Fetch unit whenever a request for
+PredictionRequest is received by the BPU from the Fetch unit whenever a request for
 the prediction is made. Based on the data provided by this input, BPU makes the
 prediction.
 
-[[Structure_of_PredictionInput]]
-===  Structure of PredictionInput
+[[Structure_of_PredictionRequest]]
+===  Structure of PredictionRequest
 
 **  Program counter
 **  instruction type (branch, jump, or ret)
@@ -145,14 +150,19 @@ prediction.
 [[Class_Description]]
 ===  Class Description
 
-**  `uint64_t PC`
-**  `uint8_t  instType`
+==== Constructor -
+`PredictionRequest(uin64_t PC, uint8_t instType) : PC_(PC), instType_(instType) {}`
+
+=== Data members
+
+==== Private members
+**  `uint64_t PC_`
+**  `uint8_t  instType_`
 
 [[Description_of_PredictionOutput]]
 == Description of PredictionOutput
 
-Olympia's Branch Predictor API intends the implementation of Branch Predictor to
-define custom PredictionOutput
+Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of a prediction output.
 
 [[Overview_of_PredictionOutput]]
 ===  Overview
@@ -170,14 +180,20 @@ to the Fetch unit.
 [[Class_Description_of_PredictionOutput]]
 ===  Class Description of PredictionOutput
 
-** `bool predDirection`
-** `uint64_t predPC`
+==== Constructor -
+`PredictionOutput(bool predDirection, uint64_t predPC) : predDirection_(predDirection), predPC_(predPC) {}`
+
+=== Data members
+
+==== Private members
+
+** `bool predDirection_`
+** `uint64_t predPC_`
 
 [[Description_of_UpdateInput]]
 == Description of UpdateInput
 
-Olympia's Branch Predictor API intends the implementation of Branch Predictor to
-define custom UpdateInput
+Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of an update input.
 
 [[Overview_of_UpdateInput]]
 ===  Overview
@@ -198,15 +214,25 @@ update BPU's internal state in case of mis-prediction.
 [[Class_Description_of_UpdateInput]]
 ===  Class Description of UpdateInput
 
-** `uint64_t instrPC`
+==== Constructor -
+`UpdateInput(uin64_t instrPC, bool correctedDirection, uint64_t correctedTargetPC) : instrPC_(instrPC), 
+correctedDirection_(correctedDirection), correctedTargetPC_(correctedTargetPC) {}`
 
-** `bool correctedDirection`
+=== Data members
 
-** `uint64_t correctedTargetPC`
+==== Private members
+
+** `uint64_t instrPC_`
+
+** `bool correctedDirection_`
+
+** `uint64_t correctedTargetPC_`
 
 
-[[Description_of_BPU]]
-== Description of BPU
+[[BPU]]
+== BPU
+
+=== Overview
 This section describes the overview and description for the top level class
 which bolts the Branch Prediction Unit into the Olympia simulator.
 
@@ -235,39 +261,64 @@ of shortest history lengths
 loop predictor table
 13. `loop_pred_table_way` - Defines the Way size of the loop predictor table
 
+[[Class_heirarchy_of_BPU]]
+=== Class heirarchy 
+
+* BPU inherits `sparta::Unit`
+* BPU inherits from BranchPredictorIF<>
+
 [[Class_Description_of_BPU]]
-===  Class Description of BPU
-* Inherits `sparta::Unit`
-* Inherits Olympia's Branch Prediction API
-* Includes `PredictionInput`, `PredictionOutput`, `UpdateInput` class.
+===  Class Description
+
+* Includes `PredictionRequest`, `PredictionOutput`, `UpdateInput` class.
 * Includes `BasePredictor` and `TAGE_SC_L` class.
-* Contains private member `ghr_` to represent GHR.
+
+[[Data_members_of_BPU]]
+=== Data members
+
+==== Private members
+* `ghr_` -  Represents the GHR.
+
+==== Public members
+
+* Olympia's Branch Predictpor API expects that an implementation of branch predictor must also specify the implementations of `getPrediction(const PredictionRequest &)` and `updatePredictor(const UpdateInput &)` operations
 
 === Function list
-***   `void recievePredictionRequest()`
-        ** called whenever PredictionInput is received on input port on BPU.
-        ** store requests in temporary input buffer to be utilised by
-           BasePredictor and TAGE-SC-L.
 
-***   `void recievePredictionUpdate()`
-        ** receives UpdateInput from input port in BPU once instructions are committed.
-        ** store deallocated FTQ entries in internal buffer in order to be
-           used by BasePredictor and TAGE-SC-L to update itself.
+==== Public functions
+1. `PredictionOutput getPrediction(const PredictionRequest &)`
+        ** Returns the PredictionOutput based on the PredictionRequest received.
 
-***   `PreditionOutput sendPrediction()`
-        ** sends prediction to Fetch unit.
-        ** makes entry in FTQ.
+2. `void updatePredictor(const UpdateInput &)`
+        ** Updates the internal state of the BasePredictor as well as the TAGE-SC-L predictor.
+
+==== Private functions
+1.   `void recievePredictionRequest()`
+        **  Called whenever PredictionRequest is received on input port of BPU.
+        ** Store requests in temporary input buffer to be utilised by BasePredictor and TAGE-SC-L.
+
+2.   `void recievePredictionUpdate()`
+        ** Receives UpdateInput from input port in BPU once instructions are committed.
+        ** Store deallocated FTQ entries in internal buffer in order to be used by BasePredictor and TAGE-SC-L to update itself.
+
+3.   `PredictionOutput sendPrediction()`
+        ** Sends prediction to Fetch unit.
+        ** Makes entry in FTQ.
         ** Later on, handle any potential prediction override between TAGE and BasePredictor.
 
-*** `updateGHRTaken()` - shifts all history bits by 1 position to left, and set last bit as 1.
+4. `updateGHRTaken()`
+        ** shifts all history bits by 1 position to left, and set last bit as 1.
 
-*** `updateGHRNotTaken()` - shifts all history bits by 1 position to left, and set last bit as 0.
+5. `updateGHRNotTaken()` 
+        ** Shifts all history bits by 1 position to left, and set last bit as 0.
 
 
 
-[[Description_of_Base_Predictor]]
-== Description of BasePredictor
+[[Description_of_BasePredictor]]
+== BasePredictor
 
+[[Overview_of_the_BasePredictor]]
+=== Overview
 The BasePredictor consists of a Pattern History Table (PHT) indexed by a GShare hash
 of PC and some specific number of global branch history bits, a Branch Target
 Buffer (BTB), and a Return Address Stack (RAS).
@@ -303,65 +354,110 @@ branch is actually (predicted to be) taken is a different question.
 ** Direction of branch is predicted by PHT and TAGE-SC-L
 
 [[class_description_of_BasePredictor]]
-=== Class Description of BasePredictor
+=== Class Description
 
-** constructor - `BasePredictor(uint32_t pht_size, uint8_t ctr_bits,
-uint32_t btb_size, uint32_t ras_size)`
+==== Constructor:
+`BasePredictor(uint32_t pht_size, uint8_t ctr_bits,
+uint32_t btb_size, uint32_t ras_size) : pattern_history_table(pht_size, ctr_bits), branch_target_buffer(btb_size), return_address_stack(ras_size) {}`
 
+==== Operation
 ** Instantiate PatternHistoryTable class with appropriate params in constructor.
 
 ** Instantiate BranchTargetBuffer class with appropriate params in constructor.
 
 ** Instantiate ReturnAddressStack class with appropriate params in constructor.
 
+=== Data members
+
+==== Public data members
+
+==== Private data members
+
+1. `PatternHistoryTable pattern_history_table_`- 
+2. `BranchTargetBuffer branch_target_buffer_`
+3. `ReturnAddressStack return_address_stack_`
+
+=== Functions list
+
+==== Public functions
+
+
+==== Private functions
 
 [[Pattern_History_Table]]
-=== 1. Pattern History Table
+== Pattern History Table
 
-An hashmap of n bit counters to predict direction of branches. It is indexed by a
+A hashmap of n bit counters to predict direction of branches. It is indexed by a
 GShare hash (XOR) of PC and some specific number of last few branch history bits.
 
 [[operation]]
-==== Operation
+=== Operation
 
 Whenever a PC is received by the BPU, the PC and the last several bits of global history
 registers are hashed to index into the PHT. The counter at this particular index provides
 the prediction that whether the branch will be taken or not.
 
 [[class_description_of_PHT]]
-==== Class description of PatternHistoryTable
+=== Class description of PatternHistoryTable
 
-** constructor - `PatternHistoryTable(uint32_t pht_size, uint8_t ctr_bits)`
+==== Constructor
+`PatternHistoryTable(uint32_t pht_size, uint8_t ctr_bits) : pht_size_(pht_size), ctr_bits_(ctr_bits) {}`
 
-** instantiate `std::map<uint64_t, uint8_t> pattern_history_table_`
+[[Data_members_of_PHT]]
+=== Data members
+
+==== Public data members
+None
+
+==== Private data members
+
+1. `const uint32_t pht_size_`
+2. `const uint8_t  ctr_bits_`
+3. `const uint8_t  ctr_bits_val_`
+4. `std::map<uint64_t, uint8_t> pattern_history_table_`
 
 [[Functions_list_of_PHT]]
-==== Functions list
-** `void incrementCounter(uint32_t idx)` - To increment counter within the set bound of ctr_bits.
-** `void decrementCounter(uint32_t idx)` - To decrement counter.
-** `uint8_t getPrediction(uint32_t idx)` - To get prediction.
+=== Functions list
+
+==== Public functions
+1. `void incrementCounter(uint32_t idx)` - To increment counter within the set bound of ctr_bits.
+2. `void decrementCounter(uint32_t idx)` - To decrement counter.
+3. `uint8_t getPrediction(uint32_t idx)` - To get prediction.
+
+==== Private functions
+None
 
 [[Branch_Target_Buffer]]
-=== 2. Branch Target Buffer
+== Branch Target Buffer
 
 Tagged entry table in which a PC is used to find a matching target.
 
 [[operation_of_BTB]]
-==== Operation
+=== Operation
 
 Whenever a PC is received by the BPU, it is used to index into the BTB,
 which contains the target address of the next instruction.
 
 [[class_description_of_BTB]]
-==== Class description of BranchTargetBuffer
+=== Class description of BranchTargetBuffer
 
-** constructor - `BranchTargetBuffer(uint32_t btb_size)`
+==== Constructor
+`BranchTargetBuffer(uint32_t btb_size) : btb_size_(btb_size) {}`
 
-** Initializes `std::map <uint64_t, uint64_t> branch_target_buffer_`
+[[Data_members_of_BTB]]
+=== Data members
 
+==== Public data members
+None
+
+==== Private data members
+1. `const uint32_t btb_size_`
+2. `std::map <uint64_t, uint64_t> branch_target_buffer_`
 
 [[BTB_Functions_List]]
-==== Functions List
+=== Functions List
+
+==== Public functions
 1. `bool addEntry(uint64_t PC, uint64_t targetPC)` - allocates a BTB entry into the
 BTB table
 
@@ -373,28 +469,40 @@ PC
 
 4. `bool isHit(uint64_t PC)` - returns whether there is an entry for the PC in BTB or not.
 
+==== Private functions
+None
 
 [[Return_Address_Stack]]
-=== 3. Return Address Stack
+== Return Address Stack
 
 RAS is a small separate predictor used to predict returns.
 
 [[Operation_of_RAS]]
-==== Operation
+=== Operation
 
 ** Push the PC on the stack whenever a "call" is made
 ** Return the PC whenever "ret" is called and pop the entry from RAS
 
 [[Class_description_of_RAS]]
-==== Class Description of ReturnAddressStack
+=== Class Description
 
-** constructor - `ReturnAddressStack(uint32_t ras_size)`
+==== Constructor
+`ReturnAddressStack(uint32_t ras_size) : ras_size_(ras_size) {}`
 
-** Initializes `std::stack<uint64_t> return_address_stack_`
+[[Data_members_of_RAS]]
+=== Data members
+
+==== Public data members
+None
+
+==== Private data members
+1. `const uint32_t ras_size_`
+2. `std::stack<uint64_t> return_address_stack_`
 
 [[RAS_Functions_List]]
-==== Functions list
+=== Functions list
 
+==== Public functions
 1. `void pushAddress()` - Whenever a JAL (call) instruction is executed, the PC is
 pushed to the RAS stack. If the RAS is already full, then depending on the value
 of `ras_enable_overwrite` parameter, overwrite the older entry.
@@ -402,31 +510,59 @@ of `ras_enable_overwrite` parameter, overwrite the older entry.
 2. `uint64_t popAddress()` - Whenever a JALR (ret) instruction is being executed, the topmost
 element of the RAS is popped and returned to the Fetch unit.
 
+==== Private functions
+None
 
 [[Description_of_TAGE_SC_L]]
-== Description of TAGE_SC_L
+== TAGE_SC_L
 
+=== Overview
 The second level predictor implements a TAGE-SC-L predictor in order to predict
 complex branches with better accuracy than is possible with a simple combination of
 PHT and RAS.
 
-[[Description_of_TAGE]]
-=== 1. TAGE
+=== Class heirarchy
 
+** Instantiate `TAGE`, `StatisticalCorrector`, and `LoopPredictor` class
+
+=== Class description
+==== Constructor
+`TAGE_SC_L()`
+
+=== Data members
+
+==== Public members
+
+==== Private members
+
+=== Functions list
+
+==== Public functions
+
+1. `uint8_t getPrediction()` -
+
+==== Private functions
+
+[[Description_of_TAGE]]
+== TAGE
+
+=== Overview
 TAGE consists of a Bimodal table (a simple PC indexed n-bit counter table), backed by
 a number of tagged predictor components which uses geometrically increasing history lengths.
 
 Each entry in a tagged component consists of 3 fields -
 
-    **  pred - represents the direction branch will take
-    **  u    - represents if the prediction made by same component turned out to be correct
+    **  `pred` - represents the direction branch will take
+    **  `useful`    - represents if the prediction made by same component turned out to be correct
         last time or not.
-    **  tag - used for verifying that the entry corresponds to the current branch instruction.
+    **  `tag` - used for verifying that the entry corresponds to the current branch instruction.
 
 image:media/TAGE.png[image,width=700,height=300]
 
+Source: Andre Seznec, Pierre Michaud, A case for (partially) TAgged GEometric history length branch prediction
+
 [[Operation_of_TAGE]]
-==== Operation of TAGE
+=== Operation of TAGE
 
 When prediction is requested, the Bi-Modal table (T0) and tagged components (Ti; 1 < i < M) are
 accessed simultaneously. The Bi-modal table (base predictor) provides the default prediction.
@@ -435,69 +571,124 @@ provided by the hitting tagged predictor component that uses the longest history
 no matching tagged predictor component, the prediction given by default predictor is used. [1]
 
 [[Parameters_of_TAGE]]
-==== Parameters of TAGE
+=== Parameters of TAGE
 // start from here
-1.  `uint32_t tage_bim_table_size` - Size of bimodal table used in TAGE.
-2.  `uint16_t tage_max_index_bits` - Maximum number of bits used to index the predictor tables of TAGE.
-3.  `uint16_t tage_num_components` - Number of tagged components used in TAGE.
-4.  `uint8_t  tage_bim_counter_bits` - Number of counter bits used in bimodal table of TAGE to make prediction.
-5.  `uint8_t  tage_counter_bits` - Number of counter bits used in tagged components of TAGE to make prediction.
-6. `uint8_t  tage_useful_bits` - Number of bits used in the 'useful' component of tagged entry.
 
-7. `uint32_t tage_global_hist_buff_len` - Length of the global history buffer used by TAGE.
-8. `uint32_t tage_folded_hist_buff_len` - Length of the history buffer used for folded history entries.
+=== Class heirarchy
 
-9. `uint32_t tage_path_hist_buff_len` - Length of the path history buffer
-
-10. `uint32_t tage_min_hist_len` - Minimum length of history used in TAGE.
-11. `uint8_t tage_hist_alpha` - Common ratio of geometric progression with which history length increases. 
-12. `uint32_t tage_reset_useful_interval` - Interval after which useful bits are reset.
-
-[[Bimodal_table_of_TAGE]]
-==== Bimodal Table of TAGE
-
-Bimodal table of the TAGE predictor provides the base prediction for any prediction request.
-
-[[class_description_of_TAGE_BIM]]
-===== Class description of TAGE_BIM
-
-** constructor - `TageBIM(uint32_t tage_bim_table_size, uint8_t tage_base_ctr_bits)`
-
-** Initializes the `std::map<uint64_t, uint8_t> Tage_Bimodal_`
-
-[[Tagged_Component_of_TAGE]]
-==== Tagged Component of TAGE
-
-Tagged components of TAGE predictor provides prediction for different history lengths.
-
-[[class_description_of_TAGE_Tagged_Component]]
-===== Class description of Tagged Component of TAGE
-
-
-1. `uint16_t Tag` - used for verifying that the entry corresponds to the current branch instruction.
-2. `uint8_t tage_ctr_bits` - represents the direction branch will take
-3. `uint8_t tage_useful_bits` - Number of bits which represents useful value
+** Includes `TageBIM` and `TageTaggedComponent` class.
 
 
 [[Class_Description_of_TAGE]]
-==== Class Description of TAGE
+=== Class Description of TAGE
 
-** Includes `TageBIM` and `TageTaggedComponent` class.
+==== Constructor
+`Tage(uint16_t tage_bim_size, uint8_t tage_bim_ctr_bits,
+uint16_t tage_tagged_table_num, uint8_t tagged_ctr_bits, uint8_t tage_u_bits, uint32_t min_hist_len, 
+uint8_t tage_hist_alpha, uint32_t tage_max_idx_bits, uint32_t global_hist_buff_len, uint32_t global_hist_folded_buff_len, 
+uint32_t useful_reset_interval)`
 
 ** Initializes an array of `TageTaggedComponent` indexed by the hash of PC and different history
 lengths
 
-** constructor - `Tage(uint16_t tage_bim_size, uint8_t tage_bim_ctr_bits,
-uint16_t tage_tagged_table_num, uint8_t tagged_ctr_bits, uint8_t tage_u_bits, uint32_t min_hist_len, uint8_t tage_hist_alpha, uint32_t tage_max_idx_bits, uint32_t global_hist_buff_len, uint32_t global_hist_folded_buff_len, uint32_t useful_reset_interval)`
+=== Data members
+
+==== Public data members
+
+==== Private data members
+1.  `uint32_t tage_bim_table_size_` - Size of bimodal table used in TAGE.
+2.  `uint16_t tage_max_index_bits_` - Maximum number of bits used to index the predictor tables of TAGE.
+3.  `uint16_t tage_num_components_` - Number of tagged components used in TAGE.
+4.  `uint8_t  tage_bim_counter_bits_` - Number of counter bits used in bimodal table of TAGE to make prediction.
+5.  `uint8_t  tage_counter_bits_` - Number of counter bits used in tagged components of TAGE to make prediction.
+6. `uint8_t  tage_useful_bits_` - Number of bits used in the 'useful' component of tagged entry.
+
+7. `uint32_t tage_global_hist_buff_len_` - Length of the global history buffer used by TAGE.
+8. `uint32_t tage_folded_hist_buff_len_` - Length of the history buffer used for folded history entries.
+
+9. `uint32_t tage_path_hist_buff_len_` - Length of the path history buffer
+
+10. `uint32_t tage_min_hist_len_` - Minimum length of history used in TAGE.
+11. `uint8_t tage_hist_alpha_` - Common ratio of geometric progression with which history length increases. 
+12. `uint32_t tage_reset_useful_interval_` - Interval after which useful bits are reset.
+
 
 [[Functions_list_of_TAGE]]
-==== Functions list
+=== Functions list
 
-** `uint8_t predict(uint64_t ip)` - return the prediction from TAGE
+==== Public functions
+** `uint8_t predict(uint64_t ip)` - Returns the prediction from TAGE
+
+==== Private functions
 
 
+[[Bimodal_table_of_TAGE]]
+== Bimodal Table of TAGE
 
-=== 2. Statistical Corrector
+Bimodal table of the TAGE predictor provides the base prediction for any prediction request.
+
+[[class_description_of_TAGE_BIM]]
+=== Class description
+
+`class TageBIM`
+
+==== Constructor
+`TageBIM(uint32_t tage_bim_table_size, uint8_t tage_base_ctr_bits) : tage_bim_table_size_(tage_bim_table_size), 
+tage_base_ctr_bits_(tage_base_ctr_bits) {}`
+
+=== Data members
+
+==== Private data members
+1. `uint32_t tage_bim_table_size_` 
+2. `uint8_t tage_base_ctr_bits_`
+3. `std::map<uint64_t, uint8_t> Tage_Bimodal_`
+
+==== Public data members
+
+=== Functions list
+
+==== Public functions
+1. `void incrementCtr()`
+2. `void decrementCtr()`
+3. `uint8_t getPrediction(uint32_t ip)` - Returns the prediction counter of index ip
+
+==== Private functions
+
+[[Tagged_Component_of_TAGE]]
+== Tagged Component of TAGE
+
+Tagged components of TAGE predictor provides prediction for different history lengths.
+
+[[class_description_of_TAGE_Tagged_Component]]
+=== Class description
+`class TageTaggedComponent`
+
+==== Constructor -
+
+`TageTaggedComponent(uint16_t Tag, uint8_t tage_ctr_bits, uint8_t tage_useful_bits) : Tag_(Tag), 
+tage_ctr_bits_(tage_ctr_bits), tage_useful_bits_(tage_useful_bits) {}`
+
+=== Data members
+
+==== Private data members
+1. `uint16_t Tag_` - used for verifying that the entry corresponds to the current branch instruction.
+2. `uint8_t tage_ctr_bits_` - represents the direction branch will take
+3. `uint8_t tage_useful_bits_` - Number of bits which represents useful value
+
+==== Public data members
+
+=== Functions list
+
+==== Public functions
+
+1. `void incrementCtr()` - Increment the counter bit within the set bounds
+2. `void decrementCtr()` - Decrement the counter bit within the set bounds
+3. `void incrementUsefulBit()`- Increment the useful bit within the set bounds
+4. `void decrementUsefulBit()` - Decremet the useful bit within the set bounds
+
+==== Private functions
+
+== Statistical Corrector
 
 **Input** - Prediction + (Address, History) pair
 
@@ -510,17 +701,29 @@ predictor performs close to an unlimited size Statistical Corrector
 predictor [2].
 
 [[Class_Description_of_SC]]
-==== Class Description of Statistical Corrector
+=== Class Description
 
-** constructor - `TageStatisticalCorrector(uint16_t logical_table_num)`
+==== Constructor 
+`TageStatisticalCorrector(uint16_t logical_table_num) : logical_table_num_(logical_table_num) {}`
+
+=== Data members
+
+==== Public members
+
+==== Private members
+1. `uint16_t logical_table_num_` - 
 
 [[Functions_list_of_SC]]
-==== Functions list
+=== Functions list
 
+==== Public functions
 ** `bool revertPred(uint16_t centeredPredSum, uint16_t centeredU)` - [2]
 
+==== Private functions
+
+
 [[Description_of_Loop_Predictor]]
-=== 3. Loop Predictor
+== Loop Predictor
 
 A loop predictor can simply identify regular loops with constant number of
 iterations. The loop predictor will provide the global prediction when it
@@ -532,12 +735,12 @@ It uses a Loop Predictor table which is essentially a k-way set associative tabl
 whose entries are used to predict loops.
 
 [[Class_description_of_LoopPredictor]]
-==== Class description of LoopPredictor
+=== Class description of LoopPredictor
 
 ** constructor - `LoopPredictor(uint32_t loop_pred_table_size, uint16_t loop_pred_table_way)`
 
 [[Class_Description_of_loop_predictor_entry]]
-==== Class Description of LoopPredictorEntry
+=== Class Description of LoopPredictorEntry
 
 ** Constructor - `LoopPredictorEntry(uint16_t past_iter, uint16_t current_iter, uint16_t tag,
 uint8_t confidence, uint8_t age, bool direction)`
@@ -556,11 +759,14 @@ uint8_t confidence, uint8_t age, bool direction)`
 
 
 [[Functions_list_of_loop_predictor]]
-==== Functions List of LoopPredictor
+=== Functions list of LoopPredictor
 
-1. `addEntry()`
+==== Public functions
+1. `addEntry()` - 
 
-2. `removeEntry()`
+2. `removeEntry()` - 
+
+==== Private functions
 
 [[Fetch_Target_Queue]]
 ==  Fetch Target Queue
@@ -577,25 +783,58 @@ and then sent to BPU to update its internal state.
 [[Class_Description_of_FTQEntry]]
 === Class Description of FTQEntry
 
-** `uint64_t targetPC`
+==== Constructor - 
+`FTQEntry(uint64_t targetPC, uint64_t correctedPC, bool predDirection, bool correctedDirection) : 
+targetPC_(targetPC), correctedPC_(correctedPC), predDirection_(predDirection), correctedDirection_(correctedDirection) {}`
 
-** `uint64_t correctedPC`
+=== Data members
 
-** `bool predDirection`
+==== Public members
 
-** `bool correctedDirection`
+==== Private members
+** `uint64_t targetPC_`
+
+** `uint64_t correctedPC_`
+
+** `bool predDirection_`
+
+** `bool correctedDirection_`
+
+=== Functions list
+
+==== Public functions
+
+1. `uint64_t getTargetPC()`
+2. `uint64_t getCorrectedPC()`
+3. `bool     getPredDirection()`
+4. `bool     getCorrectedDirection()`
+5. `void     setCorrectedPC()` - sets the `correctedPC_` variable
+6. `void     setCorrectedDirection()` - sets the `correctedDirection_` varibale
+
+
+==== Private functions
 
 [[Class_Description_of_FTQ]]
 ===  Class Description of FTQ
 
-** Initialises `std::vector<FTQEntry> fetch_target_queue_`
+==== Constructor
+`FTQ()`
+
+=== Data members
+
+==== Public members
+
+==== Private members
+1. `std::vector<FTQEntry> fetch_target_queue_` - 
 
 [[Functions_list_of_FTQ]]
-==== Functions list
+=== Functions list
+
+==== Public functions
 ** `addEntry(FTQEntry ftq_entry)` - adds an entry into the FTQ.
 ** `removeEntry(FTQEntry ftq_entry)` - removes ftq_entry from the FTQ.
 
-
+==== Private functions
 
 [[Test_Bench_Description]]
 == Test Bench Descriptions

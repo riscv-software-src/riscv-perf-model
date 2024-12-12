@@ -3,7 +3,7 @@
 
 #include "core/MemoryAccessInfo.hpp"
 #include "core/InstGenerator.hpp"
-#include "core/MavisUnit.hpp"
+#include "core/decode/MavisUnit.hpp"
 #include "mavis/ExtractorDirectInfo.h"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"

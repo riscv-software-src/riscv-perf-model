@@ -15,7 +15,7 @@
 
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
-#include "VectorConfig.hpp"
+#include "vector/VectorConfig.hpp"
 #include "MiscUtils.hpp"
 
 #include <cstdlib>

@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include "CoreUtils.hpp"
-#include "Rename.hpp"
+#include "rename/Rename.hpp"
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/report/DatabaseInterface.hpp"

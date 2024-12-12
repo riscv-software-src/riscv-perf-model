@@ -5,7 +5,7 @@
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "InstGroup.hpp"
-#include "MavisUnit.hpp"
+#include "decode/MavisUnit.hpp"
 
 #include "fsl_api/FieldExtractor.h"
 #include "fsl_api/Fusion.h"

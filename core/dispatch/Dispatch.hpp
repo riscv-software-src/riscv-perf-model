@@ -17,7 +17,7 @@
 #include "sparta/statistics/WeightedContextCounter.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
-#include "Dispatcher.hpp"
+#include "dispatch/Dispatcher.hpp"
 #include "CoreTypes.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"

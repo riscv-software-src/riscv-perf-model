@@ -1,7 +1,7 @@
 // <Execute.cpp> -*- C++ -*-
-#include "Execute.hpp"
+#include "execute/Execute.hpp"
 #include "CoreUtils.hpp"
-#include "IssueQueue.hpp"
+#include "execute/IssueQueue.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
 
 namespace olympia

@@ -1,6 +1,6 @@
 // <IssueQueue.cpp> -*- C++ -*-
 
-#include "IssueQueue.hpp"
+#include "execute/IssueQueue.hpp"
 #include "CoreUtils.hpp"
 
 namespace olympia

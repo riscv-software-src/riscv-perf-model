@@ -29,4 +29,4 @@ add_subdirectory(execute)
 add_subdirectory(vector)
 add_subdirectory(lsu)
 
-target_link_libraries(core fetch decode rename dispatch execute vector lsu instgen mss)
+target_link_libraries(core fetch decode rename dispatch execute vector lsu instgen)

@@ -16,7 +16,7 @@ add_library(instgen
   InstGenerator.cpp
 )
 
-target_link_libraries(instgen stf zstd)
+target_link_libraries(instgen stf zstd mavis)
 
 get_property(SPARTA_INCLUDE_PROP TARGET SPARTA::sparta PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(core SYSTEM PRIVATE ${SPARTA_INCLUDE_PROP})

@@ -15,6 +15,7 @@ the Olympia simulator.
 [width="100%",cols="11%,11%,16%,62%",options="header",]
 |===
 |*Revision* |*Date*      |*Author*  |*Summary of Changes*
+|0.3        | 2024.12.12 | Shobhit Sinha | Added extra ports, counters, functions list and data members to design document
 |0.2        | 2024.11.18 | Shobhit Sinha | BPU design documentation
 |0.1        | 2024.11.12 | Jeff Nye | initial template
 |===
@@ -74,30 +75,33 @@ additional cycle.
 [[Input_Ports_BPU]]
 === Input Ports in BPU
 
-**  `in_fetch_prediction_credits` - To receive credits from Fetch unit to indicate availability
-    of slots
-**  `in_fetch_prediction_req` - To receive prediction requests from Fetch unit
+**  `in_fetch_predictionOutput_credits` - To receive credits from Fetch unit to indicate availability of slots to send PredictionOutput to Fetch
+
+**  `in_fetch_predictionRequest` - To receive prediction requests from Fetch unit
 
 **  `TODO-`: input port to receive de-allocated FTQ entry once that instruction packet is committed.
 
 [[Corresponding_output_ports]]
 ==== Corresponding Output Ports
 
-** `out_bpu_prediction_credits` - in Fetch.cpp. To send credits to BPU to indicate availability of
-   slots.
+** `out_bpu_predictionOutput_credits` - in Fetch.cpp. To send credits to BPU to indicate availability of slots to receive PredictionOutput.
 
-** `out_bpu_prediction_req` - in Fetch.cpp. To send PredictionRequest to BPU.
+** `out_bpu_predictionRequest` - in Fetch.cpp. To send PredictionRequest to BPU.
 
 
 [[Output_Ports_BPU]]
 === Output Ports in BPU
 
-** `out_fetch_prediction_res` - To send prediction result to Fetch unit
+** `out_fetch_predictionRequest_credits` - To send credits to Fetch unit to indicate availabilty of slots in BPU to receive PredictionRequest.
+
+** `out_fetch_predictionOutput` - To send PredictionOutput to Fetch unit.
 
 [[Corresponding_input_ports]]
 ==== Corresponding Input Ports
 
-** `in_bpu_prediction_res` - in Fetch.cpp. To receive prediction result from BPU.
+** `in_bpu_predictionRequest_credits` -  in Fetch.cpp. To receive credits from BPU to indicate availabilty in BPU to send PredictionRequest.
+
+** `in_bpu_predictionOutput` - in Fetch.cpp. To receive PredictionOutput from BPU.
 
 [[Counters]]
 === Counters
@@ -105,13 +109,18 @@ additional cycle.
 ** `pred_req_num` - Total number of prediction requests made to BPU
 ** `num_mispred` - Total number of mis-predictions
 ** `mispred_perc` - Percentage of mis-predictions
-** `pht_req_num` -
-** `pht_mispred` - 
-** `btb_req_num` -
-** `ras_utilization` -
-** `` -
-** `` -
-** `` -
+** `branch_req_num` - Total number of prediction requests made which are conditional branch instructions.
+** `call_req_num` - Total number of prediction requests made which are call/jump type.
+** `return_req_num` - Total number of prediction requests made which are return type.
+** `pht_req_num` - Total number of requests made to PHT.
+** `pht_hit_num` - Total number of times when requested index is hit on PHT.
+** `pht_miss_rate` - Total number of times when requested index is miss on PHT.
+** `pht_mispred_perc` - Percentage of times when PHT mispredicted. 
+** `btb_req_num` - Total number of requests made to BTB.
+** `btb_hit_rate` - Total number of times when requested index is hit on BTB.
+** `btb_miss_rate` - Total number of times when requested index is miss on BTB.
+** `ras_high_mark` - Highest size of RAS during an execution cycle.
+** `ras_low_mark` - Lowest size of RAS during an execution cycle.
 
 [[Unit_Block_Diagram]]
 === Unit Block Diagram
@@ -265,7 +274,7 @@ loop predictor table
 === Class heirarchy 
 
 * BPU inherits `sparta::Unit`
-* BPU inherits from BranchPredictorIF<>
+* BPU inherits BranchPredictorIF.hpp
 
 [[Class_Description_of_BPU]]
 ===  Class Description
@@ -306,10 +315,19 @@ loop predictor table
         ** Makes entry in FTQ.
         ** Later on, handle any potential prediction override between TAGE and BasePredictor.
 
-4. `updateGHRTaken()`
+4.   `void sendCreditsToFetch()`
+        ** Send credits to Fetch unit to indicate availabilty of slots to receive prediction input.
+
+5.   `void receiveCreditsFromFetch()`
+        ** To receive credits from Fetch unit to inidcate availabilty of slots to receive prediction output.
+
+6.   `void makePrediction()`
+        ** To send incoming prediction request to BasePredictor and TAGE-SC-L to get prediction.
+
+7.   `void updateGHRTaken()`
         ** shifts all history bits by 1 position to left, and set last bit as 1.
 
-5. `updateGHRNotTaken()` 
+8.   `void updateGHRNotTaken()` 
         ** Shifts all history bits by 1 position to left, and set last bit as 0.
 
 
@@ -398,7 +416,9 @@ registers are hashed to index into the PHT. The counter at this particular index
 the prediction that whether the branch will be taken or not.
 
 [[class_description_of_PHT]]
-=== Class description of PatternHistoryTable
+=== Class description
+
+`class PatternHistoryTable`
 
 ==== Constructor
 `PatternHistoryTable(uint32_t pht_size, uint8_t ctr_bits) : pht_size_(pht_size), ctr_bits_(ctr_bits) {}`
@@ -439,7 +459,9 @@ Whenever a PC is received by the BPU, it is used to index into the BTB,
 which contains the target address of the next instruction.
 
 [[class_description_of_BTB]]
-=== Class description of BranchTargetBuffer
+=== Class description
+
+`class BranchTargetBuffer`
 
 ==== Constructor
 `BranchTargetBuffer(uint32_t btb_size) : btb_size_(btb_size) {}`
@@ -526,8 +548,11 @@ PHT and RAS.
 ** Instantiate `TAGE`, `StatisticalCorrector`, and `LoopPredictor` class
 
 === Class description
+
+`class Tage_SC_L`
+
 ==== Constructor
-`TAGE_SC_L()`
+`Tage_SC_L()`
 
 === Data members
 
@@ -581,6 +606,8 @@ no matching tagged predictor component, the prediction given by default predicto
 
 [[Class_Description_of_TAGE]]
 === Class Description of TAGE
+
+`class Tage`
 
 ==== Constructor
 `Tage(uint16_t tage_bim_size, uint8_t tage_bim_ctr_bits,

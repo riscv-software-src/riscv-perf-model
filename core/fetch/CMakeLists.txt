@@ -3,3 +3,4 @@ add_library(fetch
   ICache.cpp
   SimpleBranchPred.cpp
 )
+target_link_libraries(fetch instgen)

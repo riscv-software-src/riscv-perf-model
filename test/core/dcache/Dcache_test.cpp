@@ -1,5 +1,5 @@
 
-#include "DCache.hpp"
+#include "core/lsu/DCache.hpp"
 #include <sparta/app/SimulationConfiguration.hpp>
 #include <sparta/app/CommandLineSimulator.hpp>
 #include "sparta/utils/SpartaTester.hpp"

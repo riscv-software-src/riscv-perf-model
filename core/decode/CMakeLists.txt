@@ -1,5 +1,6 @@
 add_library(decode
-  Decode.cpp
   FusionDecode.cpp
+  Decode.cpp
   MavisUnit.cpp
 )
+target_link_libraries(decode instgen)

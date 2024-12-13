@@ -39,36 +39,28 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/mac_widening.json ${CMAKE_CURRENT_B
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/single_dest.json ${CMAKE_CURRENT_BINARY_DIR}/single_dest.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/int_ext.json ${CMAKE_CURRENT_BINARY_DIR}/int_ext.json SYMBOLIC)
 
-add_executable(Vuop_test 
-  Vuop_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp
+sparta_named_test(Vector_test_elementwise
+  Vector_test -l top info vuop_elementwise.out -c test_cores/test_big_core.yaml --input-file elementwise.json
+)
+sparta_named_test(Vector_test_widening
+  Vector_test -l top info vuop_widening.out -c test_cores/test_big_core.yaml --input-file widening.json
+)
+sparta_named_test(Vector_test_widening_mixed
+  Vector_test -l top info vuop_widening_mixed.out -c test_cores/test_big_core.yaml --input-file widening_mixed.json
+)
+sparta_named_test(Vector_test_narrowing
+  Vector_test -l top info vuop_narrowing.out -c test_cores/test_big_core.yaml --input-file narrowing.json
+)
+sparta_named_test(Vector_test_mac
+  Vector_test -l top info vuop_mac.out -c test_cores/test_big_core.yaml --input-file mac.json
+)
+sparta_named_test(Vector_test_mac_widening
+  Vector_test -l top info vuop_mac_widening.out -c test_cores/test_big_core.yaml --input-file mac_widening.json
+)
+sparta_named_test(Vector_test_single_dest
+  Vector_test -l top info vuop_single_dest.out -c test_cores/test_big_core.yaml --input-file single_dest.json
 )
 
-target_link_libraries(Vuop_test 
-  PRIVATE
-  core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta
-)
-sparta_named_test(Vuop_test_elementwise
-  Vuop_test -l top info vuop_elementwise.out -c test_cores/test_big_core.yaml --input-file elementwise.json
-)
-sparta_named_test(Vuop_test_widening
-  Vuop_test -l top info vuop_widening.out -c test_cores/test_big_core.yaml --input-file widening.json
-)
-sparta_named_test(Vuop_test_widening_mixed
-  Vuop_test -l top info vuop_widening_mixed.out -c test_cores/test_big_core.yaml --input-file widening_mixed.json
-)
-sparta_named_test(Vuop_test_narrowing
-  Vuop_test -l top info vuop_narrowing.out -c test_cores/test_big_core.yaml --input-file narrowing.json
-)
-sparta_named_test(Vuop_test_mac
-  Vuop_test -l top info vuop_mac.out -c test_cores/test_big_core.yaml --input-file mac.json
-)
-sparta_named_test(Vuop_test_mac_widening
-  Vuop_test -l top info vuop_mac_widening.out -c test_cores/test_big_core.yaml --input-file mac_widening.json
-)
-sparta_named_test(Vuop_test_single_dest
-  Vuop_test -l top info vuop_single_dest.out -c test_cores/test_big_core.yaml --input-file single_dest.json
-)
-
-sparta_named_test(Vuop_test_int_ext
-  Vuop_test -l top info vuop_int_ext.out -c test_cores/test_big_core.yaml --input-file int_ext.json
+sparta_named_test(Vector_test_int_ext
+  Vector_test -l top info vuop_int_ext.out -c test_cores/test_big_core.yaml --input-file int_ext.json
 )

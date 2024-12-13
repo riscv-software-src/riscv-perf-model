@@ -174,6 +174,9 @@ namespace olympia
             || uop_gen_type == InstArchInfo::UopGenType::MAC_WIDE
             || uop_gen_type == InstArchInfo::UopGenType::NARROWING)
         {
+            sparta_assert(vector_config->getLMUL() <= 4,
+                          "LMUL must be lower or equal to 4.\n" 
+                          "These modes set EMUL = 2 * LMUL <= 8.");
             // TODO: Add parameter to support dual dests
             num_uops_to_generate_ *= 2;
         }

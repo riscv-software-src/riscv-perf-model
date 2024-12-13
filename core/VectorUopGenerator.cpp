@@ -144,6 +144,25 @@ namespace olympia
         sparta_assert(uop_gen_type != InstArchInfo::UopGenType::NONE,
                       "Inst: " << current_inst_ << " uop gen type is none");
 
+        if (uop_gen_type == InstArchInfo::UopGenType::INT_EXT)
+        {
+            auto mnemonic = inst->getMnemonic();
+            auto modifier = mnemonic.substr(mnemonic.find(".") + 1);
+
+            if (modifier == "vf2")
+            {
+                addModifier("viext", 2);
+            }
+            else if (modifier == "vf4")
+            {
+                addModifier("viext", 4);
+            }
+            else if (modifier == "vf8")
+            {
+                addModifier("viext", 8);
+            }
+        }
+
         // Number of vector elements processed by each uop
         const VectorConfigPtr & vector_config = inst->getVectorConfig();
         const uint64_t num_elems_per_uop = VectorConfig::VLEN / vector_config->getSEW();
@@ -237,7 +256,7 @@ namespace olympia
             }
             else if constexpr (Type == InstArchInfo::UopGenType::INT_EXT)
             {
-                auto ext = current_inst_->getModifier("viext");
+                auto ext = getModifier("viext");
                 if (!ext)
                 {
                     throw sparta::SpartaException("Modifier at current instruction doesnt exist.");

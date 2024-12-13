@@ -134,23 +134,6 @@ namespace olympia
                 mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests);
                 inst = mavis_facade_->makeInstDirectly(ex_info, clk);
             }
-            if (inst->getUopGenType() == InstArchInfo::UopGenType::INT_EXT)
-            {
-                auto modifier = mnemonic.substr(mnemonic.find(".") + 1);
-
-                if (modifier == "vf2")
-                {
-                    inst->addModifier("viext", 2);
-                }
-                else if (modifier == "vf4")
-                {
-                    inst->addModifier("viext", 4);
-                }
-                else if (modifier == "vf8")
-                {
-                    inst->addModifier("viext", 8);
-                }
-            }
 
             if (jinst.find("vaddr") != jinst.end())
             {

@@ -186,6 +186,7 @@ SUPPORTED_INSTS = {
      "vwmaccus.vx" : {"pipe" : "vmul", "uop_gen" : "MAC_WIDE", "latency" : 3},
 
 # Vector Integer Arithmetic Instructions: Vector Integer Merge Instructions
+# FIXME: Requires Mavis fix to include vector mask
     "vmerge.vvm" : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},
     "vmerge.vxm" : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},
     "vmerge.vim" : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},

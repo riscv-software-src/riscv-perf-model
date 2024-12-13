@@ -24,7 +24,6 @@
 #include <unordered_map>
 #include <variant>
 #include <sstream>
-#include <optional>
 
 namespace olympia
 {
@@ -75,22 +74,6 @@ namespace olympia
             Reg dest_;
             RegList src_;
             Reg data_reg_;
-        };
-
-        class Modifier
-        {
-          public:
-            Modifier(std::string name, uint32_t value) : name_{name}, data_{value} {}
-
-            std::string getName() const { return name_; }
-
-            uint32_t getValue() const { return data_; }
-
-            void setValue(uint32_t newValue) { data_ = newValue; }
-
-          private:
-            std::string name_;
-            uint32_t data_;
         };
 
         // Used by Mavis
@@ -439,20 +422,6 @@ namespace olympia
             return ss.str();
         }
 
-        void addModifier(std::string name, uint32_t value) { modifiers_.emplace_back(name, value); }
-
-        std::optional<uint32_t> getModifier(std::string name)
-        {
-            for (auto & m : modifiers_)
-            {
-                if (m.getName() == name)
-                {
-                    return m.getValue();
-                }
-            }
-            return {};
-        }
-
       private:
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType inst_arch_info_;
@@ -507,8 +476,6 @@ namespace olympia
         RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
         static const std::unordered_map<Inst::Status, std::string> status2String;
-
-        std::vector<Modifier> modifiers_;
     };
 
     using InstPtr = Inst::PtrType;

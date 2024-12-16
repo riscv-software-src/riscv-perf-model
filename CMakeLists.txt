@@ -127,3 +127,4 @@ add_custom_target(clangformat-check
   COMMENT
      "Formatting ${prefix} with ${CLANGFORMAT_EXECUTABLE} ..."
   )
+

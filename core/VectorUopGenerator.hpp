@@ -10,6 +10,8 @@
 #include "FlushManager.hpp"
 #include "MavisUnit.hpp"
 
+#include <optional>
+
 namespace olympia
 {
 
@@ -20,6 +22,22 @@ namespace olympia
     class VectorUopGenerator : public sparta::Unit
     {
       public:
+        class Modifier
+        {
+          public:
+            Modifier(std::string name, uint32_t value) : name_{name}, data_{value} {}
+
+            std::string getName() const { return name_; }
+
+            uint32_t getValue() const { return data_; }
+
+            void setValue(uint32_t newValue) { data_ = newValue; }
+
+          private:
+            std::string name_;
+            uint32_t data_;
+        };
+
         //! \brief Parameters for VectorUopGenerator model
         class VectorUopGeneratorParameterSet : public sparta::ParameterSet
         {
@@ -46,8 +64,7 @@ namespace olympia
 
         const InstPtr generateUop();
 
-        template <bool SINGLE_DEST, bool WIDE_DEST, bool ADD_DEST_AS_SRC>
-        const InstPtr generateUops();
+        template <InstArchInfo::UopGenType Type> const InstPtr generateUops();
 
         uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }
 
@@ -65,6 +82,7 @@ namespace olympia
 
         // TODO: Use Sparta ValidValue
         InstPtr current_inst_ = nullptr;
+        std::vector<Modifier> current_inst_modifiers_;
         // UopGenFunctionMapType::iterator current_uop_gen_function_;
 
         sparta::Counter vuops_generated_;
@@ -75,11 +93,29 @@ namespace olympia
         void reset_()
         {
             current_inst_ = nullptr;
+            current_inst_modifiers_.clear();
             num_uops_generated_ = 0;
             num_uops_to_generate_ = 0;
         }
 
-         friend class VectorUopGeneratorTester;
+        void addModifier(const std::string & name, uint32_t value)
+        {
+            current_inst_modifiers_.emplace_back(name, value);
+        }
+
+        std::optional<uint32_t> getModifier(const std::string & name)
+        {
+            for (auto & m : current_inst_modifiers_)
+            {
+                if (m.getName() == name)
+                {
+                    return m.getValue();
+                }
+            }
+            return {};
+        }
+
+        friend class VectorUopGeneratorTester;
     };
 
     class VectorUopGeneratorTester;

@@ -18,6 +18,7 @@
 #include "VectorConfig.hpp"
 #include "MiscUtils.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <ostream>
 #include <unordered_map>
@@ -221,29 +222,34 @@ namespace olympia
         }
 
         const VectorConfigPtr getVectorConfig() const { return vector_config_; }
+
         VectorConfigPtr getVectorConfig() { return vector_config_; }
 
         void setTail(bool has_tail) { has_tail_ = has_tail; }
+
         bool hasTail() const { return has_tail_; }
 
         void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)
         {
             parent_uop_ = parent_uop;
         }
+
         sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return parent_uop_; }
 
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
 
         // Is this branch instruction mispredicted?
-        bool isMispredicted()  const { return is_mispredicted_; }
-        void setMispredicted()       { is_mispredicted_ = true; }
+        bool isMispredicted() const { return is_mispredicted_; }
+
+        void setMispredicted() { is_mispredicted_ = true; }
 
         // TBD -- add branch prediction
         void setSpeculative(bool spec) { is_speculative_ = spec; }
 
         // Last instruction within the cache block fetched from the ICache
         void setLastInFetchBlock(bool last) { last_in_fetch_block_ = last; }
+
         bool isLastInFetchBlock() const { return last_in_fetch_block_; }
 
         // Opcode information
@@ -271,25 +277,20 @@ namespace olympia
         bool hasZeroRegSource() const
         {
             return std::any_of(getSourceOpInfoList().begin(), getSourceOpInfoList().end(),
-                [](const mavis::OperandInfo::Element & elem)
-                {
-                    return elem.field_value == 0;
-                });
+                               [](const mavis::OperandInfo::Element & elem)
+                               { return elem.field_value == 0; });
         }
 
         bool hasZeroRegDest() const
         {
             return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
-                [](const mavis::OperandInfo::Element & elem)
-                {
-                    return elem.field_value == 0;
-                });
+                               [](const mavis::OperandInfo::Element & elem)
+                               { return elem.field_value == 0; });
         }
 
         uint64_t getImmediate() const
         {
-            sparta_assert(has_immediate_,
-                "Instruction does not have an immediate!");
+            sparta_assert(has_immediate_, "Instruction does not have an immediate!");
             return opcode_info_->getImmediate();
         }
 
@@ -298,7 +299,8 @@ namespace olympia
             try
             {
                 // If vm bit is 0, masking is enabled
-                const uint64_t vm_bit = opcode_info_->getSpecialField(mavis::OpcodeInfo::SpecialField::VM);
+                const uint64_t vm_bit =
+                    opcode_info_->getSpecialField(mavis::OpcodeInfo::SpecialField::VM);
                 return vm_bit == 0;
             }
             catch (const mavis::UnsupportedExtractorSpecialFieldID & mavis_exception)
@@ -344,7 +346,8 @@ namespace olympia
 
         bool isVector() const { return is_vector_; }
 
-        void setCoF(const bool &cof) { is_cof_ = cof; }
+        void setCoF(const bool & cof) { is_cof_ = cof; }
+
         bool isCoF() const { return is_cof_; }
 
         // Rename information

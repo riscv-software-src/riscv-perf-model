@@ -33,10 +33,6 @@
 
 TEST_INIT
 
-////////////////////////////////////////////////////////////////////////////////
-// Set up the Mavis decoder globally for the testing
-olympia::InstAllocator inst_allocator(2000, 1000);
-
 const char USAGE[] = "Usage:\n"
                      "    \n"
                      "\n";

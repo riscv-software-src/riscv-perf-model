@@ -1735,21 +1735,21 @@
     },
     {
         "mnemonic": "vsext.vf2",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vsext.vf4",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vsext.vf8",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vslide1down.vx",
@@ -2209,20 +2209,20 @@
     },
     {
         "mnemonic": "vzext.vf2",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vzext.vf4",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vzext.vf8",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     }
 ]

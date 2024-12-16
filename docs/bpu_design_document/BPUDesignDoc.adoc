@@ -15,6 +15,7 @@ the Olympia simulator.
 [width="100%",cols="11%,11%,16%,62%",options="header",]
 |===
 |*Revision* |*Date*      |*Author*  |*Summary of Changes*
+|0.4        | 2024.12.16 | Shobhit Sinha | Replaced BPU overview diagram with BPU interaction diagram
 |0.3        | 2024.12.12 | Shobhit Sinha | Added extra ports, counters, functions list and data members to design document
 |0.2        | 2024.11.18 | Shobhit Sinha | BPU design documentation
 |0.1        | 2024.11.12 | Jeff Nye | initial template
@@ -57,12 +58,12 @@ Fetch unit and predicts the direction and target address from which Fetch unit
 has to get the next instruction.
 
 
-[[Overview_Block_Diagram]]
-=== Overview Block Diagram
+[[BPU_Interaction_Block_Diagram]]
+=== Interaction of BPU
 
-image:media/bpu_overview.png[image,width=576,height=366]
+image:media/bpu_interaction.png[image,width=576,height=366]
 
-Figure 1 - Overview of BPU in reference to Fetch unit
+Figure 1 - Overview of interaction of BPU with Fetch
 
 [[Functional_Description]]
 == Functional Description

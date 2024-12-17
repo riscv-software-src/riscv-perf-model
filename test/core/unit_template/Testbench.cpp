@@ -1,5 +1,5 @@
 #include "Dut.hpp"
-#include "MavisUnit.hpp"
+#include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 #include "Sink.hpp"
 #include "Src.hpp"

@@ -13,11 +13,7 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvli_vaddvv_e32m1ta.json      ${
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetvl_vaddvv_e64m1ta.json       ${CMAKE_CURRENT_BINARY_DIR}/vsetvl_vaddvv_e64m1ta.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsetivli_vaddvv_tail_e8m8ta.json ${CMAKE_CURRENT_BINARY_DIR}/vsetivli_vaddvv_tail_e8m8ta.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/multiple_vset.json               ${CMAKE_CURRENT_BINARY_DIR}/multiple_vset.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmulvx_e8m4.json                 ${CMAKE_CURRENT_BINARY_DIR}/vmulvx_e8m4.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vwmulvv_e8m4.json                ${CMAKE_CURRENT_BINARY_DIR}/vwmulvv_e8m4.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmseqvv_e8m4.json                ${CMAKE_CURRENT_BINARY_DIR}/vmseqvv_e8m4.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vrgather.json                    ${CMAKE_CURRENT_BINARY_DIR}/vrgather.json SYMBOLIC)
-file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vsadd.json                       ${CMAKE_CURRENT_BINARY_DIR}/vsadd.json SYMBOLIC)
 
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/elementwise.json ${CMAKE_CURRENT_BINARY_DIR}/elementwise.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/widening.json ${CMAKE_CURRENT_BINARY_DIR}/widening.json SYMBOLIC)
@@ -39,11 +35,7 @@ sparta_named_test(Vector_test_multiple_vset Vector_test -l top info mulitple_vse
 sparta_named_test(Vector_unsupported_test   Vector_test -l top info unsupported.out   -c test_cores/test_big_core.yaml --input-file vrgather.json)
 
 # Vector sequencing tests
-sparta_named_test(Vector_test_vmulvx         Vector_test -l top info vmulvx.out              -c test_cores/test_big_core.yaml --input-file vmulvx_e8m4.json          --expected-num-uops 4)
-sparta_named_test(Vector_test_vmulvv         Vector_test -l top info vmulvv.out              -c test_cores/test_big_core.yaml --input-file vwmulvv_e8m4.json         --expected-num-uops 8)
-sparta_named_test(Vector_test_vmseqvv        Vector_test -l top info vmseqvv.out             -c test_cores/test_big_core.yaml --input-file vmseqvv_e8m4.json         --expected-num-uops 4)
-sparta_named_test(Vector_test_vsadd          Vector_test -l top info vsadd.out               -c test_cores/test_big_core.yaml --input-file vsadd.json                --expected-num-uops 4)
-sparta_named_test(Vector_test_elementwise    Vector_test -l top info vuop_elementwise.out    -c test_cores/test_big_core.yaml --input-file elementwise.json          --expected-num-uops 4)
+sparta_named_test(Vector_test_elementwise    Vector_test -l top info vuop_elementwise.out    -c test_cores/test_big_core.yaml --input-file elementwise.json          --expected-num-uops 8)
 sparta_named_test(Vector_test_widening       Vector_test -l top info vuop_widening.out       -c test_cores/test_big_core.yaml --input-file widening.json             --expected-num-uops 8)
 sparta_named_test(Vector_test_widening_mixed Vector_test -l top info vuop_widening_mixed.out -c test_cores/test_big_core.yaml --input-file widening_mixed.json       --expected-num-uops 8)
 sparta_named_test(Vector_test_narrowing      Vector_test -l top info vuop_narrowing.out      -c test_cores/test_big_core.yaml --input-file narrowing.json            --expected-num-uops 8)

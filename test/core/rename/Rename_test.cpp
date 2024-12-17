@@ -32,10 +32,6 @@
 
 TEST_INIT
 
-////////////////////////////////////////////////////////////////////////////////
-// Set up the Mavis decoder globally for the testing
-olympia::InstAllocator inst_allocator(2000, 1000);
-
 class olympia::RenameTester {
 public:
   void test_clearing_rename_structures(olympia::Rename &rename) {

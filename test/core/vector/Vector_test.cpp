@@ -1,35 +1,15 @@
-#include "CPUFactory.hpp"
-#include "CoreUtils.hpp"
-#include "dispatch/Dispatch.hpp"
-#include "InstArchInfo.hpp"
-#include "decode/MavisUnit.hpp"
-#include "OlympiaAllocators.hpp"
 #include "OlympiaSim.hpp"
-#include "execute/IssueQueue.hpp"
+#include "decode/Decode.hpp"
+#include "ROB.hpp"
 #include "vector/VectorUopGenerator.hpp"
 
 #include "sparta/app/CommandLineSimulator.hpp"
-#include "sparta/app/Simulation.hpp"
-#include "sparta/events/UniqueEvent.hpp"
 #include "sparta/kernel/Scheduler.hpp"
-#include "sparta/report/Report.hpp"
-#include "sparta/resources/Buffer.hpp"
 #include "sparta/simulation/ClockManager.hpp"
-#include "sparta/sparta.hpp"
-#include "sparta/statistics/StatisticSet.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaTester.hpp"
 
-#include <cinttypes>
-#include <initializer_list>
-#include <memory>
-#include <sstream>
-#include <vector>
 TEST_INIT
-
-////////////////////////////////////////////////////////////////////////////////
-// Set up the Mavis decoder globally for the testing
-olympia::InstAllocator inst_allocator(2000, 1000);
 
 const char USAGE[] = "Usage:\n"
                      "\n"
@@ -133,8 +113,7 @@ void runTests(int argc, char** argv)
     int err_code = 0;
     if (!cls.parse(argc, argv, err_code))
     {
-        sparta_assert(false,
-                      "Command line parsing failed"); // Any errors already printed to cerr
+        sparta_assert(false, "Command line parsing failed");
     }
 
     sparta::Scheduler scheduler;
@@ -309,6 +288,102 @@ void runTests(int argc, char** argv)
         rob_tester.test_last_inst_has_tail(false);
 
         vuop_tester.test_num_vuops_generated(4);
+    }
+    else if (input_file.find("elementwise.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(4);
+    }
+    else if (input_file.find("widening.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(8);
+    }
+    else if (input_file.find("widening_mixed.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(8);
+    }
+    else if (input_file.find("mac.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(4);
+    }
+    else if (input_file.find("mac_widening.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(8);
+    }
+    else if (input_file.find("single_dest.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(4);
+    }
+    else if (input_file.find("narrowing.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(128);
+
+        vuop_tester.test_num_vuops_generated(8);
+    }
+    else if (input_file.find("int_ext.json") != std::string::npos)
+    {
+        cls.runSimulator(&sim);
+
+        decode_tester.test_lmul(4);
+        decode_tester.test_vl(256);
+        decode_tester.test_vta(false);
+        decode_tester.test_sew(64);
+        decode_tester.test_vlmax(64);
+
+        vuop_tester.test_num_vuops_generated(12);
     }
     else
     {

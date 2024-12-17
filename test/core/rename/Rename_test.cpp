@@ -1,11 +1,11 @@
 
 #include "CoreUtils.hpp"
-#include "Dispatch.hpp"
-#include "ExecutePipe.hpp"
-#include "LSU.hpp"
-#include "MavisUnit.hpp"
+#include "dispatch/Dispatch.hpp"
+#include "execute/ExecutePipe.hpp"
+#include "lsu/LSU.hpp"
+#include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
-#include "Rename.hpp"
+#include "rename/Rename.hpp"
 #include "sim/OlympiaSim.hpp"
 
 #include "test/core/common/SinkUnit.hpp"

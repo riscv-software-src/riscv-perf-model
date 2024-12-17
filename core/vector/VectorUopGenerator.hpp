@@ -8,7 +8,7 @@
 
 #include "Inst.hpp"
 #include "FlushManager.hpp"
-#include "MavisUnit.hpp"
+#include "decode/MavisUnit.hpp"
 
 #include <optional>
 

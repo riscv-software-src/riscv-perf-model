@@ -1,4 +1,4 @@
-#include "VectorUopGenerator.hpp"
+#include "vector/VectorUopGenerator.hpp"
 #include "Inst.hpp"
 #include "InstArchInfo.hpp"
 #include "mavis/Mavis.h"

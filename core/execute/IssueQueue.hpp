@@ -19,7 +19,7 @@
 #include "sparta/resources/PriorityQueue.hpp"
 
 #include "CoreTypes.hpp"
-#include "ExecutePipe.hpp"
+#include "execute/ExecutePipe.hpp"
 #include "FlushManager.hpp"
 #include "Inst.hpp"
 

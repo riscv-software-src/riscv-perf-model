@@ -1,6 +1,6 @@
 
-#include "Dispatcher.hpp"
-#include "Dispatch.hpp"
+#include "dispatch/Dispatcher.hpp"
+#include "dispatch/Dispatch.hpp"
 
 namespace olympia
 {

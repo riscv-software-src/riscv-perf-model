@@ -26,7 +26,7 @@
 #include "MemoryAccessInfo.hpp"
 
 #include "CacheFuncModel.hpp"
-#include "LSU.hpp"
+#include "lsu/LSU.hpp"
 
 namespace olympia_mss
 {

@@ -6,9 +6,9 @@
 //!
 
 #include <algorithm>
-#include "Fetch.hpp"
+#include "fetch/Fetch.hpp"
 #include "InstGenerator.hpp"
-#include "MavisUnit.hpp"
+#include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 
 #include "sparta/utils/MathUtils.hpp"

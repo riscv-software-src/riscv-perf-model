@@ -1,6 +1,6 @@
 // <ExecutePipePipe.cpp> -*- C++ -*-
 
-#include "ExecutePipe.hpp"
+#include "execute/ExecutePipe.hpp"
 #include "CoreUtils.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/SpartaAssert.hpp"

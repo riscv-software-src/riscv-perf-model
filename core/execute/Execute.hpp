@@ -6,8 +6,8 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 
 #include "Inst.hpp"
-#include "ExecutePipe.hpp"
-#include "IssueQueue.hpp"
+#include "execute/ExecutePipe.hpp"
+#include "execute/IssueQueue.hpp"
 
 namespace olympia
 {

@@ -1,7 +1,7 @@
 #include "OlympiaSim.hpp"
-#include "Decode.hpp"
+#include "decode/Decode.hpp"
 #include "ROB.hpp"
-#include "VectorUopGenerator.hpp"
+#include "vector/VectorUopGenerator.hpp"
 
 #include "sparta/app/CommandLineSimulator.hpp"
 #include "sparta/kernel/Scheduler.hpp"

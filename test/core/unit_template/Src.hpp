@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/InstGenerator.hpp"
-#include "core/MavisUnit.hpp"
+#include "core/decode/MavisUnit.hpp"
 #include "core/InstGroup.hpp"
 
 #include "mavis/ExtractorDirectInfo.h"

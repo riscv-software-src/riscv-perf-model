@@ -1,7 +1,7 @@
 // <Decode.cpp> -*- C++ -*-
 
-#include "Decode.hpp"
-#include "VectorUopGenerator.hpp"
+#include "decode/Decode.hpp"
+#include "vector/VectorUopGenerator.hpp"
 #include "fsl_api/FusionTypes.h"
 
 #include "sparta/events/StartupEvent.hpp"

@@ -1,0 +1,138 @@
+[
+  {
+    "mnemonic": "li",
+    "rd": 0,
+    "imm": "32"
+  },
+  {
+    "mnemonic": "vsetvli",
+    "vtype": "0x12",
+    "rd": 0,
+    "vl": 256,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vle32.v",
+    "vd": 8,
+    "rs1": 14,
+    "vaddr": "0xdeadbeef",
+    "mop": 0,
+    "eew": 32,
+    "stride": 32
+  },
+  {
+    "mnemonic": "ld",
+    "rd": 10,
+    "rs1": 8,
+    "imm": -128,
+    "vaddr": "0xdeedbeef",
+    "mop": 0,
+    "eew": 32,
+    "stride": 32
+  },
+  {
+    "mnemonic": "vle32.v",
+    "vd": 16,
+    "rs1": 30,
+    "vaddr": "0xdaadbeef",
+    "mop": 0,
+    "eew": 32,
+    "stride": 32
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 15,
+    "rs1": 16,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 14,
+    "rs1": 17,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 13,
+    "rs1": 9,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 12,
+    "rs1": 31,
+    "imm": 0
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 8,
+    "rs1": 15,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 9,
+    "rs1": 14,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 10,
+    "rs1": 13,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 11,
+    "rs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 15,
+    "rs1": 15,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 14,
+    "rs1": 29,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 13,
+    "rs1": 28,
+    "imm": 0
+  },
+  {
+    "mnemonic": "flw",
+    "fd": 12,
+    "rs1": 7,
+    "imm": 0
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 12,
+    "rs1": 15,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 14,
+    "rs1": 14,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 15,
+    "rs1": 13,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vfmacc.vf",
+    "vd": 13,
+    "rs1": 12,
+    "vs2": 16
+  }
+]

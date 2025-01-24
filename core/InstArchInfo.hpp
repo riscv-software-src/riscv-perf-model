@@ -50,6 +50,9 @@ namespace olympia
             MUL,
             VINT,
             VFIXED,
+            VFLOAT,
+            VFMUL,
+            VFDIV,
             VMASK,
             VMUL,
             VDIV,
@@ -68,11 +71,14 @@ namespace olympia
 
         enum class UopGenType
         {
-            ARITH,
-            ARITH_SINGLE_DEST,
-            ARITH_WIDE_DEST,
-            ARITH_MAC,
-            ARITH_MAC_WIDE_DEST,
+            ELEMENTWISE,
+            SINGLE_DEST,
+            WIDENING,
+            WIDENING_MIXED,
+            NARROWING,
+            MAC,
+            MAC_WIDE,
+            INT_EXT,
             NONE,
             UNKNOWN
         };

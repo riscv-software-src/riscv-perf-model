@@ -1,11 +1,11 @@
 
 #include "CPUFactory.hpp"
 #include "CoreUtils.hpp"
-#include "Dispatch.hpp"
-#include "MavisUnit.hpp"
+#include "dispatch/Dispatch.hpp"
+#include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 #include "OlympiaSim.hpp"
-#include "Rename.hpp"
+#include "rename/Rename.hpp"
 
 #include "test/core/common/SinkUnit.hpp"
 #include "test/core/common/SourceUnit.hpp"

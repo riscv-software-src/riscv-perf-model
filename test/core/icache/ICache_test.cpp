@@ -13,7 +13,7 @@
 #include "test/core/icache/ICacheSource.hpp"
 #include "test/core/icache/ICacheChecker.hpp"
 
-#include "ICache.hpp"
+#include "fetch/ICache.hpp"
 #include "OlympiaAllocators.hpp"
 
 #include <random>

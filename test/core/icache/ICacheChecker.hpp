@@ -6,7 +6,7 @@
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/LogUtils.hpp"
-#include "ICache.hpp"
+#include "core/fetch/ICache.hpp"
 
 #include <string>
 #include <map>

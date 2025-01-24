@@ -1,0 +1,34 @@
+[
+  {
+    "mnemonic": "vsetvli",
+    "vtype": "0x2",
+    "rd": 0,
+    "rs1": 12,
+    "vl": 256,
+    "vta": 1
+  },
+  {
+    "mnemonic": "vle32.v",
+    "vd": 0,
+    "rs1": 10,
+    "vaddr": "0xdaadbeef",
+    "mop": 0,
+    "eew": 32,
+    "stride": 32
+  },
+  {
+    "mnemonic": "vmax.vx",
+    "vd": 0,
+    "vs2": 0,
+    "rs1": 0
+  },
+  {
+    "mnemonic": "vse32.v",
+    "vs3": 0,
+    "rs1": 11,
+    "vaddr": "0xdeadbeef",
+    "mop": 0,
+    "eew": 32,
+    "stride": 32
+  }
+]

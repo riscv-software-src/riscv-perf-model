@@ -5,14 +5,14 @@
 
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "Core.hpp"
-#include "ICache.hpp"
-#include "Fetch.hpp"
-#include "Decode.hpp"
-#include "VectorUopGenerator.hpp"
-#include "Rename.hpp"
-#include "Dispatch.hpp"
-#include "Execute.hpp"
-#include "LSU.hpp"
+#include "fetch/ICache.hpp"
+#include "fetch/Fetch.hpp"
+#include "decode/Decode.hpp"
+#include "vector/VectorUopGenerator.hpp"
+#include "rename/Rename.hpp"
+#include "dispatch/Dispatch.hpp"
+#include "execute/Execute.hpp"
+#include "lsu/LSU.hpp"
 #include "MMU.hpp"
 #include "SimpleTLB.hpp"
 #include "BIU.hpp"
@@ -21,8 +21,8 @@
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
-#include "MavisUnit.hpp"
-#include "IssueQueue.hpp"
+#include "decode/MavisUnit.hpp"
+#include "execute/IssueQueue.hpp"
 
 namespace olympia{
 

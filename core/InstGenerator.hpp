@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "Inst.hpp"
-#include "MavisUnit.hpp"
+#include "decode/MavisUnit.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
 
 #include "stf-inc/stf_inst_reader.hpp"

@@ -14,3 +14,4 @@ dependencies:
   - clang-14>=14.0.6
   - clangxx>=14.0.6
   - lld>=14.0.6
+  - llvm-tools>=14.0.6

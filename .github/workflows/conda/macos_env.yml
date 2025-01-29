@@ -10,3 +10,4 @@ dependencies:
   - libsqlite>=3.40.0
   - sqlite>=3.36.0
   - hdf5>=1.10.6
+  - bison>=3.8.0

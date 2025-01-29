@@ -2,6 +2,7 @@ name: riscv_perf_model
 channels:
   - conda-forge
 dependencies:
+  - zstd>=1.5.6
   - cmake>=3.25.2
   - boost>=1.76.0
   - boost-cpp>=1.76.0
@@ -11,4 +12,3 @@ dependencies:
   - sqlite>=3.36.0
   - hdf5>=1.10.6
   - bison>=3.8.0
-  - zstd>=1.5.6

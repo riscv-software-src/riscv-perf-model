@@ -10,8 +10,3 @@ dependencies:
   - libsqlite>=3.40.0
   - sqlite>=3.36.0
   - hdf5>=1.10.6
-  - clang>=14.0.6
-  - clang-14>=14.0.6
-  - clangxx>=14.0.6
-  - lld>=14.0.6
-  - llvm-tools>=14.0.6

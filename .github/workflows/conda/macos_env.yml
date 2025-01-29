@@ -2,14 +2,14 @@ name: riscv_perf_model
 channels:
   - conda-forge
 dependencies:
-  - cmake>=3.25.2=h077f3f9_0
-  - boost>=1.76.0=py310h7c3ba0c_1
-  - boost-cpp>=1.76.0=h312852a_1
-  - yaml-cpp>=0.7.0=h27087fc_2
-  - rapidjson>=1.1.0=he1b5a44_1002
-  - libsqlite>=3.40.0=h753d276_0
-  - sqlite>=3.36.0=h9cd32fc_2
-  - hdf5>=1.10.6=nompi_h6a2412b_1114
+  - cmake>=3.25.2
+  - boost>=1.76.0
+  - boost-cpp>=1.76.0
+  - yaml-cpp>=0.7.0
+  - rapidjson>=1.1.0
+  - libsqlite>=3.40.0
+  - sqlite>=3.36.0
+  - hdf5>=1.10.6
   - clang>=14.0.6
   - clang-14>=14.0.6
   - clangxx>=14.0.6

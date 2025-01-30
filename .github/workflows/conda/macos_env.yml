@@ -4,11 +4,19 @@ channels:
 dependencies:
   - zstd>=1.5.6
   - cmake>=3.25.2
+  - zstd>=1.5.6
   - boost>=1.76.0
+  - zstd>=1.5.6
   - boost-cpp>=1.76.0
+  - zstd>=1.5.6
   - yaml-cpp>=0.7.0
+  - zstd>=1.5.6
   - rapidjson>=1.1.0
+  - zstd>=1.5.6
   - libsqlite>=3.40.0
+  - zstd>=1.5.6
   - sqlite>=3.36.0
+  - zstd>=1.5.6
   - hdf5>=1.10.6
+  - zstd>=1.5.6
   - bison>=3.8.0

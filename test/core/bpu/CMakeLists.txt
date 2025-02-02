@@ -1,5 +1,5 @@
-set(PRJ "BPU_TESTBENCH")
-set(EXE "BPU_TESTBENCH_EXE")
+set(PRJ "BPU_test")
+set(EXE "BPU_test")
 
 set(TST1 "${PRJ}_tst1")
 set(TST2 "${PRJ}_json")

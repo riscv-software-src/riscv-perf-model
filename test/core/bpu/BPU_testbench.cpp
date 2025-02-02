@@ -16,13 +16,13 @@ using namespace std;
 TEST_INIT
 olympia::InstAllocator inst_allocator(2000, 1000);
 
-
 // ----------------------------------------------------------------------
 // Testbench reference - example starting point for unit benches
 // ----------------------------------------------------------------------
 class Simulator : public sparta::app::Simulation
 {
-    using BPUFactory = sparta::ResourceFactory<olympia::BranchPredictor::BPU, olympia::BranchPredictor::BPU::BPUParameterSet>;
+    using BPUFactory = sparta::ResourceFactory<olympia::BranchPredictor::BPU,
+                                               olympia::BranchPredictor::BPU::BPUParameterSet>;
 
   public:
     Simulator(sparta::Scheduler* sched, const string & mavis_isa_files,
@@ -56,7 +56,7 @@ class Simulator : public sparta::app::Simulation
             rtn, olympia::MavisUnit::name, sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE, "Mavis Unit", &mavis_fact));
 
-        // Create a Source Unit 
+        // Create a Source Unit
         sparta::ResourceTreeNode* src_unit = new sparta::ResourceTreeNode(
             rtn, "src", sparta::TreeNode::GROUP_NAME_NONE, sparta::TreeNode::GROUP_IDX_NONE,
             "Source Unit", &source_fact);
@@ -65,7 +65,7 @@ class Simulator : public sparta::app::Simulation
 
         auto* src_params = src_unit->getParameterSet();
         src_params->getParameter("input_file")->setValueFromString(input_file_);
-        
+
         // Create the device under test
         sparta::ResourceTreeNode* bpu =
             new sparta::ResourceTreeNode(rtn, "bpu", sparta::TreeNode::GROUP_NAME_NONE,
@@ -93,16 +93,18 @@ class Simulator : public sparta::app::Simulation
         // See the README.md for A/B/Cx/Dx
         //
         // A - bpu sends prediction request credits to source
-        sparta::bind(root_node->getChildAs<sparta::Port>("bpu.ports.out_fetch_predictionRequest_credits"),
-                     root_node->getChildAs<sparta::Port>("src.ports.in_bpu_predictionRequest_credits"));
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("bpu.ports.out_fetch_predictionRequest_credits"),
+            root_node->getChildAs<sparta::Port>("src.ports.in_bpu_predictionRequest_credits"));
 
         // B - source sends prediction request to bpu
         sparta::bind(root_node->getChildAs<sparta::Port>("bpu.ports.in_fetch_predictionRequest"),
                      root_node->getChildAs<sparta::Port>("src.ports.out_bpu_predictionRequest"));
 
         // C - sink sends prediction output credits to bpu
-        sparta::bind(root_node->getChildAs<sparta::Port>("bpu.ports.in_fetch_predictionOutput_credits"),
-                     root_node->getChildAs<sparta::Port>("sink.ports.out_bpu_predictionOutput_credits"));
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("bpu.ports.in_fetch_predictionOutput_credits"),
+            root_node->getChildAs<sparta::Port>("sink.ports.out_bpu_predictionOutput_credits"));
 
         // D - bpu sends prediction output to sink
         sparta::bind(root_node->getChildAs<sparta::Port>("bpu.ports.out_fetch_predictionOutput"),

@@ -15,24 +15,21 @@ namespace bpu_test
 {
     class BPUSink : public sparta::Unit
     {
-        public:
+      public:
         static constexpr char name[] = "bpu_sink_unit";
 
         class BPUSinkParameters : public sparta::ParameterSet
         {
-        public:
-            BPUSinkParameters(sparta::TreeNode *n) : sparta::ParameterSet(n)
-            {}
+          public:
+            BPUSinkParameters(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
         };
 
-        BPUSink(sparta::TreeNode *n, const BPUSinkParameters *params) :
-            sparta::Unit(n)
+        BPUSink(sparta::TreeNode* n, const BPUSinkParameters* params) : sparta::Unit(n)
         {
             sparta::StartupEvent(n, CREATE_SPARTA_HANDLER(BPUSink, sendPredictionOutputCredits_));
         }
 
-        private:
-
+      private:
         uint32_t predictionOutputCredits_ = 1;
 
         void sendPredictionOutputCredits_()
@@ -40,7 +37,8 @@ namespace bpu_test
             ILOG("send prediction output credits to bpu");
             out_bpu_predictionOutput_credits_.send(predictionOutputCredits_);
         }
-        void recievePredictionOutput_(const olympia::BranchPredictor::PredictionOutput &predOutput)
+
+        void recievePredictionOutput_(const olympia::BranchPredictor::PredictionOutput & predOutput)
         {
             ILOG("recieve prediction output from bpu");
             predictionOutputResult_.push_back(predOutput);
@@ -52,14 +50,16 @@ namespace bpu_test
         ////////////////////////////////////////////////////////////////////////////////
         // Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<olympia::BranchPredictor::PredictionOutput> in_bpu_predictionOutput_{&unit_port_set_,
-                                                             "in_bpu_predictionOutput", 0};
+        sparta::DataInPort<olympia::BranchPredictor::PredictionOutput> in_bpu_predictionOutput_{
+            &unit_port_set_, "in_bpu_predictionOutput", 0};
 
-        sparta::DataOutPort<uint32_t> out_bpu_predictionOutput_credits_{&unit_port_set_,
-                                                             "out_bpu_predictionOutput_credits"};
+        sparta::DataOutPort<uint32_t> out_bpu_predictionOutput_credits_{
+            &unit_port_set_, "out_bpu_predictionOutput_credits"};
 
-        sparta::UniqueEvent<> ev_return_credits_{&unit_event_set_, "return_credits",
-                                                CREATE_SPARTA_HANDLER(BPUSink, sendPredictionOutputCredits_)};
+        sparta::UniqueEvent<> ev_return_credits_{
+            &unit_event_set_, "return_credits",
+            CREATE_SPARTA_HANDLER(BPUSink, sendPredictionOutputCredits_)};
     };
+
     using SinkFactory = sparta::ResourceFactory<BPUSink, BPUSink::BPUSinkParameters>;
-}
+} // namespace bpu_test

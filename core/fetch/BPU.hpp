@@ -65,7 +65,27 @@ namespace olympia
               public:
                 BPUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
-                PARAMETER(uint32_t, ghr_size, 1024, "Number of history bits in GHR");
+                // TODO: choose default values properly
+                // currently values were chosen randomly
+                PARAMETER(uint32_t, ghr_size, 1024, "Number of branch history bits stored in GHR");
+                PARAMETER(uint32_t, ghr_hash_bits, 4,
+                          "Number of bits from GHR used for hashing with PC, to index PHT")
+                PARAMETER(uint32_t, pht_size, 1024, "Number of entries stored in PHT")
+                PARAMETER(uint32_t, ctr_bits, 8,
+                          "Number of bits used by counter in PHT to make prediction")
+                PARAMETER(uint32_t, btb_size, 512, "Maximum possible number of entries in BTB")
+                PARAMETER(uint32_t, ras_size, 128, "Maximum possible number of entries in RAS")
+                PARAMETER(bool, ras_enable_overwrite, true,
+                          "New entries on maximum capacity overwrite")
+                PARAMETER(uint32_t, tage_bim_table_size, 1024, "Size of TAGE bimodal table")
+                PARAMETER(uint32_t, tage_bim_ctr_bits, 8,
+                          "Number of bits used by TAGE bimodal table to make prediction")
+                PARAMETER(uint32_t, tage_tagged_table_num, 6,
+                          "Number of tagged components in TAGE predictor")
+                PARAMETER(uint32_t, logical_table_num, 8, "Number of logical table in SC");
+                PARAMETER(uint32_t, loop_pred_table_size, 64,
+                          "Maximum possible entries in loop predictor table")
+                PARAMETER(uint32_t, loop_pred_table_way, 4, "Way size of loop predictor table")
             };
 
             BPU(sparta::TreeNode* node, const BPUParameterSet* p);
@@ -74,9 +94,6 @@ namespace olympia
             void updatePredictor(const UpdateInput &);
 
             ~BPU();
-
-            // DefaultPrediction getPrediction(const PredictionRequest &);
-            // void updatePredictor(const UpdateInput &);
 
             //! \brief Name of this resource. Required by sparta::UnitFactory
             static const char* name;
@@ -89,6 +106,20 @@ namespace olympia
             void receivePredictionOutputCredits_(const uint32_t & credits);
             void makePrediction_();
             void sendPrediction_();
+
+            uint32_t ghr_size_;
+            uint32_t ghr_hash_bits_;
+            uint32_t pht_size_;
+            uint32_t ctr_bits_;
+            uint32_t btb_size_;
+            uint32_t ras_size_;
+            bool ras_enable_overwrite_;
+            uint32_t tage_bim_table_size_;
+            uint32_t tage_bim_ctr_bits_;
+            uint32_t tage_tagged_table_num_;
+            uint32_t logical_table_num_;
+            uint32_t loop_pred_table_size_;
+            uint32_t loop_pred_table_way_;
 
             std::list<PredictionRequest> predictionRequestBuffer_;
             std::list<PredictionOutput> generatedPredictionOutputBuffer_;

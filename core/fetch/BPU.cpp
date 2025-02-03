@@ -21,7 +21,8 @@ namespace olympia
             tage_tagged_table_num_(p->tage_tagged_table_num),
             logical_table_num_(p->logical_table_num),
             loop_pred_table_size_(p->loop_pred_table_size),
-            loop_pred_table_way_(p->loop_pred_table_way)
+            loop_pred_table_way_(p->loop_pred_table_way),
+            base_predictor_(pht_size_, ctr_bits_, btb_size_, ras_size_)
         {
             in_fetch_predictionRequest_.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(BPU, recievePredictionRequest_, PredictionRequest));

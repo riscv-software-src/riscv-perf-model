@@ -11,7 +11,7 @@ set(BPUDir ../../../core/fetch)
 
 project(${PRJ})
 
-add_executable(${EXE} BPU_testbench.cpp ${BPUDir}/BPU.cpp ${BPUDir}/BPU.hpp BPUSource.hpp BPUSink.hpp)
+add_executable(${EXE} BPU_testbench.cpp ${BPUDir}/BPU.cpp ${BPUDir}/BPU.hpp ${BPUDir}/BasePredictor.cpp ${BPUDir}/BasePredictor.hpp BPUSource.hpp BPUSink.hpp)
 target_include_directories(${EXE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(${EXE} core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)

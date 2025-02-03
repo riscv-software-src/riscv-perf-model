@@ -8,6 +8,7 @@
 #include "sparta/utils/LogUtils.hpp"
 
 #include "BranchPredIF.hpp"
+#include "BasePredictor.hpp"
 
 #include <list>
 
@@ -125,6 +126,8 @@ namespace olympia
             std::list<PredictionOutput> generatedPredictionOutputBuffer_;
             uint32_t predictionRequestCredits_ = 0;
             uint32_t predictionOutputCredits_ = 0;
+
+            BasePredictor base_predictor_;
 
             ///////////////////////////////////////////////////////////////////////////////
             // Ports

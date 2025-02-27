@@ -12,7 +12,7 @@ jobs:
     strategy:
       # Strategy is a matrix of debug and release builds/regression
       matrix:
-        os: [macos-14]
+        os: [macos-latest]
         BUILD_TYPE: [Debug]
         COMPILER: [clang]
 

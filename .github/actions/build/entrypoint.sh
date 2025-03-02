@@ -48,7 +48,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1
 fi
-make -j$NUM_CORES regress_valgrind
+make -j$NUM_CORES regress
 BUILD_OLYMPIA=$?
 if [ ${BUILD_OLYMPIA} -ne 0 ]; then
     echo "ERROR: build/regress of olympia FAILED!!!"

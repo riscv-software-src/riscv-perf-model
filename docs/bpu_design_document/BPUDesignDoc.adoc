@@ -15,6 +15,7 @@ the Olympia simulator.
 [width="100%",cols="11%,11%,16%,62%",options="header",]
 |===
 |*Revision* |*Date*      |*Author*  |*Summary of Changes*
+|0.5        | 2025.03.02 | Shobhit Sinha | Added details of FTQ structure to enable prediction overriding in case of mismatch between first and second level prediction.
 |0.4        | 2024.12.16 | Shobhit Sinha | Replaced BPU overview diagram with BPU interaction diagram
 |0.3        | 2024.12.12 | Shobhit Sinha | Added extra ports, counters, functions list and data members to design document
 |0.2        | 2024.11.18 | Shobhit Sinha | BPU design documentation
@@ -93,7 +94,7 @@ additional cycle.
 [[Output_Ports_BPU]]
 === Output Ports in BPU
 
-** `out_fetch_predictionRequest_credits` - To send credits to Fetch unit to indicate availabilty of slots in BPU to receive PredictionRequest.
+** `out_fetch_predictionRequest_credits` - To send credits to Fetch unit to indicate availability of slots in BPU to receive PredictionRequest.
 
 ** `out_fetch_predictionOutput` - To send PredictionOutput to Fetch unit.
 
@@ -424,6 +425,9 @@ the prediction that whether the branch will be taken or not.
 ==== Constructor
 `PatternHistoryTable(uint32_t pht_size, uint8_t ctr_bits) : pht_size_(pht_size), ctr_bits_(ctr_bits) {}`
 
+*  Initializes all the index of PHT with 0 values
+
+
 [[Data_members_of_PHT]]
 === Data members
 
@@ -435,7 +439,7 @@ None
 1. `const uint32_t pht_size_`
 2. `const uint8_t  ctr_bits_`
 3. `const uint8_t  ctr_bits_val_`
-4. `std::map<uint64_t, uint8_t> pattern_history_table_`
+4. `std::map<uint64_t, uint8_t> pht_`
 
 [[Functions_list_of_PHT]]
 === Functions list
@@ -475,7 +479,7 @@ None
 
 ==== Private data members
 1. `const uint32_t btb_size_`
-2. `std::map <uint64_t, uint64_t> branch_target_buffer_`
+2. `std::map <uint64_t, uint64_t> btb_`
 
 [[BTB_Functions_List]]
 === Functions List
@@ -487,10 +491,10 @@ BTB table
 2. `bool removeEntry(uint64_t PC)` - deallocates a BTB entry corresponding to a
 particular PC.
 
-3. `uint64_t getPredictedPC(uint64_t PC)` - returns the target PC corresponding to the
-PC
+3. `bool isHit(uint64_t PC)` - returns whether there is an entry for the PC in BTB or not.
 
-4. `bool isHit(uint64_t PC)` - returns whether there is an entry for the PC in BTB or not.
+4. `uint64_t getPredictedPC(uint64_t PC)` - returns the target PC corresponding to the
+PC
 
 ==== Private functions
 None
@@ -520,18 +524,20 @@ None
 
 ==== Private data members
 1. `const uint32_t ras_size_`
-2. `std::stack<uint64_t> return_address_stack_`
+2. `std::stack<uint64_t> ras_`
 
 [[RAS_Functions_List]]
 === Functions list
 
 ==== Public functions
-1. `void pushAddress()` - Whenever a JAL (call) instruction is executed, the PC is
+1. `void pushAddress(uint64_t PC)` - Whenever a JAL (call) instruction is executed, the PC is
 pushed to the RAS stack. If the RAS is already full, then depending on the value
 of `ras_enable_overwrite` parameter, overwrite the older entry.
 
 2. `uint64_t popAddress()` - Whenever a JALR (ret) instruction is being executed, the topmost
 element of the RAS is popped and returned to the Fetch unit.
+
+3. `uint32_t getSize()` - To get the current size of RAS.
 
 ==== Private functions
 None
@@ -802,11 +808,49 @@ uint8_t confidence, uint8_t age, bool direction)`
 Fetch Target Queue stores information related to in-flight branches which are used to update
 the BPU, once instructions are finally committed.
 
-Similar to ROB, but it is decoupled from it. Implemented using a Queue.
+* Similar to ROB, but it is decoupled from it.
 
-Entries are allocated to FTQ when predictions are sent to Fetch.
-Upon retirement of instructions, the `correctedPC` and `correctedDirection` values are written,
-and then sent to BPU to update its internal state.
+* Entries are allocated to FTQ when predictions are made.
+
+* Upon retirement of the instruction, the corresponding FTQ entry is de-allocated
+and `UpdateInput` containing `correctedDirection` and `correctedTargetPC` is sent to BPU to
+update BPU's internal state.
+
+=== FTQ enable multi-level branch predictor hierarchy
+The FTQ stores predicted addresses from the branch predictor, later to be consumed by the
+instruction cache.
+
+Entries stored in the FTQ can be consumed by the instruction cache while the branch predictor
+accesses higher levels of its hierarchy. [3]
+
+=== Overriding mechanism
+* BasePredictor makes the prediction for every incoming branch instruction it receives and pushes
+the prediction to FTQ as soon it is made.
+
+* This prediction stored in FTQ is utilized to fetch next instruction from instruction cache
+while the branch predictor accesses higher level(TAGE-SC-L) of its hierarchy.
+
+* Once the prediction by TAGE-SC-L is made, it is compared against the prediction made by
+BasePredictor, which is already stored in FTQ.
+
+* In case the prediction made by TAGE-SC-L mismatches the prediction made by BasePredictor,
+then instructions are flushed and newly created prediction is inserted to FTQ.
+
+* Otherwise, instruction execution continues as it is.
+
+[[Unit_Diagram_of_FTQ]]
+=== Unit Diagram of FTQ
+image:media/FTQ.png[image,width=800,height=366]
+
+Figure: Unit block diagram of FTQ
+
+* Port 1 -> `in_bpu_first_prediction_` - Receives prediction made by BasePredictor of BPU
+* Port 2 -> `in_bpu_second_prediction_` - Receives prediction made by TAGE-SC-L of BPU
+* Port 3 -> `out_ftq_prediction_` - Send PredictionOutput to FTQ
+* Port 4 -> `out_bpu_update_` - Send UpdateInput to BPU to carry out any BPU state update
+* Port 5 -> `in_rob_signal_` - Receives signal from ROB during commit
+* Port 6 -> `TODO` - to enable flushing instructions in case of mismatch between first level and second
+level prediction.
 
 [[Class_Description_of_FTQEntry]]
 === Class Description of FTQEntry
@@ -901,3 +945,5 @@ made by BasePredictor and TAGE_SC_L-Predictor
 [1] André Seznec, The L-TAGE Branch Predictor, 2007
 
 [2] André Seznec, A New Case for the TAGE Branch Predictor
+
+[3] Optimizations Enabled by a Decoupled Front-End Architecture

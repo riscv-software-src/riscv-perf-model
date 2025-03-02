@@ -17,6 +17,9 @@ CXX_COMPILER=${CXX_COMPILER/gcc/g++}
 
 NUM_CORES=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
 
+# Print the ulimits
+ulimit -a
+
 #
 # Compile Sparta Infra (always build with release)
 #   Have other build types point to release

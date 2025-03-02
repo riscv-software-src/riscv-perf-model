@@ -76,7 +76,6 @@ dependencies:
   - sysroot_linux-64>=2.12=he073ed8_15
   - tk>=8.6.12=h27826a3_0
   - tzdata>=2022g=h191b570_0
-  - valgrind
   - wheel>=0.42.0=pyhd8ed1ab_0
   - xz>=5.2.6=h166bdaf_0
   - yaml-cpp>=0.7.0=h27087fc_2

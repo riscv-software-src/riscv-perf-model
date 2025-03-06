@@ -20,6 +20,8 @@ namespace olympia
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
+        store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
+        store_buffer_size_(p->ldst_inst_queue_size),
         ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                        ->load_store_info_allocator),
@@ -31,11 +33,12 @@ namespace olympia
         cache_read_stage_(cache_lookup_stage_
                           + 1), // Get data from the cache in the cycle after cache lookup
         complete_stage_(
-            cache_read_stage_
+            cache_read_stage_  
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
         ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
                        getClock()), // complete_stage_ + 1 is number of stages
-        allow_speculative_load_exec_(p->allow_speculative_load_exec)
+        allow_speculative_load_exec_(p->allow_speculative_load_exec),
+        allow_data_forwarding_(p->allow_data_forwarding)
     {
         sparta_assert(p->mmu_lookup_stage_length > 0,
                       "MMU lookup stage should atleast be one cycle");
@@ -48,6 +51,7 @@ namespace olympia
         ldst_pipeline_.enableCollection(node);
         ldst_inst_queue_.enableCollection(node);
         replay_buffer_.enableCollection(node);
+        store_buffer_.enableCollection(node);
 
         // Startup handler for sending initial credits
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(LSU, sendInitialCredits_));
@@ -177,6 +181,12 @@ namespace olympia
     {
         ILOG("New instruction added to the ldst queue " << inst_ptr);
         allocateInstToIssueQueue_(inst_ptr);
+        // allocate to Store buffer
+        if (inst_ptr->isStoreInst())
+        {
+            allocateInstToStoreBuffer_(inst_ptr);
+        }
+
         handleOperandIssueCheck_(inst_ptr);
         lsu_insts_dispatched_++;
     }
@@ -265,7 +275,19 @@ namespace olympia
         sparta_assert(inst_ptr->getStatus() == Inst::Status::RETIRED,
                       "Get ROB Ack, but the store inst hasn't retired yet!");
 
-        ++stores_retired_;
+        if (inst_ptr->isStoreInst())
+        {
+            auto oldest_store = getOldestStore_();
+            sparta_assert(oldest_store && oldest_store->getInstPtr()->getUniqueID() == inst_ptr->getUniqueID(),
+                     "Attempting to retire store out of order! Expected: " 
+                     << (oldest_store ? oldest_store->getInstPtr()->getUniqueID() : 0)
+                     << " Got: " << inst_ptr->getUniqueID());
+        
+            // Remove from store buffer -> don't actually need to send cache request
+            store_buffer_.erase(store_buffer_.begin());;
+            ++stores_retired_;
+        }
+
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         if (isReadyToIssueInsts_())
@@ -447,7 +469,7 @@ namespace olympia
             {
                 updateInstReplayReady_(load_store_info_ptr);
             }
-            // There might not be a wake up because the cache cannot handle nay more instruction
+            // There might not be a wake up because the cache cannot handle any more instruction
             // Change to nack wakeup when implemented
             if (!load_store_info_ptr->isInReadyQueue())
             {
@@ -468,7 +490,7 @@ namespace olympia
         // If have passed translation and the instruction is a store,
         // then it's good to be retired (i.e. mark it completed).
         // Stores typically do not cause a flush after a successful
-        // translation.  We now wait for the Retire block to "retire"
+        // translation. We now wait for the Retire block to "retire"
         // it, meaning it's good to go to the cache
         if (inst_ptr->isStoreInst() && (inst_ptr->getStatus() == Inst::Status::SCHEDULED))
         {
@@ -483,19 +505,34 @@ namespace olympia
             return;
         }
 
-        // Loads dont perform a cache lookup if there are older stores present in the load store
-        // queue
-        if (!inst_ptr->isStoreInst() && olderStoresExists_(inst_ptr)
+        // Loads dont perform a cache lookup if there are older stores haven't issued in the load store queue
+        if (!inst_ptr->isStoreInst() && !allOlderStoresIssued_(inst_ptr)
             && allow_speculative_load_exec_)
         {
             ILOG("Dropping speculative load " << inst_ptr);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
+            // TODO: double check whether "allow_speculative_load_exec_" means not allow
             if (allow_speculative_load_exec_)
             {
                 updateInstReplayReady_(load_store_info_ptr);
             }
             return;
+        }
+
+        // Add store forwarding check here for loads
+        if (!inst_ptr->isStoreInst() && allow_data_forwarding_)
+        {
+            const uint64_t load_addr = inst_ptr->getTargetVAddr();
+            auto forwarding_store = findYoungestMatchingStore_(load_addr);
+
+            if (forwarding_store)
+            {
+                ILOG("Found forwarding store for load " << inst_ptr);
+                mem_access_info_ptr->setDataReady(true);
+                mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+                return;
+            }
         }
 
         const bool is_already_hit =
@@ -790,6 +827,7 @@ namespace olympia
         flushIssueQueue_(criteria);
         flushReplayBuffer_(criteria);
         flushReadyQueue_(criteria);
+        flushStoreBuffer_(criteria);
 
         // Cancel replay events
         auto flush = [&criteria](const LoadStoreInstInfoPtr & ldst_info_ptr) -> bool
@@ -892,6 +930,36 @@ namespace olympia
         inst_info_ptr->setIssueQueueIterator(iter);
 
         ILOG("Append new load/store instruction to issue queue!");
+    }
+
+    void LSU::allocateInstToStoreBuffer_(const InstPtr & inst_ptr)
+    {
+        const auto & store_info_ptr = createLoadStoreInst_(inst_ptr);
+
+        sparta_assert(store_buffer_.size() < ldst_inst_queue_size_,
+                      "Appending store buffer causes overflows!");
+
+        store_buffer_.push_back(store_info_ptr);
+        ILOG("Store added to store buffer: " << inst_ptr);
+    }
+
+    LoadStoreInstInfoPtr LSU::findYoungestMatchingStore_(const uint64_t addr) const
+    {
+        LoadStoreInstInfoPtr matching_store = nullptr;
+
+        auto it = std::find_if(store_buffer_.rbegin(), store_buffer_.rend(),
+                                [addr](const auto& store) {
+                                    return store->getInstPtr()->getTargetVAddr() == addr;
+                                });
+        return (it != store_buffer_.rend()) ? *it : nullptr;
+    }
+
+    LoadStoreInstInfoPtr  LSU::getOldestStore_() const
+    {
+        if(store_buffer_.empty()) {
+            return nullptr;
+        }
+        return store_buffer_.read(0);
     }
 
     bool LSU::allOlderStoresIssued_(const InstPtr & inst_ptr)
@@ -1364,6 +1432,22 @@ namespace olympia
             {
                 replay_buffer_.erase(delete_iter);
                 ILOG("Flushing from replay buffer - Instruction ID: " << inst_ptr->getUniqueID());
+            }
+        }
+    }
+
+    void LSU::flushStoreBuffer_(const FlushCriteria & criteria)
+    {
+        auto sb_iter = store_buffer_.begin();
+        while(sb_iter != store_buffer_.end()) {
+            auto inst_ptr = (*sb_iter)->getInstPtr();
+            if(criteria.includedInFlush(inst_ptr)) {
+                auto delete_iter = sb_iter++;
+                // store buffer didn't return an iterator
+                store_buffer_.erase(delete_iter);
+                ILOG("Flushed store from store buffer: " << inst_ptr);
+            } else {
+                ++sb_iter;
             }
         }
     }

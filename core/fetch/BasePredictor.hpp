@@ -32,8 +32,8 @@ namespace olympia
 
             bool addEntry(uint64_t PC, uint64_t targetPC);
             bool removeEntry(uint64_t PC);
-            uint64_t getPredictedPC(uint64_t PC);
             bool isHit(uint64_t PC);
+            uint64_t getPredictedPC(uint64_t PC);
 
           private:
             const uint32_t btb_size_;
@@ -45,8 +45,9 @@ namespace olympia
           public:
             ReturnAddressStack(uint32_t ras_size);
 
-            void pushAddress();
+            void pushAddress(uint64_t PC);
             uint64_t popAddress();
+            uint32_t getSize();
 
           private:
             const uint32_t ras_size_;
@@ -60,9 +61,9 @@ namespace olympia
                           uint32_t ras_size);
 
           private:
-            PatternHistoryTable pattern_history_table;
-            BranchTargetBuffer branch_target_buffer;
-            ReturnAddressStack return_address_stack;
+            PatternHistoryTable pattern_history_table_;
+            BranchTargetBuffer branch_target_buffer_;
+            ReturnAddressStack return_address_stack_;
         };
     } // namespace BranchPredictor
 } // namespace olympia

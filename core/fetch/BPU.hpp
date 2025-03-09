@@ -9,6 +9,7 @@
 
 #include "BranchPredIF.hpp"
 #include "BasePredictor.hpp"
+#include "TAGE_SC_L.hpp"
 
 #include <list>
 
@@ -83,7 +84,7 @@ namespace olympia
                           "Number of bits used by TAGE bimodal table to make prediction")
                 PARAMETER(uint32_t, tage_tagged_table_num, 6,
                           "Number of tagged components in TAGE predictor")
-                PARAMETER(uint32_t, logical_table_num, 8, "Number of logical table in SC");
+                PARAMETER(uint32_t, logical_table_num, 8, "Number of logical table in SC")
                 PARAMETER(uint32_t, loop_pred_table_size, 64,
                           "Maximum possible entries in loop predictor table")
                 PARAMETER(uint32_t, loop_pred_table_way, 4, "Way size of loop predictor table")

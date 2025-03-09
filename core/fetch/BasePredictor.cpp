@@ -6,9 +6,9 @@ namespace olympia
     {
         BasePredictor::BasePredictor(uint32_t pht_size, uint8_t ctr_bits, uint32_t btb_size,
                                      uint32_t ras_size) :
-            pattern_history_table(pht_size, ctr_bits),
-            branch_target_buffer(btb_size),
-            return_address_stack(ras_size)
+            pattern_history_table_(pht_size, ctr_bits),
+            branch_target_buffer_(btb_size),
+            return_address_stack_(ras_size)
         {
         }
 
@@ -21,8 +21,10 @@ namespace olympia
 
         void PatternHistoryTable::incrementCounter(uint32_t idx)
         {
-            if(pht_.find(idx) != pht_.end()) {
-                if(pht_[idx] < ctr_bits_val_) {
+            if (pht_.find(idx) != pht_.end())
+            {
+                if (pht_[idx] < ctr_bits_val_)
+                {
                     pht_[idx]++;
                 }
             }
@@ -30,8 +32,10 @@ namespace olympia
 
         void PatternHistoryTable::decrementCounter(uint32_t idx)
         {
-            if(pht_.find(idx) != pht_.end()) {
-                if(pht_[idx] > 0) {
+            if (pht_.find(idx) != pht_.end())
+            {
+                if (pht_[idx] > 0)
+                {
                     pht_[idx]--;
                 }
             }
@@ -39,60 +43,72 @@ namespace olympia
 
         uint8_t PatternHistoryTable::getPrediction(uint32_t idx)
         {
-            if(pht_.find(idx) != pht_.end()) {
+            if (pht_.find(idx) != pht_.end())
+            {
                 return pht_[idx];
             }
-            else {
+            else
+            {
                 return 0;
             }
         }
 
+        // Branch Target Buffer
         BranchTargetBuffer::BranchTargetBuffer(uint32_t btb_size) : btb_size_(btb_size) {}
 
         bool BranchTargetBuffer::addEntry(uint64_t PC, uint64_t targetPC)
         {
-            if(btb_.size() < btb_size_) {
+            if (btb_.size() < btb_size_)
+            {
                 btb_[PC] = targetPC;
                 return true;
             }
             return false;
         }
 
-        bool BranchTargetBuffer::removeEntry(uint64_t PC)
-        {
-            return btb_.erase(PC);
-        }
-
-        uint64_t BranchTargetBuffer::getPredictedPC(uint64_t PC)
-        {
-            if(isHit(PC)) {
-                return btb_[PC];
-            }
-            else {
-                return 0; // change it later
-            }
-        }
+        bool BranchTargetBuffer::removeEntry(uint64_t PC) { return btb_.erase(PC); }
 
         bool BranchTargetBuffer::isHit(uint64_t PC)
         {
-            if(btb_.find(PC) != btb_.end()) {
+            if (btb_.find(PC) != btb_.end())
+            {
                 return true;
             }
-            else {
+            else
+            {
                 return false;
             }
         }
 
+        uint64_t BranchTargetBuffer::getPredictedPC(uint64_t PC)
+        {
+            if (isHit(PC))
+            {
+                return btb_[PC];
+            }
+            else
+            {
+                return 0; // change it later
+            }
+        }
+
+        // Return Address Stack
         ReturnAddressStack::ReturnAddressStack(uint32_t ras_size) : ras_size_(ras_size) {}
 
-        void ReturnAddressStack::pushAddress()
+        void ReturnAddressStack::pushAddress(uint64_t PC)
         {
-
+            if (ras_.size() < ras_size_)
+            {
+                ras_.push(PC);
+            }
+            else
+            {
+                return;
+            }
         }
 
-        uint64_t ReturnAddressStack::popAddress()
-        {
-            return 0;
-        }
+        uint64_t ReturnAddressStack::popAddress() { return 0; }
+
+        uint32_t ReturnAddressStack::getSize() { return ras_.size(); }
     } // namespace BranchPredictor
 } // namespace olympia

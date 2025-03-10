@@ -23,11 +23,11 @@ top.cpu.core0.extension.core_extensions:
   [
       ["sys", "int", "mul", "i2f", "cmov"], # exe0
       ["int", "div"], # exe1
-      ["int"], # exe2
+      ["int", "vset"], # exe2
       ["float", "faddsub", "fmac"], # exe3
       ["float", "f2i"], # exe4
       ["br"], # exe5
-      ["vint", "vset", "vdiv", "vmul"] # exe6
+      ["vint", "vdiv", "vmul", "vfixed", "vmask", "vmv", "v2s", "vfloat", "vfdiv", "vfmul", "vpermute", "vload", "vstore"] # exe6
   ]
 
   # this is used to set how many units per queue

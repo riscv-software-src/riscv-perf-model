@@ -273,7 +273,7 @@ namespace olympia
 
         const VectorConfigPtr & vector_config = current_inst_.getValue()->getVectorConfig();
         uop->setVectorConfig(vector_config);
-        uop->setUOpID(num_uops_generated_ + 1);
+        uop->setUOpID(num_uops_generated_);
 
         // Set weak pointer to parent vector instruction
         sparta::SpartaWeakPointer<olympia::Inst> parent_weak_ptr = current_inst_.getValue();

@@ -29,12 +29,12 @@ top.cpu.core0.extension.core_extensions:
     ["int", "mul"], # exe2
     ["int", "mul", "i2f", "cmov"], # exe3
     ["int"], # exe4
-    ["int"], # exe5
+    ["int", "vset"], # exe5
     ["float", "faddsub", "fmac"], # exe6
     ["float", "f2i"], # exe7
     ["br"], # exe8
     ["br"], # exe9
-    ["vint", "vset", "vdiv", "vmul"]
+    ["vint", "vdiv", "vmul", "vfixed", "vmask", "vmv", "v2s", "vfloat", "vfdiv", "vfmul", "vpermute", "vload", "vstore"] # exe10
   ]
   # this is used to set how many units per queue
   # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive

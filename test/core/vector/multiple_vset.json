@@ -1,10 +1,10 @@
 [
     {
-        "mnemonic": "vsetvli",
-        "rs1": 0,
+        "mnemonic": "vsetivli",
+        "imm": 32,
         "vtype": "0x10",
-        "rd": 1,
-        "vl": 128
+        "rd": 0,
+        "vl": 4
     },
     {
         "mnemonic": "vadd.vv",
@@ -13,11 +13,11 @@
         "vd": 10
     },
     {
-        "mnemonic": "vsetvli",
-        "rs1": 0,
-        "vtype": "0x1",
-        "rd": 1,
-        "vl": 256
+        "mnemonic": "vsetivli",
+        "imm": 33,
+        "vtype": "0x11",
+        "rd": 0,
+        "vl": 8
     },
     {
         "mnemonic": "vadd.vv",
@@ -26,11 +26,11 @@
         "vd": 12
     },
     {
-        "mnemonic": "vsetvli",
-        "rs1": 0,
-        "vtype": "0x2",
-        "rd": 1,
-        "vl": 512
+        "mnemonic": "vsetivli",
+        "imm": 34,
+        "vtype": "0x12",
+        "rd": 0,
+        "vl": 16
     },
     {
         "mnemonic": "vadd.vv",
@@ -39,11 +39,11 @@
         "vd": 16
     },
     {
-        "mnemonic": "vsetvli",
-        "rs1": 2,
-        "vtype": "0x3",
-        "rd": 1,
-        "vl": 1024
+        "mnemonic": "vsetivli",
+        "imm": 35,
+        "vtype": "0x13",
+        "rd": 0,
+        "vl": 32
     },
     {
         "mnemonic": "vadd.vv",

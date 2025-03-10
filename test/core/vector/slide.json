@@ -1,0 +1,22 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x12",
+    "vl": 16,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vslide1up.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
+  },
+  {
+    "mnemonic": "vslide1down.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
+  }
+]

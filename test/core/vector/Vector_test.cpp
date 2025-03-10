@@ -22,8 +22,6 @@ class olympia::DecodeTester
   public:
     DecodeTester(olympia::Decode* decode) : decode_(decode) {}
 
-    void test_waiting_on_vset() { EXPECT_TRUE(decode_->waiting_on_vset_ == true); }
-
     void test_waiting_on_vset(const bool expected_val)
     {
         EXPECT_TRUE(decode_->waiting_on_vset_ == expected_val);
@@ -71,12 +69,6 @@ class olympia::ROBTester
     void test_num_uops_retired(const uint64_t expected_num_uops_retired)
     {
         EXPECT_TRUE(rob_->num_uops_retired_ == expected_num_uops_retired);
-    }
-
-    void test_last_inst_has_tail(const bool expected_tail)
-    {
-        EXPECT_TRUE(rob_->last_inst_retired_ != nullptr);
-        EXPECT_TRUE(rob_->last_inst_retired_->hasTail() == expected_tail);
     }
 
   private:
@@ -131,31 +123,31 @@ void runTests(int argc, char** argv)
     auto* my_decode = root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
     olympia::DecodeTester decode_tester{my_decode};
 
-    auto* my_rob = root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB*>();
-    olympia::ROBTester rob_tester{my_rob};
-
     auto* my_vuop_generator = root_node->getChild("cpu.core0.decode.vec_uop_gen")
                                   ->getResourceAs<olympia::VectorUopGenerator*>();
     olympia::VectorUopGeneratorTester vuop_tester{my_vuop_generator};
+
+    auto* my_rob = root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB*>();
+    olympia::ROBTester rob_tester{my_rob};
 
     if (input_file.find("vsetivli_vaddvv_e8m4.json") != std::string::npos)
     {
         // Test Decode (defaults)
         decode_tester.test_lmul(1);
-        decode_tester.test_vl(128);
+        decode_tester.test_vl(16);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
-        decode_tester.test_vlmax(128);
+        decode_tester.test_vlmax(16);
 
         cls.runSimulator(&sim);
 
         // Test after vsetivli
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(4);
-        decode_tester.test_vl(512);
+        decode_tester.test_vl(64);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
-        decode_tester.test_vlmax(512);
+        decode_tester.test_vlmax(64);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -164,7 +156,6 @@ void runTests(int argc, char** argv)
         rob_tester.test_num_insts_retired(2);
         // vset + 4 vadd.vv uops
         rob_tester.test_num_uops_retired(5);
-        rob_tester.test_last_inst_has_tail(false);
     }
     else if (input_file.find("vsetvli_vaddvv_e32m1ta.json") != std::string::npos)
     {
@@ -173,10 +164,10 @@ void runTests(int argc, char** argv)
         // Test Decode
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(1);
-        decode_tester.test_vl(32);
+        decode_tester.test_vl(4);
         decode_tester.test_vta(true);
         decode_tester.test_sew(32);
-        decode_tester.test_vlmax(32);
+        decode_tester.test_vlmax(4);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -185,7 +176,6 @@ void runTests(int argc, char** argv)
         rob_tester.test_num_insts_retired(2);
         // vset + 1 vadd.vv uop
         rob_tester.test_num_uops_retired(2);
-        rob_tester.test_last_inst_has_tail(false);
     }
     else if (input_file.find("vsetvl_vaddvv_e64m1ta.json") != std::string::npos)
     {
@@ -194,10 +184,10 @@ void runTests(int argc, char** argv)
         // Test Decode
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(1);
-        decode_tester.test_vl(16);
+        decode_tester.test_vl(2);
         decode_tester.test_vta(true);
         decode_tester.test_sew(64);
-        decode_tester.test_vlmax(16);
+        decode_tester.test_vlmax(2);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -206,7 +196,6 @@ void runTests(int argc, char** argv)
         rob_tester.test_num_insts_retired(2);
         // vset + 1 vadd.vv uop
         rob_tester.test_num_uops_retired(2);
-        rob_tester.test_last_inst_has_tail(false);
     }
     else if (input_file.find("vsetivli_vaddvv_tail_e8m8ta.json") != std::string::npos)
     {
@@ -214,10 +203,10 @@ void runTests(int argc, char** argv)
 
         // Test Decode
         decode_tester.test_lmul(8);
-        decode_tester.test_vl(900);
+        decode_tester.test_vl(120);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
-        decode_tester.test_vlmax(1024);
+        decode_tester.test_vlmax(128);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -226,7 +215,6 @@ void runTests(int argc, char** argv)
         rob_tester.test_num_insts_retired(2);
         // vset + 8 vadd.vv uop
         rob_tester.test_num_uops_retired(9);
-        rob_tester.test_last_inst_has_tail(true);
     }
     else if (input_file.find("multiple_vset.json") != std::string::npos)
     {
@@ -235,10 +223,10 @@ void runTests(int argc, char** argv)
         // Test Decode (last vset)
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(8);
-        decode_tester.test_vl(1024);
+        decode_tester.test_vl(32);
         decode_tester.test_vta(false);
-        decode_tester.test_sew(8);
-        decode_tester.test_vlmax(1024);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(32);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);

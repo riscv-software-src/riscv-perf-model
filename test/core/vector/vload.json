@@ -1,0 +1,29 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x12",
+    "vl": 16,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vle8.v",
+    "vd": 4,
+    "rs1": 3,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vlse16.v",
+    "vd": 8,
+    "rs1": 3,
+    "rs2": 4,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vle64ff.v",
+    "vd": 16,
+    "rs1": 3,
+    "vaddr": "0x1000"
+  }
+]

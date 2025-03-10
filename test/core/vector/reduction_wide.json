@@ -8,9 +8,9 @@
     "vta": 0
   },
   {
-    "mnemonic": "vwaddu.vv",
-    "vd": 12,
+    "mnemonic": "vwredsum.vs",
+    "vd": 20,
     "vs2": 4,
-    "vs1": 8
+    "vs1": 12
   }
 ]

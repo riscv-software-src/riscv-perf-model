@@ -4,13 +4,13 @@
     "rd": 0,
     "imm": 256,
     "vtype": "0x12",
-    "vl": 256,
+    "vl": 16,
     "vta": 0
   },
   {
     "mnemonic": "vnclipu.wv",
     "vd": 0,
-    "vs2": 4,
-    "vs1": 8
+    "vs2": 8,
+    "vs1": 16
   }
 ]

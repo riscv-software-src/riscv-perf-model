@@ -3,8 +3,8 @@
     "mnemonic": "vsetivli",
     "rd": 0,
     "imm": 256,
-    "vtype": "0x1a",
-    "vl": 256,
+    "vtype": "0x1b",
+    "vl": 16,
     "vta": 0
   },
   {

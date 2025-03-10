@@ -15,6 +15,11 @@ echo "PWD:" `pwd`
 CXX_COMPILER=${COMPILER/clang/clang++}
 CXX_COMPILER=${CXX_COMPILER/gcc/g++}
 
+NUM_CORES=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+
+# Print the ulimits
+ulimit -a
+
 #
 # Compile Sparta Infra (always build with release)
 #   Have other build types point to release
@@ -28,7 +33,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1
 fi
-make -j$(nproc --all) install
+make -j$NUM_CORES install
 BUILD_SPARTA=$?
 if [ ${BUILD_SPARTA} -ne 0 ]; then
     echo "ERROR: build sparta FAILED!!!"
@@ -43,7 +48,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for olympia failed"
     exit 1
 fi
-make -j$(nproc --all) regress
+make -j$NUM_CORES regress
 BUILD_OLYMPIA=$?
 if [ ${BUILD_OLYMPIA} -ne 0 ]; then
     echo "ERROR: build/regress of olympia FAILED!!!"

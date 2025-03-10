@@ -56,16 +56,22 @@ namespace olympia
     };
 
     const InstArchInfo::UopGenMap InstArchInfo::uop_gen_type_map = {
-        {"ELEMENTWISE",    InstArchInfo::UopGenType::ELEMENTWISE},
-        {"SINGLE_DEST",    InstArchInfo::UopGenType::SINGLE_DEST},
-        {"WIDENING",       InstArchInfo::UopGenType::WIDENING},
+        {"ELEMENTWISE", InstArchInfo::UopGenType::ELEMENTWISE},
+        {"SINGLE_DEST", InstArchInfo::UopGenType::SINGLE_DEST},
+        {"SINGLE_SRC", InstArchInfo::UopGenType::SINGLE_SRC},
+        {"WIDENING", InstArchInfo::UopGenType::WIDENING},
         {"WIDENING_MIXED", InstArchInfo::UopGenType::WIDENING_MIXED},
-        {"NARROWING",      InstArchInfo::UopGenType::NARROWING},
-        {"MAC",            InstArchInfo::UopGenType::MAC},
-        {"MAC_WIDE",       InstArchInfo::UopGenType::MAC_WIDE},
-        {"INT_EXT",        InstArchInfo::UopGenType::INT_EXT},
-        {"NONE",           InstArchInfo::UopGenType::NONE}
-    };
+        {"NARROWING", InstArchInfo::UopGenType::NARROWING},
+        {"MAC", InstArchInfo::UopGenType::MAC},
+        {"MAC_WIDE", InstArchInfo::UopGenType::MAC_WIDE},
+        {"REDUCTION", InstArchInfo::UopGenType::REDUCTION},
+        {"REDUCTION_WIDE", InstArchInfo::UopGenType::REDUCTION_WIDE},
+        {"INT_EXT", InstArchInfo::UopGenType::INT_EXT},
+        {"SLIDE1UP", InstArchInfo::UopGenType::SLIDE1UP},
+        {"SLIDE1DOWN", InstArchInfo::UopGenType::SLIDE1DOWN},
+        {"PERMUTE", InstArchInfo::UopGenType::PERMUTE},
+        {"NONE", InstArchInfo::UopGenType::NONE}};
+
 
     void InstArchInfo::update(const nlohmann::json & jobj)
     {

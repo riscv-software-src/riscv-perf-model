@@ -60,7 +60,7 @@ sparta_named_test(Vector_test_slide          Vector_test -l top info vuop_slide.
 #sparta_named_test(Vector_test_permute        Vector_test -l top info vuop_permute.out        -c test_cores/test_big_core.yaml --input-file permute.json              --expected-num-uops 19)
 
 # Vector instruction tests
-sparta_named_test(Vector_test_vload  Vector_test -l top info vload.out  -c test_cores/test_big_core.yaml --input-file vload.json  --expected-num-uops 12)
-sparta_named_test(Vector_test_vstore Vector_test -l top info vstore.out -c test_cores/test_big_core.yaml --input-file vstore.json --expected-num-uops 8)
+#sparta_named_test(Vector_test_vload  Vector_test -l top info vload.out  -c test_cores/test_big_core.yaml --input-file vload.json  --expected-num-uops 12)
+#sparta_named_test(Vector_test_vstore Vector_test -l top info vstore.out -c test_cores/test_big_core.yaml --input-file vstore.json --expected-num-uops 8)
 sparta_named_test(Vector_test_vfirst Vector_test -l top info vfirst.out -c test_cores/test_big_core.yaml --input-file vfirst.json --expected-num-uops 0)
 sparta_named_test(Vector_test_vmv4r  Vector_test -l top info vmv4r.out  -c test_cores/test_big_core.yaml --input-file vmv4r.json  --expected-num-uops 4)

@@ -4,7 +4,7 @@
         "imm": 32,
         "vtype": "0x10",
         "rd": 0,
-        "vl": 4
+        "vl": 32
     },
     {
         "mnemonic": "vadd.vv",
@@ -17,7 +17,7 @@
         "imm": 33,
         "vtype": "0x11",
         "rd": 0,
-        "vl": 8
+        "vl": 64
     },
     {
         "mnemonic": "vadd.vv",
@@ -30,7 +30,7 @@
         "imm": 34,
         "vtype": "0x12",
         "rd": 0,
-        "vl": 16
+        "vl": 128
     },
     {
         "mnemonic": "vadd.vv",
@@ -43,7 +43,7 @@
         "imm": 35,
         "vtype": "0x13",
         "rd": 0,
-        "vl": 32
+        "vl": 256
     },
     {
         "mnemonic": "vadd.vv",

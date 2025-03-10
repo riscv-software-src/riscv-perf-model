@@ -134,20 +134,20 @@ void runTests(int argc, char** argv)
     {
         // Test Decode (defaults)
         decode_tester.test_lmul(1);
-        decode_tester.test_vl(16);
+        decode_tester.test_vl(128);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
-        decode_tester.test_vlmax(16);
+        decode_tester.test_vlmax(128);
 
         cls.runSimulator(&sim);
 
         // Test after vsetivli
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(4);
-        decode_tester.test_vl(64);
+        decode_tester.test_vl(512);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
-        decode_tester.test_vlmax(64);
+        decode_tester.test_vlmax(512);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -164,10 +164,10 @@ void runTests(int argc, char** argv)
         // Test Decode
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(1);
-        decode_tester.test_vl(4);
+        decode_tester.test_vl(32);
         decode_tester.test_vta(true);
         decode_tester.test_sew(32);
-        decode_tester.test_vlmax(4);
+        decode_tester.test_vlmax(32);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -184,10 +184,10 @@ void runTests(int argc, char** argv)
         // Test Decode
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(1);
-        decode_tester.test_vl(2);
+        decode_tester.test_vl(16);
         decode_tester.test_vta(true);
         decode_tester.test_sew(64);
-        decode_tester.test_vlmax(2);
+        decode_tester.test_vlmax(16);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -203,10 +203,10 @@ void runTests(int argc, char** argv)
 
         // Test Decode
         decode_tester.test_lmul(8);
-        decode_tester.test_vl(120);
+        decode_tester.test_vl(1000);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
-        decode_tester.test_vlmax(128);
+        decode_tester.test_vlmax(1024);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);
@@ -223,10 +223,10 @@ void runTests(int argc, char** argv)
         // Test Decode (last vset)
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(8);
-        decode_tester.test_vl(32);
+        decode_tester.test_vl(256);
         decode_tester.test_vta(false);
         decode_tester.test_sew(32);
-        decode_tester.test_vlmax(32);
+        decode_tester.test_vlmax(256);
 
         // Test Vector Uop Generation
         vuop_tester.test_num_vuops_generated(expected_num_uops);

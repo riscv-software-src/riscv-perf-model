@@ -58,18 +58,27 @@ namespace olympia
         {
           public:
             Tage(uint32_t tage_bim_table_size, uint8_t tage_bim_ctr_bits,
-                 uint8_t tage_tagged_ctr_bits, uint8_t tage_tagged_useful_bits,
-                 uint8_t num_tage_component);
+                 uint16_t tage_max_index_bits, uint8_t tage_tagged_ctr_bits, 
+                 uint8_t tage_tagged_useful_bits, uint32_t tage_global_hist_buff_len,
+                 uint32_t tage_min_hist_len, uint8_t tage_hist_alpha,
+                 uint32_t tage_reset_useful_interval, uint8_t tage_num_component);
+
+            uint8_t predict(uint64_t ip);
 
           private:
             uint32_t tage_bim_table_size_;
             uint8_t tage_bim_ctr_bits_;
+            uint16_t tage_max_index_bits_;
             uint8_t tage_tagged_ctr_bits_;
             uint8_t tage_tagged_useful_bits_;
-            uint8_t num_tage_component_;
-
+            uint32_t tage_global_hist_buff_len_;
+            uint32_t tage_min_hist_len_;
+            uint8_t tage_hist_alpha_;
+            uint32_t tage_reset_useful_interval_;
+            uint8_t tage_num_component_;
             TageBIM tage_bim_;
             std::vector<TageTaggedComponent> tage_tagged_components_;
+            std::vector<uint8_t> global_history_buff_;
         };
 
         class StatisticalCorrector

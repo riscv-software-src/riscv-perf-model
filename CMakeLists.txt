@@ -58,7 +58,7 @@ add_definitions(-DOLYMPIA_VERSION=\"${OLYMPIA_VERSION}\")
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
-set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
+set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g -U_FORTIFY_SOURCE")
 
 # Include directories
 include_directories (core mss sim)
@@ -128,4 +128,3 @@ add_custom_target(clangformat-check
   COMMENT
      "Formatting ${prefix} with ${CLANGFORMAT_EXECUTABLE} ..."
   )
-

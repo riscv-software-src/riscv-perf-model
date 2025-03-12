@@ -1,53 +1,26 @@
-
-#include "CPUFactory.hpp"
-#include "CoreUtils.hpp"
-#include "Dispatch.hpp"
-#include "MavisUnit.hpp"
-#include "OlympiaAllocators.hpp"
 #include "OlympiaSim.hpp"
-#include "IssueQueue.hpp"
-#include "test/core/dispatch/Dispatch_test.hpp"
+#include "decode/Decode.hpp"
+#include "ROB.hpp"
+#include "vector/VectorUopGenerator.hpp"
 
 #include "sparta/app/CommandLineSimulator.hpp"
-#include "sparta/app/Simulation.hpp"
-#include "sparta/events/UniqueEvent.hpp"
 #include "sparta/kernel/Scheduler.hpp"
-#include "sparta/report/Report.hpp"
-#include "sparta/resources/Buffer.hpp"
 #include "sparta/simulation/ClockManager.hpp"
-#include "sparta/sparta.hpp"
-#include "sparta/statistics/StatisticSet.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaTester.hpp"
 
-#include <cinttypes>
-#include <initializer_list>
-#include <memory>
-#include <sstream>
-#include <vector>
 TEST_INIT
 
-////////////////////////////////////////////////////////////////////////////////
-// Set up the Mavis decoder globally for the testing
-olympia::InstAllocator inst_allocator(2000, 1000);
-
 const char USAGE[] = "Usage:\n"
-                     "    \n"
+                     "\n"
                      "\n";
 
 sparta::app::DefaultValues DEFAULTS;
 
 class olympia::DecodeTester
 {
-public:
-    DecodeTester(olympia::Decode * decode) :
-        decode_(decode)
-    {}
-
-    void test_waiting_on_vset()
-    {
-        EXPECT_TRUE(decode_->waiting_on_vset_ == true);
-    }
+  public:
+    DecodeTester(olympia::Decode* decode) : decode_(decode) {}
 
     void test_waiting_on_vset(const bool expected_val)
     {
@@ -79,16 +52,14 @@ public:
         EXPECT_TRUE(decode_->vector_config_->getVTA() == expected_vta);
     }
 
-private:
-    olympia::Decode * decode_;
+  private:
+    olympia::Decode* decode_;
 };
 
 class olympia::ROBTester
 {
-public:
-    ROBTester(olympia::ROB * rob) :
-        rob_(rob)
-    {}
+  public:
+    ROBTester(olympia::ROB* rob) : rob_(rob) {}
 
     void test_num_insts_retired(const uint64_t expected_num_insts_retired)
     {
@@ -100,56 +71,64 @@ public:
         EXPECT_TRUE(rob_->num_uops_retired_ == expected_num_uops_retired);
     }
 
-    void test_last_inst_has_tail(const bool expected_tail)
-    {
-        EXPECT_TRUE(rob_->last_inst_retired_ != nullptr);
-        EXPECT_TRUE(rob_->last_inst_retired_->hasTail() == expected_tail);
-    }
-
-private:
-    olympia::ROB * rob_;
+  private:
+    olympia::ROB* rob_;
 };
 
-void runTests(int argc, char **argv)
+class olympia::VectorUopGeneratorTester
+{
+  public:
+    VectorUopGeneratorTester(olympia::VectorUopGenerator* vuop) : vuop_{vuop} {}
+
+    void test_num_vuops_generated(const uint64_t expected_num_vuops_generated)
     {
+        EXPECT_TRUE(vuop_->vuops_generated_ == expected_num_vuops_generated);
+    }
+
+  private:
+    VectorUopGenerator* vuop_;
+};
+
+void runTests(int argc, char** argv)
+{
     DEFAULTS.auto_summary_default = "off";
     std::string input_file;
+    uint32_t expected_num_uops;
 
     sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
-    auto &app_opts = cls.getApplicationOptions();
+    auto & app_opts = cls.getApplicationOptions();
     app_opts.add_options()
         ("input-file",
-            sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
-            "Provide a JSON instruction stream",
-            "Provide a JSON file with instructions to run through Execute");
+         sparta::app::named_value<std::string>("INPUT_FILE", &input_file)->default_value(""),
+         "Provide a JSON instruction stream",
+         "Provide a JSON file with instructions to run through Execute")
+        ("expected-num-uops",
+         sparta::app::named_value<uint32_t>("EXPECTED_NUM_UOPS", &expected_num_uops)->default_value(0),
+         "");
 
     int err_code = 0;
     if (!cls.parse(argc, argv, err_code))
     {
-        sparta_assert(false,
-            "Command line parsing failed"); // Any errors already printed to cerr
+        sparta_assert(false, "Command line parsing failed");
     }
 
     sparta::Scheduler scheduler;
     uint32_t num_cores = 1;
     uint64_t ilimit = 0;
     bool show_factories = false;
-    OlympiaSim sim("simple",
-                   scheduler,
-                   num_cores,
-                   input_file,
-                   ilimit,
-                   show_factories);
-    sparta::RootTreeNode *root_node = sim.getRoot();
+    OlympiaSim sim("simple", scheduler, num_cores, input_file, ilimit, show_factories);
+    sparta::RootTreeNode* root_node = sim.getRoot();
     cls.populateSimulation(&sim);
 
-    olympia::Decode *my_decode = \
-        root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
-    olympia::DecodeTester decode_tester {my_decode};
+    auto* my_decode = root_node->getChild("cpu.core0.decode")->getResourceAs<olympia::Decode*>();
+    olympia::DecodeTester decode_tester{my_decode};
 
-    olympia::ROB *my_rob = \
-        root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB *>();
-    olympia::ROBTester rob_tester {my_rob};
+    auto* my_vuop_generator = root_node->getChild("cpu.core0.decode.vec_uop_gen")
+                                  ->getResourceAs<olympia::VectorUopGenerator*>();
+    olympia::VectorUopGeneratorTester vuop_tester{my_vuop_generator};
+
+    auto* my_rob = root_node->getChild("cpu.core0.rob")->getResourceAs<olympia::ROB*>();
+    olympia::ROBTester rob_tester{my_rob};
 
     if (input_file.find("vsetivli_vaddvv_e8m4.json") != std::string::npos)
     {
@@ -170,13 +149,15 @@ void runTests(int argc, char **argv)
         decode_tester.test_sew(8);
         decode_tester.test_vlmax(512);
 
+        // Test Vector Uop Generation
+        vuop_tester.test_num_vuops_generated(expected_num_uops);
+
         // Test Retire
         rob_tester.test_num_insts_retired(2);
         // vset + 4 vadd.vv uops
         rob_tester.test_num_uops_retired(5);
-        rob_tester.test_last_inst_has_tail(false);
     }
-    else if(input_file.find("vsetvli_vaddvv_e32m1ta.json") != std::string::npos)
+    else if (input_file.find("vsetvli_vaddvv_e32m1ta.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -188,13 +169,15 @@ void runTests(int argc, char **argv)
         decode_tester.test_sew(32);
         decode_tester.test_vlmax(32);
 
+        // Test Vector Uop Generation
+        vuop_tester.test_num_vuops_generated(expected_num_uops);
+
         // Test Retire
         rob_tester.test_num_insts_retired(2);
         // vset + 1 vadd.vv uop
         rob_tester.test_num_uops_retired(2);
-        rob_tester.test_last_inst_has_tail(false);
     }
-    else if(input_file.find("vsetvl_vaddvv_e64m1ta.json") != std::string::npos)
+    else if (input_file.find("vsetvl_vaddvv_e64m1ta.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
@@ -206,109 +189,78 @@ void runTests(int argc, char **argv)
         decode_tester.test_sew(64);
         decode_tester.test_vlmax(16);
 
+        // Test Vector Uop Generation
+        vuop_tester.test_num_vuops_generated(expected_num_uops);
+
         // Test Retire
         rob_tester.test_num_insts_retired(2);
         // vset + 1 vadd.vv uop
         rob_tester.test_num_uops_retired(2);
-        rob_tester.test_last_inst_has_tail(false);
     }
-    else if(input_file.find("vsetivli_vaddvv_tail_e8m8ta.json") != std::string::npos)
+    else if (input_file.find("vsetivli_vaddvv_tail_e8m8ta.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
         // Test Decode
         decode_tester.test_lmul(8);
-        decode_tester.test_vl(900);
+        decode_tester.test_vl(1000);
         decode_tester.test_vta(false);
         decode_tester.test_sew(8);
         decode_tester.test_vlmax(1024);
+
+        // Test Vector Uop Generation
+        vuop_tester.test_num_vuops_generated(expected_num_uops);
 
         // Test Retire
         rob_tester.test_num_insts_retired(2);
         // vset + 8 vadd.vv uop
         rob_tester.test_num_uops_retired(9);
-        rob_tester.test_last_inst_has_tail(true);
     }
-    else if(input_file.find("multiple_vset.json") != std::string::npos)
+    else if (input_file.find("multiple_vset.json") != std::string::npos)
     {
         cls.runSimulator(&sim);
 
         // Test Decode (last vset)
         decode_tester.test_waiting_on_vset(false);
         decode_tester.test_lmul(8);
-        decode_tester.test_vl(1024);
+        decode_tester.test_vl(256);
         decode_tester.test_vta(false);
-        decode_tester.test_sew(8);
-        decode_tester.test_vlmax(1024);
+        decode_tester.test_sew(32);
+        decode_tester.test_vlmax(256);
+
+        // Test Vector Uop Generation
+        vuop_tester.test_num_vuops_generated(expected_num_uops);
 
         // Test Retire
         rob_tester.test_num_insts_retired(8);
         // vset + 1 vadd.vv + vset + 2 vadd.vv + vset + 4 vadd.vv uop + vset + 8 vadd.vv
         rob_tester.test_num_uops_retired(19);
     }
-    else if(input_file.find("vmulvx_e8m4.json") != std::string::npos)
-    {
-        cls.runSimulator(&sim);
-
-        // Test Retire
-        rob_tester.test_num_insts_retired(3);
-        // vadd + 4 vmul.vx uop
-        rob_tester.test_num_uops_retired(6);
-        rob_tester.test_last_inst_has_tail(false);
-
-        // TODO: Test source values for all uops
-    }
-    else if(input_file.find("vwmulvv_e8m4.json") != std::string::npos)
-    {
-        cls.runSimulator(&sim);
-
-        // Test Retire
-        rob_tester.test_num_insts_retired(2);
-        // vadd + 8 vwmul.vv uop
-        rob_tester.test_num_uops_retired(9);
-        rob_tester.test_last_inst_has_tail(false);
-
-        // TODO: Test destination values for all uops
-    }
-    else if(input_file.find("vmseqvv_e8m4.json") != std::string::npos)
-    {
-        cls.runSimulator(&sim);
-
-        // Test Retire
-        rob_tester.test_num_insts_retired(2);
-        // vadd + 4 vmseq.vv uops
-        rob_tester.test_num_uops_retired(5);
-        rob_tester.test_last_inst_has_tail(false);
-
-        // TODO: Test destination values for all uops
-    }
-    else if(input_file.find("vrgather.json") != std::string::npos)
+    else if (input_file.find("vrgather.json") != std::string::npos)
     {
         // Unsupported vector instructions are expected to make the simulator to throw
         bool sparta_exception_fired = false;
-        try {
+        try
+        {
             cls.runSimulator(&sim);
-        } catch (const sparta::SpartaException& ex) {
+        }
+        catch (const sparta::SpartaException & ex)
+        {
             sparta_exception_fired = true;
         }
         EXPECT_TRUE(sparta_exception_fired);
     }
-    else if (input_file.find("vsadd.json") != std::string::npos)
+    else
     {
         cls.runSimulator(&sim);
 
-        rob_tester.test_num_insts_retired(2);
-        rob_tester.test_num_uops_retired(5);
-        rob_tester.test_last_inst_has_tail(false);
-    }
-    else
-    {
-        sparta_assert(false, "Invalid input file: " << input_file);
+        // Test Vector Uop Generation
+        vuop_tester.test_num_vuops_generated(expected_num_uops);
     }
 }
 
-int main(int argc, char **argv)
-    {
+int main(int argc, char** argv)
+{
     runTests(argc, argv);
 
     REPORT_ERROR;

@@ -1,0 +1,16 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vnclipu.wv",
+    "vd": 0,
+    "vs2": 8,
+    "vs1": 16
+  }
+]

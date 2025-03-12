@@ -69,9 +69,11 @@ namespace olympia
         is_condbranch_(opcode_info_->isInstType(mavis::OpcodeInfo::InstructionTypes::CONDITIONAL)),
         is_call_(isCallInstruction(opcode_info)),
         is_csr_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::CSR)),
-        is_vector_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::VECTOR)),
         is_return_(isReturnInstruction(opcode_info)),
         has_immediate_(opcode_info_->hasImmediate()),
+        is_vector_(opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::VECTOR)),
+        is_vector_whole_reg_(
+            is_vector_ && opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::WHOLE)),
         status_state_(Status::BEFORE_FETCH)
     {
         sparta_assert(inst_arch_info_ != nullptr,

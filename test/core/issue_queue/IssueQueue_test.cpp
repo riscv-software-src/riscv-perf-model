@@ -1,11 +1,11 @@
 
 #include "CPUFactory.hpp"
 #include "CoreUtils.hpp"
-#include "Dispatch.hpp"
-#include "MavisUnit.hpp"
+#include "dispatch/Dispatch.hpp"
+#include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 #include "OlympiaSim.hpp"
-#include "IssueQueue.hpp"
+#include "execute/IssueQueue.hpp"
 #include "test/core/dispatch/Dispatch_test.hpp"
 
 #include "sparta/app/CommandLineSimulator.hpp"
@@ -26,10 +26,6 @@
 #include <sstream>
 #include <vector>
 TEST_INIT
-
-////////////////////////////////////////////////////////////////////////////////
-// Set up the Mavis decoder globally for the testing
-olympia::InstAllocator inst_allocator(2000, 1000);
 
 const char USAGE[] = "Usage:\n"
                      "    \n"

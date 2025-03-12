@@ -12,7 +12,7 @@ jobs:
     strategy:
       # Strategy is a matrix of debug and release builds/regression
       matrix:
-        os: [macos-12]
+        os: [macos-latest]
         BUILD_TYPE: [Debug]
         COMPILER: [clang]
 
@@ -63,9 +63,8 @@ jobs:
             ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache
 
       - name: Setup Conda Environment
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-variant: Mambaforge
           channels: conda-forge,defaults
           channel-priority: true
           activate-environment: riscv_perf_model

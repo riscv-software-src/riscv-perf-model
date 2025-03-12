@@ -20,12 +20,12 @@ top.cpu.core0.extension.core_extensions:
     ["int", "mul"],
     ["int", "mul", "i2f", "cmov"],
     ["int"],
-    ["int"],
+    ["int", "vset"],
     ["float", "faddsub", "fmac"], 
     ["float", "f2i"],
     ["br"],
     ["br"],
-    ["vint", "vset", "vdiv", "vmul"]
+    ["vint", "vdiv", "vmul", "vfixed", "vmask", "vmv", "v2s", "vfloat", "vfdiv", "vfmul", "vpermute", "vload", "vstore"]
   ]
   issue_queue_to_pipe_map:
   [ 

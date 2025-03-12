@@ -1,201 +1,201 @@
 [
     {
         "mnemonic": "vaadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vaadd.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vaaddu.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vaaddu.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vadc.vim",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vadc.vvm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vadc.vxm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vadd.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vadd.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vadd.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vand.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vand.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vand.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vasub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vasub.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vasubu.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vasubu.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vcompress.vm",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vdiv.vv",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vdiv.vx",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vdivu.vv",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vdivu.vx",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vfadd.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfclass.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfcvt.f.x.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.f.xu.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.rtz.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.rtz.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfcvt.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfdiv.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfdiv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 25
     },
     {
         "mnemonic": "vfdiv.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfdiv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 25
     },
     {
         "mnemonic": "vfdot.vv",
@@ -205,177 +205,177 @@
     },
     {
         "mnemonic": "vfirst.m",
-        "pipe": "?",
+        "pipe": "v2s",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vfmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmadd.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmax.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfmax.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfmerge.vfm",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfmin.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfmin.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmul.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmul.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfmv.f.s",
-        "pipe": "?",
+        "pipe": "v2s",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vfmv.s.f",
-        "pipe": "?",
+        "pipe": "vmv",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vfmv.v.f",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfncvt.f.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.f.x.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.f.xu.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.rod.f.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.rtz.x.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.rtz.xu.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.x.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfncvt.xu.f.w",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 3
     },
     {
         "mnemonic": "vfnmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmadd.vf",
@@ -385,177 +385,177 @@
     },
     {
         "mnemonic": "vfnmadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfnmsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfrdiv.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfdiv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 25
     },
     {
         "mnemonic": "vfrec7.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfdiv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vfredmax.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vfredmin.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vfredosum.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vfredusum.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vfrsqrt7.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfdiv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vfrsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfsgnj.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnj.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjn.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjn.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjx.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfsgnjx.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vfslide1down.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "SLIDE1DOWN",
+        "latency": 1
     },
     {
         "mnemonic": "vfslide1up.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "SLIDE1UP",
+        "latency": 1
     },
     {
         "mnemonic": "vfsqrt.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfdiv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 25
     },
     {
         "mnemonic": "vfsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.wf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING_MIXED",
+        "latency": 6
     },
     {
         "mnemonic": "vfwadd.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING_MIXED",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.f.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.f.x.v",
@@ -565,404 +565,404 @@
     },
     {
         "mnemonic": "vfwcvt.f.xu.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.rtz.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.rtz.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.x.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwcvt.xu.f.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwmul.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 3
     },
     {
         "mnemonic": "vfwmul.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 3
     },
     {
         "mnemonic": "vfwnmacc.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwnmacc.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwnmsac.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwnmsac.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfmul",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwredosum.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "REDUCTION_WIDE",
+        "latency": 2
     },
     {
         "mnemonic": "vfwredusum.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "REDUCTION_WIDE",
+        "latency": 2
     },
     {
         "mnemonic": "vfwsub.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwsub.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING",
+        "latency": 6
     },
     {
         "mnemonic": "vfwsub.wf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING_MIXED",
+        "latency": 6
     },
     {
         "mnemonic": "vfwsub.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "WIDENING_MIXED",
+        "latency": 6
     },
     {
         "mnemonic": "vid.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmask",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "viota.m",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmask",
+        "uop_gen": "SINGLE_SRC",
+        "latency": 1
     },
     {
         "mnemonic": "vl1re16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl1re32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl1re64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl1re8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl2re16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl2re32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl2re64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl2re8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl4re16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl4re32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl4re64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl4re8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl8re16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl8re32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl8re64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vl8re8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle16ff.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle32ff.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle64ff.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vle8ff.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vlm.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vloxei16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vloxei32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vloxei64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vloxei8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vlse16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vlse32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vlse64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vlse8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vluxei16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vluxei32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vluxei64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vluxei8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vload",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vmacc.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vmacc.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vmadc.vim",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmadc.vvm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmadc.vxm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmadd.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vmadd.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
@@ -980,56 +980,56 @@
     {
         "mnemonic": "vmax.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmax.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmaxu.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmaxu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmerge.vim",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmerge.vvm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmerge.vxm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmfeq.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmfeq.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmfge.vf",
@@ -1039,68 +1039,68 @@
     },
     {
         "mnemonic": "vmfgt.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmfle.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmfle.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmflt.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmflt.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmfne.vf",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmfne.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfloat",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 2
     },
     {
         "mnemonic": "vmin.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmin.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vminu.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vminu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
@@ -1130,254 +1130,254 @@
     {
         "mnemonic": "vmsbc.vvm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmsbc.vxm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmsbf.m",
-        "pipe": "?",
+        "pipe": "vmask",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vmseq.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmseq.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmseq.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsgt.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsgt.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsgtu.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsgtu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsif.m",
-        "pipe": "?",
+        "pipe": "vmask",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vmsle.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsle.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsle.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsleu.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsleu.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsleu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmslt.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmslt.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsltu.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsltu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsne.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsne.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsne.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_SINGLE_DEST",
+        "uop_gen": "SINGLE_DEST",
         "latency": 1
     },
     {
         "mnemonic": "vmsof.m",
-        "pipe": "?",
+        "pipe": "vmask",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vmul.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmul.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmulh.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmulh.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmulhsu.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmulhsu.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmulhu.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmulhu.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vmv.s.x",
-        "pipe": "?",
+        "pipe": "vmv",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vmv.v.i",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmv.v.v",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmv.v.x",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vmv.x.s",
-        "pipe": "?",
+        "pipe": "v2s",
         "uop_gen": "NONE",
-        "latency": 0
+        "latency": 1
     },
     {
         "mnemonic": "vmv1r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vmv2r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vmv4r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vmv8r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vmv",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vmxnor.mm",
@@ -1393,116 +1393,116 @@
     },
     {
         "mnemonic": "vnclip.wi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "NARROWING",
+        "latency": 2
     },
     {
         "mnemonic": "vnclip.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "NARROWING",
+        "latency": 2
     },
     {
         "mnemonic": "vnclip.wx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "NARROWING",
+        "latency": 2
     },
     {
         "mnemonic": "vnclipu.wi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "NARROWING",
+        "latency": 2
     },
     {
         "mnemonic": "vnclipu.wv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "NARROWING",
+        "latency": 2
     },
     {
         "mnemonic": "vnclipu.wx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "NARROWING",
+        "latency": 2
     },
     {
         "mnemonic": "vnmsac.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vnmsac.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vnmsub.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vnmsub.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC",
+        "uop_gen": "MAC",
         "latency": 3
     },
     {
         "mnemonic": "vnsra.wi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "NARROWING",
         "latency": 1
     },
     {
         "mnemonic": "vnsra.wv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "NARROWING",
         "latency": 1
     },
     {
         "mnemonic": "vnsra.wx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "NARROWING",
         "latency": 1
     },
     {
         "mnemonic": "vnsrl.wi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "NARROWING",
         "latency": 1
     },
     {
         "mnemonic": "vnsrl.wv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "NARROWING",
         "latency": 1
     },
     {
         "mnemonic": "vnsrl.wx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "NARROWING",
         "latency": 1
     },
     {
         "mnemonic": "vor.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vor.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vor.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
@@ -1513,27 +1513,27 @@
     },
     {
         "mnemonic": "vredand.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vredmax.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vredmaxu.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vredmin.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vredminu.vs",
@@ -1543,87 +1543,87 @@
     },
     {
         "mnemonic": "vredor.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vredsum.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vredxor.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION",
+        "latency": 2
     },
     {
         "mnemonic": "vrem.vv",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vrem.vx",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vremu.vv",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vremu.vx",
         "pipe": "vdiv",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 23
     },
     {
         "mnemonic": "vrgather.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vrgather.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vrgather.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vrgatherei16.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vrsub.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vrsub.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vs1r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vs2r.v",
@@ -1633,87 +1633,87 @@
     },
     {
         "mnemonic": "vs4r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vs8r.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsadd.vi",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsadd.vv",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsadd.vx",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsaddu.vi",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsaddu.vv",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsaddu.vx",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsbc.vvm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsbc.vxm",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vse16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vse32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vse64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vse8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsetivli",
@@ -1735,494 +1735,494 @@
     },
     {
         "mnemonic": "vsext.vf2",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vsext.vf4",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vsext.vf8",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vslide1down.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "SLIDE1DOWN",
+        "latency": 1
     },
     {
         "mnemonic": "vslide1up.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "SLIDE1UP",
+        "latency": 1
     },
     {
         "mnemonic": "vslidedown.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vslidedown.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vslideup.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vslideup.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vpermute",
+        "uop_gen": "PERMUTE",
+        "latency": 4
     },
     {
         "mnemonic": "vsll.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsll.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsll.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsm.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsmul.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vsmul.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 3
     },
     {
         "mnemonic": "vsoxei16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsoxei32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsoxei64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsoxei8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsra.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsra.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsra.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsrl.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsrl.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsrl.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsse16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsse32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsse64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsse8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vssra.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssra.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssra.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssrl.vi",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssrl.vv",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssrl.vx",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssub.vv",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssub.vx",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssubu.vv",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vssubu.vx",
-        "pipe": "vint",
-        "uop_gen": "ARITH",
-        "latency": 1
+        "pipe": "vfixed",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 6
     },
     {
         "mnemonic": "vsub.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsub.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vsuxei16.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsuxei32.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsuxei64.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vsuxei8.v",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vstore",
+        "uop_gen": "ELEMENTWISE",
+        "latency": 1
     },
     {
         "mnemonic": "vwadd.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwadd.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwadd.wv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwadd.wx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwaddu.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwaddu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwaddu.wv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwaddu.wx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwmacc.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmacc.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmaccsu.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmaccsu.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmaccu.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmaccu.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmaccus.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_MAC_WIDE_DEST",
+        "uop_gen": "MAC_WIDE",
         "latency": 3
     },
     {
         "mnemonic": "vwmul.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 3
     },
     {
         "mnemonic": "vwmul.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 3
     },
     {
         "mnemonic": "vwmulsu.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 3
     },
     {
         "mnemonic": "vwmulsu.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 3
     },
     {
         "mnemonic": "vwmulu.vv",
         "pipe": "vmul",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 3
     },
     {
         "mnemonic": "vwmulu.vx",
         "pipe": "vmul",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 3
     },
     {
         "mnemonic": "vwredsum.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION_WIDE",
+        "latency": 2
     },
     {
         "mnemonic": "vwredsumu.vs",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "REDUCTION_WIDE",
+        "latency": 2
     },
     {
         "mnemonic": "vwsub.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwsub.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwsub.wv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwsub.wx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwsubu.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwsubu.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING",
         "latency": 1
     },
     {
         "mnemonic": "vwsubu.wv",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vwsubu.wx",
         "pipe": "vint",
-        "uop_gen": "ARITH_WIDE_DEST",
+        "uop_gen": "WIDENING_MIXED",
         "latency": 1
     },
     {
         "mnemonic": "vxor.vi",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vxor.vv",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vxor.vx",
         "pipe": "vint",
-        "uop_gen": "ARITH",
+        "uop_gen": "ELEMENTWISE",
         "latency": 1
     },
     {
         "mnemonic": "vzext.vf2",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vzext.vf4",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     },
     {
         "mnemonic": "vzext.vf8",
-        "pipe": "?",
-        "uop_gen": "NONE",
-        "latency": 0
+        "pipe": "vint",
+        "uop_gen": "INT_EXT",
+        "latency": 1
     }
 ]

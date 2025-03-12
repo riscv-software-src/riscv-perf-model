@@ -1,0 +1,25 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x1b",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vzext.vf2",
+    "vd": 4,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vzext.vf4",
+    "vd": 4,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vzext.vf8",
+    "vd": 4,
+    "vs2": 8
+  }
+]

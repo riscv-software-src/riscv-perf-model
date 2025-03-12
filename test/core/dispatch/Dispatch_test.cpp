@@ -1,41 +1,7 @@
 
-#include "CPUFactory.hpp"
-#include "CoreUtils.hpp"
-#include "Dispatch.hpp"
-#include "MavisUnit.hpp"
-#include "OlympiaAllocators.hpp"
-#include "OlympiaSim.hpp"
-#include "Rename.hpp"
-
-#include "test/core/common/SinkUnit.hpp"
-#include "test/core/common/SourceUnit.hpp"
-#include "test/core/dispatch/Dispatch_test.hpp"
-#include "test/core/dispatch/ExecutePipeSinkUnit.hpp"
-#include "test/core/rename/ROBSinkUnit.hpp"
-
-#include "sparta/app/CommandLineSimulator.hpp"
-#include "sparta/app/Simulation.hpp"
-#include "sparta/events/UniqueEvent.hpp"
-#include "sparta/kernel/Scheduler.hpp"
-#include "sparta/report/Report.hpp"
-#include "sparta/resources/Buffer.hpp"
-#include "sparta/simulation/ClockManager.hpp"
-#include "sparta/sparta.hpp"
-#include "sparta/statistics/StatisticSet.hpp"
-#include "sparta/utils/SpartaSharedPointer.hpp"
-#include "sparta/utils/SpartaTester.hpp"
-
-#include <cinttypes>
-#include <initializer_list>
-#include <memory>
-#include <sstream>
-#include <vector>
+#include "Dispatch_test.hpp"
 
 TEST_INIT
-
-////////////////////////////////////////////////////////////////////////////////
-// Set up the Mavis decoder globally for the testing
-olympia::InstAllocator inst_allocator(2000, 1000);
 
 const char USAGE[] = "Usage:\n"
                      "    \n"

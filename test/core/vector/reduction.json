@@ -8,9 +8,9 @@
     "vta": 0
   },
   {
-    "mnemonic": "vnclipu.wv",
-    "vd": 0,
-    "vs2": 8,
-    "vs1": 16
+    "mnemonic": "vredsum.vs",
+    "vd": 12,
+    "vs2": 4,
+    "vs1": 8
   }
 ]

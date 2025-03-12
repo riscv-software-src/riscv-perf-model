@@ -277,8 +277,7 @@ namespace olympia
                         ++(weighted_unit_distribution_context_.context(target_pipe));
 
                         ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
-                        ILOG("Sending instruction: " << ex_inst_ptr << " to "
-                                                     << disp->getName());
+                        ILOG("Sending instruction: " << ex_inst_ptr << " to " << disp->getName());
                         dispatched = true;
 
                         break;
@@ -295,7 +294,7 @@ namespace olympia
                 current_stall_ = static_cast<StallReason>(target_pipe);
                 keep_dispatching = false;
             }
-         
+
             if (dispatched)
             {
                 insts_dispatched->emplace_back(ex_inst_ptr);

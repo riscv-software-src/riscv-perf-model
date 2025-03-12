@@ -1,0 +1,58 @@
+[
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x10",
+        "vl": 32,
+        "vta": 0
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 9,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x11",
+        "vl": 64,
+        "vta": 0
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 10,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x12",
+        "vl": 128,
+        "vta": 0
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 12,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x13",
+        "vl": 32,
+        "vta": 0
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 16,
+        "vd": 24
+    }
+]

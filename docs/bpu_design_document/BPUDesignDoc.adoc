@@ -134,12 +134,11 @@ Figure 2 - Unit block diagram of BPU
 [[Block_Diagram_Description]]
 === Block Diagram Description
 
-BPU consists of a BasePredictor (which is accessed in the
-first fetch cycle), a TAGE_SC_L-Predictor (which is also accessed
-in the first fetch cycle), and an FTQ (a simple
+BPU consists of a BasePredictor, a TAGE_SC_L-Predictor, and an FTQ (a
 queue) which stores the information of all in-flight branch instructions
-and is required in order to update the BPU once instruction are finally
-committed.
+and is required in order to update the state of BPU once instruction are finally
+committed, it also enables multi-tier prediction by buffering the initial prediction
+while BPU accesses its higher level of hierarchy.
 
 [[Description_of_PredictionRequest]]
 == Description of PredictionRequest
@@ -606,7 +605,7 @@ no matching tagged predictor component, the prediction given by default predicto
 === Parameters of TAGE
 // start from here
 
-=== Class heirarchy
+=== Class hierarchy
 
 ** Includes `TageBIM` and `TageTaggedComponent` class.
 
@@ -620,7 +619,7 @@ no matching tagged predictor component, the prediction given by default predicto
 `Tage(uint16_t tage_bim_size, uint8_t tage_bim_ctr_bits,
 uint16_t tage_tagged_table_num, uint8_t tagged_ctr_bits, uint8_t tage_u_bits, uint32_t min_hist_len, 
 uint8_t tage_hist_alpha, uint32_t tage_max_idx_bits, uint32_t global_hist_buff_len, uint32_t global_hist_folded_buff_len, 
-uint32_t useful_reset_interval)`
+uint32_t useful_reset_interval) {}`
 
 ** Initializes an array of `TageTaggedComponent` indexed by the hash of PC and different history
 lengths
@@ -631,11 +630,11 @@ lengths
 
 ==== Private data members
 1.  `uint32_t tage_bim_table_size_` - Size of bimodal table used in TAGE.
-2.  `uint16_t tage_max_index_bits_` - Maximum number of bits used to index the predictor tables of TAGE.
-3.  `uint16_t tage_num_components_` - Number of tagged components used in TAGE.
-4.  `uint8_t  tage_bim_counter_bits_` - Number of counter bits used in bimodal table of TAGE to make prediction.
+2.  `uint8_t  tage_bim_counter_bits_` - Number of counter bits used in bimodal table of TAGE to make prediction.
+3.  `uint16_t tage_max_index_bits_` - Maximum number of bits used to index the predictor tables of TAGE.
+4.  `uint16_t tage_num_components_` - Number of tagged components used in TAGE.
 5.  `uint8_t  tage_counter_bits_` - Number of counter bits used in tagged components of TAGE to make prediction.
-6. `uint8_t  tage_useful_bits_` - Number of bits used in the 'useful' component of tagged entry.
+6.  `uint8_t  tage_useful_bits_` - Number of bits used in the 'useful' component of tagged entry.
 
 7. `uint32_t tage_global_hist_buff_len_` - Length of the global history buffer used by TAGE.
 8. `uint32_t tage_folded_hist_buff_len_` - Length of the history buffer used for folded history entries.
@@ -646,12 +645,16 @@ lengths
 11. `uint8_t tage_hist_alpha_` - Common ratio of geometric progression with which history length increases. 
 12. `uint32_t tage_reset_useful_interval_` - Interval after which useful bits are reset.
 
+13. `TageBIM tage_bim_` - Bi-modal table of the TAGE predictor.
+14. `std::vector<TageTaggedComponent> tage_tagged_components_` - Array of tagged components of TAGE predictor.
 
 [[Functions_list_of_TAGE]]
 === Functions list
 
 ==== Public functions
-** `uint8_t predict(uint64_t ip)` - Returns the prediction from TAGE
+* `uint8_t predict(uint64_t ip)` - Returns the prediction from TAGE
+* `bool addTaggedEntry()`
+* `bool removedTaggedEntry()`
 
 ==== Private functions
 
@@ -670,44 +673,51 @@ Bimodal table of the TAGE predictor provides the base prediction for any predict
 `TageBIM(uint32_t tage_bim_table_size, uint8_t tage_base_ctr_bits) : tage_bim_table_size_(tage_bim_table_size), 
 tage_base_ctr_bits_(tage_base_ctr_bits) {}`
 
+* Initializes counter at all indexes of BIM with 0
+
 === Data members
 
 ==== Private data members
-1. `uint32_t tage_bim_table_size_` 
-2. `uint8_t tage_base_ctr_bits_`
-3. `std::map<uint64_t, uint8_t> Tage_Bimodal_`
+1. `uint32_t tage_bim_table_size_` - Represents maximum size of the BIM table of TAGE
+2. `uint8_t tage_bim_ctr_bits_` - Represents the number of bits used in counter of BIM table
+3. `std::vector<uint8_t> Tage_Bimodal_` - Represents the container used for BIM in the
+implementation
 
 ==== Public data members
+None
 
 === Functions list
 
 ==== Public functions
-1. `void incrementCtr()`
-2. `void decrementCtr()`
-3. `uint8_t getPrediction(uint32_t ip)` - Returns the prediction counter of index ip
+1. `void incrementCtr(uint32_t ip)` - Increments counter at index ip of BIM table within set bounds of `tage_bim_ctr_bits_`.
+2. `void decrementCtr(uint32_t ip)` - Decrements counter at index ip of BIM table within set bounds of `tage_bim_ctr_bits_`.
+3. `uint8_t getPrediction(uint32_t ip)` - Returns the prediction counter given BIM at index ip.
 
 ==== Private functions
+None
 
-[[Tagged_Component_of_TAGE]]
-== Tagged Component of TAGE
+[[Tagged_Component_Entry_of_TAGE]]
+== Tagged Component Entry of TAGE
 
 Tagged components of TAGE predictor provides prediction for different history lengths.
 
 [[class_description_of_TAGE_Tagged_Component]]
 === Class description
-`class TageTaggedComponent`
+`class TageTaggedComponentEntry`
 
 ==== Constructor -
 
-`TageTaggedComponent(uint16_t Tag, uint8_t tage_ctr_bits, uint8_t tage_useful_bits) : Tag_(Tag), 
+`TageTaggedComponentEntry(uint16_t Tag, uint8_t tage_ctr_bits, uint8_t tage_useful_bits) : Tag_(Tag),
 tage_ctr_bits_(tage_ctr_bits), tage_useful_bits_(tage_useful_bits) {}`
 
 === Data members
 
 ==== Private data members
-1. `uint16_t Tag_` - used for verifying that the entry corresponds to the current branch instruction.
-2. `uint8_t tage_ctr_bits_` - represents the direction branch will take
-3. `uint8_t tage_useful_bits_` - Number of bits which represents useful value
+1. `uint16_t Tag_` - Used for verifying that the entry corresponds to the current branch instruction.
+2. `uint8_t tage_ctr_bits_` - Number of bits to be used for Tage component entry counter(ctr)
+3. `uint8_t tage_useful_bits_` - Number of bits to be used for Tage component entry useful value(u)
+4. `uint8_t ctr_` - Represent counter(ctr) value of tage tagged component entry.
+5. `uint8_t useful_` - Represent useful(u) value of tage tagged component entry.
 
 ==== Public data members
 
@@ -715,12 +725,48 @@ tage_ctr_bits_(tage_ctr_bits), tage_useful_bits_(tage_useful_bits) {}`
 
 ==== Public functions
 
-1. `void incrementCtr()` - Increment the counter bit within the set bounds
-2. `void decrementCtr()` - Decrement the counter bit within the set bounds
-3. `void incrementUsefulBit()`- Increment the useful bit within the set bounds
-4. `void decrementUsefulBit()` - Decremet the useful bit within the set bounds
+1. `void incrementCtr()` - Increment the counter bit within the bounds of tage_ctr_bits
+2. `void decrementCtr()` - Decrement the counter bit within the bounds of tage_ctr_bits
+3. `void incrementUseful()`- Increment the useful bit within the bounds of tage_useful_bits
+4. `void decrementUseful()` - Decrement the useful bit within the bounds of tage_useful_bits
 
 ==== Private functions
+None
+
+[[Tagged_Component_of_TAGE]]
+== Tagged Component of TAGE
+
+Represents one tagged component of TAGE predictor filled with `TageTaggedComponentEntry`
+
+=== Class Hierarchy
+
+Includes `TageTaggedComponentEntry` class
+
+=== Class Description
+
+`class TageTaggedComponent`
+
+==== Constructor
+
+`TageTaggedComponent(uint16_t num_tagged_entry) : num_tagged_entry_(num_tagged_entry) {}`
+
+=== Data Members
+
+==== Public Data Members
+
+==== Private Data Members
+1. `num_tagged_entry_` - Defines the maximum number of allowed entry in the current tagged component.
+2. `std::vector<TageTaggedComponentEntry> tage_tagged_component_` - Defines the internal container used to
+store elements of a tagged component.
+
+=== Functions list
+
+==== Public functions
+1. `addEntry()`
+2. `removeEntry()`
+
+==== Private functions
+
 
 == Statistical Corrector
 
@@ -846,11 +892,11 @@ Figure: Unit block diagram of FTQ
 
 * Port 1 -> `in_bpu_first_prediction_` - Receives prediction made by BasePredictor of BPU
 * Port 2 -> `in_bpu_second_prediction_` - Receives prediction made by TAGE-SC-L of BPU
-* Port 3 -> `out_ftq_prediction_` - Send PredictionOutput to FTQ
-* Port 4 -> `out_bpu_update_` - Send UpdateInput to BPU to carry out any BPU state update
-* Port 5 -> `in_rob_signal_` - Receives signal from ROB during commit
-* Port 6 -> `TODO` - to enable flushing instructions in case of mismatch between first level and second
+* Port 3 -> `TODO` - to enable flushing instructions in case of mismatch between first level and second
 level prediction.
+* Port 4 -> `out_ftq_prediction_` - Send PredictionOutput to FTQ
+* Port 5 -> `in_rob_signal_` - Receives signal from ROB during commit
+* Port 6 -> `out_bpu_update_` - Send UpdateInput to BPU to carry out any BPU state update
 
 [[Class_Description_of_FTQEntry]]
 === Class Description of FTQEntry

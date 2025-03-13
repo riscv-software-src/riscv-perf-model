@@ -1,0 +1,23 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse8.v",
+    "vs3": 8,
+    "rs1": 3,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vlse16.v",
+    "vs3": 8,
+    "rs1": 3,
+    "rs2": 4,
+    "vaddr": "0x1000"
+  }
+]

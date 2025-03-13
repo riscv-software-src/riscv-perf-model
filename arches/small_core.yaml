@@ -18,10 +18,10 @@ top.cpu.core0.extension.core_extensions:
   # targets of: "int" and "div"
   pipelines:
   [
-      ["sys", "int", "mul", "i2f", "cmov", "div"], # exe0
+      ["sys", "int", "mul", "i2f", "cmov", "div", "vset"], # exe0
       ["float", "faddsub", "fmac", "f2i"], # exe1
       ["br"], # exe2
-      ["vint", "vset", "vdiv", "vmul"] # exe3
+      ["vint", "vdiv", "vmul", "vfixed", "vmask", "vmv", "v2s", "vfloat", "vfdiv", "vfmul", "vpermute", "vload", "vstore"] # exe3
   ]
   # this is used to set how many units per queue
   # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive

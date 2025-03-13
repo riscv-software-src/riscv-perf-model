@@ -6,66 +6,79 @@
 namespace olympia
 {
     const InstArchInfo::TargetPipeMap InstArchInfo::execution_pipe_map = {
-        {"br",      InstArchInfo::TargetPipe::BR},
-        {"cmov",    InstArchInfo::TargetPipe::CMOV},
-        {"div",     InstArchInfo::TargetPipe::DIV},
+        {"br", InstArchInfo::TargetPipe::BR},
+        {"cmov", InstArchInfo::TargetPipe::CMOV},
+        {"div", InstArchInfo::TargetPipe::DIV},
         {"faddsub", InstArchInfo::TargetPipe::FADDSUB},
-        {"float",   InstArchInfo::TargetPipe::FLOAT},
-        {"fmac",    InstArchInfo::TargetPipe::FMAC},
-        {"i2f",     InstArchInfo::TargetPipe::I2F},
-        {"f2i",     InstArchInfo::TargetPipe::F2I},
-        {"int",     InstArchInfo::TargetPipe::INT},
-        {"lsu",     InstArchInfo::TargetPipe::LSU},
-        {"mul",     InstArchInfo::TargetPipe::MUL},
-        {"vint",    InstArchInfo::TargetPipe::VINT},
-        {"vfixed",  InstArchInfo::TargetPipe::VFIXED},
-        {"vfloat",  InstArchInfo::TargetPipe::VFLOAT},
-        {"vfmul",   InstArchInfo::TargetPipe::VFMUL},
-        {"vfdiv",   InstArchInfo::TargetPipe::VFDIV},
-        {"vmask",   InstArchInfo::TargetPipe::VMASK},
-        {"vset",    InstArchInfo::TargetPipe::VSET},
-        {"vmul",    InstArchInfo::TargetPipe::VMUL},
-        {"vdiv",    InstArchInfo::TargetPipe::VDIV},
-        {"sys",     InstArchInfo::TargetPipe::SYS},
-        {"?",       InstArchInfo::TargetPipe::UNKNOWN}
-    };
+        {"float", InstArchInfo::TargetPipe::FLOAT},
+        {"fmac", InstArchInfo::TargetPipe::FMAC},
+        {"i2f", InstArchInfo::TargetPipe::I2F},
+        {"f2i", InstArchInfo::TargetPipe::F2I},
+        {"int", InstArchInfo::TargetPipe::INT},
+        {"lsu", InstArchInfo::TargetPipe::LSU},
+        {"mul", InstArchInfo::TargetPipe::MUL},
+        {"vint", InstArchInfo::TargetPipe::VINT},
+        {"vdiv", InstArchInfo::TargetPipe::VDIV},
+        {"vmul", InstArchInfo::TargetPipe::VMUL},
+        {"vfixed", InstArchInfo::TargetPipe::VFIXED},
+        {"vmask", InstArchInfo::TargetPipe::VMASK},
+        {"vmv", InstArchInfo::TargetPipe::VMV},
+        {"v2s", InstArchInfo::TargetPipe::V2S},
+        {"vfloat", InstArchInfo::TargetPipe::VFLOAT},
+        {"vfdiv", InstArchInfo::TargetPipe::VFDIV},
+        {"vfmul", InstArchInfo::TargetPipe::VFMUL},
+        {"vpermute", InstArchInfo::TargetPipe::VPERMUTE},
+        {"vload", InstArchInfo::TargetPipe::VLOAD},
+        {"vstore", InstArchInfo::TargetPipe::VSTORE},
+        {"vset", InstArchInfo::TargetPipe::VSET},
+        {"sys", InstArchInfo::TargetPipe::SYS},
+        {"?", InstArchInfo::TargetPipe::UNKNOWN}};
 
     const InstArchInfo::TargetPipeStringMap InstArchInfo::execution_pipe_string_map = {
-        {InstArchInfo::TargetPipe::BR,      "BR"},
-        {InstArchInfo::TargetPipe::CMOV,    "CMOV"},
-        {InstArchInfo::TargetPipe::DIV,     "DIV"},
+        {InstArchInfo::TargetPipe::BR, "BR"},
+        {InstArchInfo::TargetPipe::CMOV, "CMOV"},
+        {InstArchInfo::TargetPipe::DIV, "DIV"},
         {InstArchInfo::TargetPipe::FADDSUB, "FADDSUB"},
-        {InstArchInfo::TargetPipe::FLOAT,   "FLOAT"},
-        {InstArchInfo::TargetPipe::FMAC,    "FMAC"},
-        {InstArchInfo::TargetPipe::I2F,     "I2F"},
-        {InstArchInfo::TargetPipe::F2I,     "F2I"},
-        {InstArchInfo::TargetPipe::INT,     "INT"},
-        {InstArchInfo::TargetPipe::LSU,     "LSU"},
-        {InstArchInfo::TargetPipe::MUL,     "MUL"},
-        {InstArchInfo::TargetPipe::VINT,    "VINT"},
-        {InstArchInfo::TargetPipe::VFIXED,  "VFIXED"},
-        {InstArchInfo::TargetPipe::VFLOAT,  "VFLOAT"},
-        {InstArchInfo::TargetPipe::VFMUL,   "VFMUL"},
-        {InstArchInfo::TargetPipe::VFDIV,   "VFDIV"},
-        {InstArchInfo::TargetPipe::VMASK,   "VMASK"},
-        {InstArchInfo::TargetPipe::VSET,    "VSET"},
-        {InstArchInfo::TargetPipe::VMUL,    "VMUL"},
-        {InstArchInfo::TargetPipe::VDIV,    "VDIV"},
-        {InstArchInfo::TargetPipe::SYS,     "SYS"},
-        {InstArchInfo::TargetPipe::UNKNOWN, "?"}
-    };
+        {InstArchInfo::TargetPipe::FLOAT, "FLOAT"},
+        {InstArchInfo::TargetPipe::FMAC, "FMAC"},
+        {InstArchInfo::TargetPipe::I2F, "I2F"},
+        {InstArchInfo::TargetPipe::F2I, "F2I"},
+        {InstArchInfo::TargetPipe::INT, "INT"},
+        {InstArchInfo::TargetPipe::LSU, "LSU"},
+        {InstArchInfo::TargetPipe::MUL, "MUL"},
+        {InstArchInfo::TargetPipe::VINT, "VINT"},
+        {InstArchInfo::TargetPipe::VDIV, "VDIV"},
+        {InstArchInfo::TargetPipe::VMUL, "VMUL"},
+        {InstArchInfo::TargetPipe::VFIXED, "VFIXED"},
+        {InstArchInfo::TargetPipe::VMASK, "VMASK"},
+        {InstArchInfo::TargetPipe::VMV, "VMV"},
+        {InstArchInfo::TargetPipe::V2S, "V2S"},
+        {InstArchInfo::TargetPipe::VFLOAT, "VFLOAT"},
+        {InstArchInfo::TargetPipe::VFDIV, "VFDIV"},
+        {InstArchInfo::TargetPipe::VFMUL, "VFMUL"},
+        {InstArchInfo::TargetPipe::VPERMUTE, "VPERMUTE"},
+        {InstArchInfo::TargetPipe::VLOAD, "VLOAD"},
+        {InstArchInfo::TargetPipe::VSTORE, "VSTORE"},
+        {InstArchInfo::TargetPipe::VSET, "VSET"},
+        {InstArchInfo::TargetPipe::SYS, "SYS"},
+        {InstArchInfo::TargetPipe::UNKNOWN, "?"}};
 
     const InstArchInfo::UopGenMap InstArchInfo::uop_gen_type_map = {
-        {"ELEMENTWISE",    InstArchInfo::UopGenType::ELEMENTWISE},
-        {"SINGLE_DEST",    InstArchInfo::UopGenType::SINGLE_DEST},
-        {"WIDENING",       InstArchInfo::UopGenType::WIDENING},
+        {"ELEMENTWISE", InstArchInfo::UopGenType::ELEMENTWISE},
+        {"SINGLE_DEST", InstArchInfo::UopGenType::SINGLE_DEST},
+        {"SINGLE_SRC", InstArchInfo::UopGenType::SINGLE_SRC},
+        {"WIDENING", InstArchInfo::UopGenType::WIDENING},
         {"WIDENING_MIXED", InstArchInfo::UopGenType::WIDENING_MIXED},
-        {"NARROWING",      InstArchInfo::UopGenType::NARROWING},
-        {"MAC",            InstArchInfo::UopGenType::MAC},
-        {"MAC_WIDE",       InstArchInfo::UopGenType::MAC_WIDE},
-        {"INT_EXT",        InstArchInfo::UopGenType::INT_EXT},
-        {"NONE",           InstArchInfo::UopGenType::NONE}
-    };
+        {"NARROWING", InstArchInfo::UopGenType::NARROWING},
+        {"MAC", InstArchInfo::UopGenType::MAC},
+        {"MAC_WIDE", InstArchInfo::UopGenType::MAC_WIDE},
+        {"REDUCTION", InstArchInfo::UopGenType::REDUCTION},
+        {"REDUCTION_WIDE", InstArchInfo::UopGenType::REDUCTION_WIDE},
+        {"INT_EXT", InstArchInfo::UopGenType::INT_EXT},
+        {"SLIDE1UP", InstArchInfo::UopGenType::SLIDE1UP},
+        {"SLIDE1DOWN", InstArchInfo::UopGenType::SLIDE1DOWN},
+        {"PERMUTE", InstArchInfo::UopGenType::PERMUTE},
+        {"NONE", InstArchInfo::UopGenType::NONE}};
 
     void InstArchInfo::update(const nlohmann::json & jobj)
     {
@@ -89,8 +102,8 @@ namespace olympia
             auto uop_gen_name = jobj["uop_gen"].get<std::string>();
             const auto itr = uop_gen_type_map.find(uop_gen_name);
             sparta_assert(itr != uop_gen_type_map.end(),
-                "Unknown uop gen: " << uop_gen_name << " for inst: "
-                                    << jobj["mnemonic"].get<std::string>());
+                          "Unknown uop gen: " << uop_gen_name << " for inst: "
+                                              << jobj["mnemonic"].get<std::string>());
             uop_gen_ = itr->second;
         }
 

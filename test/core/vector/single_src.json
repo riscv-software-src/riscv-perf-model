@@ -1,0 +1,14 @@
+[
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "vtype": "0x12",
+        "vl": 128,
+        "vta": 0
+    },
+    {
+        "mnemonic": "viota.m",
+        "vs2": 0,
+        "vd": 8
+    }
+]

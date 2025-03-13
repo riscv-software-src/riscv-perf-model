@@ -62,9 +62,7 @@ namespace olympia
 
         void setInst(const InstPtr & inst);
 
-        const InstPtr generateUop();
-
-        template <InstArchInfo::UopGenType Type> const InstPtr generateUops();
+        InstPtr generateUop();
 
         uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }
 
@@ -75,27 +73,33 @@ namespace olympia
 
         MavisType* mavis_facade_;
 
-        // typedef std::function<const InstPtr (VectorUopGenerator*)> FUNC;
         typedef std::function<const InstPtr(VectorUopGenerator*)> UopGenFunctionType;
         typedef std::map<InstArchInfo::UopGenType, UopGenFunctionType> UopGenFunctionMapType;
         UopGenFunctionMapType uop_gen_function_map_;
 
-        // TODO: Use Sparta ValidValue
-        InstPtr current_inst_ = nullptr;
+        sparta::utils::ValidValue<InstPtr> current_inst_;
         std::vector<Modifier> current_inst_modifiers_;
-        // UopGenFunctionMapType::iterator current_uop_gen_function_;
 
         sparta::Counter vuops_generated_;
 
-        uint64_t num_uops_generated_ = 0;
         uint64_t num_uops_to_generate_ = 0;
+        uint64_t num_uops_generated_ = 0;
+
+        template <InstArchInfo::UopGenType Type> InstPtr generateUops_();
+
+        template <InstArchInfo::UopGenType Type> InstPtr generateSlideUops_();
+
+        InstPtr generatePermuteUops_();
+
+        InstPtr makeInst_(const mavis::OperandInfo::ElementList & srcs,
+                          const mavis::OperandInfo::ElementList & dests);
 
         void reset_()
         {
-            current_inst_ = nullptr;
+            current_inst_.clearValid();
             current_inst_modifiers_.clear();
-            num_uops_generated_ = 0;
             num_uops_to_generate_ = 0;
+            num_uops_generated_ = 0;
         }
 
         void addModifier(const std::string & name, uint32_t value)
@@ -114,6 +118,9 @@ namespace olympia
             }
             return {};
         }
+
+        // Dump debug content on failure
+        void dumpDebugContent_(std::ostream & output) const override final;
 
         friend class VectorUopGeneratorTester;
     };

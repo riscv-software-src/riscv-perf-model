@@ -8,9 +8,15 @@
     "vta": 0
   },
   {
-    "mnemonic": "vwmacc.vv",
-    "vd": 12,
+    "mnemonic": "vslide1up.vx",
+    "vd": 8,
     "vs2": 4,
-    "vs1": 8
+    "rs1": 1
+  },
+  {
+    "mnemonic": "vslide1down.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
   }
 ]

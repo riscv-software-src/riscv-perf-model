@@ -1,0 +1,14 @@
+[
+    {
+        "mnemonic": "beq",
+        "rs1": 1,
+        "rs2": 4,
+        "offset": 2
+    },
+    {
+        "mnemonic": "bne",
+        "rs1": 1,
+        "rs2": 4,
+        "offset": 1
+    }
+]

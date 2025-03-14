@@ -15,9 +15,12 @@ the Olympia simulator.
 [width="100%",cols="11%,11%,16%,62%",options="header",]
 |===
 |*Revision* |*Date*      |*Author*  |*Summary of Changes*
-|0.5        | 2025.03.02 | Shobhit Sinha | Added details of FTQ structure to enable prediction overriding in case of mismatch between first and second level prediction.
+|0.6        | 2025.03.14 | Shobhit Sinha | Defined interaction mechanism between BPU, FTQ and Fetch/ICache
+|0.5        | 2025.03.02 | Shobhit Sinha | Added details of FTQ structure to enable prediction overriding in
+case of mismatch between first and second level prediction
 |0.4        | 2024.12.16 | Shobhit Sinha | Replaced BPU overview diagram with BPU interaction diagram
-|0.3        | 2024.12.12 | Shobhit Sinha | Added extra ports, counters, functions list and data members to design document
+|0.3        | 2024.12.12 | Shobhit Sinha | Added extra ports, counters, functions list and data members to
+design document
 |0.2        | 2024.11.18 | Shobhit Sinha | BPU design documentation
 |0.1        | 2024.11.12 | Jeff Nye | initial template
 |===
@@ -57,14 +60,6 @@ resolved in the pipeline. This prediction allows the processor to prefetch and e
 It receives prediction input in the form of PC and instruction type from the
 Fetch unit and predicts the direction and target address from which Fetch unit
 has to get the next instruction.
-
-
-[[BPU_Interaction_Block_Diagram]]
-=== Interaction of BPU
-
-image:media/bpu_interaction.png[image,width=576,height=366]
-
-Figure 1 - Overview of interaction of BPU with Fetch
 
 [[Functional_Description]]
 == Functional Description
@@ -129,7 +124,7 @@ additional cycle.
 
 image:media/bpu_uarch.png[image,width=800,height=366]
 
-Figure 2 - Unit block diagram of BPU
+Figure 1 - Unit block diagram of BPU
 
 [[Block_Diagram_Description]]
 === Block Diagram Description
@@ -549,7 +544,7 @@ The second level predictor implements a TAGE-SC-L predictor in order to predict
 complex branches with better accuracy than is possible with a simple combination of
 PHT and RAS.
 
-=== Class heirarchy
+=== Class Hierarchy
 
 ** Instantiate `TAGE`, `StatisticalCorrector`, and `LoopPredictor` class
 
@@ -892,17 +887,55 @@ Figure: Unit block diagram of FTQ
 
 * Port 1 -> `in_bpu_first_prediction_` - Receives prediction made by BasePredictor of BPU
 * Port 2 -> `in_bpu_second_prediction_` - Receives prediction made by TAGE-SC-L of BPU
-* Port 3 -> `TODO` - to enable flushing instructions in case of mismatch between first level and second
+* Port 3 -> `out_first_misprediction_flush_` - to enable flushing instructions in case of mismatch between first level and second
 level prediction.
-* Port 4 -> `out_ftq_prediction_` - Send PredictionOutput to FTQ
+* Port 4 -> `out_fetch_prediction_` - Send PredictionOutput to Fetch/ICache
 * Port 5 -> `in_rob_signal_` - Receives signal from ROB during commit
-* Port 6 -> `out_bpu_update_` - Send UpdateInput to BPU to carry out any BPU state update
+* Port 6 -> `out_bpu_update_input_` - Send UpdateInput to BPU to carry out any BPU state update
+
+[[Class_Description_of_FTQ]]
+===  Class Description of FTQ
+
+==== Constructor
+`FTQ(uint32_t ftq_capacity) : ftq_capacity_(ftq_capacity) {}`
+
+=== Data members
+
+==== Public members
+
+==== Private members
+1. `std::queue<FTQEntry> fetch_target_queue_` - Underlying container of FTQ
+2. `const uint32_t ftq_capacity_` - Max capacity of FTQ.
+
+[[Functions_list_of_FTQ]]
+=== Functions list
+
+==== Public functions
+** `void sendCreditsToBPU_(uint32_t credits)` - Send credits to BPU to indicate availability of capacity
+in FTQ.
+** `void sendInitialCreditsToBPU_()` - Wrapper function to send initial credits to BPU.
+** `void receiveFirstPrediction_()` - Receives prediction from BasePredictor and pushes it into FTQ.
+** `void receiveSecondPrediction_()` - Receives prediction from TAGE_SC_L, checks if there's a mismatch
+and updates ftq appropriately.
+** `void receiveCreditsFromFetch_()` - Receive credits from Fetch/ICache to indicate availability to send
+prediction.
+** `void sendPredictionToFetch_()` - Continuously send predictions to Fetch/ICache.
+** `void firstMispredictionFlush_()` - Flushes instruction if first tier prediction does not match
+second tier prediction.
+** `void receiveROBSignal_()` - Receives branch resolution signal from ROB at the time of commit.
+** `void deallocateEntry_()` - De-allocate FTQ entry once branch instruction is committed.
+
+==== Private functions
+NA
+
+[[FTQEntry]]
+== FTQEntry
 
 [[Class_Description_of_FTQEntry]]
 === Class Description of FTQEntry
 
-==== Constructor - 
-`FTQEntry(uint64_t targetPC, uint64_t correctedPC, bool predDirection, bool correctedDirection) : 
+==== Constructor -
+`FTQEntry(uint64_t targetPC, uint64_t correctedPC, bool predDirection, bool correctedDirection) :
 targetPC_(targetPC), correctedPC_(correctedPC), predDirection_(predDirection), correctedDirection_(correctedDirection) {}`
 
 === Data members
@@ -918,6 +951,8 @@ targetPC_(targetPC), correctedPC_(correctedPC), predDirection_(predDirection), c
 
 ** `bool correctedDirection_`
 
+** `uint8_t status_` - Indicates if the prediction has been sent from FTQ to Fetch/ICache or not.
+
 === Functions list
 
 ==== Public functions
@@ -929,30 +964,29 @@ targetPC_(targetPC), correctedPC_(correctedPC), predDirection_(predDirection), c
 5. `void     setCorrectedPC()` - sets the `correctedPC_` variable
 6. `void     setCorrectedDirection()` - sets the `correctedDirection_` varibale
 
-
 ==== Private functions
+NA
 
-[[Class_Description_of_FTQ]]
-===  Class Description of FTQ
+[[Interaction_of_BPU_Block_Diagram]]
+== Interaction of BPU
 
-==== Constructor
-`FTQ()`
+image:media/BPUInteraction.png[image,width=576,height=366]
 
-=== Data members
+Figure 3 - Overview of interaction of BPU with Fetch
 
-==== Public members
+[[Interaction_between_BPU_and_FTQ]]
+=== Interaction between BPU and FTQ
+* First level prediction can only be pushed to FTQ if there is space available.
+* Second level prediction is sent to FTQ through `sparta::DataOutPort` without any such constraint,
+since second level prediction only verifies (or replaces, in case mis-prediction) the prediction already
+stored in the FTQ.
+* Credits are transferred from FTQ to BPU to keep track of available FTQ capacity.
+        ** Credits are sent to BPU everytime FTQEntry is de-allocated from FTQ at commit.
 
-==== Private members
-1. `std::vector<FTQEntry> fetch_target_queue_` - 
-
-[[Functions_list_of_FTQ]]
-=== Functions list
-
-==== Public functions
-** `addEntry(FTQEntry ftq_entry)` - adds an entry into the FTQ.
-** `removeEntry(FTQEntry ftq_entry)` - removes ftq_entry from the FTQ.
-
-==== Private functions
+[[Interaction_between_FTQ_and_Fetch_or_ICache]]
+=== Interaction between FTQ and Fetch/ICache
+* Fetch/ICache send credits to BPU to indicate availability to receive prediction.
+* If FTQ has unsent predictions in the queue, and credits are available then it send credits to Fetch/ICache.
 
 [[Test_Bench_Description]]
 == Test Bench Descriptions

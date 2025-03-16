@@ -578,7 +578,7 @@ a number of tagged predictor components which uses geometrically increasing hist
 
 Each entry in a tagged component consists of 3 fields -
 
-    **  `pred` - represents the direction branch will take
+    **  `ctr` - represents the direction branch will take
     **  `useful`    - represents if the prediction made by same component turned out to be correct
         last time or not.
     **  `tag` - used for verifying that the entry corresponds to the current branch instruction.
@@ -590,11 +590,42 @@ Source: Andre Seznec, Pierre Michaud, A case for (partially) TAgged GEometric hi
 [[Operation_of_TAGE]]
 === Operation of TAGE
 
-When prediction is requested, the Bi-Modal table (T0) and tagged components (Ti; 1 < i < M) are
-accessed simultaneously. The Bi-modal table (base predictor) provides the default prediction.
-Whereas the tagged components provide a prediction only on a tag match. The overall prediction is
-provided by the hitting tagged predictor component that uses the longest history length. In case of
-no matching tagged predictor component, the prediction given by default predictor is used. [1]
+==== How is prediction made?
+
+* When prediction is requested, the Bi-Modal table (T0) is accessed using PC and the tagged components
+(Ti; 1 < i < M) are accessed using a hash of PC and geometrically increasing numbers of branch history bits.
+
+* The Bi-modal table (base predictor) provides the default prediction.
+
+* Whereas the tagged components provide a prediction only on a tag match.
+
+* The overall prediction is provided by the hitting tagged predictor component that uses the longest history length.
+In case of no matching tagged predictor component, the prediction given by default predictor is used. [1]
+
+==== Internal state update
+
+* Global resetting of useful component - After a certain number of branch instructions, useful bits of all the entries
+are reset.
+
+* When prediction is correct
+
+** The counter bits of provider component is updated appropriately.
+
+** The useful bits of provider component is incremented whenever prediction is correct and altpred is incorrect (TODO :
+verify condition).
+
+** No new entry is allocated anywhere.
+
+* When prediction is incorrect
+
+** The counter bits of provider component is updated appropriately.
+
+** As a second step, if the provider component (Ti) is not the component using the longest history (i.e i < M), we try
+to allocate a new entries to components (Tk) using a longest history (i.e i < k < M).
+
+*** TODO : Deciding the number of newer entries to allocate on mis-prediction.
+
+*** In order to allocate newer entries, useful bits are read and the component whose useful bits are null is chosen.
 
 [[Parameters_of_TAGE]]
 === Parameters of TAGE
@@ -632,27 +663,31 @@ lengths
 6.  `uint8_t  tage_useful_bits_` - Number of bits used in the 'useful' component of tagged entry.
 
 7. `uint32_t tage_global_hist_buff_len_` - Length of the global history buffer used by TAGE.
-8. `uint32_t tage_folded_hist_buff_len_` - Length of the history buffer used for folded history entries.
+8. `std::vector<uint8_t> tage_gloabl_history_` - GHR used by TAGE.
+9. `uint32_t tage_folded_hist_buff_len_` - Length of the history buffer used for folded history entries.
 
-9. `uint32_t tage_path_hist_buff_len_` - Length of the path history buffer
+10. `uint32_t tage_path_hist_buff_len_` - Length of the path history buffer
 
-10. `uint32_t tage_min_hist_len_` - Minimum length of history used in TAGE.
-11. `uint8_t tage_hist_alpha_` - Common ratio of geometric progression with which history length increases. 
-12. `uint32_t tage_reset_useful_interval_` - Interval after which useful bits are reset.
-
-13. `TageBIM tage_bim_` - Bi-modal table of the TAGE predictor.
-14. `std::vector<TageTaggedComponent> tage_tagged_components_` - Array of tagged components of TAGE predictor.
+11. `uint32_t tage_min_hist_len_` - Minimum length of history used in TAGE.
+12. `uint8_t tage_hist_alpha_` - Common ratio of geometric progression with which history length increases.
+13. `uint32_t tage_reset_useful_interval_` - Interval after which useful bits are reset.
+14. `uint32_t branch_counter` - To keep track of number of branches predicted. Used for resetting useful bits
+periodically.
+15. `TageBIM tage_bim_` - Bi-modal table of the TAGE predictor.
+16. `std::vector<TageTaggedComponent> tage_tagged_components_` - Array of tagged components of TAGE predictor.
 
 [[Functions_list_of_TAGE]]
 === Functions list
 
 ==== Public functions
-* `uint8_t predict(uint64_t ip)` - Returns the prediction from TAGE
-* `bool addTaggedEntry()`
-* `bool removedTaggedEntry()`
+1. `uint8_t predict(uint64_t PC)` - Returns the prediction from TAGE for a given PC.
+2. `void update()` - Updates the internal state of TAGE based on the `UpdateInput` received by the BPU.
 
 ==== Private functions
-
+1. `uint32_t tage_hasher(uint64_t PC, std::vector<uint8_t> & tage_global_history, uint32_t hist_length_bits)` - Returns the index value
+obtained by combining PC and history bits.
+2. `void resetAllUseful()` - Resets `useful` component of all the tagged component entries of TAGE.
+3. `bool allocateEntries()`
 
 [[Bimodal_table_of_TAGE]]
 == Bimodal Table of TAGE
@@ -673,7 +708,7 @@ tage_base_ctr_bits_(tage_base_ctr_bits) {}`
 === Data members
 
 ==== Private data members
-1. `uint32_t tage_bim_table_size_` - Represents maximum size of the BIM table of TAGE
+1. `uint32_t tage_bim_max_size_` - Represents maximum size of the BIM table of TAGE
 2. `uint8_t tage_bim_ctr_bits_` - Represents the number of bits used in counter of BIM table
 3. `std::vector<uint8_t> Tage_Bimodal_` - Represents the container used for BIM in the
 implementation
@@ -694,7 +729,7 @@ None
 [[Tagged_Component_Entry_of_TAGE]]
 == Tagged Component Entry of TAGE
 
-Tagged components of TAGE predictor provides prediction for different history lengths.
+Represents the blueprint of the entry of the tagged components of TAGE predictor.
 
 [[class_description_of_TAGE_Tagged_Component]]
 === Class description
@@ -702,19 +737,23 @@ Tagged components of TAGE predictor provides prediction for different history le
 
 ==== Constructor -
 
-`TageTaggedComponentEntry(uint16_t Tag, uint8_t tage_ctr_bits, uint8_t tage_useful_bits) : Tag_(Tag),
-tage_ctr_bits_(tage_ctr_bits), tage_useful_bits_(tage_useful_bits) {}`
+`TageTaggedComponentEntry(uint16_t tag, uint8_t tage_ctr_bits, uint8_t tage_useful_bits, uint8_t ctr_initial,
+uint8_t useful_initial) : tag(tag), tage_ctr_bits_(tage_ctr_bits), tage_useful_bits_(tage_useful_bits),
+ctr_(ctr_initial), useful_(useful_initial) {}`
+
+* ctr_ is initialized with ctr_initial.
+* useful_ is initialized with useful_initial.
 
 === Data members
 
 ==== Private data members
-1. `uint16_t Tag_` - Used for verifying that the entry corresponds to the current branch instruction.
-2. `uint8_t tage_ctr_bits_` - Number of bits to be used for Tage component entry counter(ctr)
-3. `uint8_t tage_useful_bits_` - Number of bits to be used for Tage component entry useful value(u)
-4. `uint8_t ctr_` - Represent counter(ctr) value of tage tagged component entry.
-5. `uint8_t useful_` - Represent useful(u) value of tage tagged component entry.
+1. `uint8_t tage_ctr_bits_` - Number of bits to be used for Tage component entry counter(ctr)
+2. `uint8_t tage_useful_bits_` - Number of bits to be used for Tage component entry useful value(u)
+3. `uint8_t ctr_` - Represent counter(ctr) value of tage tagged component entry.
+4. `uint8_t useful_` - Represent useful(u) value of tage tagged component entry.
 
 ==== Public data members
+1. `uint16_t tag` - Used for verifying that the entry corresponds to the current branch instruction.
 
 === Functions list
 
@@ -724,6 +763,7 @@ tage_ctr_bits_(tage_ctr_bits), tage_useful_bits_(tage_useful_bits) {}`
 2. `void decrementCtr()` - Decrement the counter bit within the bounds of tage_ctr_bits
 3. `void incrementUseful()`- Increment the useful bit within the bounds of tage_useful_bits
 4. `void decrementUseful()` - Decrement the useful bit within the bounds of tage_useful_bits
+5. `void resetUseful()` - Sets useful bit of current entry as null(or zero).
 
 ==== Private functions
 None
@@ -743,25 +783,30 @@ Includes `TageTaggedComponentEntry` class
 
 ==== Constructor
 
-`TageTaggedComponent(uint16_t num_tagged_entry) : num_tagged_entry_(num_tagged_entry) {}`
+`TageTaggedComponent(uint16_t num_tagged_entry, uint8_t ctr_initial, uint8_t useful_initial) :
+num_tagged_entry_(num_tagged_entry), ctr_initial_(ctr_initial), useful_initial_(useful_initial)
+{}`
 
 === Data Members
 
 ==== Public Data Members
 
 ==== Private Data Members
-1. `num_tagged_entry_` - Defines the maximum number of allowed entry in the current tagged component.
-2. `std::vector<TageTaggedComponentEntry> tage_tagged_component_` - Defines the internal container used to
+1. `uint16_t max_capacity_` - Defines the maximum number of allowed entry in the current tagged component.
+2. `uint8_t ctr_initial_` - Defines the value with which `ctr` of all entries in the current component will
+be initialized.
+3. `uint8_t useful_initial_` - Defines the value with which `useful_` of all entries in the current component will
+be initialized.
+4. `std::vector<TageTaggedComponentEntry> tage_tagged_component_` - Defines the internal container used to
 store elements of a tagged component.
 
 === Functions list
 
 ==== Public functions
-1. `addEntry()`
-2. `removeEntry()`
+1. `addEntry(uint8_t tag, uint16_t ctr, uint16_t useful)` - Function to allocate a new entry to the current table of TAGE.
+2. `removeEntry(uint16_t ip)` - Function to de-allocate an entry from the current table of TAGE.
 
 ==== Private functions
-
 
 == Statistical Corrector
 
@@ -821,16 +866,11 @@ whose entries are used to predict loops.
 uint8_t confidence, uint8_t age, bool direction)`
 
 1. `uint16_t past_iter` - Stores the 14-bit count for the number of iterations seen in past
-
 2. `uint16_t current_iter` - stores the 14-bit count for the number of iterations seen currently
-
 3. `uint16_t tag` - Stores the 14-bit tag for the entry
-
-4. `uint8_t confidence` - 2-bit counter signifying confidence in prediction
-
-5. `uint8_t age` - 8-bit counter signifying age of entry
-
-6. `bool direction` - Stores the direction bit
+4. `uint8_t  confidence` - 2-bit counter signifying confidence in prediction
+5. `uint8_t  age` - 8-bit counter signifying age of entry
+6. `bool     direction` - Stores the direction bit
 
 
 [[Functions_list_of_loop_predictor]]
@@ -935,23 +975,20 @@ NA
 === Class Description of FTQEntry
 
 ==== Constructor -
-`FTQEntry(uint64_t targetPC, uint64_t correctedPC, bool predDirection, bool correctedDirection) :
-targetPC_(targetPC), correctedPC_(correctedPC), predDirection_(predDirection), correctedDirection_(correctedDirection) {}`
+`FTQEntry(uint64_t targetPC, uint64_t correctedPC, bool predDirection, bool correctedDirection) {}`
 
 === Data members
 
 ==== Public members
 
 ==== Private members
-** `uint64_t targetPC_`
-
-** `uint64_t correctedPC_`
-
-** `bool predDirection_`
-
-** `bool correctedDirection_`
-
-** `uint8_t status_` - Indicates if the prediction has been sent from FTQ to Fetch/ICache or not.
+** `uint64_t instrPC_` - PC of instruction corresponding to current FTQ entry.
+** `uint64_t predTargetPC_` - Predicted target PC
+** `uint64_t correctedTargetPC_` - Actual target PC
+** `bool     predDirection_` - Predicted direction of branch (Taken/Not-Taken)
+** `bool     correctedDirection_` - Actual direction taken by branch instruction.
+** `uint8_t  status_` - Indicates if the prediction corresponding to this entry has been sent from FTQ to Fetch/ICache
+or not.
 
 === Functions list
 
@@ -961,8 +998,8 @@ targetPC_(targetPC), correctedPC_(correctedPC), predDirection_(predDirection), c
 2. `uint64_t getCorrectedPC()`
 3. `bool     getPredDirection()`
 4. `bool     getCorrectedDirection()`
-5. `void     setCorrectedPC()` - sets the `correctedPC_` variable
-6. `void     setCorrectedDirection()` - sets the `correctedDirection_` varibale
+5. `void     setCorrectedPC(uint64_t correctedPC)` - sets the `correctedPC_` variable
+6. `void     setCorrectedDirection(bool correctedDirection)` - sets the `correctedDirection_` varibale
 
 ==== Private functions
 NA

@@ -53,66 +53,27 @@ which are used to update the BPU once instructions are finally committed.
 [[OVERVIEW]]
 == OVERVIEW
 
-Branch Prediction Unit is the unit responsible for predicting the branch
-outcomes and branch targets before branch instructions are actually
-resolved in the pipeline. This prediction allows the processor to prefetch and execute subsequent instructions without waiting to resolve the branch condition, minimizing stalls and maintaining high throughput in the pipeline.
+Branch Prediction Unit is the unit responsible for predicting the branch outcomes and branch targets before branch
+instructions are actually resolved in the pipeline. This prediction allows the processor to prefetch and execute
+subsequent instructions without waiting to resolve the branch condition, minimizing stalls and maintaining high
+throughput in the pipeline.
 
-It receives prediction input in the form of PC and instruction type from the
-Fetch unit and predicts the direction and target address from which Fetch unit
-has to get the next instruction.
+The proposed design receives input in the form of `PredictionRequest` from the Fetch unit and predicts in the form
+of `PredictionRequest` (includes direction and target address) from which Fetch unit fetches the next instruction.
+Information to update the internal state of BPU is received in the form of `UpdateInput` when the instructions are
+committed.
 
-[[Functional_Description]]
-== Functional Description
+Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of a
+prediction input, prediction output, and the update input.
 
-The proposed Branch Prediction Unit (BPU) is a two-tiered branch predictor where the
-first tier(BasePredictor) provides a simple but fast prediction, whereas the second tier(TAGE_SC_L)
-can give more accurate prediction but takes an additional cycle.
-
-[[Counters]]
-=== Counters
-
-** `pred_req_num` - Total number of prediction requests made to BPU
-** `num_mispred` - Total number of mis-predictions
-** `mispred_perc` - Percentage of mis-predictions
-** `branch_req_num` - Total number of prediction requests made which are conditional branch instructions.
-** `call_req_num` - Total number of prediction requests made which are call/jump type.
-** `return_req_num` - Total number of prediction requests made which are return type.
-** `pht_req_num` - Total number of requests made to PHT.
-** `pht_hit_num` - Total number of times when requested index is hit on PHT.
-** `pht_miss_rate` - Total number of times when requested index is miss on PHT.
-** `pht_mispred_perc` - Percentage of times when PHT mispredicted. 
-** `btb_req_num` - Total number of requests made to BTB.
-** `btb_hit_rate` - Total number of times when requested index is hit on BTB.
-** `btb_miss_rate` - Total number of times when requested index is miss on BTB.
-** `ras_high_mark` - Highest size of RAS during an execution cycle.
-** `ras_low_mark` - Lowest size of RAS during an execution cycle.
-
-[[Unit_Block_Diagram]]
-=== Unit Block Diagram
-
-image:media/bpu_uarch.png[image,width=800,height=366]
-
-Figure 1 - Unit block diagram of BPU
-
-[[Block_Diagram_Description]]
-=== Block Diagram Description
-
-BPU consists of a BasePredictor, a TAGE_SC_L-Predictor, and an FTQ (a
-queue) which stores the information of all in-flight branch instructions
-and is required in order to update the state of BPU once instruction are finally
-committed, it also enables multi-tier prediction by buffering the initial prediction
-while BPU accesses its higher level of hierarchy.
-
-[[Description_of_PredictionRequest]]
-== Description of PredictionRequest
-
-Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of a prediction input.
+[[PredictionRequest]]
+== PredictionRequest
 
 [[Overview_of_PredictionRequest]]
 ===  Overview
-PredictionRequest is received by the BPU from the Fetch unit whenever a request for
-the prediction is made. Based on the data provided by this input, BPU makes the
-prediction.
+
+`PredictionRequest` is received by the BPU from the Fetch unit whenever a request for the prediction is made. Based on
+the data provided by this input, BPU makes the prediction.
 
 [[Structure_of_PredictionRequest]]
 ===  Structure of PredictionRequest
@@ -123,7 +84,9 @@ prediction.
 [[Class_Description]]
 ===  Class Description
 
-==== Constructor -
+`class PredictionRequest`
+
+==== Constructor
 `PredictionRequest(uin64_t PC, uint8_t instType) : PC_(PC), instType_(instType) {}`
 
 === Data members
@@ -132,15 +95,12 @@ prediction.
 **  `uint64_t PC_`
 **  `uint8_t  instType_`
 
-[[Description_of_PredictionOutput]]
-== Description of PredictionOutput
-
-Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of a prediction output.
+[[PredictionOutput]]
+== PredictionOutput
 
 [[Overview_of_PredictionOutput]]
 ===  Overview
-PredictionOutput is the format in which predictions made by the BPU is sent out
-to the Fetch unit.
+PredictionOutput is the format in which predictions made by the BPU is sent out to the Fetch unit.
 
 [[Structure_of_PredictionOutput]]
 ===  Structure of PredictionOutput
@@ -163,16 +123,13 @@ to the Fetch unit.
 ** `bool predDirection_`
 ** `uint64_t predPC_`
 
-[[Description_of_UpdateInput]]
-== Description of UpdateInput
-
-Olympia's Branch Prediction API expects the implementation of Branch Predictor to specify its implementation of an update input.
+[[UpdateInput]]
+== UpdateInput
 
 [[Overview_of_UpdateInput]]
 ===  Overview
 
-Once the instructions are committed, UpdateInput is sent to the BPU in order to
-update BPU's internal state in case of mis-prediction.
+Once the instructions are committed in the pipeline, `UpdateInput` is sent to the BPU to update its internal state.
 
 [[Structure_of_UpdateInput]]
 ===  Structure of UpdateInput
@@ -209,8 +166,53 @@ correctedDirection_(correctedDirection), correctedTargetPC_(correctedTargetPC) {
 This section describes the overview and description for the top level class
 which bolts the Branch Prediction Unit into the Olympia simulator.
 
+[[Functional_Description]]
+=== Functional Description
+
+The proposed Branch Prediction Unit (BPU) is a two-tiered branch predictor where the
+first tier(BasePredictor) provides a simple but fast prediction, whereas the second tier(TAGE_SC_L)
+can give more accurate prediction but takes an additional cycle.
+
+[[Counters]]
+=== Counters
+
+** `pred_req_num` - Total number of prediction requests made to BPU
+** `num_mispred` - Total number of mis-predictions
+** `mispred_perc` - Percentage of mis-predictions
+** `branch_req_num` - Total number of prediction requests made which are conditional branch instructions.
+** `call_req_num` - Total number of prediction requests made which are call/jump type.
+** `return_req_num` - Total number of prediction requests made which are return type.
+** `pht_req_num` - Total number of requests made to PHT.
+** `pht_hit_num` - Total number of times when requested index is hit on PHT.
+** `pht_miss_rate` - Total number of times when requested index is miss on PHT.
+** `pht_mispred_perc` - Percentage of times when PHT mispredicted.
+** `btb_req_num` - Total number of requests made to BTB.
+** `btb_hit_rate` - Total number of times when requested index is hit on BTB.
+** `btb_miss_rate` - Total number of times when requested index is miss on BTB.
+** `ras_high_mark` - Highest size of RAS during an execution cycle.
+** `ras_low_mark` - Lowest size of RAS during an execution cycle.
+
+[[Unit_Block_Diagram]]
+=== Unit Block Diagram
+
+image:media/bpu_uarch.png[image,width=800,height=366]
+
+Figure 1 - Unit block diagram of BPU
+
+[[Block_Diagram_Description]]
+=== Block Diagram Description
+
+BPU consists of a BasePredictor, a TAGE_SC_L Predictor, and an FTQ (a
+queue) which stores the information of all in-flight branch instructions
+and is required in order to update the state of BPU once instruction are finally
+committed, it also enables multi-tier prediction by buffering the initial prediction
+while BPU accesses its higher level of hierarchy.
+
+[[Ports_of_BPU]]
+=== Ports of BPU
+
 [[Input_Ports_BPU]]
-=== Input Ports in BPU
+==== Input Ports in BPU
 
 **  `in_fetch_prediction_request` - To receive `PredictionRequest` from Fetch unit.
 
@@ -220,7 +222,7 @@ which bolts the Branch Prediction Unit into the Olympia simulator.
 branch, UpdateInput is used to update the internal state of BPU.
 
 [[Output_Ports_BPU]]
-=== Output Ports in BPU
+==== Output Ports in BPU
 
 ** `out_fetch_prediction_request_credits` - To send credits to Fetch unit to indicate availability of slots in BPU to
 receive `PredictionRequest`.
@@ -537,16 +539,19 @@ PHT and RAS.
 
 === Class description
 
-`class Tage_SC_L`
+`class TAGE_SC_L`
 
 ==== Constructor
-`Tage_SC_L()`
+`TAGE_SC_L()`
 
 === Data members
 
 ==== Public members
 
 ==== Private members
+* `TAGE tage_`
+* `StatisticalCorrector statisticalCorrector_`
+* `LoopPredictor loopPredictor_`
 
 === Functions list
 

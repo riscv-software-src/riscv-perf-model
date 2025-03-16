@@ -64,41 +64,9 @@ has to get the next instruction.
 [[Functional_Description]]
 == Functional Description
 
-The proposed branch prediction unit is a two-tiered branch predictor where the
-first tier provides a simple but fast prediction, whereas the second tier consists
-of a more accurate predictor which can predict even complex branches but takes an
-additional cycle.
-
-[[Input_Ports_BPU]]
-=== Input Ports in BPU
-
-**  `in_fetch_predictionOutput_credits` - To receive credits from Fetch unit to indicate availability of slots to send PredictionOutput to Fetch
-
-**  `in_fetch_predictionRequest` - To receive prediction requests from Fetch unit
-
-**  `TODO-`: input port to receive de-allocated FTQ entry once that instruction packet is committed.
-
-[[Corresponding_output_ports]]
-==== Corresponding Output Ports
-
-** `out_bpu_predictionOutput_credits` - in Fetch.cpp. To send credits to BPU to indicate availability of slots to receive PredictionOutput.
-
-** `out_bpu_predictionRequest` - in Fetch.cpp. To send PredictionRequest to BPU.
-
-
-[[Output_Ports_BPU]]
-=== Output Ports in BPU
-
-** `out_fetch_predictionRequest_credits` - To send credits to Fetch unit to indicate availability of slots in BPU to receive PredictionRequest.
-
-** `out_fetch_predictionOutput` - To send PredictionOutput to Fetch unit.
-
-[[Corresponding_input_ports]]
-==== Corresponding Input Ports
-
-** `in_bpu_predictionRequest_credits` -  in Fetch.cpp. To receive credits from BPU to indicate availabilty in BPU to send PredictionRequest.
-
-** `in_bpu_predictionOutput` - in Fetch.cpp. To receive PredictionOutput from BPU.
+The proposed Branch Prediction Unit (BPU) is a two-tiered branch predictor where the
+first tier(BasePredictor) provides a simple but fast prediction, whereas the second tier(TAGE_SC_L)
+can give more accurate prediction but takes an additional cycle.
 
 [[Counters]]
 === Counters
@@ -241,6 +209,26 @@ correctedDirection_(correctedDirection), correctedTargetPC_(correctedTargetPC) {
 This section describes the overview and description for the top level class
 which bolts the Branch Prediction Unit into the Olympia simulator.
 
+[[Input_Ports_BPU]]
+=== Input Ports in BPU
+
+**  `in_fetch_prediction_request` - To receive `PredictionRequest` from Fetch unit.
+
+**  `in_ftq_credits_` - To receive credits from FTQ to indicate its availability to receive predictions.
+
+**  `in_ftq_update_input_` - To receive UpdateInput from FTQ once the instruction is committed. After resolution of
+branch, UpdateInput is used to update the internal state of BPU.
+
+[[Output_Ports_BPU]]
+=== Output Ports in BPU
+
+** `out_fetch_prediction_request_credits` - To send credits to Fetch unit to indicate availability of slots in BPU to
+receive `PredictionRequest`.
+
+** `out_ftq_first_prediction_` - To send prediction made by first level (BasePredictor) of the BPU to FTQ.
+
+** `out_ftq_second_prediction_` - To send prediction made by second level (TAGE_SC_L) of the BPU to FTQ.
+
 [[Parameterization_of_BPU]]
 === Parameterization of BPU
 1. `ghr_size` - Maximum number of branch history bits stored in Global
@@ -267,7 +255,7 @@ loop predictor table
 13. `loop_pred_table_way` - Defines the Way size of the loop predictor table
 
 [[Class_heirarchy_of_BPU]]
-=== Class heirarchy 
+=== Class Hierarchy
 
 * BPU inherits `sparta::Unit`
 * BPU inherits BranchPredictorIF.hpp
@@ -282,51 +270,50 @@ loop predictor table
 === Data members
 
 ==== Private members
-* `ghr_` -  Represents the GHR.
+* `uint64_t ghr_` -  Represents the GHR.
 
 ==== Public members
 
-* Olympia's Branch Predictpor API expects that an implementation of branch predictor must also specify the implementations of `getPrediction(const PredictionRequest &)` and `updatePredictor(const UpdateInput &)` operations
+Olympia's Branch Predictor API expects that an implementation of branch predictor must also specify the
+implementations of `getPrediction(const PredictionRequest &)` and `updatePredictor(const UpdateInput &)` operations.
 
 === Function list
 
 ==== Public functions
-1. `PredictionOutput getPrediction(const PredictionRequest &)`
-        ** Returns the PredictionOutput based on the PredictionRequest received.
+1. `PredictionOutput getPrediction(const PredictionRequest &)` - Returns the PredictionOutput based on the
+PredictionRequest received.
 
-2. `void updatePredictor(const UpdateInput &)`
-        ** Updates the internal state of the BasePredictor as well as the TAGE-SC-L predictor.
+2. `void updatePredictor(const UpdateInput &)` - Updates the internal state of the BasePredictor as well as the
+TAGE-SC-L predictor.
 
 ==== Private functions
-1.   `void recievePredictionRequest()`
-        **  Called whenever PredictionRequest is received on input port of BPU.
+1. `void recievePredictionRequest()`
+        ** Called whenever PredictionRequest is received on input port of BPU.
         ** Store requests in temporary input buffer to be utilised by BasePredictor and TAGE-SC-L.
 
-2.   `void recievePredictionUpdate()`
-        ** Receives UpdateInput from input port in BPU once instructions are committed.
-        ** Store deallocated FTQ entries in internal buffer in order to be used by BasePredictor and TAGE-SC-L to update itself.
+2. `void makePrediction()`
+        ** To send incoming prediction request to `BasePredictor` and `TAGE-SC-L` to get prediction.
 
-3.   `PredictionOutput sendPrediction()`
-        ** Sends prediction to Fetch unit.
-        ** Makes entry in FTQ.
-        ** Later on, handle any potential prediction override between TAGE and BasePredictor.
+3. `void receiveCreditsFromFTQ()`
+        ** To receive credits from Fetch unit to indicate availability of slots to receive prediction.
 
-4.   `void sendCreditsToFetch()`
-        ** Send credits to Fetch unit to indicate availabilty of slots to receive prediction input.
+4. `void sendFirstPrediction()`
+        ** Sends prediction made by BasePredictor to FTQ.
 
-5.   `void receiveCreditsFromFetch()`
-        ** To receive credits from Fetch unit to inidcate availabilty of slots to receive prediction output.
+5. `void sendSecondPrediction()`
+        ** Sends prediction made by TAGE-SC-L to FTQ.
 
-6.   `void makePrediction()`
-        ** To send incoming prediction request to BasePredictor and TAGE-SC-L to get prediction.
+6. `void recieveUpdateInput()`
+        ** Receives UpdateInput from `in_ftq_update_input_`.
 
-7.   `void updateGHRTaken()`
+7. `void sendCreditsToFetch()`
+        ** Send credits to Fetch unit to indicate availability of slots to receive `PredictionRequest`.
+
+8.   `void updateGHRTaken()`
         ** shifts all history bits by 1 position to left, and set last bit as 1.
 
-8.   `void updateGHRNotTaken()` 
+9.   `void updateGHRNotTaken()`
         ** Shifts all history bits by 1 position to left, and set last bit as 0.
-
-
 
 [[Description_of_BasePredictor]]
 == BasePredictor

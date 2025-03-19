@@ -122,6 +122,10 @@ namespace olympia
 
         ILOG("num to retire: " << num_to_retire);
 
+        // Send instructions to rename
+        InstGroupPtr retired_insts =
+            sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+
         uint32_t retired_this_cycle = 0;
         for (uint32_t i = 0; i < num_to_retire; ++i)
         {
@@ -139,8 +143,6 @@ namespace olympia
                 {
                     out_rob_retire_ack_.send(ex_inst_ptr);
                 }
-                // sending retired instruction to rename
-                out_rob_retire_ack_rename_.send(ex_inst_ptr);
 
                 // All instructions count as 1 uop
                 ++num_uops_retired_;
@@ -169,6 +171,8 @@ namespace olympia
 
                 retire_event_.collect(*ex_inst_ptr);
                 last_inst_retired_ = ex_inst_ptr;
+
+                retired_insts->emplace_back(ex_inst_ptr);
 
                 if (SPARTA_EXPECT_FALSE((num_retired_ % retire_heartbeat_) == 0))
                 {
@@ -207,6 +211,11 @@ namespace olympia
             {
                 break;
             }
+        }
+
+        if(false == retired_insts->empty()) {
+            // sending retired instruction to rename
+            out_rob_retire_ack_rename_.send(retired_insts);
         }
 
         if (false == reorder_buffer_.empty())
@@ -268,7 +277,9 @@ namespace olympia
     // sys gets flushed unless it is csr rd
     void ROB::retireSysInst_(InstPtr &ex_inst)
     {
-        auto srclist = ex_inst->getRenameData().getSourceList();
+        // All sys instructions use integer registers
+        auto srclist = ex_inst->getRenameData().getSourceList(core_types::RegFile::RF_INTEGER);
+
         // if SYS instr is not a csr instruction flush
         // if SYS instr is a csr but src1 is not x0, flush
         // otherwise it is a csr read, therefore don't flush

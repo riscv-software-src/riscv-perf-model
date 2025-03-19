@@ -97,52 +97,65 @@ namespace olympia
 
     void IssueQueue::handleOperandIssueCheck_(const InstPtr & ex_inst)
     {
-        const auto srcs = ex_inst->getRenameData().getSourceList();
-
-        // Lambda function to check if a source is ready.
-        // Returns true if source is ready.
-        // Returns false and registers a callback if source is not ready.
-        auto check_src_ready = [this, ex_inst](const Inst::RenameData::Reg & src)
-        {
-            // vector-scalar operations have 1 vector src and 1 scalar src that
-            // need to be checked, so can't assume the register files are the
-            // same for every source
-            auto reg_file = src.rf;
-            const auto & src_bits = ex_inst->getSrcRegisterBitMask(reg_file);
-            if (scoreboard_views_[reg_file]->isSet(src_bits))
-            {
-                return true;
-            }
-            else
-            {
-                // temporary fix for clearCallbacks not working
-                scoreboard_views_[reg_file]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
-                    [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
-                    {
-                        this->handleOperandIssueCheck_(ex_inst);
-                    }
-                );
-                return false;
-            }
-        };
-
+        // Assume all ready
         bool all_srcs_ready = true;
-        for (const auto & src : srcs)
-        {
-            const bool src_ready = check_src_ready(src);
 
-            if (!src_ready)
+        for (auto reg_file = 0; reg_file < core_types::RegFile::N_REGFILES; ++reg_file)
+        {
+            const auto srcs =
+                ex_inst->getRenameData().getSourceList(static_cast<core_types::RegFile>(reg_file));
+
+            if(true == srcs.empty()) { continue; }
+
+            // Lambda function to check if a source is ready.
+            // Returns true if source is ready.
+            // Returns false and registers a callback if source is not ready.
+            auto check_src_ready = [this, ex_inst](const RenameData::Reg & src,
+                                                   auto reg_file)
             {
-                ILOG("Instruction NOT ready: " << ex_inst <<
-                     " Bits needed:" << sparta::printBitSet(ex_inst->getSrcRegisterBitMask(src.rf)) <<
-                     " rf: " << src.rf);
-                all_srcs_ready = false;
-                // we break to prevent multiple callbacks from being sent out
-                break;
+                // vector-scalar operations have 1 vector src and 1
+                // scalar src that need to be checked, so can't assume
+                // the register files are the same for every source
+                const auto & src_bits =
+                    ex_inst->getSrcRegisterBitMask(static_cast<core_types::RegFile>(reg_file));
+                if (scoreboard_views_[reg_file]->isSet(src_bits))
+                {
+                    return true;
+                }
+                else
+                {
+                    // temporary fix for clearCallbacks not working
+                    scoreboard_views_[reg_file]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
+                                                                       [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
+                                                                       {
+                                                                           this->handleOperandIssueCheck_(ex_inst);
+                                                                       }
+                        );
+                    return false;
+                }
+            };
+
+            for (const auto & src : srcs)
+            {
+                const bool src_ready = check_src_ready(src, reg_file);
+
+                if (!src_ready)
+                {
+                    ILOG("Instruction NOT ready: " << ex_inst <<
+                         " Bits needed:" << sparta::printBitSet(ex_inst->
+                                                                getSrcRegisterBitMask(static_cast<core_types::RegFile>(reg_file))) <<
+                         " rf: " << reg_file);
+                    all_srcs_ready = false;
+
+                    // we break to prevent multiple callbacks from
+                    // being sent out
+                    break;
+                }
             }
         }
 
-        // we wait till the final callback comes back and checks in the case where both RF are ready at the same time
+        // we wait till the final callback comes back and checks in
+        // the case where both RF are ready at the same time
         if (all_srcs_ready)
         {
             // all register file types are ready
@@ -157,9 +170,9 @@ namespace olympia
     void IssueQueue::readyExeUnit_(const uint32_t & readyExe)
     {
         /*
-        TODO:
-        have a map/mask to see which execution units are ready
-        signal port
+          TODO:
+          have a map/mask to see which execution units are ready
+          signal port
         */
         if (!ready_queue_.empty())
         {

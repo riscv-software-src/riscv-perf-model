@@ -150,7 +150,8 @@ namespace olympia
             VLOAD_BUSY = InstArchInfo::TargetPipe::VLOAD,
             VSTORE_BUSY = InstArchInfo::TargetPipe::VSTORE,
             VSET_BUSY = InstArchInfo::TargetPipe::VSET,
-            NO_ROB_CREDITS = InstArchInfo::TargetPipe::SYS, // No credits from the ROB
+            NO_ROB_CREDITS = InstArchInfo::TargetPipe::ROB,
+            SYS_BUSY = InstArchInfo::TargetPipe::SYS, // No credits from the ROB
             NOT_STALLED, // Made forward progress (dispatched all instructions or no instructions)
             N_STALL_REASONS
         };
@@ -213,6 +214,8 @@ namespace olympia
                                   sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_rob_full", "No credits from ROB",
                                   sparta::Counter::COUNT_NORMAL, getClock()),
+             sparta::CycleCounter(getStatisticSet(), "sys_busy", "System Unit Busy",
+                                  sparta::Counter::COUNT_NORMAL, getClock()),
              sparta::CycleCounter(getStatisticSet(), "stall_not_stalled",
                                   "Dispatch not stalled, all instructions dispatched",
                                   sparta::Counter::COUNT_NORMAL, getClock())}};
@@ -268,8 +271,11 @@ namespace olympia
                              sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_vset_insts", "Total VSET insts",
                              sparta::Counter::COUNT_NORMAL),
+             sparta::Counter(getStatisticSet(), "count_rob_insts", "Total ROB-only insts",
+                             sparta::Counter::COUNT_NORMAL),
              sparta::Counter(getStatisticSet(), "count_sys_insts", "Total SYS insts",
-                             sparta::Counter::COUNT_NORMAL)}};
+                             sparta::Counter::COUNT_NORMAL)
+            }};
 
         // As an example, this is a context counter that does the same
         // thing as the unit_distribution counter, albeit a little

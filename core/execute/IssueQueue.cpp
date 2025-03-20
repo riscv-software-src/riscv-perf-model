@@ -105,13 +105,15 @@ namespace olympia
             const auto srcs =
                 ex_inst->getRenameData().getSourceList(static_cast<core_types::RegFile>(reg_file));
 
-            if(true == srcs.empty()) { continue; }
+            if (true == srcs.empty())
+            {
+                continue;
+            }
 
             // Lambda function to check if a source is ready.
             // Returns true if source is ready.
             // Returns false and registers a callback if source is not ready.
-            auto check_src_ready = [this, ex_inst](const RenameData::Reg & src,
-                                                   auto reg_file)
+            auto check_src_ready = [this, ex_inst](const RenameData::Reg & src, auto reg_file)
             {
                 // vector-scalar operations have 1 vector src and 1
                 // scalar src that need to be checked, so can't assume
@@ -125,12 +127,10 @@ namespace olympia
                 else
                 {
                     // temporary fix for clearCallbacks not working
-                    scoreboard_views_[reg_file]->registerReadyCallback(src_bits, ex_inst->getUniqueID(),
-                                                                       [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
-                                                                       {
-                                                                           this->handleOperandIssueCheck_(ex_inst);
-                                                                       }
-                        );
+                    scoreboard_views_[reg_file]->registerReadyCallback(
+                        src_bits, ex_inst->getUniqueID(),
+                        [this, ex_inst](const sparta::Scoreboard::RegisterBitMask &)
+                        { this->handleOperandIssueCheck_(ex_inst); });
                     return false;
                 }
             };
@@ -141,10 +141,11 @@ namespace olympia
 
                 if (!src_ready)
                 {
-                    ILOG("Instruction NOT ready: " << ex_inst <<
-                         " Bits needed:" << sparta::printBitSet(ex_inst->
-                                                                getSrcRegisterBitMask(static_cast<core_types::RegFile>(reg_file))) <<
-                         " rf: " << reg_file);
+                    ILOG("Instruction NOT ready: "
+                         << ex_inst << " Bits needed:"
+                         << sparta::printBitSet(ex_inst->getSrcRegisterBitMask(
+                                static_cast<core_types::RegFile>(reg_file)))
+                         << " rf: " << static_cast<core_types::RegFile>(reg_file));
                     all_srcs_ready = false;
 
                     // we break to prevent multiple callbacks from

@@ -81,8 +81,9 @@ namespace olympia
                     // The number of non-tail elements in the uop is used to determine how many
                     // passes are needed
                     const VectorConfigPtr & vector_config = ex_inst->getVectorConfig();
-                    const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getLMUL();
-                    const uint32_t num_elems_remaining = \
+                    const uint32_t num_elems_per_uop =
+                        vector_config->getVLMAX() / vector_config->getLMUL();
+                    const uint32_t num_elems_remaining =
                         vector_config->getVL() - (num_elems_per_uop * (ex_inst->getUOpID() - 1));
                     const uint32_t vl = std::min(num_elems_per_uop, num_elems_remaining);
                     const uint32_t num_passes = std::ceil(vl / valu_adder_num_);

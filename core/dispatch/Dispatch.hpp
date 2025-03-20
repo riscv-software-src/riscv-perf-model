@@ -322,6 +322,11 @@ namespace olympia
             "count_lsu_insts + count_mul_insts + count_br_insts"};
 
         friend class DispatchTester;
+
+        // Called when the simulator is shutting down due to an
+        // exception.  Writes out text to aid debug
+        void dumpDebugContent_(std::ostream & output) const override final;
+
     };
 
     using DispatchFactory =

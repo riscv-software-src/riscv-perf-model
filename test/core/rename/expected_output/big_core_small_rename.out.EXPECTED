@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Wednesday Wed Mar 19 15:08:31 2025
-#Elapsed:  0.002281s
+#Start:    Thursday Thu Mar 20 11:50:33 2025
+#Elapsed:  0.002192s
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: DIViq0
 {0000000000 00000000 top.dispatch info} Dispatch: mapping target: INTiq1
@@ -32,22 +32,22 @@
 {0000000000 00000000 top.execute.exe8 info} ExecutePipe: ExecutePipe construct: #8
 {0000000000 00000000 top.execute.exe9 info} ExecutePipe: ExecutePipe construct: #9
 {0000000000 00000000 top.execute.exe10 info} ExecutePipe: ExecutePipe construct: #10
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} robCredits_: ROB got 30 credits, total: 30
 {0000000000 00000000 top.dispatch info} receiveCredits_: lsu got 10 credits, total: 10
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} receiveCredits_: iq0 got 8 credits, total: 8
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} receiveCredits_: iq1 got 8 credits, total: 8
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} receiveCredits_: iq2 got 8 credits, total: 8
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} receiveCredits_: iq3 got 8 credits, total: 8
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} receiveCredits_: iq4 got 8 credits, total: 8
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.dispatch info} receiveCredits_: iq5 got 8 credits, total: 8
-{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no rob credits or no instructions to process
+{0000000000 00000000 top.dispatch info} scheduleDispatchSession: no instructions to process
 {0000000000 00000000 top.decode info} inCredits: Got credits from dut: 10
 {0000000000 00000000 top.decode info} Sending group: 0x00000000 UID(0)  PID(1)  add
 {0000000001 00000001 top.rename info} scheduleRenaming_: current stall: NOT_STALLED
@@ -82,7 +82,7 @@
 {0000000003 00000003 top.dispatch info} acceptInst: iq0: dispatching uid:1    RENAMED 0 pid:2 uopid:0 'add	4,3,2' 
 {0000000003 00000003 top.dispatch info} dispatchInstructions_: Sending instruction: uid:1 DISPATCHED 0 pid:2 uopid:0 'add	4,3,2'  to iq0 of target type: INT
 {0000000003 00000003 top.rename info} scheduleRenaming_: current stall: NO_INTEGER_RENAMES
-{0000000004 00000004 top.execute.iq0 info} handleOperandIssueCheck_: Instruction NOT ready: uid:1 DISPATCHED 0 pid:2 uopid:0 'add	4,3,2'  Bits needed:[2,32] rf: 0
+{0000000004 00000004 top.execute.iq0 info} handleOperandIssueCheck_: Instruction NOT ready: uid:1 DISPATCHED 0 pid:2 uopid:0 'add	4,3,2'  Bits needed:[2,32] rf: integer
 {0000000004 00000004 top.rob info} robAppended_: retire appended: uid:1 DISPATCHED 0 pid:2 uopid:0 'add	4,3,2' 
 {0000000004 00000004 top.execute.exe0 info} executeInst_: Executed inst: uid:0  SCHEDULED 0 pid:1 uopid:0 'add	3,1,2' 
 {0000000004 00000004 top.rob info} retireInstructions_: num to retire: 2

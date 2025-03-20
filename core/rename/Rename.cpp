@@ -237,16 +237,12 @@ namespace olympia
                 }
             }
 
-            // FIXME: Let scalar Rename unit do bookkeeping for now
-            if (getContainer()->getGroupIdx() == 0)
-            {
-                sparta_assert(!inst_queue_.empty(), "ROB and rename inst_queue out of sync");
+            sparta_assert(!inst_queue_.empty(), "ROB and rename inst_queue out of sync");
 
-                const auto & oldest_inst = inst_queue_.front();
-                sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
-                              "ROB and rename inst_queue out of sync");
-                inst_queue_.pop_front();
-            }
+            const auto & oldest_inst = inst_queue_.front();
+            sparta_assert(oldest_inst->getUniqueID() == inst_ptr->getUniqueID(),
+                          "ROB and rename inst_queue out of sync");
+            inst_queue_.pop_front();
         }
 
         if (credits_dispatch_ > 0 && (uop_queue_.size() > 0))
@@ -260,10 +256,12 @@ namespace olympia
     {
         ILOG("Got a flush call for " << criteria);
 
-        // Restore the rename map, reference counters and freelist by walking through the
-        // inst_queue_ inst_queue_.erase((++it).base()) will advance the reverse_iterator and then
-        // erase the element it previously pointed to. it remains valid because we're erasing from
-        // the back of the deque
+        // Restore the rename map, reference counters and freelist by
+        // walking through the inst_queue_
+        // inst_queue_.erase((++it).base()) will advance the
+        // reverse_iterator and then erase the element it previously
+        // pointed to. it remains valid because we're erasing from the
+        // back of the deque
         for (auto it = inst_queue_.rbegin(); it != inst_queue_.rend();
              inst_queue_.erase((++it).base()))
         {
@@ -481,11 +479,7 @@ namespace olympia
             // Remove it from uop queue
             uop_queue_.erase(0);
 
-            // FIXME: Let scalar Rename unit do bookkeeping for now
-            if (getContainer()->getGroupIdx() == 0)
-            {
-                inst_queue_.emplace_back(inst_to_rename);
-            }
+            inst_queue_.emplace_back(inst_to_rename);
             rename_event_.collect(*inst_to_rename);
 
             if (partial_rename_)

@@ -84,6 +84,8 @@ namespace olympia
             std::vector<uint8_t> global_history_buff_;
         };
 
+        /***
+         * TODO
         class StatisticalCorrector
         {
           public:
@@ -104,5 +106,6 @@ namespace olympia
             StatisticalCorrector sc;
             LoopPredictor l;
         };
+        ***/
     } // namespace BranchPredictor
 } // namespace olympia

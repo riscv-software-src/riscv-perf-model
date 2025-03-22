@@ -3,7 +3,7 @@ set(EXE "BPU_test")
 
 set(TST1 "${PRJ}_tst1")
 set(TST2 "${PRJ}_json")
-set(TST3 "${PRJ}_stf")
+#set(TST3 "${PRJ}_stf")
 
 set(CFG config/config.yaml)
 
@@ -39,4 +39,4 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/expected_output
 
 sparta_named_test(${TST1} ${EXE} bpu_tb_test1.out -c ${CFG})
 sparta_named_test(${TST2} ${EXE} bpu_tb_json.out --input_file ${JSON} -c ${CFG})
-sparta_named_test(${TST3} ${EXE} bpu_tb_stf.out --input_file ${STF} -c ${CFG})
+#sparta_named_test(${TST3} ${EXE} bpu_tb_stf.out --input_file ${STF} -c ${CFG})

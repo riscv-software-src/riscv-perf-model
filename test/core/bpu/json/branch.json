@@ -2,13 +2,43 @@
     {
         "mnemonic": "beq",
         "rs1": 1,
-        "rs2": 4,
-        "offset": 2
+        "rs2": 2,
+        "vaddr": "0x1000",
+        "target": "0x2000"
     },
     {
         "mnemonic": "bne",
-        "rs1": 1,
+        "rs1": 3,
         "rs2": 4,
-        "offset": 1
+        "vaddr": "0x1004",
+        "target": "0x2004"
+    },
+    {
+        "mnemonic": "blt",
+        "rs1": 5,
+        "rs2": 6,
+        "vaddr": "0x1008",
+        "target": "0x2008"
+    },
+    {
+        "mnemonic": "bge",
+        "rs1": 7,
+        "rs2": 8,
+        "vaddr": "0x100C",
+        "target": "0x200C"
+    },
+    {
+        "mnemonic": "bltu",
+        "rs1": 9,
+        "rs2": 10,
+        "vaddr": "0x1010",
+        "target": "0x2010"
+    },
+    {
+        "mnemonic": "bgeu",
+        "rs1": 11,
+        "rs2": 12,
+        "vaddr": "0x1014",
+        "target": "0x2014"
     }
 ]

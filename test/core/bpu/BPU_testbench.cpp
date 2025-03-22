@@ -1,4 +1,5 @@
 #include "../../../core/fetch/BPU.hpp"
+#include "../../../core/FTQ.hpp"
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 #include "BPUSink.hpp"
@@ -10,6 +11,8 @@
 
 #include <iostream>
 #include <vector>
+
+#include <fstream>
 
 using namespace std;
 
@@ -24,6 +27,9 @@ class Simulator : public sparta::app::Simulation
     using BPUFactory = sparta::ResourceFactory<olympia::BranchPredictor::BPU,
                                                olympia::BranchPredictor::BPU::BPUParameterSet>;
 
+    using FTQFactory = sparta::ResourceFactory<olympia::FTQ,
+                                               olympia::FTQ::FTQParameterSet>;
+
   public:
     Simulator(sparta::Scheduler* sched, const string & mavis_isa_files,
               const string & mavis_uarch_files, const string & output_file,
@@ -34,7 +40,10 @@ class Simulator : public sparta::app::Simulation
     {
     }
 
-    ~Simulator() { getRoot()->enterTeardown(); }
+    virtual ~Simulator() { 
+        std::cout << "Simulator destructor\n";
+        getRoot()->enterTeardown(); 
+    }
 
     void runRaw(uint64_t run_time) override final
     {
@@ -63,15 +72,24 @@ class Simulator : public sparta::app::Simulation
 
         tns_to_delete_.emplace_back(src_unit);
 
-        auto* src_params = src_unit->getParameterSet();
-        src_params->getParameter("input_file")->setValueFromString(input_file_);
+        //auto* src_params = src_unit->getParameterSet();
+        //src_params->getParameter("input_file")->setValueFromString(input_file_);
 
         // Create the device under test
+
+        // Create BPU
         sparta::ResourceTreeNode* bpu =
             new sparta::ResourceTreeNode(rtn, "bpu", sparta::TreeNode::GROUP_NAME_NONE,
                                          sparta::TreeNode::GROUP_IDX_NONE, "BPU", &bpu_fact);
 
         tns_to_delete_.emplace_back(bpu);
+
+        // Create FTQ
+        sparta::ResourceTreeNode* ftq = 
+            new sparta::ResourceTreeNode(rtn, "ftq", sparta::TreeNode::GROUP_NAME_NONE,
+                                         sparta::TreeNode::GROUP_IDX_NONE, "FTQ", &ftq_fact);
+
+        tns_to_delete_.emplace_back(ftq);
 
         // Create the Sink unit
         sparta::ResourceTreeNode* sink =
@@ -80,8 +98,8 @@ class Simulator : public sparta::app::Simulation
 
         tns_to_delete_.emplace_back(sink);
 
-        auto* sink_params = sink->getParameterSet();
-        sink_params->getParameter("purpose")->setValueFromString("grp");
+        //auto* sink_params = sink->getParameterSet();
+        //sink_params->getParameter("purpose")->setValueFromString("grp");
     }
 
     void configureTree_() override {}
@@ -92,23 +110,43 @@ class Simulator : public sparta::app::Simulation
 
         // See the README.md for A/B/Cx/Dx
         //
-        // A - bpu sends prediction request credits to source
+        // Credit is transferred from BPU to Source
         sparta::bind(
-            root_node->getChildAs<sparta::Port>("bpu.ports.out_fetch_predictionRequest_credits"),
-            root_node->getChildAs<sparta::Port>("src.ports.in_bpu_predictionRequest_credits"));
+            root_node->getChildAs<sparta::Port>("bpu.ports.out_fetch_credits"),
+            root_node->getChildAs<sparta::Port>("src.ports.in_bpu_credits"));
 
-        // B - source sends prediction request to bpu
-        sparta::bind(root_node->getChildAs<sparta::Port>("bpu.ports.in_fetch_predictionRequest"),
-                     root_node->getChildAs<sparta::Port>("src.ports.out_bpu_predictionRequest"));
-
-        // C - sink sends prediction output credits to bpu
+        // Movement of PredictionRequest from Source to BPU
         sparta::bind(
-            root_node->getChildAs<sparta::Port>("bpu.ports.in_fetch_predictionOutput_credits"),
-            root_node->getChildAs<sparta::Port>("sink.ports.out_bpu_predictionOutput_credits"));
+            root_node->getChildAs<sparta::Port>("bpu.ports.in_fetch_prediction_request"),
+            root_node->getChildAs<sparta::Port>("src.ports.out_bpu_prediction_request"));
 
-        // D - bpu sends prediction output to sink
-        sparta::bind(root_node->getChildAs<sparta::Port>("bpu.ports.out_fetch_predictionOutput"),
-                     root_node->getChildAs<sparta::Port>("sink.ports.in_bpu_predictionOutput"));
+        // Credits is transferred from Sink to FTQ
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("ftq.ports.in_fetch_credits"),
+            root_node->getChildAs<sparta::Port>("sink.ports.out_ftq_credits"));
+
+        // Movement of PredictionOutput from FTQ to Sink
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("ftq.ports.out_fetch_prediction_output"),
+            root_node->getChildAs<sparta::Port>("sink.ports.in_ftq_prediction_output"));
+
+        // Binding BPU and FTQ
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("ftq.ports.out_bpu_update_input"),
+            root_node->getChildAs<sparta::Port>("bpu.ports.in_ftq_update_input"));
+
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("ftq.ports.out_bpu_credits"),
+            root_node->getChildAs<sparta::Port>("bpu.ports.in_ftq_credits"));
+            
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("ftq.ports.in_bpu_first_prediction_output"),
+            root_node->getChildAs<sparta::Port>("bpu.ports.out_ftq_first_prediction_output"));
+            
+        sparta::bind(
+            root_node->getChildAs<sparta::Port>("ftq.ports.in_bpu_second_prediction_output"),
+            root_node->getChildAs<sparta::Port>("bpu.ports.out_ftq_second_prediction_output"));
+        
     }
 
     // Allocators.  Last thing to delete
@@ -116,6 +154,7 @@ class Simulator : public sparta::app::Simulation
 
     olympia::MavisFactory mavis_fact;
     BPUFactory bpu_fact;
+    FTQFactory ftq_fact;
 
     bpu_test::SrcFactory source_fact;
     bpu_test::SinkFactory sink_fact;
@@ -190,9 +229,17 @@ bool runTest(int argc, char** argv)
         il << "No input file specified, exiting gracefully, output not checked";
         return true; // not an error
     }
-
     cls.populateSimulation(&sim);
     cls.runSimulator(&sim);
+
+    std::cout << "file name: " << datafiles[0] << std::endl;
+    ifstream Myfile(datafiles[0]);
+
+    std::string str;
+    while(getline(Myfile, str)) {
+        std::cout << str << std::endl;
+    }
+    Myfile.close();
 
     EXPECT_FILES_EQUAL(datafiles[0], "expected_output/" + datafiles[0] + ".EXPECTED");
     return true;

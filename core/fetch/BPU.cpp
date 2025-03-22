@@ -5,7 +5,7 @@ namespace olympia
 {
     namespace BranchPredictor
     {
-        const char* BPU::name = "BPU";
+        const char* BPU::name = "bpu";
 
         BPU::BPU(sparta::TreeNode* node, const BPUParameterSet* p) :
             sparta::Unit(node),
@@ -21,75 +21,121 @@ namespace olympia
             tage_tagged_table_num_(p->tage_tagged_table_num),
             logical_table_num_(p->logical_table_num),
             loop_pred_table_size_(p->loop_pred_table_size),
-            loop_pred_table_way_(p->loop_pred_table_way),
-            base_predictor_(pht_size_, ctr_bits_, btb_size_, ras_size_)
+            loop_pred_table_way_(p->loop_pred_table_way)
+            //base_predictor_(pht_size_, ctr_bits_, btb_size_, ras_size_)
         {
-            in_fetch_predictionRequest_.registerConsumerHandler(
-                CREATE_SPARTA_HANDLER_WITH_DATA(BPU, recievePredictionRequest_, PredictionRequest));
+            sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BPU, sendIntitialCreditsToFetch_));
 
-            in_fetch_predictionOutput_credits_.registerConsumerHandler(
-                CREATE_SPARTA_HANDLER_WITH_DATA(BPU, receivePredictionOutputCredits_, uint32_t));
+            in_fetch_prediction_request_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(BPU, getPredictionRequest_, PredictionRequest));
+
+            in_ftq_credits_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(BPU, getCreditsFromFTQ_, uint32_t));
+
+            in_ftq_update_input_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(BPU, getUpdateInput_, UpdateInput));
         }
-
-        PredictionOutput BPU::getPrediction(const PredictionRequest & pred)
-        {
-            PredictionOutput output;
-            output.predDirection_ = true;
-            output.predPC_ = 0x0220;
-
-            return output;
-        }
-
-        void BPU::updatePredictor(const UpdateInput & update) {}
 
         BPU::~BPU() {}
 
-        void BPU::sendPredictionRequestCredits_(uint32_t credits)
-        {
-            ILOG("Send prediction request credits to Fetch");
-            out_fetch_predictionRequest_credits_.send(credits);
-        }
-
-        void BPU::sendInitialPredictionRequestCredits_()
-        {
-            ILOG("Sending initial prediction request credits to Fetch");
-            sendPredictionRequestCredits_(1);
-        }
-
-        void BPU::recievePredictionRequest_(const PredictionRequest & predReq)
-        {
-            ILOG("Received prediction request from Fetch");
-            predictionRequestBuffer_.push_back(predReq);
-        }
-
-        // void BPU::recievePredictionUpdate_()
-        //{}
-
-        void BPU::receivePredictionOutputCredits_(const uint32_t & credits)
-        {
-            ILOG("Recieve prediction output credits from Fetch");
-            predictionOutputCredits_ += credits;
-        }
-
-        void BPU::makePrediction_()
-        {
+        PredictionOutput BPU::getPrediction(const PredictionRequest &) {
             PredictionOutput output;
             output.predDirection_ = true;
-            output.predPC_ = 100000;
-            generatedPredictionOutputBuffer_.push_back(output);
+            output.predPC_ = 5;
+            return output;
         }
 
-        void BPU::sendPrediction_()
-        {
-            if (predictionOutputCredits_ > 0)
+        void BPU::updatePredictor(const UpdateInput &) {
+
+        }
+
+        void BPU::getPredictionRequest_(const PredictionRequest & request) {
+            predictionRequestBuffer_.push_back(request);
+            ILOG("BPU: received PredictionRequest from Fetch");
+
+            makePrediction_();
+        }
+
+        void BPU::makePrediction_() {
+            ILOG("making prediction");
+            std::cout << "making prediction\n";
+            if(predictionRequestBuffer_.size() > 0) {
+                //auto input = predictionRequestBuffer_.front();
+                predictionRequestBuffer_.pop_front();
+
+                // call base predictor on input
+                PredictionOutput output;
+
+                output.predDirection_ = true;
+                output.predPC_ = 100;
+                generatedPredictionOutputBuffer_.push_back(output);
+                
+                // call tage_sc_l on input
+            }
+        }
+
+        void BPU::getCreditsFromFTQ_(const uint32_t & credits) {
+            predictionOutputCredits_ += credits;
+            ILOG("BPU: received " << credits << " credits from FTQ");
+
+            sendFirstPrediction_();
+        }
+
+        
+        void BPU::sendFirstPrediction_() {
+            ILOG("SendFirstPrediction starting");
+            // take first PredictionRequest from buffer
+            if(predictionOutputCredits_ > 0) 
             {
-                ILOG("Sending prediction output to fetch");
-                auto predOutput = generatedPredictionOutputBuffer_.front();
+                auto firstPrediction = generatedPredictionOutputBuffer_.front();
                 generatedPredictionOutputBuffer_.pop_front();
-                out_fetch_predictionOutput_.send(predOutput);
+                ILOG("BPU: Sending first PredictionOutput to FTQ");
+                out_ftq_first_prediction_output_.send(firstPrediction);
                 predictionOutputCredits_--;
             }
         }
 
+        /**
+        void BPU::sendSecondPrediction_() {
+            // send prediction made by TAGE_SC_L
+        }
+***/
+        void BPU::getUpdateInput_(const UpdateInput & input) {
+            //internal_update_input_ = input;
+
+            ILOG("BPU: received UpdateInput from FTQ");
+
+           // updateBPU_(internal_update_input_);
+        }
+        /**
+
+        void BPU::updateBPU_(const UpdateInput & input) {
+
+            // Update internal state of BasePredictor according to UpdateInput received
+            //base_predictor_.update(input);
+
+            // Update internal state of TAGE_SC_L according to UpdateInput received
+            // TODO 
+            // tage_sc_l.update(input);
+        }
+            **/
+        
+
+        void BPU::sendCreditsToFetch_(const uint32_t & credits) {
+            ILOG("BPU: Send " << credits << " credits to Fetch");
+            out_fetch_credits_.send(credits);
+        }
+
+        void BPU::sendIntitialCreditsToFetch_() {
+            sendCreditsToFetch_(pred_req_buffer_capacity_);
+        }
+
+        void BPU::updateGHRTaken_() {
+
+        }
+
+        void BPU::updateGHRNotTaken_() {
+
+        }
     } // namespace BranchPredictor
 } // namespace olympia

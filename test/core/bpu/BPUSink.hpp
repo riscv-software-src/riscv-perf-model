@@ -26,39 +26,45 @@ namespace bpu_test
 
         BPUSink(sparta::TreeNode* n, const BPUSinkParameters* params) : sparta::Unit(n)
         {
-            sparta::StartupEvent(n, CREATE_SPARTA_HANDLER(BPUSink, sendPredictionOutputCredits_));
+            sparta::StartupEvent(n, CREATE_SPARTA_HANDLER(BPUSink, sendInitialCreditsToFTQ_));
+
+            in_ftq_prediction_output_.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(BPUSink, getPredictionOutput_, olympia::BranchPredictor::PredictionOutput));
         }
 
       private:
-        uint32_t predictionOutputCredits_ = 1;
+        std::list<olympia::BranchPredictor::PredictionOutput> pred_output_buffer_;
+        uint32_t ftq_credits_ = 0;
 
-        void sendPredictionOutputCredits_()
+        void sendCreditsToFTQ_(const uint32_t & credits)
         {
-            ILOG("send prediction output credits to bpu");
-            out_bpu_predictionOutput_credits_.send(predictionOutputCredits_);
+            ILOG("Fetch: Send " << credits << " credits to FTQ");
+            out_ftq_credits_.send(credits);
         }
 
-        void recievePredictionOutput_(const olympia::BranchPredictor::PredictionOutput & predOutput)
-        {
-            ILOG("recieve prediction output from bpu");
-            predictionOutputResult_.push_back(predOutput);
-            ev_return_credits_.schedule(1);
+        void sendInitialCreditsToFTQ_() {
+            sendCreditsToFTQ_(5);
         }
 
-        std::list<olympia::BranchPredictor::PredictionOutput> predictionOutputResult_;
+        void getPredictionOutput_(const olympia::BranchPredictor::PredictionOutput & output)
+        {
+            ILOG("Fetch: Recieve prediction output from FTQ");
+            pred_output_buffer_.push_back(output);
+        }
 
         ////////////////////////////////////////////////////////////////////////////////
         // Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<olympia::BranchPredictor::PredictionOutput> in_bpu_predictionOutput_{
-            &unit_port_set_, "in_bpu_predictionOutput", 0};
+        sparta::DataInPort<olympia::BranchPredictor::PredictionOutput> in_ftq_prediction_output_{
+            &unit_port_set_, "in_ftq_prediction_output", 0};
 
-        sparta::DataOutPort<uint32_t> out_bpu_predictionOutput_credits_{
-            &unit_port_set_, "out_bpu_predictionOutput_credits"};
+        sparta::DataOutPort<uint32_t> out_ftq_credits_{
+            &unit_port_set_, "out_ftq_credits"};
 
-        sparta::UniqueEvent<> ev_return_credits_{
+        /**sparta::UniqueEvent<> ev_return_credits_{
             &unit_event_set_, "return_credits",
             CREATE_SPARTA_HANDLER(BPUSink, sendPredictionOutputCredits_)};
+            ***/
     };
 
     using SinkFactory = sparta::ResourceFactory<BPUSink, BPUSink::BPUSinkParameters>;

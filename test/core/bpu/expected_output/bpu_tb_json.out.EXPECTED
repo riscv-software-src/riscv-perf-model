@@ -1,0 +1,26 @@
+#Name:     
+#Cmdline:  
+#Exe:      
+#SimulatorVersion:
+#Repro:    
+#Start:    Saturday Sat Mar 22 11:12:35 2025
+#Elapsed:  0.001667s
+{0000000000 00000000 top.bpu info} sendCreditsToFetch_: BPU: Send 10 credits to Fetch
+{0000000000 00000000 top.ftq info} sendCreditsToBPU_: FTQ: Sending 5 credits to BPU
+{0000000000 00000000 top.sink info} sendCreditsToFTQ_: Fetch: Send 5 credits to FTQ
+{0000000000 00000000 top.src info} getCreditsFromBPU_: Fetch: Received 10 credits from BPU
+{0000000000 00000000 top.src info} sendPredictionRequest_: Fetch: Current credits = 10
+{0000000000 00000000 top.src info} sendPredictionRequest_: Sending PredictionRequest to BPU
+{0000000000 00000000 top.bpu info} getPredictionRequest_: BPU: received PredictionRequest from Fetch
+{0000000000 00000000 top.bpu info} makePrediction_: making prediction
+{0000000000 00000000 top.bpu info} getCreditsFromFTQ_: BPU: received 5 credits from FTQ
+{0000000000 00000000 top.bpu info} sendFirstPrediction_: SendFirstPrediction starting
+{0000000000 00000000 top.bpu info} sendFirstPrediction_: BPU: Sending first PredictionOutput to FTQ
+{0000000001 00000001 top.ftq info} getFetchCredits_: FTQ: Received 5 credits from Fetch
+{0000000001 00000001 top.ftq info} sendPrediction_: In sendPrediction function
+{0000000001 00000001 top.ftq info} sendPrediction_: fetchCredits > 0
+{0000000001 00000001 top.ftq info} getFirstPrediction_: FTQ: Received first PredictionOutput from BPU
+{0000000001 00000001 top.ftq info} sendPrediction_: In sendPrediction function
+{0000000001 00000001 top.ftq info} sendPrediction_: fetchCredits > 0
+{0000000001 00000001 top.ftq info} sendPrediction_: FTQ: Send prediction to Fetch
+{0000000001 00000001 top.sink info} getPredictionOutput_: Fetch: Recieve prediction output from FTQ

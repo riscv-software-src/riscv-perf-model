@@ -48,7 +48,8 @@ namespace olympia
         class UpdateInput
         {
           public:
-            UpdateInput(uint64_t instrPC, bool correctedDirection, uint64_t correctedTargetPC) {}
+            UpdateInput() {}
+            //UpdateInput(uint64_t instrPC, bool correctedDirection, uint64_t correctedTargetPC) {}
 
             uint64_t instrPC_;
             bool correctedDirection_;
@@ -92,68 +93,78 @@ namespace olympia
 
             BPU(sparta::TreeNode* node, const BPUParameterSet* p);
 
+            ~BPU();
+
             PredictionOutput getPrediction(const PredictionRequest &);
             void updatePredictor(const UpdateInput &);
-
-            ~BPU();
 
             //! \brief Name of this resource. Required by sparta::UnitFactory
             static const char* name;
 
           private:
-            void sendPredictionRequestCredits_(uint32_t credits);
-            void sendInitialPredictionRequestCredits_();
-            void recievePredictionRequest_(const PredictionRequest & predReq);
-            // void recievePredictionUpdate_();
-            void receivePredictionOutputCredits_(const uint32_t & credits);
+            void getPredictionRequest_(const PredictionRequest &);
             void makePrediction_();
-            void sendPrediction_();
+            void getCreditsFromFTQ_(const uint32_t &);
+            void sendFirstPrediction_();
+            void sendSecondPrediction_();
+            void getUpdateInput_(const UpdateInput &);
+            void updateBPU_(const UpdateInput &);
+            void sendCreditsToFetch_(const uint32_t &);
+            void sendIntitialCreditsToFetch_();
+            void updateGHRTaken_();
+            void updateGHRNotTaken_();
 
-            uint32_t ghr_size_;
-            uint32_t ghr_hash_bits_;
-            uint32_t pht_size_;
-            uint32_t ctr_bits_;
-            uint32_t btb_size_;
-            uint32_t ras_size_;
-            bool ras_enable_overwrite_;
-            uint32_t tage_bim_table_size_;
-            uint32_t tage_bim_ctr_bits_;
-            uint32_t tage_tagged_table_num_;
-            uint32_t logical_table_num_;
-            uint32_t loop_pred_table_size_;
-            uint32_t loop_pred_table_way_;
+            const uint32_t ghr_size_;
+            const uint32_t ghr_hash_bits_;
+            const uint32_t pht_size_;
+            const uint32_t ctr_bits_;
+            const uint32_t btb_size_;
+            const uint32_t ras_size_;
+            const bool     ras_enable_overwrite_;
+            const uint32_t tage_bim_table_size_;
+            const uint32_t tage_bim_ctr_bits_;
+            const uint32_t tage_tagged_table_num_;
+            const uint32_t logical_table_num_;
+            const uint32_t loop_pred_table_size_;
+            const uint32_t loop_pred_table_way_;
 
             std::list<PredictionRequest> predictionRequestBuffer_;
             std::list<PredictionOutput> generatedPredictionOutputBuffer_;
-            uint32_t predictionRequestCredits_ = 0;
+            const uint32_t pred_req_buffer_capacity_ = 10;
             uint32_t predictionOutputCredits_ = 0;
+            //UpdateInput internal_update_input_;
 
-            BasePredictor base_predictor_;
+            //BasePredictor base_predictor_;
 
             ///////////////////////////////////////////////////////////////////////////////
             // Ports
             ///////////////////////////////////////////////////////////////////////////////
 
-            // Internal DataInPort from fetch unit for prediction request
-            sparta::DataInPort<PredictionRequest> in_fetch_predictionRequest_{
-                &unit_port_set_, "in_fetch_predictionRequest", sparta::SchedulingPhase::Tick, 0};
+            // Internal DataInPort from Fetch unit for PredictionRequest
+            sparta::DataInPort<PredictionRequest> in_fetch_prediction_request_{
+                &unit_port_set_, "in_fetch_prediction_request", sparta::SchedulingPhase::Tick, 0};
 
-            // Internal DataInPort from fetch unit for credits to indicate
-            // availabilty of slots for sending prediction output
-            sparta::DataInPort<uint32_t> in_fetch_predictionOutput_credits_{
-                &unit_port_set_, "in_fetch_predictionOutput_credits", sparta::SchedulingPhase::Tick,
+            // Internal DataInPort from FTQ unit for credits to indicate
+            // availabilty of slots for sending PredictionOutput
+            sparta::DataInPort<uint32_t> in_ftq_credits_{
+                &unit_port_set_, "in_ftq_credits", sparta::SchedulingPhase::Tick,
                 0};
+            // Internal DataInPort from FTQ for UpdateInput
+            sparta::DataInPort<UpdateInput> in_ftq_update_input_{
+                &unit_port_set_, "in_ftq_update_input", sparta::SchedulingPhase::Tick, 0};
 
-            // TODO
+            // DataOutPort to Fetch unit to send credits to indicate availability
+            // of slots to receive PredictionRequest
+            sparta::DataOutPort<uint32_t> out_fetch_credits_{
+                &unit_port_set_, "out_fetch_credits"};
 
-            // DataOutPort to fetch unit to send credits to indicate availability
-            // of slots to receive prediction request
-            sparta::DataOutPort<uint32_t> out_fetch_predictionRequest_credits_{
-                &unit_port_set_, "out_fetch_predictionRequest_credits"};
+            // DataOutPort to FTQ unit to send prediction made by BasePredictor
+            sparta::DataOutPort<PredictionOutput> out_ftq_first_prediction_output_{
+                &unit_port_set_, "out_ftq_first_prediction_output"};
 
-            // DataOutPort to fetch unit to send prediction output
-            sparta::DataOutPort<PredictionOutput> out_fetch_predictionOutput_{
-                &unit_port_set_, "out_fetch_predictionOutput"};
+            // DataOutPort to FTQ unit to send prediction made by TAGE_SC_L
+            sparta::DataOutPort<PredictionOutput> out_ftq_second_prediction_output_{
+                &unit_port_set_, "out_ftq_second_prediction_output"};
 
             //////////////////////////////////////////////////////////////////////////////
             // Events

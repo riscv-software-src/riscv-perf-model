@@ -40,8 +40,8 @@ namespace bpu_test
             mavis_facade_(olympia::getMavis(n))
         {
             sparta_assert(mavis_facade_ != nullptr, "Could not find the Mavis Unit");
-            in_bpu_predictionRequest_credits_.registerConsumerHandler(
-                CREATE_SPARTA_HANDLER_WITH_DATA(BPUSource, receivePredictionRequestCredits_,
+            in_bpu_credits_.registerConsumerHandler(
+                CREATE_SPARTA_HANDLER_WITH_DATA(BPUSource, getCreditsFromBPU_,
                                                 uint32_t));
 
             if (params->input_file != "")
@@ -51,17 +51,39 @@ namespace bpu_test
             }
         }
 
-        void initiate()
-        {
-            // olympia::BranchPredictor::PredictionRequest pred;
-            generatedPredictedRequest_.emplace_back();
-        }
-
       private:
         const std::string test_type_;
         olympia::MavisType* mavis_facade_ = nullptr;
         std::unique_ptr<olympia::InstGenerator> inst_generator_;
 
+        uint32_t bpu_credits_ = 0;
+
+        std::list<olympia::BranchPredictor::PredictionRequest> pred_request_buffer_;
+
+        const uint32_t pred_req_buffer_capacity = 8;
+
+        void getCreditsFromBPU_(const uint32_t & credits) {
+            bpu_credits_ += credits;
+            ILOG("Fetch: Received " << credits << " credits from BPU");
+
+            sendPredictionRequest_();
+        }
+
+        void sendPredictionRequest_() {
+            if(bpu_credits_ > 0) {
+                ILOG("Fetch: Current credits = " << bpu_credits_);
+                ILOG("Sending PredictionRequest to BPU");
+                olympia::BranchPredictor::PredictionRequest pred_request;
+                pred_request.instType_ = 1;
+                pred_request.PC_ = 5;
+                out_bpu_prediction_request_.send(pred_request);
+                bpu_credits_--;
+            }
+        }
+
+        // functions
+
+        /**
         void receivePredictionRequestCredits_(const uint32_t & credits)
         {
             ILOG("Received prediction request credits from BPU");
@@ -86,18 +108,19 @@ namespace bpu_test
 
         uint32_t predictionRequestCredits_ = 0;
         std::list<olympia::BranchPredictor::PredictionRequest> generatedPredictedRequest_;
+        ***/
 
         ////////////////////////////////////////////////////////////////////////////////
         // Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataOutPort<olympia::BranchPredictor::PredictionRequest> out_bpu_predictionRequest_{
-            &unit_port_set_, "out_bpu_predictionRequest"};
+        sparta::DataOutPort<olympia::BranchPredictor::PredictionRequest> out_bpu_prediction_request_{
+            &unit_port_set_, "out_bpu_prediction_request"};
 
-        sparta::DataInPort<uint32_t> in_bpu_predictionRequest_credits_{
-            &unit_port_set_, "in_bpu_predictionRequest_credits", 0};
+        sparta::DataInPort<uint32_t> in_bpu_credits_{
+            &unit_port_set_, "in_bpu_credits", 0};
 
-        sparta::SingleCycleUniqueEvent<> ev_gen_insts_{
-            &unit_event_set_, "gen_inst", CREATE_SPARTA_HANDLER(BPUSource, sendPredictionRequest_)};
+        //sparta::SingleCycleUniqueEvent<> ev_gen_insts_{
+        //    &unit_event_set_, "gen_inst", CREATE_SPARTA_HANDLER(BPUSource, sendPredictionRequest_)};
     };
 
     using SrcFactory = sparta::ResourceFactory<BPUSource, BPUSource::BPUSourceParameters>;

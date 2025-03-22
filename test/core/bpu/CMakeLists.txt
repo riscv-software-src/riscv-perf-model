@@ -8,10 +8,13 @@ set(TST3 "${PRJ}_stf")
 set(CFG config/config.yaml)
 
 set(BPUDir ../../../core/fetch)
+set(CoreDir ../../../core)
+
+set(JSON ../json/branch.json)
 
 project(${PRJ})
 
-add_executable(${EXE} BPU_testbench.cpp ${BPUDir}/BPU.cpp ${BPUDir}/BPU.hpp ${BPUDir}/BasePredictor.cpp ${BPUDir}/BasePredictor.hpp BPUSource.hpp BPUSink.hpp)
+add_executable(${EXE} BPU_testbench.cpp ${BPUDir}/BPU.cpp ${BPUDir}/BPU.hpp ${CoreDir}/FTQ.cpp ${CoreDir}/FTQ.hpp BPUSource.hpp BPUSink.hpp)
 target_include_directories(${EXE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(${EXE} core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
@@ -35,5 +38,5 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/expected_output
                  ${CMAKE_CURRENT_BINARY_DIR}/expected_output SYMBOLIC)
 
 sparta_named_test(${TST1} ${EXE} bpu_tb_test1.out -c ${CFG})
-sparta_named_test(${TST2} ${EXE} bpu_tb_json.out  --input_file ${STF}  -c ${CFG})
-sparta_named_test(${TST3} ${EXE} bpu_tb_stf.out --input_file ${JSON} -c ${CFG})
+sparta_named_test(${TST2} ${EXE} bpu_tb_json.out --input_file ${JSON} -c ${CFG})
+sparta_named_test(${TST3} ${EXE} bpu_tb_stf.out --input_file ${STF} -c ${CFG})

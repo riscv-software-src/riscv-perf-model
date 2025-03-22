@@ -7,9 +7,13 @@ namespace olympia
 
         // Tage Tagged Component Entry
         TageTaggedComponentEntry::TageTaggedComponentEntry(uint8_t tage_ctr_bits,
-                                                           uint8_t tage_useful_bits) :
+                                                           uint8_t tage_useful_bits,
+                                                           uint8_t ctr_initial, 
+                                                           uint8_t useful_initial) :
             tage_ctr_bits_(tage_ctr_bits),
-            tage_useful_bits_(tage_useful_bits)
+            tage_useful_bits_(tage_useful_bits),
+            ctr_(ctr_initial),
+            useful_(useful_initial)
         {
         }
 

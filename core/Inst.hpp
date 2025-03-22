@@ -294,6 +294,11 @@ namespace olympia
             return opcode_info_->getImmediate();
         }
 
+        uint64_t getSpecialField(const mavis::OpcodeInfo::SpecialField sfid) const
+        {
+            return opcode_info_->getSpecialField(sfid);
+        }
+
         bool getVectorMaskEnabled() const
         {
             try
@@ -345,6 +350,8 @@ namespace olympia
         bool isVset() const { return inst_arch_info_->isVset(); }
 
         bool isVector() const { return is_vector_; }
+
+        bool isVectorWholeRegister() const { return is_vector_whole_reg_; }
 
         void setCoF(const bool & cof) { is_cof_ = cof; }
 
@@ -441,11 +448,14 @@ namespace olympia
         const bool is_condbranch_;
         const bool is_call_;
         const bool is_csr_;
-        const bool is_vector_;
         const bool is_return_;
         // Is this instruction a change of flow?
         bool is_cof_ = false;
         const bool has_immediate_;
+
+        // Vector
+        const bool is_vector_;
+        const bool is_vector_whole_reg_;
 
         VectorConfigPtr vector_config_{new VectorConfig};
         bool has_tail_ = false; // Does this vector uop have a tail?

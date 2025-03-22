@@ -26,12 +26,12 @@ void runTest(int argc, char **argv)
 
    // try the same input with fetchPC 0x0 again
    prediction = predictor.getPrediction(input);
-   
+
    EXPECT_EQUAL(prediction.branch_idx, 2);
    EXPECT_EQUAL(prediction.predicted_PC, 0x100);
 
    // TODO: add more tests
-            
+
 }
 
 int main(int argc, char **argv)

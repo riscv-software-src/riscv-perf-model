@@ -37,10 +37,23 @@ namespace olympia
 
     // Handy UIDs that the modeler can assign to an instruction for
     // compare
-    constexpr mavis::InstructionUniqueID MAVIS_UID_NOP        = 1;
-    constexpr mavis::InstructionUniqueID MAVIS_UID_VSETIVLI   = 4;
-    constexpr mavis::InstructionUniqueID MAVIS_UID_VSETVLI    = 3;
-    constexpr mavis::InstructionUniqueID MAVIS_UID_VSETVL     = 2;
+    enum MavisUIDs : mavis::InstructionUniqueID
+    {
+        MAVIS_UID_NOP = 1,
+        MAVIS_UID_VSETIVLI,
+        MAVIS_UID_VSETVLI,
+        MAVIS_UID_VSETVL,
+        MAVIS_UID_VMV1R,
+        MAVIS_UID_VMV2R,
+        MAVIS_UID_VMV4R,
+        MAVIS_UID_VMV8R,
+        MAVIS_UID_VZEXTVF2,
+        MAVIS_UID_VSEXTVF2,
+        MAVIS_UID_VZEXTVF4,
+        MAVIS_UID_VSEXTVF4,
+        MAVIS_UID_VZEXTVF8,
+        MAVIS_UID_VSEXTVF8
+    };
 
     // This is a sparta tree node wrapper around the Mavis facade object
     // Used to provide global access to the facade
@@ -88,11 +101,21 @@ namespace olympia
 
         //! Mavis Instruction ID's that we want to use in Olympia
         static inline mavis::InstUIDList mavis_uid_list_ {
-            { "nop",             MAVIS_UID_NOP },
-            { "vsetivli",        MAVIS_UID_VSETIVLI },
-            { "vsetvli",         MAVIS_UID_VSETVLI },
-            { "vsetvl",          MAVIS_UID_VSETVL },
-        };
+            { "nop",      MAVIS_UID_NOP},
+            { "vsetivli", MAVIS_UID_VSETIVLI},
+            { "vsetvli",  MAVIS_UID_VSETVLI},
+            { "vsetvl",   MAVIS_UID_VSETVL},
+            {"vmv1r.v",   MAVIS_UID_VMV1R},
+            {"vmv2r.v",   MAVIS_UID_VMV2R},
+            {"vmv4r.v",   MAVIS_UID_VMV4R},
+            {"vmv8r.v",   MAVIS_UID_VMV8R},
+            {"vzext.vf2", MAVIS_UID_VZEXTVF2},
+            {"vsext.vf2", MAVIS_UID_VSEXTVF2},
+            {"vzext.vf4", MAVIS_UID_VZEXTVF4},
+            {"vsext.vf4", MAVIS_UID_VSEXTVF4},
+            {"vzext.vf8", MAVIS_UID_VZEXTVF8},
+            {"vsext.vf8", MAVIS_UID_VSEXTVF8}
+	};
 
         const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
         std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object

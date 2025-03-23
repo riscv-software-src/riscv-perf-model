@@ -52,10 +52,10 @@ namespace olympia
         auto setup_map = [this](auto reg_file, uint32_t num_regs_reserved)
         {
             // for x0 for RF_INTEGER, we don't want to set a PRF for it because x0 is hardwired to 0
-            for (uint32_t i = reg_file == core_types::RegFile::RF_INTEGER ? 1 : 0;
-                 i < NUM_RISCV_REGS_; i++)
+            const auto staring_arf = (reg_file == core_types::RegFile::RF_INTEGER ? 1 : 0);
+            for (uint32_t areg = staring_arf; areg < NUM_RISCV_REGS_; areg++)
             {
-                map_table_[reg_file][i] = num_regs_reserved++;
+                map_table_[reg_file][areg] = num_regs_reserved++;
             }
 
             return num_regs_reserved;

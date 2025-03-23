@@ -44,6 +44,7 @@ namespace olympia
             PARAMETER(uint32_t, l1_line_size, 64, "IL1 line size (power of 2)")
             PARAMETER(uint32_t, l1_size_kb, 32, "Size of IL1 in KB (power of 2)")
             PARAMETER(uint32_t, l1_associativity, 8, "IL1 associativity (power of 2)")
+            PARAMETER(std::string, replacement_policy, "TreePLRU", "IL1 cache replacement policy")
             PARAMETER(uint32_t, cache_latency, 1, "Assumed latency of the memory system")
             PARAMETER(bool, l1_always_hit, false, "IL1 will always hit")
         };

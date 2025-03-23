@@ -12,4 +12,7 @@ The following people from multiple organizations have contributed to this projec
 * (Condor Computing)[https://condorcomputing.com]
   * (Jeff Nye)[https://github.com/jeffnye-gh]
 
+* (InCore Semiconductors)[https://incoresemi.com/]
+  * (Sai Govardhan)[https://github.com/govardhnn]
+
 List is incomplete and more contributor names/organizations to be added. 

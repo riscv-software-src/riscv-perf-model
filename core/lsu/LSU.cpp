@@ -33,7 +33,7 @@ namespace olympia
         cache_read_stage_(cache_lookup_stage_
                           + 1), // Get data from the cache in the cycle after cache lookup
         complete_stage_(
-            cache_read_stage_  
+            cache_read_stage_
             + p->cache_read_stage_length), // Complete stage is after the cache read stage
         ldst_pipeline_("LoadStorePipeline", (complete_stage_ + 1),
                        getClock()), // complete_stage_ + 1 is number of stages
@@ -505,7 +505,7 @@ namespace olympia
             return;
         }
 
-        // Loads dont perform a cache lookup if there are older stores haven't issued in the load store queue
+        // Loads don't perform a cache lookup if there are older stores haven't issued in the load store queue
         if (!inst_ptr->isStoreInst() && !allOlderStoresIssued_(inst_ptr)
             && allow_speculative_load_exec_)
         {

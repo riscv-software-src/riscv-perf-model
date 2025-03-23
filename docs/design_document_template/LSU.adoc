@@ -45,7 +45,7 @@
 
 == OVERVIEW
 
-The Load Store Unit (LSU) implements the memory interface for the Olympia processor, managing all load and store operations. It features multiple parallel pipelines, data forwarding capabilities, and ensures memory consistency while maintaining high performance through careful hazard management and efficient queueing structures.
+The Load Store Unit (LSU) implements the memory interface for the Olympia processor. Managing all load and store operations. The LSU features multiple parallel pipelines, data forwarding capabilities, and ensures memory consistency while maintaining high performance through careful hazard management and efficient queueing structures.
 
 === Overview Block Diagram
 

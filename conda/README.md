@@ -20,7 +20,7 @@ If `conda` is not already set up or the preference is to have a local
 A new environment can be created using `environment.yaml` file as follows:
 
 ```
-conda env create -f environment.yml
+conda env create -f .github/workflows/conda/environment.yml
 ```
 
 This will create a conda environment named `riscv_perf_model` in the default conda path.

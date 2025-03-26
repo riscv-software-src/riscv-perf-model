@@ -5,6 +5,7 @@
 #include "sparta/memory/AddressTypes.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 #include "sparta/resources/Queue.hpp"
+#include "sparta/resources/Buffer.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
@@ -17,6 +18,7 @@
 #include "CoreTypes.hpp"
 #include "vector/VectorConfig.hpp"
 #include "MiscUtils.hpp"
+#include "RenameData.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -38,46 +40,11 @@ namespace olympia
     class Inst
     {
       public:
-        class RenameData
-        {
-          public:
-            // A register consists of its value and its register file.
-            struct Reg
-            {
-                uint32_t val = 0;
-                core_types::RegFile rf = core_types::RegFile::RF_INVALID;
-                mavis::InstMetaData::OperandFieldID field_id =
-                    mavis::InstMetaData::OperandFieldID::NONE;
-                bool is_x0 = false;
-            };
-
-            using RegList = std::vector<Reg>;
-
-            void setOriginalDestination(const Reg & destination) { original_dest_ = destination; }
-
-            void setDestination(const Reg & destination) { dest_ = destination; }
-
-            void setDataReg(const Reg & data_reg) { data_reg_ = data_reg; }
-
-            void setSource(const Reg & source) { src_.emplace_back(source); }
-
-            const RegList & getSourceList() const { return src_; }
-
-            const Reg & getOriginalDestination() const { return original_dest_; }
-
-            const Reg & getDestination() const { return dest_; }
-
-            const Reg & getDataReg() const { return data_reg_; }
-
-          private:
-            Reg original_dest_;
-            Reg dest_;
-            RegList src_;
-            Reg data_reg_;
-        };
-
         // Used by Mavis
         using PtrType = sparta::SpartaSharedPointer<Inst>;
+
+        // Used by Rename, etc
+        using WeakPtrType = sparta::SpartaWeakPointer<Inst>;
 
         // The modeler needs to alias a type called
         // "SpartaPairDefinitionType" to the Pair Definition class of
@@ -229,12 +196,9 @@ namespace olympia
 
         bool hasTail() const { return has_tail_; }
 
-        void setUOpParent(sparta::SpartaWeakPointer<olympia::Inst> & parent_uop)
-        {
-            parent_uop_ = parent_uop;
-        }
+        void setUOpParent(WeakPtrType & parent_uop) { parent_uop_ = parent_uop; }
 
-        sparta::SpartaWeakPointer<olympia::Inst> getUOpParent() { return parent_uop_; }
+        WeakPtrType getUOpParent() { return parent_uop_; }
 
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
@@ -251,6 +215,14 @@ namespace olympia
         void setLastInFetchBlock(bool last) { last_in_fetch_block_ = last; }
 
         bool isLastInFetchBlock() const { return last_in_fetch_block_; }
+
+        // ROB target information
+        void setTargetROB(bool tgt = true) { rob_targeted_ = tgt; }
+
+        bool isTargetROB() const
+        {
+            return rob_targeted_;
+        }
 
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
@@ -272,7 +244,20 @@ namespace olympia
             return opcode_info_->getSourceOpInfoList();
         }
 
-        const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
+        const OpInfoList & getDestOpInfoList() const
+        {
+            return opcode_info_->getDestOpInfoList();
+        }
+
+        const RenameData::DestOpInfoWithRegfileList & getDestOpInfoListWithRegfile() const
+        {
+            return dest_opcode_info_with_reg_file_;
+        }
+
+        const RenameData::SrcOpInfoWithRegfileList & getSrcOpInfoListWithRegfile() const
+        {
+            return src_opcode_info_with_reg_file_;
+        }
 
         bool hasZeroRegSource() const
         {
@@ -284,7 +269,7 @@ namespace olympia
         bool hasZeroRegDest() const
         {
             return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
-                               [](const mavis::OperandInfo::Element & elem)
+                               [](const auto & elem)
                                { return elem.field_value == 0; });
         }
 
@@ -318,8 +303,56 @@ namespace olympia
             }
         }
 
+        void setDataRegister(RenameData::Reg && reg)
+        {
+            if (!reg.op_info.is_x0)
+            {
+                getDataRegisterBitMask(reg.op_info.reg_file).set(reg.phys_reg);
+            }
+            getRenameData().setDataReg(std::forward<RenameData::Reg>(reg));
+        }
+
+        void setDestRegisterBitWithScoreboardUpdate(const RenameData::Reg & reg,
+                                                    sparta::Scoreboard* const scoreboard)
+        {
+            auto & bitmask = getDestRegisterBitMask(reg.op_info.reg_file);
+            bitmask.set(reg.phys_reg);
+
+            // clear scoreboard for the PRF we are allocating
+            scoreboard->clearBits(bitmask);
+        }
+
+        void addDestRegister(RenameData::Reg && reg)
+        {
+            getRenameData().addDestination(std::forward<RenameData::Reg>(reg));
+        }
+
+        void addDestRegisterWithScoreboardUpdate(RenameData::Reg && reg,
+                                                 sparta::Scoreboard* const scoreboard)
+        {
+            if (!reg.op_info.is_x0)
+            {
+                setDestRegisterBitWithScoreboardUpdate(reg, scoreboard);
+            }
+
+            addDestRegister(std::forward<RenameData::Reg>(reg));
+        }
+
+        void addSrcRegister(RenameData::Reg && reg)
+        {
+            if (!reg.op_info.is_x0)
+            {
+                getSrcRegisterBitMask(reg.op_info.reg_file).set(reg.phys_reg);
+            }
+
+            getRenameData().addSource(std::forward<RenameData::Reg>(reg));
+        }
+
+
         // Static instruction information
         bool isStoreInst() const { return is_store_; }
+
+        bool isLoadInst() const { return is_load_; }
 
         bool isLoadStoreInst() const { return inst_arch_info_->isLoadStore(); }
 
@@ -356,6 +389,14 @@ namespace olympia
         void setCoF(const bool & cof) { is_cof_ = cof; }
 
         bool isCoF() const { return is_cof_; }
+
+        bool isMove() const { return is_move_; }
+
+        // Is a load the producer for one or more of this inst's operands?
+        bool hasLoadProducer() const { return has_load_producer_; }
+
+        // This instruction is fed by a load
+        void setLoadProducer(bool load_producer) { has_load_producer_ = load_producer; }
 
         // Rename information
         core_types::RegisterBitMask & getSrcRegisterBitMask(const core_types::RegFile rf)
@@ -433,6 +474,11 @@ namespace olympia
         mavis::OpcodeInfo::PtrType opcode_info_;
         InstArchInfo::PtrType inst_arch_info_;
 
+        // Handy list that extends Mavis' opcode info with register
+        // file type.
+        RenameData::DestOpInfoWithRegfileList dest_opcode_info_with_reg_file_;
+        RenameData::SrcOpInfoWithRegfileList  src_opcode_info_with_reg_file_;
+
         sparta::memory::addr_t inst_pc_ = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_ =
             0; // Instruction's Target PC (for branches, loads/stores)
@@ -443,6 +489,8 @@ namespace olympia
         uint64_t program_id_increment_ = 1;
         bool is_speculative_ = false; // Is this instruction soon to be flushed?
         const bool is_store_;
+        const bool is_load_;
+        const bool is_move_;
         const bool is_transfer_; // Is this a transfer instruction (F2I/I2F)
         const bool is_branch_;
         const bool is_condbranch_;
@@ -452,6 +500,11 @@ namespace olympia
         // Is this instruction a change of flow?
         bool is_cof_ = false;
         const bool has_immediate_;
+
+        // Is this instruction just retired? (Dynamically assigned)
+        bool rob_targeted_ = false;
+
+        bool has_load_producer_ = false;
 
         // Vector
         const bool is_vector_;
@@ -489,7 +542,9 @@ namespace olympia
     };
 
     using InstPtr = Inst::PtrType;
+    using InstWeakPtr = Inst::WeakPtrType;
     using InstQueue = sparta::Queue<InstPtr>;
+    using InstBuffer = sparta::Buffer<InstPtr>;
 
     inline std::ostream & operator<<(std::ostream & os, const Inst::Status & status)
     {

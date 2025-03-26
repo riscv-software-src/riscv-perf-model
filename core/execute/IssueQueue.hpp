@@ -140,8 +140,8 @@ namespace olympia
         friend class IssueQueueTester;
 
         // For correlation activities
-        sparta::pevents::PeventCollector<InstPEventPairs> issue_event_{"ISSUE", getContainer(), getClock()};
-
+        sparta::pevents::PeventCollector<InstPEventPairs> issue_event_{"ISSUE", getContainer(),
+                                                                       getClock()};
     };
 
     using IssueQueueFactory =

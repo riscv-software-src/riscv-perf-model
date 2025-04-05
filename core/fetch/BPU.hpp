@@ -49,7 +49,8 @@ namespace olympia
         {
           public:
             UpdateInput() {}
-            //UpdateInput(uint64_t instrPC, bool correctedDirection, uint64_t correctedTargetPC) {}
+
+            // UpdateInput(uint64_t instrPC, bool correctedDirection, uint64_t correctedTargetPC) {}
 
             uint64_t instrPC_;
             bool correctedDirection_;
@@ -120,7 +121,7 @@ namespace olympia
             const uint32_t ctr_bits_;
             const uint32_t btb_size_;
             const uint32_t ras_size_;
-            const bool     ras_enable_overwrite_;
+            const bool ras_enable_overwrite_;
             const uint32_t tage_bim_table_size_;
             const uint32_t tage_bim_ctr_bits_;
             const uint32_t tage_tagged_table_num_;
@@ -131,10 +132,12 @@ namespace olympia
             std::list<PredictionRequest> predictionRequestBuffer_;
             std::list<PredictionOutput> generatedPredictionOutputBuffer_;
             const uint32_t pred_req_buffer_capacity_ = 10;
-            uint32_t predictionOutputCredits_ = 0;
-            //UpdateInput internal_update_input_;
 
-            //BasePredictor base_predictor_;
+            uint32_t ftq_credits_ = 0;
+            // UpdateInput internal_update_input_;
+
+            BasePredictor base_predictor_;
+            Tage tage_predictor_;
 
             ///////////////////////////////////////////////////////////////////////////////
             // Ports
@@ -146,17 +149,15 @@ namespace olympia
 
             // Internal DataInPort from FTQ unit for credits to indicate
             // availabilty of slots for sending PredictionOutput
-            sparta::DataInPort<uint32_t> in_ftq_credits_{
-                &unit_port_set_, "in_ftq_credits", sparta::SchedulingPhase::Tick,
-                0};
+            sparta::DataInPort<uint32_t> in_ftq_credits_{&unit_port_set_, "in_ftq_credits",
+                                                         sparta::SchedulingPhase::Tick, 0};
             // Internal DataInPort from FTQ for UpdateInput
             sparta::DataInPort<UpdateInput> in_ftq_update_input_{
                 &unit_port_set_, "in_ftq_update_input", sparta::SchedulingPhase::Tick, 0};
 
             // DataOutPort to Fetch unit to send credits to indicate availability
             // of slots to receive PredictionRequest
-            sparta::DataOutPort<uint32_t> out_fetch_credits_{
-                &unit_port_set_, "out_fetch_credits"};
+            sparta::DataOutPort<uint32_t> out_fetch_credits_{&unit_port_set_, "out_fetch_credits"};
 
             // DataOutPort to FTQ unit to send prediction made by BasePredictor
             sparta::DataOutPort<PredictionOutput> out_ftq_first_prediction_output_{
@@ -173,6 +174,14 @@ namespace olympia
                 &unit_event_set_, "ev_sendPrediction",
                 CREATE_SPARTA_HANDLER_WITH_DATA(BPU, sendPrediction_, PredictionOutput)};
                 ***/
+
+            sparta::UniqueEvent<> ev_send_first_prediction_{
+                &unit_event_set_, "ev_send_first_prediction_",
+                CREATE_SPARTA_HANDLER(BPU, sendFirstPrediction_)};
+
+            sparta::UniqueEvent<> ev_send_second_prediction_{
+                &unit_event_set_, "ev_send_second_prediction_",
+                CREATE_SPARTA_HANDLER(BPU, sendSecondPrediction_)};
 
             //////////////////////////////////////////////////////////////////////////////
             // Counters

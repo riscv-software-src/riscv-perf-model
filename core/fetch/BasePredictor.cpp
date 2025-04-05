@@ -1,51 +1,120 @@
 #include "BasePredictor.hpp"
 
+#define CALL 0
+#define RET 1
+#define BRANCH 2
+
 namespace olympia
 {
     namespace BranchPredictor
     {
-        BasePredictor::BasePredictor(uint32_t pht_size, uint8_t ctr_bits, uint32_t btb_size,
-                                     uint32_t ras_size) :
-            pattern_history_table_(pht_size, ctr_bits),
-            branch_target_buffer_(btb_size),
-            return_address_stack_(ras_size)
-        {
-        }
-
-        PatternHistoryTable::PatternHistoryTable(uint32_t pht_size, uint8_t ctr_bits) :
+        BasePredictor::BasePredictor(uint32_t pht_size, uint8_t pht_ctr_bits, uint32_t btb_size,
+                                     uint32_t ras_size, bool ras_enable_overwrite) :
             pht_size_(pht_size),
-            ctr_bits_(ctr_bits),
-            ctr_bits_val_(pow(2, ctr_bits))
+            pht_ctr_bits_(pht_ctr_bits),
+            pht_ctr_max_val_(1 << pht_ctr_bits_),
+            btb_size_(btb_size),
+            ras_size_(ras_size),
+            ras_enable_overwrite_(ras_enable_overwrite)
         {
+            for (uint32_t i = 0; i < pht_size_; i++)
+            {
+                pattern_history_table_[i] = 0;
+            }
+            for (uint32_t i = 0; i < btb_size; i++)
+            {
+                branch_target_buffer_[i] = 0;
+            }
         }
 
-        void PatternHistoryTable::incrementCounter(uint32_t idx)
+        bool BasePredictor::getDirection(const uint64_t & PC, const uint8_t & instType)
         {
-            if (pht_.find(idx) != pht_.end())
+            std::cout << "ggggetting direction from base predictor\n";
+            // branch taken or not-taken?
+
+            // hardcoding values for each type for now
+            // instType_ = 0 -> call
+            // instType_ = 1 -> ret
+            // instType_ = 2 -> conditional branch
+
+            // if instruction type is call/jump or ret branch is always taken
+            if (instType == 0 || instType == 1)
             {
-                if (pht_[idx] < ctr_bits_val_)
+                return true;
+            }
+            else
+            {
+                return branchTaken(PC);
+            }
+        }
+
+        uint64_t BasePredictor::getTarget(const uint64_t & PC, const uint8_t & instType)
+        {
+            std::cout << "gggggetting pc from base predictor\n";
+            // target PC
+
+            // hardcoding values for each type for now
+            // instType_ = 0 -> call
+            // instType_ = 1 -> ret
+            // instType_ = 2 -> conditional branch
+
+            // if call -> instruction then save current pc to ctr_max_val_RAS
+            // if ret -> pop pc from RAS
+            // if conditonal branch -> use BTB
+            uint64_t targetPC = 0;
+            if (instType == 0)
+            {
+                pushAddress(PC);
+                if (isHit(PC))
                 {
-                    pht_[idx]++;
+                    targetPC = getTargetPC(PC, instType);
+                }
+                else
+                {
+                    targetPC = PC + 8;
+                }
+            }
+            else if (instType == RET)
+            {
+                targetPC = popAddress();
+            }
+            else
+            {
+                targetPC = getTargetPC(PC, instType);
+            }
+            return targetPC;
+        }
+
+        // done
+        void BasePredictor::incrementCtr(uint32_t idx)
+        {
+            if (pattern_history_table_.find(idx) != pattern_history_table_.end())
+            {
+                if (pattern_history_table_[idx] < pht_ctr_max_val_)
+                {
+                    pattern_history_table_[idx]++;
                 }
             }
         }
 
-        void PatternHistoryTable::decrementCounter(uint32_t idx)
+        // done
+        void BasePredictor::decrementCtr(uint32_t idx)
         {
-            if (pht_.find(idx) != pht_.end())
+            if (pattern_history_table_.find(idx) != pattern_history_table_.end())
             {
-                if (pht_[idx] > 0)
+                if (pattern_history_table_[idx] > 0)
                 {
-                    pht_[idx]--;
+                    pattern_history_table_[idx]--;
                 }
             }
         }
 
-        uint8_t PatternHistoryTable::getPrediction(uint32_t idx)
+        // done
+        uint8_t BasePredictor::getCtr(uint32_t idx)
         {
-            if (pht_.find(idx) != pht_.end())
+            if (pattern_history_table_.find(idx) != pattern_history_table_.end())
             {
-                return pht_[idx];
+                return pattern_history_table_[idx];
             }
             else
             {
@@ -53,24 +122,11 @@ namespace olympia
             }
         }
 
-        // Branch Target Buffer
-        BranchTargetBuffer::BranchTargetBuffer(uint32_t btb_size) : btb_size_(btb_size) {}
-
-        bool BranchTargetBuffer::addEntry(uint64_t PC, uint64_t targetPC)
+        // done
+        bool BasePredictor::branchTaken(uint32_t idx)
         {
-            if (btb_.size() < btb_size_)
-            {
-                btb_[PC] = targetPC;
-                return true;
-            }
-            return false;
-        }
-
-        bool BranchTargetBuffer::removeEntry(uint64_t PC) { return btb_.erase(PC); }
-
-        bool BranchTargetBuffer::isHit(uint64_t PC)
-        {
-            if (btb_.find(PC) != btb_.end())
+            uint8_t ctr = getCtr(idx);
+            if (ctr > pht_ctr_max_val_ / 2)
             {
                 return true;
             }
@@ -80,26 +136,91 @@ namespace olympia
             }
         }
 
-        uint64_t BranchTargetBuffer::getPredictedPC(uint64_t PC)
+        // done
+        bool BasePredictor::addEntry(uint64_t PC, uint64_t targetPC)
         {
-            if (isHit(PC))
+            if (branch_target_buffer_.size() < btb_size_)
             {
-                return btb_[PC];
+                branch_target_buffer_[PC] = targetPC;
+                return true;
+            }
+            return false;
+        }
+
+        // done
+        bool BasePredictor::isHit(uint64_t PC)
+        {
+            if (branch_target_buffer_.find(PC) != branch_target_buffer_.end())
+            {
+                return true;
             }
             else
             {
-                return 0; // change it later
+                return false;
             }
         }
 
-        // Return Address Stack
-        ReturnAddressStack::ReturnAddressStack(uint32_t ras_size) : ras_size_(ras_size) {}
-
-        void ReturnAddressStack::pushAddress(uint64_t PC)
+        // i think good enough for review
+        uint64_t BasePredictor::getTargetPC(uint64_t PC, uint8_t instType)
         {
-            if (ras_.size() < ras_size_)
+            uint64_t targetPC = PC + 8;
+            if (isHit(PC))
             {
-                ras_.push(PC);
+                if (instType == CALL)
+                {
+                    targetPC = branch_target_buffer_[PC];
+                }
+                else if (instType == BRANCH)
+                {
+                    if (branchTaken(PC))
+                    {
+                        targetPC = branch_target_buffer_[PC];
+                    }
+                    else
+                    {
+                        branch_target_buffer_.erase(PC);
+                        targetPC = PC + 8;
+                    }
+                }
+            }
+            else
+            {
+                if (instType == CALL)
+                {
+                    // TODO: put something random and
+                    // rely on update to correct it later?
+                    addEntry(PC, PC + 8);
+                    targetPC = PC + 8;
+                }
+                else if (instType == BRANCH)
+                {
+                    if (branchTaken(PC))
+                    {
+                        // TODO: put something random and
+                        // rely on update to correct it later?
+                        addEntry(PC, PC + 8);
+                    }
+                    else
+                    {
+                        targetPC = PC + 8;
+                    }
+                }
+            }
+            return targetPC;
+        }
+
+        // i think done
+        void BasePredictor::pushAddress(uint64_t PC)
+        {
+            if (return_address_stack_.size() < ras_size_)
+            {
+                return_address_stack_.push_front(PC);
+            }
+            else if (ras_enable_overwrite_)
+            {
+                // oldest entry of RAS is overwritten to make space for new entry
+                return_address_stack_.pop_back();
+                return_address_stack_.push_front(PC);
             }
             else
             {
@@ -107,8 +228,18 @@ namespace olympia
             }
         }
 
-        uint64_t ReturnAddressStack::popAddress() { return 0; }
-
-        uint32_t ReturnAddressStack::getSize() { return ras_.size(); }
+        // i think done for now with TODO left
+        uint64_t BasePredictor::popAddress()
+        {
+            if (return_address_stack_.size() > 0)
+            {
+                uint64_t address = return_address_stack_.front();
+                return_address_stack_.pop_front();
+                return address;
+            }
+            // TODO: what to return when ras is empty but popAddress() is
+            // inocrrectly called?
+            return 0;
+        }
     } // namespace BranchPredictor
 } // namespace olympia

@@ -28,8 +28,8 @@ namespace bpu_test
         {
             sparta::StartupEvent(n, CREATE_SPARTA_HANDLER(BPUSink, sendInitialCreditsToFTQ_));
 
-            in_ftq_prediction_output_.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(BPUSink, getPredictionOutput_, olympia::BranchPredictor::PredictionOutput));
+            in_ftq_prediction_output_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
+                BPUSink, getPredictionOutput_, olympia::BranchPredictor::PredictionOutput));
         }
 
       private:
@@ -38,17 +38,15 @@ namespace bpu_test
 
         void sendCreditsToFTQ_(const uint32_t & credits)
         {
-            ILOG("Fetch: Send " << credits << " credits to FTQ");
+            ILOG("Send " << credits << " credits from Fetch to FTQ");
             out_ftq_credits_.send(credits);
         }
 
-        void sendInitialCreditsToFTQ_() {
-            sendCreditsToFTQ_(5);
-        }
+        void sendInitialCreditsToFTQ_() { sendCreditsToFTQ_(5); }
 
         void getPredictionOutput_(const olympia::BranchPredictor::PredictionOutput & output)
         {
-            ILOG("Fetch: Recieve prediction output from FTQ");
+            ILOG("Fetch recieves prediction output from FTQ");
             pred_output_buffer_.push_back(output);
         }
 
@@ -58,8 +56,7 @@ namespace bpu_test
         sparta::DataInPort<olympia::BranchPredictor::PredictionOutput> in_ftq_prediction_output_{
             &unit_port_set_, "in_ftq_prediction_output", 0};
 
-        sparta::DataOutPort<uint32_t> out_ftq_credits_{
-            &unit_port_set_, "out_ftq_credits"};
+        sparta::DataOutPort<uint32_t> out_ftq_credits_{&unit_port_set_, "out_ftq_credits"};
 
         /**sparta::UniqueEvent<> ev_return_credits_{
             &unit_event_set_, "return_credits",

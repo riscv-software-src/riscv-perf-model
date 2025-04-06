@@ -11,8 +11,8 @@ namespace olympia
         class TageTaggedComponentEntry
         {
           public:
-            TageTaggedComponentEntry(uint8_t tage_ctr_bits, uint8_t tage_useful_bits,
-                                     uint8_t ctr_initial, uint8_t useful_initial);
+            TageTaggedComponentEntry(const uint8_t & tage_ctr_bits, const uint8_t & tage_useful_bits,
+                                     const uint8_t & ctr_initial, const uint8_t & useful_initial);
 
             void incrementCtr();
             void decrementCtr();
@@ -27,7 +27,7 @@ namespace olympia
             const uint8_t tage_ctr_bits_;
             const uint8_t tage_useful_bits_;
             const uint8_t tage_ctr_max_val_;
-            const uint8_t tage_useful_max_val_
+            const uint8_t tage_useful_max_val_;
 
             uint8_t ctr_;
             uint8_t useful_;
@@ -36,10 +36,10 @@ namespace olympia
         class TageTaggedComponent
         {
           public:
-            TageTaggedComponent(uint8_t tage_ctr_bits, uint8_t tage_useful_bits,
-                                uint16_t num_tagged_entry);
+            TageTaggedComponent(const uint8_t & tage_ctr_bits, const uint8_t & tage_useful_bits,
+                                const uint16_t & num_tagged_entry);
 
-            TageTaggedComponentEntry getTageComponentEntryAtIndex(uint16_t index);
+            TageTaggedComponentEntry getTageComponentEntryAtIndex(const uint16_t & index);
 
           private:
             const uint8_t tage_ctr_bits_;
@@ -51,29 +51,29 @@ namespace olympia
         class TageBIM
         {
           public:
-            TageBIM(uint32_t tage_bim_table_size, uint8_t tage_base_ctr_bits);
+            TageBIM(const uint32_t & tage_bim_table_size, const uint8_t & tage_base_ctr_bits);
 
-            void incrementCtr(uint32_t ip);
-            void decrementCtr(uint32_t ip);
-            uint8_t getPrediction(uint32_t ip);
+            void incrementCtr(const uint32_t & ip);
+            void decrementCtr(const uint32_t & ip);
+            uint8_t getPrediction(const uint32_t & ip);
 
           private:
             const uint32_t tage_bim_table_size_;
             const uint8_t tage_bim_ctr_bits_;
             uint8_t tage_bim_max_ctr_;
-            std::vector<uint8_t> Tage_Bimodal_;
+            std::vector<uint8_t> tage_bimodal_;
         };
 
         class Tage
         {
           public:
-            Tage(uint32_t tage_bim_table_size, uint8_t tage_bim_ctr_bits,
-                 uint16_t tage_max_index_bits, uint8_t tage_tagged_ctr_bits,
-                 uint8_t tage_tagged_useful_bits, uint32_t tage_global_history_len,
-                 uint32_t tage_min_hist_len, uint8_t tage_hist_alpha,
-                 uint32_t tage_reset_useful_interval, uint8_t tage_num_component);
+            Tage(const uint32_t & tage_bim_table_size, const uint8_t & tage_bim_ctr_bits,
+                 const uint16_t & tage_max_index_bits, const uint8_t & tage_tagged_ctr_bits,
+                 const uint8_t & tage_tagged_useful_bits, const uint32_t & tage_global_history_len,
+                 const uint32_t & tage_min_hist_len, const uint8_t & tage_hist_alpha,
+                 const uint32_t & tage_reset_useful_interval, const uint8_t & tage_num_component);
 
-            uint8_t predict(uint64_t ip);
+            uint8_t predict(const uint64_t & ip);
 
           private:
             const uint32_t tage_bim_table_size_;
@@ -90,8 +90,12 @@ namespace olympia
             std::vector<TageTaggedComponent> tage_tagged_components_;
             std::vector<uint8_t> tage_global_history_;
 
-            uint32_t hashAddr(uint64_t PC, uint8_t component_number);
-            uint16_t calculatedTag(uint64_t PC, uint8_t component_number);
+            // Helper function to compress tage ghr into a numeric
+            uint64_t compressed_ghr(const uint8_t & req_length);
+            // Helper function to calculate hash too index into tage table
+            uint32_t hashAddr(const uint64_t & PC, const uint8_t & component_number);
+            // Helper function to calcuate tag
+            uint16_t calculatedTag(const uint64_t & PC, const uint8_t & component_number);
         };
 
         /***

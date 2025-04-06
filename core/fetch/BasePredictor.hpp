@@ -16,25 +16,25 @@ namespace olympia
         class BasePredictor
         {
           public:
-            BasePredictor(uint32_t pht_size, uint8_t pht_ctr_bits, uint32_t btb_size,
-                          uint32_t ras_size, bool ras_enable_overwrite);
+            BasePredictor(const uint32_t & pht_size, const uint8_t & pht_ctr_bits, const uint32_t & btb_size,
+                          const uint32_t & ras_size, const bool & ras_enable_overwrite);
 
             bool getDirection(const uint64_t &, const uint8_t &);
             uint64_t getTarget(const uint64_t &, const uint8_t &);
 
             // PHT
-            void incrementCtr(uint32_t idx);
-            void decrementCtr(uint32_t idx);
-            uint8_t getCtr(uint32_t idx);
-            bool branchTaken(uint32_t idx);
+            void incrementCtr(const uint32_t & idx);
+            void decrementCtr(const uint32_t & idx);
+            uint8_t getCtr(const uint32_t & idx);
+            bool branchTaken(const uint32_t & idx);
 
             // BTB
-            bool addEntry(uint64_t PC, uint64_t targetPC);
-            bool isHit(uint64_t PC);
-            uint64_t getTargetPC(uint64_t PC, uint8_t instType);
+            bool addEntry(const uint64_t & PC, const uint64_t & targetPC);
+            bool isHit(const uint64_t & PC);
+            uint64_t getTargetPC(const uint64_t & PC, const uint8_t & instType);
 
             // RAS
-            void pushAddress(uint64_t PC);
+            void pushAddress(const uint64_t & PC);
             uint64_t popAddress();
 
           private:

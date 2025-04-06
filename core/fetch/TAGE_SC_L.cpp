@@ -1,5 +1,6 @@
 #include "TAGE_SC_L.hpp"
 #include <iostream>
+#include <cmath>
 
 namespace olympia
 {
@@ -7,16 +8,16 @@ namespace olympia
     {
 
         // Tage Tagged Component Entry
-        TageTaggedComponentEntry::TageTaggedComponentEntry(uint8_t tage_ctr_bits,
-                                                           uint8_t tage_useful_bits,
-                                                           uint8_t ctr_initial,
-                                                           uint8_t useful_initial) :
+        TageTaggedComponentEntry::TageTaggedComponentEntry(const uint8_t & tage_ctr_bits,
+                                                           const uint8_t & tage_useful_bits,
+                                                           const uint8_t & ctr_initial,
+                                                           const uint8_t & useful_initial) :
             tage_ctr_bits_(tage_ctr_bits),
             tage_useful_bits_(tage_useful_bits),
-            ctr_(ctr_initial),
-            useful_(useful_initial),
             tage_ctr_max_val_(1 << tage_ctr_bits_),
-            tage_useful_max_val_(1 << tage_useful_bits_)
+            tage_useful_max_val_(1 << tage_useful_bits_),
+            ctr_(ctr_initial),
+            useful_(useful_initial)
         {
         }
 
@@ -53,8 +54,8 @@ namespace olympia
         uint8_t TageTaggedComponentEntry::getUseful() { return useful_; }
 
         // Tagged component
-        TageTaggedComponent::TageTaggedComponent(uint8_t tage_ctr_bits, uint8_t tage_useful_bits,
-                                                 uint16_t num_tagged_entry) :
+        TageTaggedComponent::TageTaggedComponent(const uint8_t & tage_ctr_bits, const uint8_t & tage_useful_bits,
+                                                 const uint16_t & num_tagged_entry) :
             tage_ctr_bits_(tage_ctr_bits),
             tage_useful_bits_(tage_useful_bits),
             num_tagged_entry_(num_tagged_entry),
@@ -62,51 +63,51 @@ namespace olympia
         {
         }
 
-        TageTaggedComponentEntry TageTaggedComponent::getTageComponentEntryAtIndex(uint16_t index)
+        TageTaggedComponentEntry TageTaggedComponent::getTageComponentEntryAtIndex(const uint16_t & index)
         {
             return tage_tagged_component_[index];
         }
 
         // Tage Bimodal
-        TageBIM::TageBIM(uint32_t tage_bim_table_size, uint8_t tage_base_ctr_bits) :
+        TageBIM::TageBIM(const uint32_t & tage_bim_table_size, const uint8_t & tage_base_ctr_bits) :
             tage_bim_table_size_(tage_bim_table_size),
             tage_bim_ctr_bits_(tage_base_ctr_bits),
-            Tage_Bimodal_(tage_bim_table_size_)
+            tage_bimodal_(tage_bim_table_size_)
         {
             // recheck value
             tage_bim_max_ctr_ = 1 << tage_bim_ctr_bits_;
 
             // initialize counter at all index to be 0
-            for (auto & val : Tage_Bimodal_)
+            for (auto & val : tage_bimodal_)
             {
                 val = 0;
             }
         }
 
-        void TageBIM::incrementCtr(uint32_t ip)
+        void TageBIM::incrementCtr(const uint32_t & ip)
         {
-            if (Tage_Bimodal_[ip] < tage_bim_max_ctr_)
+            if (tage_bimodal_[ip] < tage_bim_max_ctr_)
             {
-                Tage_Bimodal_[ip]++;
+                tage_bimodal_[ip]++;
             }
         }
 
-        void TageBIM::decrementCtr(uint32_t ip)
+        void TageBIM::decrementCtr(const uint32_t & ip)
         {
-            if (Tage_Bimodal_[ip] > 0)
+            if (tage_bimodal_[ip] > 0)
             {
-                Tage_Bimodal_[ip]--;
+                tage_bimodal_[ip]--;
             }
         }
 
-        uint8_t TageBIM::getPrediction(uint32_t ip) { return Tage_Bimodal_[ip]; }
+        uint8_t TageBIM::getPrediction(const uint32_t & ip) { return tage_bimodal_[ip]; }
 
         // TAGE
-        Tage::Tage(uint32_t tage_bim_table_size, uint8_t tage_bim_ctr_bits,
-                   uint16_t tage_max_index_bits, uint8_t tage_tagged_ctr_bits,
-                   uint8_t tage_tagged_useful_bits, uint32_t tage_global_history_len,
-                   uint32_t tage_min_hist_len, uint8_t tage_hist_alpha,
-                   uint32_t tage_reset_useful_interval, uint8_t tage_num_component) :
+        Tage::Tage(const uint32_t & tage_bim_table_size, const uint8_t & tage_bim_ctr_bits,
+                   const uint16_t & tage_max_index_bits, const uint8_t & tage_tagged_ctr_bits,
+                   const uint8_t & tage_tagged_useful_bits, const uint32_t & tage_global_history_len,
+                   const uint32_t & tage_min_hist_len, const uint8_t & tage_hist_alpha,
+                   const uint32_t & tage_reset_useful_interval, const uint8_t & tage_num_component) :
             tage_bim_table_size_(tage_bim_table_size),
             tage_bim_ctr_bits_(tage_bim_ctr_bits),
             tage_max_index_bits_(tage_max_index_bits),
@@ -125,40 +126,52 @@ namespace olympia
         {
         }
 
-        uint32_t Tage::hashAddr(uint64_t PC, uint8_t component_number)
+        uint64_t Tage::compressed_ghr(const uint8_t & req_length)
         {
-            // TODO: Write logic to calculate hash
-            uint32_t hashedValue = 0;
+            uint64_t resultant_ghr = 0;
+            // if req_length is more than tage_global_history_len_ then return whole tage_global_history_
+            uint8_t length = (req_length > tage_global_history_len_) ? tage_global_history_len_ : req_length;
+            for(uint8_t idx = 0; idx < length; idx++) {
+                resultant_ghr = (resultant_ghr << 1) | tage_global_history_[tage_global_history_len_ - idx - 1];
+            }
+            return resultant_ghr;
+        }
+
+        uint32_t Tage::hashAddr(const uint64_t & PC, const uint8_t & component_number)
+        {
+            uint8_t local_hist_len = tage_min_hist_len_ * pow(tage_hist_alpha_, component_number - 1);
+            uint64_t effective_hist = compressed_ghr(local_hist_len);
+            uint32_t hashedValue = (uint32_t) (PC ^ effective_hist);
             return hashedValue;
         }
 
-        uint16_t Tage::calculatedTag(uint64_t PC, uint8_t component_number)
+        uint16_t Tage::calculatedTag(const uint64_t & PC, const uint8_t & component_number)
         {
-            // uint16_t tag_i = (PC ^ (PC >> shift1) ^ compressed_ghr);
-            uint16_t tag_i = 0;
-            return tag_i;
+            uint8_t local_hist_len = tage_min_hist_len_ * pow(tage_hist_alpha_, component_number - 1);
+            uint64_t effective_hist = compressed_ghr(local_hist_len);
+            uint16_t calculated_tag = (uint16_t) (PC ^ effective_hist);
+            return calculated_tag;
         }
 
-        // for now return 1
-        uint8_t Tage::predict(uint64_t ip)
+        uint8_t Tage::predict(const uint64_t & ip)
         {
-            uint8_t def_pred = tage_bim_.getPrediction(ip);
-            uint8_t num_counter = 0;
-            uint8_t tage_pred = def_pred;
+            uint8_t default_prediction = tage_bim_.getPrediction(ip);
+            uint8_t num_counter = 1;
+            uint8_t tage_prediction = default_prediction;
             for (auto tage_i : tage_tagged_components_)
             {
                 uint64_t effective_addr = hashAddr(ip, num_counter);
                 TageTaggedComponentEntry tage_entry =
                     tage_i.getTageComponentEntryAtIndex(effective_addr);
 
+                // Tag match
                 if (tage_entry.tag == calculatedTag(ip, num_counter))
                 {
-                    tage_pred = tage_entry.getCtr();
+                    tage_prediction = tage_entry.getCtr();
                 }
                 num_counter++;
             }
-            std::cout << "getting tage prediction\n";
-            return tage_pred;
+            return tage_prediction;
         }
     } // namespace BranchPredictor
 } // namespace olympia

@@ -8,8 +8,8 @@ namespace olympia
 {
     namespace BranchPredictor
     {
-        BasePredictor::BasePredictor(uint32_t pht_size, uint8_t pht_ctr_bits, uint32_t btb_size,
-                                     uint32_t ras_size, bool ras_enable_overwrite) :
+        BasePredictor::BasePredictor(const uint32_t & pht_size, const uint8_t & pht_ctr_bits, const uint32_t & btb_size,
+                                     const uint32_t & ras_size, const bool & ras_enable_overwrite) :
             pht_size_(pht_size),
             pht_ctr_bits_(pht_ctr_bits),
             pht_ctr_max_val_(1 << pht_ctr_bits_),
@@ -86,7 +86,7 @@ namespace olympia
         }
 
         // done
-        void BasePredictor::incrementCtr(uint32_t idx)
+        void BasePredictor::incrementCtr(const uint32_t & idx)
         {
             if (pattern_history_table_.find(idx) != pattern_history_table_.end())
             {
@@ -98,7 +98,7 @@ namespace olympia
         }
 
         // done
-        void BasePredictor::decrementCtr(uint32_t idx)
+        void BasePredictor::decrementCtr(const uint32_t & idx)
         {
             if (pattern_history_table_.find(idx) != pattern_history_table_.end())
             {
@@ -110,7 +110,7 @@ namespace olympia
         }
 
         // done
-        uint8_t BasePredictor::getCtr(uint32_t idx)
+        uint8_t BasePredictor::getCtr(const uint32_t & idx)
         {
             if (pattern_history_table_.find(idx) != pattern_history_table_.end())
             {
@@ -123,7 +123,7 @@ namespace olympia
         }
 
         // done
-        bool BasePredictor::branchTaken(uint32_t idx)
+        bool BasePredictor::branchTaken(const uint32_t & idx)
         {
             uint8_t ctr = getCtr(idx);
             if (ctr > pht_ctr_max_val_ / 2)
@@ -137,7 +137,7 @@ namespace olympia
         }
 
         // done
-        bool BasePredictor::addEntry(uint64_t PC, uint64_t targetPC)
+        bool BasePredictor::addEntry(const uint64_t & PC, const uint64_t & targetPC)
         {
             if (branch_target_buffer_.size() < btb_size_)
             {
@@ -148,7 +148,7 @@ namespace olympia
         }
 
         // done
-        bool BasePredictor::isHit(uint64_t PC)
+        bool BasePredictor::isHit(const uint64_t & PC)
         {
             if (branch_target_buffer_.find(PC) != branch_target_buffer_.end())
             {
@@ -161,7 +161,7 @@ namespace olympia
         }
 
         // i think good enough for review
-        uint64_t BasePredictor::getTargetPC(uint64_t PC, uint8_t instType)
+        uint64_t BasePredictor::getTargetPC(const uint64_t & PC, const uint8_t & instType)
         {
             uint64_t targetPC = PC + 8;
             if (isHit(PC))
@@ -210,7 +210,7 @@ namespace olympia
         }
 
         // i think done
-        void BasePredictor::pushAddress(uint64_t PC)
+        void BasePredictor::pushAddress(const uint64_t & PC)
         {
             if (return_address_stack_.size() < ras_size_)
             {

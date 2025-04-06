@@ -2,17 +2,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this 
 
 The following people from multiple organizations have contributed to this project:
 
-* (Ventana Micro Systems)[https://www.ventanamicro.com]
-  * (Arup Chakraborty)[https://github.com/arupc]
+* [Ventana Micro Systems]([https://www.ventanamicro.com)
+  * [Arup Chakraborty](https://github.com/arupc)
 
-* (MIPS)[https://mips.com] 
-  * (Knute Lingaard)[https://github.com/klingaard]
-  * (Kathlene Magnus)[https://github.com/kathlenemagnus]
+* [MIPS](https://mips.com) 
+  * [Knute Lingaard](https://github.com/klingaard)
+  * [Kathlene Magnus](https://github.com/kathlenemagnus)
 
-* (Condor Computing)[https://condorcomputing.com]
-  * (Jeff Nye)[https://github.com/jeffnye-gh]
+* [Condor Computing](https://condorcomputing.com)
+  * [Jeff Nye](https://github.com/jeffnye-gh)
 
-* (InCore Semiconductors)[https://incoresemi.com/]
-  * (Sai Govardhan)[https://github.com/govardhnn]
+* [InCore Semiconductors](https://incoresemi.com/)
+  * [Sai Govardhan](https://github.com/govardhnn)
 
 List is incomplete and more contributor names/organizations to be added. 

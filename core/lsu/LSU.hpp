@@ -78,7 +78,7 @@ namespace olympia
         static const char name[];
 
         // return allow_data_forwarding for test
-        bool allow_data_forwarding_ex() {
+        bool allowDataForwardingEX() const {
             return allow_data_forwarding_;
         }
 

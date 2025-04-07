@@ -109,7 +109,7 @@ void runTest(int argc, char **argv)
     olympia::LSUTester lsupipe_tester;
     lsupipe_tester.test_pipeline_stages(*my_lsu);
 
-    if(my_lsu->allow_data_forwarding_ex()) {
+    if(my_lsu->allowDataForwardingEX()) {
         // Data forwarding enabled case
         std::cout << "allow data forwarding " <<  "\n";;
         // First store

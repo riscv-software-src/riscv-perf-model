@@ -91,6 +91,8 @@ namespace olympia
 
         InstPtr generatePermuteUops_();
 
+        InstPtr generateScalarMoveUops_();
+
         InstPtr makeInst_(const mavis::OperandInfo::ElementList & srcs,
                           const mavis::OperandInfo::ElementList & dests);
 

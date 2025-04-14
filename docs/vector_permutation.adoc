@@ -152,7 +152,7 @@ only one micro-operation.
 
 - Instruction Architecture Info:
     
-    . `core/InstArchInfo.hpp`:
+    . `core/InstArchInfo.{hpp}/{cpp}`:
         .. Already has `VPERMUTE` in TargetPipe enum
         .. Need to ensure proper UopGenType for permutation, to add: 
             ... `SCALAR_MOVE`
@@ -259,6 +259,48 @@ Requirements:
 // discusses each major block in a separate sub-section>
 . TODO
 
+=== Taking an example of implementing the vector move instructions
+
+    . vmv.x.s rd, vs2    # x[rd] = vs2[0]
+
+    1. We add the instruction in `mavis/json/isa_rv64v.json` file
+
+    2. Add the instruction to `core/InstArchInfo.hpp` file
+
+    ```cpp
+        enum class UopGenType
+        {
+            ...
+            SCALAR_MOVE
+            ...
+        }
+    ```
+
+    3. Add a new function for SCALAR_MOVE and declare it in the header.
+
+    ```cpp
+        InstPtr generateScalarMoveUops_();
+    ```
+
+    4. Add the new function in the `core/vector/VectorUopGenerator.cpp` file.
+
+    ```cpp
+        InstPtr generateScalarMoveUops_();
+    ```
+
+    5. Add the new function in the `core/vector/VectorUopGenerator.cpp` file.
+
+    ```cpp
+
+    InstPtr VectorUopGenerator::generateScalarMoveUops_()
+    {
+
+        // TODO implementation
+    }
+    ```
+
+    6. Add the tests to the `test/core/vector/Vector_test.cpp` file.
+    
 [[Unit_Block_Diagram]]
 === Unit Block Diagram
 

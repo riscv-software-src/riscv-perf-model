@@ -171,6 +171,10 @@ namespace olympia
         //     Exe Uop 4: vrgather.vv v23, v11
         uop_gen_function_map_.emplace(InstArchInfo::UopGenType::PERMUTE,
                                       &VectorUopGenerator::generatePermuteUops_);
+
+        // Vector scalar move uop generator
+        uop_gen_function_map_.emplace(InstArchInfo::UopGenType::SCALAR_MOVE,
+                                      &VectorUopGenerator::generateScalarMoveUops_);
     }
 
     void VectorUopGenerator::onBindTreeLate_() { mavis_facade_ = getMavis(getContainer()); }
@@ -482,6 +486,13 @@ namespace olympia
     InstPtr VectorUopGenerator::generatePermuteUops_()
     {
         sparta_assert(false, "Vector permute uop generation is currently not supported!");
+    }
+
+    InstPtr VectorUopGenerator::generateScalarMoveUops_()
+    {
+
+        // TODO implementation
+        sparta_assert(false, "Vector scalar move uop generation is currently yet to be implemented");
     }
 
     InstPtr VectorUopGenerator::makeInst_(const mavis::OperandInfo::ElementList & srcs,

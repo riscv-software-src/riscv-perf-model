@@ -92,6 +92,7 @@ namespace olympia
             INT_EXT,
             SLIDE1UP,
             SLIDE1DOWN,
+            SCALAR_MOVE,
             PERMUTE,
             NONE,
             UNKNOWN

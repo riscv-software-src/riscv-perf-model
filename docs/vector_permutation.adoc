@@ -95,7 +95,7 @@ Olympia implements the Vector Unit in the `core/vector/` directory where:
  - `VLEN` is the width of the vector register statically set to 1024
 
  - `ELEN`, the Maximum Vector Element Width is specified based on `sew_` 
- (Set Element Width)
+ (Selected Element Width)
 
 Within the `core/vector/VectorConfig.hpp` file, the `VectorConfig` class is 
 defined to configure the Vector Unit.

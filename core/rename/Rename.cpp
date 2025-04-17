@@ -597,7 +597,7 @@ namespace olympia
 
                 sparta_assert(!freelist.empty(), "Freelist should never be empty");
 
-                uint32_t prf = 0;
+                uint32_t prf = std::numeric_limits<uint32_t>::max();
                 bool update_scoreboard = true;
 
                 bool move_eliminated = false;
@@ -637,6 +637,9 @@ namespace olympia
                     DLOG("popping: " << prf);
                     freelist.pop();
                 }
+
+                sparta_assert(prf != std::numeric_limits<uint32_t>::max(),
+                              "PRF not assigned neither from the freelist nor move elim (if enabled)");
 
                 const uint32_t prev_dest = map_table_[reg_file][arch_num];
                 RenameData::Reg renamed_dst({prf, dest, prev_dest});

@@ -23,8 +23,8 @@ namespace olympia
             loop_pred_table_size_(p->loop_pred_table_size),
             loop_pred_table_way_(p->loop_pred_table_way),
             base_predictor_(pht_size_, ctr_bits_, btb_size_, ras_size_, ras_enable_overwrite_),
-            tage_predictor_(tage_bim_table_size_, tage_bim_ctr_bits_, 5, 2, 3, 10, 2, 2, 1024,
-                            tage_tagged_table_num_)
+            tage_predictor_(tage_bim_table_size_, tage_bim_ctr_bits_, /*5,*/ 2, 3, 10, 2, 2, 1024,
+                            tage_tagged_table_num_, 10)
         {
             sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BPU, sendIntitialCreditsToFetch_));
 
@@ -98,6 +98,7 @@ namespace olympia
                 ILOG("Getting target from base predictor");
                 uint64_t target = base_predictor_.getTarget(in.PC_, in.instType_);
 
+                output.instrPC = in.PC_;
                 output.predPC_ = target;
                 output.predDirection_ = dir;
 
@@ -119,8 +120,10 @@ namespace olympia
             PredictionRequest in = predictionRequestBuffer_.front();
 
             ILOG("Getting direction prediction from TAGE");
+            output.instrPC = in.PC_;
             output.predDirection_ = tage_predictor_.predict(in.PC_);
-            output.predPC_ = 100;
+            // TAGE only predicts whether branch will be taken or not, so predPC_ value will be ignored
+            output.predPC_ = 0;
             ILOG("Sending second PredictionOutput from BPU to FTQ");
             out_ftq_second_prediction_output_.send(output);
         }

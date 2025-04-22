@@ -36,6 +36,10 @@ namespace olympia
           public:
             PredictionOutput() {}
 
+            // PC of instruction for which PredictionOutput is generated 
+            // this can be used as an index to find mismatch and update prediction 
+            // between BasePredictor and TAGE_SC_L.
+            uint64_t instrPC;
             bool predDirection_;
             uint64_t predPC_;
 

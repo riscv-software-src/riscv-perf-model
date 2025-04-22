@@ -51,6 +51,11 @@ namespace olympia
             }
         }
 
+        void TageTaggedComponentEntry::resetUseful() 
+        {
+            useful_ >>= 1;
+        }
+
         uint8_t TageTaggedComponentEntry::getUseful() { return useful_; }
 
         // Tagged component
@@ -74,7 +79,6 @@ namespace olympia
             tage_bim_ctr_bits_(tage_base_ctr_bits),
             tage_bimodal_(tage_bim_table_size_)
         {
-            // recheck value
             tage_bim_max_ctr_ = 1 << tage_bim_ctr_bits_;
 
             // initialize counter at all index to be 0
@@ -104,13 +108,15 @@ namespace olympia
 
         // TAGE
         Tage::Tage(const uint32_t & tage_bim_table_size, const uint8_t & tage_bim_ctr_bits,
-                   const uint16_t & tage_max_index_bits, const uint8_t & tage_tagged_ctr_bits,
+                   //const uint16_t & tage_max_index_bits, 
+                   const uint8_t & tage_tagged_ctr_bits,
                    const uint8_t & tage_tagged_useful_bits, const uint32_t & tage_global_history_len,
                    const uint32_t & tage_min_hist_len, const uint8_t & tage_hist_alpha,
-                   const uint32_t & tage_reset_useful_interval, const uint8_t & tage_num_component) :
+                   const uint32_t & tage_reset_useful_interval, const uint8_t & tage_num_component,
+                   const uint16_t & tage_tagged_component_entry_num) :
             tage_bim_table_size_(tage_bim_table_size),
             tage_bim_ctr_bits_(tage_bim_ctr_bits),
-            tage_max_index_bits_(tage_max_index_bits),
+            //tage_max_index_bits_(tage_max_index_bits),
             tage_tagged_ctr_bits_(tage_tagged_ctr_bits),
             tage_tagged_useful_bits_(tage_tagged_useful_bits),
             tage_global_history_len_(tage_global_history_len),
@@ -118,10 +124,10 @@ namespace olympia
             tage_hist_alpha_(tage_hist_alpha),
             tage_reset_useful_interval_(tage_reset_useful_interval),
             tage_num_component_(tage_num_component),
-            tage_bim_(tage_bim_table_size_, tage_bim_table_size_),
-            // for now number of tagged component entry in each component is set as 10
+            tage_tagged_component_entry_num_(tage_tagged_component_entry_num),
+            tage_bim_(tage_bim_table_size_, tage_bim_ctr_bits_),
             tage_tagged_components_(tage_num_component_,
-                                    {tage_tagged_ctr_bits_, tage_tagged_useful_bits_, 10}),
+                                    {tage_tagged_ctr_bits_, tage_tagged_useful_bits_, tage_tagged_component_entry_num_}),
             tage_global_history_(tage_global_history_len_, 0)
         {
         }
@@ -153,8 +159,29 @@ namespace olympia
             return calculated_tag;
         }
 
+        void Tage::updateUsefulBits() 
+        {
+            for(auto & tage_table : tage_tagged_components_) 
+            {
+                for(auto & entry : tage_table.tage_tagged_component_) 
+                {
+                    entry.resetUseful();
+                }
+            }
+        }
+
         uint8_t Tage::predict(const uint64_t & ip)
         {
+            if(reset_counter < tage_reset_useful_interval_) 
+            {       
+                reset_counter++;
+            }
+            else if(reset_counter == tage_reset_useful_interval_) 
+            {
+                reset_counter = 0;
+                updateUsefulBits();
+            }
+
             uint8_t default_prediction = tage_bim_.getPrediction(ip);
             uint8_t num_counter = 1;
             uint8_t tage_prediction = default_prediction;

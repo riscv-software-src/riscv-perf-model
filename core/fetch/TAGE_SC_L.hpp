@@ -19,6 +19,7 @@ namespace olympia
             uint8_t getCtr();
             void incrementUseful();
             void decrementUseful();
+            void resetUseful();
             uint8_t getUseful();
 
             uint16_t tag;
@@ -41,7 +42,7 @@ namespace olympia
 
             TageTaggedComponentEntry getTageComponentEntryAtIndex(const uint16_t & index);
 
-          private:
+          //private:
             const uint8_t tage_ctr_bits_;
             const uint8_t tage_useful_bits_;
             const uint16_t num_tagged_entry_;
@@ -68,17 +69,19 @@ namespace olympia
         {
           public:
             Tage(const uint32_t & tage_bim_table_size, const uint8_t & tage_bim_ctr_bits,
-                 const uint16_t & tage_max_index_bits, const uint8_t & tage_tagged_ctr_bits,
+                 //const uint16_t & tage_max_index_bits, 
+                 const uint8_t & tage_tagged_ctr_bits,
                  const uint8_t & tage_tagged_useful_bits, const uint32_t & tage_global_history_len,
                  const uint32_t & tage_min_hist_len, const uint8_t & tage_hist_alpha,
-                 const uint32_t & tage_reset_useful_interval, const uint8_t & tage_num_component);
+                 const uint32_t & tage_reset_useful_interval, const uint8_t & tage_num_component,
+                 const uint16_t & tage_tagged_component_entry_num);
 
             uint8_t predict(const uint64_t & ip);
 
           private:
             const uint32_t tage_bim_table_size_;
             const uint8_t tage_bim_ctr_bits_;
-            uint16_t tage_max_index_bits_;
+            //uint16_t tage_max_index_bits_;
             const uint8_t tage_tagged_ctr_bits_;
             const uint8_t tage_tagged_useful_bits_;
             const uint32_t tage_global_history_len_;
@@ -86,9 +89,12 @@ namespace olympia
             const uint8_t tage_hist_alpha_;
             const uint32_t tage_reset_useful_interval_;
             const uint8_t tage_num_component_;
+            const uint16_t tage_tagged_component_entry_num_;
             TageBIM tage_bim_;
             std::vector<TageTaggedComponent> tage_tagged_components_;
             std::vector<uint8_t> tage_global_history_;
+
+            uint32_t reset_counter = 0;
 
             // Helper function to compress tage ghr into a numeric
             uint64_t compressed_ghr(const uint8_t & req_length);
@@ -96,6 +102,8 @@ namespace olympia
             uint32_t hashAddr(const uint64_t & PC, const uint8_t & component_number);
             // Helper function to calcuate tag
             uint16_t calculatedTag(const uint64_t & PC, const uint8_t & component_number);
+
+            void updateUsefulBits();
         };
 
         /***

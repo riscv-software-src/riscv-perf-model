@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Saturday Sat Apr  5 17:01:41 2025
-#Elapsed:  0.001278s
+#Start:    Tuesday Tue Apr 22 05:37:54 2025
+#Elapsed:  0.001596s
 {0000000000 00000000 top.bpu info} sendCreditsToFetch_: Send 10 credits from BPU to Fetch
 {0000000000 00000000 top.ftq info} sendCreditsToBPU_: Send 5 credits to BPU
 {0000000000 00000000 top.sink info} sendCreditsToFTQ_: Send 5 credits from Fetch to FTQ
@@ -22,3 +22,9 @@
 {0000000004 00000004 top.bpu info} sendSecondPrediction_: Getting direction prediction from TAGE
 {0000000004 00000004 top.bpu info} sendSecondPrediction_: Sending second PredictionOutput from BPU to FTQ
 {0000000005 00000005 top.ftq info} getSecondPrediction_: FTQ receives second PredictionOutput from BPU
+{0000000005 00000005 top.ftq info} handleMismatch: Checking mismatch between BasePredictor and TAGE_SC_L
+{0000000005 00000005 top.ftq info} handleMismatch: BasePredictor prediction direction: 1
+{0000000005 00000005 top.ftq info} handleMismatch: TAGE_SC_L prediction direction: 0
+{0000000005 00000005 top.ftq info} handleMismatch: Prediction mismatch between tage and base predictor
+{0000000005 00000005 top.ftq info} sendPrediction_: Send prediction from FTQ to Fetch
+{0000000005 00000005 top.sink info} getPredictionOutput_: Fetch recieves prediction output from FTQ

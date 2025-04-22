@@ -12,7 +12,7 @@
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 
-#include <queue>
+#include <deque>
 
 namespace olympia
 {
@@ -38,7 +38,10 @@ namespace olympia
         const uint32_t ftq_capacity_;
 
         uint32_t fetch_credits_ = 0;
-        std::queue<BranchPredictor::PredictionOutput> fetch_target_queue_;
+        std::deque<BranchPredictor::PredictionOutput> fetch_target_queue_;
+
+        // Iterator pointing to next element to send further
+        std::deque<BranchPredictor::PredictionOutput> :: iterator ftq_it;
 
         sparta::DataInPort<BranchPredictor::PredictionOutput> in_bpu_first_prediction_output_{
             &unit_port_set_, "in_bpu_first_prediction_output", 1};
@@ -65,6 +68,8 @@ namespace olympia
         // receives prediction from TAGE_SC_L, checks if there's a mismatch
         // updates ftq appropriately
         void getSecondPrediction_(const BranchPredictor::PredictionOutput &);
+
+        void handleMismatch(const BranchPredictor::PredictionOutput &);
 
         void getFetchCredits_(const uint32_t &);
 

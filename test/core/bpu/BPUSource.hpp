@@ -61,12 +61,27 @@ namespace bpu_test
 
         const uint32_t pred_req_buffer_capacity = 8;
 
+        void generatePredictionOutput_() {
+            while(pred_request_buffer_.size() < pred_req_buffer_capacity) {
+                olympia::BranchPredictor::PredictionRequest pred_request;
+                pred_request.instType_ = 1;
+                pred_request.PC_ = 5;
+                pred_request_buffer_.push_back(pred_request);
+            }
+        }
+
         void getCreditsFromBPU_(const uint32_t & credits)
         {
             bpu_credits_ += credits;
             ILOG("Received " << credits << " credits from BPU");
 
+            generatePredictionOutput_();
+
             //ev_send_pred_req_.schedule(sparta::Clock::Cycle(0));
+            /**while(pred_request_buffer_.size() > 0) {
+                sendPredictionRequest_();
+                //ev_send_pred_req_.schedule(sparta::Clock::Cycle(1));
+            }**/
             sendPredictionRequest_();
         }
 
@@ -75,10 +90,9 @@ namespace bpu_test
             if (bpu_credits_ > 0)
             {
                 ILOG("Sending PredictionRequest from Fetch to BPU");
-                olympia::BranchPredictor::PredictionRequest pred_request;
-                pred_request.instType_ = 1;
-                pred_request.PC_ = 5;
-                out_bpu_prediction_request_.send(pred_request);
+                olympia::BranchPredictor::PredictionRequest req_to_send = pred_request_buffer_.front();
+                pred_request_buffer_.pop_front();
+                out_bpu_prediction_request_.send(req_to_send);
                 bpu_credits_--;
             }
         }
@@ -92,7 +106,7 @@ namespace bpu_test
         sparta::DataInPort<uint32_t> in_bpu_credits_{&unit_port_set_, "in_bpu_credits", 0};
 
         //sparta::Event<> ev_send_pred_req_{&unit_event_set_, "ev_send_pred_req_",
-        //                                  CREATE_SPARTA_HANDLER(BPUSource, sendPredictionRequest_)};
+          //                                CREATE_SPARTA_HANDLER(BPUSource, sendPredictionRequest_)};
     };
 
     using SrcFactory = sparta::ResourceFactory<BPUSource, BPUSource::BPUSourceParameters>;

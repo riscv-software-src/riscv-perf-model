@@ -104,7 +104,7 @@
     {
         "mnemonic": "vcompress.vm",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "COMPRESS",
         "latency": 4
     },
     {
@@ -302,13 +302,13 @@
     {
         "mnemonic": "vfmv.f.s",
         "pipe": "v2s",
-        "uop_gen": "NONE",
+        "uop_gen": "SCALAR_MOVE",
         "latency": 1
     },
     {
         "mnemonic": "vfmv.s.f",
         "pipe": "vmv",
-        "uop_gen": "NONE",
+        "uop_gen": "SCALAR_MOVE",
         "latency": 1
     },
     {
@@ -1328,7 +1328,7 @@
     {
         "mnemonic": "vmv.s.x",
         "pipe": "vmv",
-        "uop_gen": "NONE",
+        "uop_gen": "SCALAR_MOVE",
         "latency": 1
     },
     {
@@ -1352,7 +1352,7 @@
     {
         "mnemonic": "vmv.x.s",
         "pipe": "v2s",
-        "uop_gen": "NONE",
+        "uop_gen": "SCALAR_MOVE",
         "latency": 1
     },
     {
@@ -1586,25 +1586,25 @@
     {
         "mnemonic": "vrgather.vi",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "RGATHER",
         "latency": 4
     },
     {
         "mnemonic": "vrgather.vv",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "RGATHER",
         "latency": 4
     },
     {
         "mnemonic": "vrgather.vx",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "RGATHER",
         "latency": 4
     },
     {
         "mnemonic": "vrgatherei16.vv",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "RGATHER",
         "latency": 4
     },
     {
@@ -1766,25 +1766,25 @@
     {
         "mnemonic": "vslidedown.vi",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "SLIDEDOWN",
         "latency": 4
     },
     {
         "mnemonic": "vslidedown.vx",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "SLIDEDOWN",
         "latency": 4
     },
     {
         "mnemonic": "vslideup.vi",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "SLIDEUP",
         "latency": 4
     },
     {
         "mnemonic": "vslideup.vx",
         "pipe": "vpermute",
-        "uop_gen": "PERMUTE",
+        "uop_gen": "SLIDEUP",
         "latency": 4
     },
     {

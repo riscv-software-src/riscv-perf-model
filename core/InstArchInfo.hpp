@@ -90,12 +90,16 @@ namespace olympia
             REDUCTION,
             REDUCTION_WIDE,
             INT_EXT,
+            SLIDEUP,
+            SLIDEDOWN,
             SLIDE1UP,
             SLIDE1DOWN,
             SCALAR_MOVE,
-            PERMUTE,
-            NONE,
-            UNKNOWN
+            RGATHER,
+            COMPRESS,
+            WHOLE_REG_MOVE,
+            UNKNOWN,
+            NONE
         };
 
         static constexpr uint32_t N_UOP_GEN_TYPES = static_cast<uint32_t>(UopGenType::NONE);

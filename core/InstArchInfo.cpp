@@ -77,8 +77,12 @@ namespace olympia
         {"INT_EXT", InstArchInfo::UopGenType::INT_EXT},
         {"SLIDE1UP", InstArchInfo::UopGenType::SLIDE1UP},
         {"SLIDE1DOWN", InstArchInfo::UopGenType::SLIDE1DOWN},
-        {"PERMUTE", InstArchInfo::UopGenType::PERMUTE},
-        {"NONE", InstArchInfo::UopGenType::NONE}};
+        {"SCALAR_MOVE", InstArchInfo::UopGenType::SCALAR_MOVE},
+        {"RGATHER", InstArchInfo::UopGenType::RGATHER},
+        {"COMPRESS", InstArchInfo::UopGenType::COMPRESS},
+        {"WHOLE_REG_MOVE", InstArchInfo::UopGenType::WHOLE_REG_MOVE},
+        {"NONE", InstArchInfo::UopGenType::NONE},
+    };
 
     void InstArchInfo::update(const nlohmann::json & jobj)
     {

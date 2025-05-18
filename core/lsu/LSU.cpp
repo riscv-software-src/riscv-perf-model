@@ -524,7 +524,10 @@ namespace olympia
         if (!inst_ptr->isStoreInst() && allow_data_forwarding_)
         {
             const uint64_t load_addr = inst_ptr->getTargetVAddr();
-            auto forwarding_store = findYoungestMatchingStore_(load_addr);
+            const uint32_t load_size = inst_ptr->getMemAccessSize();
+
+            // passing both load address and load size
+            auto forwarding_store = tryStoreToLoadForwarding(inst_ptr)
 
             if (forwarding_store)
             {
@@ -943,16 +946,69 @@ namespace olympia
         ILOG("Store added to store buffer: " << inst_ptr);
     }
 
-    LoadStoreInstInfoPtr LSU::findYoungestMatchingStore_(const uint64_t addr) const
+    bool LSU::tryStoreToLoadForwarding(const InstPtr& load_inst_ptr) const
     {
-        LoadStoreInstInfoPtr matching_store = nullptr;
+        const uint64_t load_addr = load_inst_ptr->getTargetVAddr();
+        const uint32_t load_size = load_inst_ptr->getMemAccessSize();
 
-        auto it = std::find_if(store_buffer_.rbegin(), store_buffer_.rend(),
-                                [addr](const auto& store) {
-                                    return store->getInstPtr()->getTargetVAddr() == addr;
-                                });
-        return (it != store_buffer_.rend()) ? *it : nullptr;
+        // A load must have a non-zero size to access memory.
+        if (load_size == 0) {
+            return false;
+        }
+
+        std::vector<bool> coverage_mask(load_size, false);
+        uint32_t bytes_covered_count = 0;
+
+        // Iterate through the store_buffer_ from youngest to oldest.
+        // This ensures that if multiple stores write to the same byte,
+        // the data from the youngest store is effectively used.
+        for (auto it = store_buffer_.rbegin(); it != store_buffer_.rend(); ++it)
+        {
+            const auto& store_info_ptr = *it; // LoadStoreInstInfoPtr
+            const InstPtr& store_inst_ptr = store_info_ptr->getInstPtr();
+
+            const uint64_t store_addr = store_inst_ptr->getTargetVAddr();
+            const uint32_t store_size = store_inst_ptr->getMemAccessSize();
+
+            if (store_size == 0) {
+                continue; // Skip stores that don't actually write data.
+            }
+
+            // Determine the overlapping region [overlap_start_addr, overlap_end_addr)
+            // The overlap is in terms of global memory addresses.
+            uint64_t overlap_start_addr = std::max(load_addr, store_addr);
+            uint64_t overlap_end_addr   = std::min(load_addr + load_size, store_addr + store_size);
+
+            // If there's an actual overlap (i.e., the range is not empty)
+            if (overlap_start_addr < overlap_end_addr)
+            {
+                // Iterate over the bytes *within the load's address range* that this store covers.
+                for (uint64_t current_byte_global_addr = overlap_start_addr; current_byte_global_addr < overlap_end_addr; ++current_byte_global_addr)
+                {
+                    // Calculate the index of this byte relative to the load's start address.
+                    // This index is used for the coverage_mask.
+                    uint32_t load_byte_idx = static_cast<uint32_t>(current_byte_global_addr - load_addr);
+
+                    // If this byte within the load's coverage_mask hasn't been marked true yet
+                    // (meaning it hasn't been covered by an even younger store), mark it.
+                    if (!coverage_mask[load_byte_idx])
+                    {
+                        coverage_mask[load_byte_idx] = true;
+                        bytes_covered_count++;
+                    }
+                }
+            }
+
+            // If all bytes of the load are now covered, no need to check even older stores
+            if (bytes_covered_count == load_size) {
+                break;
+            }
+        }
+
+        // Check if all bytes required by the load were covered by stores in the buffer.
+        return bytes_covered_count == load_size;
     }
+
 
     LoadStoreInstInfoPtr  LSU::getOldestStore_() const
     {

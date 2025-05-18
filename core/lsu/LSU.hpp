@@ -275,8 +275,8 @@ namespace olympia
         // allocate store inst to store buffer
         void allocateInstToStoreBuffer_(const InstPtr & inst_ptr);
 
-        // Search store buffer in FIFO order for youngest matching store
-        LoadStoreInstInfoPtr findYoungestMatchingStore_(const uint64_t addr) const ;
+        // check whether load inst could be forwarded by store
+        bool tryStoreToLoadForwarding(const InstPtr& load_inst_ptr) const ;
 
         // get oldest store
         LoadStoreInstInfoPtr getOldestStore_() const;

@@ -140,34 +140,77 @@ LoadStoreInstInfoPtr findYoungestMatchingStore_(const uint64_t addr) const;
 The data forwarding logic is implemented through the store buffer and involves:
 
 1. *Store Buffer Search*
-[source,cpp]
-----
-LoadStoreInstInfoPtr findYoungestMatchingStore_(const uint64_t addr) const {
-    auto it = std::find_if(store_buffer_.rbegin(), store_buffer_.rend(),
-                          [addr](const auto& store) {
-                              return store->getInstPtr()->getTargetVAddr() == addr;
-                          });
-    return (it != store_buffer_.rend()) ? *it : nullptr;
-}
-----
+   [source,cpp]
+   ----
+   LoadStoreInstInfoPtr findYoungestMatchingStore_(const uint64_t addr) const {
+       auto it = std::find_if(store_buffer_.rbegin(), store_buffer_.rend(),
+                             [addr](const auto& store) {
+                                 return store->getInstPtr()->getTargetVAddr() == addr;
+                             });
+       return (it != store_buffer_.rend()) ? *it : nullptr;
+   }
+   ----
+   This initial search method identifies the youngest store that matches a specific address. However, for comprehensive forwarding, especially when a load might be covered by multiple stores or a store might partially cover a load, a more detailed check is required.
 
 2. *Forward Detection*
-[source,cpp]
-----
-void handleCacheLookupReq_() {
-    // ...
-    if (!inst_ptr->isStoreInst() && allow_data_forwarding_) {
-        const uint64_t load_addr = inst_ptr->getTargetVAddr();
-        auto forwarding_store = findYoungestMatchingStore_(load_addr);
-        if (forwarding_store) {
-            mem_access_info_ptr->setDataReady(true);
-            mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-            return;
-        }
-    }
-    // ...
-}
-----
+   [source,cpp]
+   ----
+   void handleCacheLookupReq_() {
+       // ...
+       if (!inst_ptr->isStoreInst() && allow_data_forwarding_) {
+           const uint64_t load_addr = inst_ptr->getTargetVAddr();
+             // The original findYoungestMatchingStore_ might be a quick initial check
+           // auto forwarding_store = findYoungestMatchingStore_(load_addr);
+             // A more comprehensive check like tryStoreToLoadForwarding is needed for full/partial coverage:
+           if (tryStoreToLoadForwarding(inst_ptr, mem_access_info_ptr)) { // <1>
+               mem_access_info_ptr->setDataReady(true);
+               mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
+               return;
+           }
+       }
+       // ...
+   }
+   ----
+   <1> `tryStoreToLoadForwarding` is a more detailed function to check full data coverage.
+
+[[Comprehensive_Forwarding_Check]]
+==== Comprehensive Forwarding Check (tryStoreToLoadForwarding)
+
+To determine if a load instruction can receive all its data from the `store_buffer_`, a more thorough check is performed. This mechanism is crucial for performance, as it can prevent stalls by bypassing cache access if data is available more locally.
+
+The process involves the following steps:
+
+1.  *Initialization*:
+    * The load's target virtual address (`load_addr`) and its size (`load_size`) are obtained.
+    * A `coverage_mask` (typically a `std::vector<bool>` or a bitmask like `uint64_t` for smaller loads) is created with a size equal to `load_size`. Each element/bit corresponds to a byte of the load, initialized to indicate "not covered."
+    * A counter, `bytes_covered_count`, is initialized to zero.
+
+2.  *Store Buffer Iteration*:
+    * The `store_buffer_` is iterated from the youngest (most recently added) store to the oldest. This order is critical to ensure that if multiple stores write to the same byte, the data from the youngest store is considered for forwarding.
+    * For each store in the buffer:
+        * The store's virtual address (`store_addr`) and size (`store_size`) are retrieved.
+        * The overlapping memory region between the current load and the store is calculated:
+            * `overlap_start_addr = std::max(load_addr, store_addr)`
+            * `overlap_end_addr = std::min(load_addr + load_size, store_addr + store_size)`
+        * If `overlap_start_addr < overlap_end_addr`, an actual overlap exists.
+
+3.  *Updating Coverage*:
+    * For each byte within the calculated overlapping region:
+        * The byte's 0-based index relative to the `load_addr` (`load_byte_idx`) is determined.
+        * If the `coverage_mask` indicates that this `load_byte_idx` has *not* yet been covered by an even younger store (i.e., `!coverage_mask[load_byte_idx]`):
+            * The `coverage_mask` for `load_byte_idx` is marked as "covered" (e.g., set to `true`).
+            * `bytes_covered_count` is incremented.
+    * This ensures each byte of the load is counted only once towards being covered, and by the youngest store that provides it.
+
+4.  *Early Exit Optimization*:
+    * If, after processing any store, `bytes_covered_count` becomes equal to `load_size`, it means all bytes of the load are covered. The iteration through the `store_buffer_` can stop early, as no further stores need to be checked.
+
+5.  *Final Determination*:
+    * After iterating through the necessary stores, if `bytes_covered_count == load_size`, the load can be fully forwarded.
+    * In this case, the load's `MemoryAccessInfoPtr` is updated: `setDataReady(true)` and `setCacheState(MemoryAccessInfo::CacheState::HIT)`. The LSU can then proceed as if the data was instantaneously available, bypassing a full cache lookup for the data itself.
+    * If `bytes_covered_count < load_size`, the load cannot be fully forwarded from the store buffer and must proceed to the cache for the remaining (or all) data.
+
+This comprehensive check allows the LSU to forward data even if it's sourced from multiple (potentially partial) stores, significantly improving performance for common RAW (Read-After-Write) hazard scenarios.
 
 === Multi-Pipeline Design
 

@@ -527,7 +527,7 @@ namespace olympia
             const uint32_t load_size = inst_ptr->getMemAccessSize();
 
             // passing both load address and load size
-            auto forwarding_store = tryStoreToLoadForwarding(inst_ptr)
+            auto forwarding_store = tryStoreToLoadForwarding(inst_ptr);
 
             if (forwarding_store)
             {

@@ -105,7 +105,7 @@
         "mnemonic": "vcompress.vm",
         "pipe": "vpermute",
         "uop_gen": "COMPRESS",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vdiv.vv",
@@ -1587,25 +1587,25 @@
         "mnemonic": "vrgather.vi",
         "pipe": "vpermute",
         "uop_gen": "RGATHER",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vrgather.vv",
         "pipe": "vpermute",
         "uop_gen": "RGATHER",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vrgather.vx",
         "pipe": "vpermute",
         "uop_gen": "RGATHER",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vrgatherei16.vv",
         "pipe": "vpermute",
         "uop_gen": "RGATHER",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vrsub.vi",
@@ -1767,25 +1767,25 @@
         "mnemonic": "vslidedown.vi",
         "pipe": "vpermute",
         "uop_gen": "SLIDEDOWN",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vslidedown.vx",
         "pipe": "vpermute",
         "uop_gen": "SLIDEDOWN",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vslideup.vi",
         "pipe": "vpermute",
         "uop_gen": "SLIDEUP",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vslideup.vx",
         "pipe": "vpermute",
         "uop_gen": "SLIDEUP",
-        "latency": 4
+        "latency": 6
     },
     {
         "mnemonic": "vsll.vi",

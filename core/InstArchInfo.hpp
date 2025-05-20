@@ -98,8 +98,8 @@ namespace olympia
             RGATHER,
             COMPRESS,
             WHOLE_REG_MOVE,
-            UNKNOWN,
-            NONE
+            NONE,
+            UNKNOWN
         };
 
         static constexpr uint32_t N_UOP_GEN_TYPES = static_cast<uint32_t>(UopGenType::NONE);

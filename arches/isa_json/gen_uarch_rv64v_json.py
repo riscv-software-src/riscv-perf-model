@@ -487,31 +487,31 @@ SUPPORTED_INSTS = {
     "vid.v" : {"pipe" : "vmask", "uop_gen" : "ELEMENTWISE", "latency" : 1},
 
 # Vector Permutation Instructions: Integer Scalar Move Instructions
-    "vmv.x.s" : {"pipe" : "v2s", "uop_gen" : "NONE", "latency" : 1},
-    "vmv.s.x" : {"pipe" : "vmv", "uop_gen" : "NONE", "latency" : 1},
+    "vmv.x.s" : {"pipe" : "v2s", "uop_gen" : "SCALAR_MOVE", "latency" : 1},
+    "vmv.s.x" : {"pipe" : "vmv", "uop_gen" : "SCALAR_MOVE", "latency" : 1},
 
 # Vector Permutation Instructions: Floating-Point Scalar Move Instructions
-    "vfmv.f.s" : {"pipe" : "v2s", "uop_gen" : "NONE", "latency" : 1},
-    "vfmv.s.f" : {"pipe" : "vmv", "uop_gen" : "NONE", "latency" : 1},
+    "vfmv.f.s" : {"pipe" : "v2s", "uop_gen" : "SCALAR_MOVE", "latency" : 1},
+    "vfmv.s.f" : {"pipe" : "vmv", "uop_gen" : "SCALAR_MOVE", "latency" : 1},
 
 # Vector Permutation Instructions: Vector Slide Instructions
-    "vslideup.vx"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
-    "vslideup.vi"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
-    "vslidedown.vx"  : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
-    "vslidedown.vi"  : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
+    "vslideup.vx"    : {"pipe" : "vpermute", "uop_gen" : "SLIDEUP",    "latency" : 6},
+    "vslideup.vi"    : {"pipe" : "vpermute", "uop_gen" : "SLIDEUP",    "latency" : 6},
+    "vslidedown.vx"  : {"pipe" : "vpermute", "uop_gen" : "SLIDEDOWN",  "latency" : 6},
+    "vslidedown.vi"  : {"pipe" : "vpermute", "uop_gen" : "SLIDEDOWN",  "latency" : 6},
     "vslide1up.vx"   : {"pipe" : "vint",     "uop_gen" : "SLIDE1UP",   "latency" : 1},
     "vfslide1up.vf"  : {"pipe" : "vfloat",   "uop_gen" : "SLIDE1UP",   "latency" : 1},
     "vslide1down.vx" : {"pipe" : "vint",     "uop_gen" : "SLIDE1DOWN", "latency" : 1},
     "vfslide1down.vf": {"pipe" : "vfloat",   "uop_gen" : "SLIDE1DOWN", "latency" : 1},
 
 # Vector Permutation Instructions: Vector Register Gather Instructions
-    "vrgather.vv"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
-    "vrgatherei16.vv": {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
-    "vrgather.vx"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
-    "vrgather.vi"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
+    "vrgather.vv"    : {"pipe" : "vpermute", "uop_gen" : "RGATHER", "latency" : 6},
+    "vrgatherei16.vv": {"pipe" : "vpermute", "uop_gen" : "RGATHER", "latency" : 6},
+    "vrgather.vx"    : {"pipe" : "vpermute", "uop_gen" : "RGATHER", "latency" : 6},
+    "vrgather.vi"    : {"pipe" : "vpermute", "uop_gen" : "RGATHER", "latency" : 6},
 
 # Vector Permutation Instructions: Vector Compress Instruction
-    "vcompress.vm" : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
+    "vcompress.vm" : {"pipe" : "vpermute", "uop_gen" : "COMPRESS", "latency" : 6},
 
 # Vector Permutation Instructions: Whole Vector Register Move
     "vmv1r.v" : {"pipe" : "vmv", "uop_gen" : "ELEMENTWISE", "latency" : 1},

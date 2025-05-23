@@ -1,0 +1,296 @@
+[
+  {
+    "CSR": 140,
+    "mnemonic": "csrrs",
+    "rs1": 18,
+    "rs2": 0
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "CSR": 140,
+    "mnemonic": "csrrs",
+    "rs1": 18,
+    "rs2": 0
+  },
+  {
+    "CSR": 141,
+    "mnemonic": "csrrs",
+    "rs1": 18,
+    "rs2": 0
+  },
+  {
+    "CSR": 142,
+    "mnemonic": "csrrs",
+    "rs1": 18,
+    "rs2": 0
+  },
+  {
+    "CSR": 143,
+    "mnemonic": "csrrs",
+    "rs1": 18,
+    "rs2": 0
+  },
+  {
+    "CSR": 144,
+    "mnemonic": "csrrs",
+    "rs1": 18,
+    "rs2": 0
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 3,
+    "rs1": 5,
+    "rs2": 2
+  }
+]

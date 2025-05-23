@@ -1,5 +1,7 @@
 # Generating Input for Olympia
 
+jn: TEST commit and push
+
 Olympia can take input in two formats: JSON and
 [STF](https://github.com/sparcians/stf_spec).
 

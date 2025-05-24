@@ -36,12 +36,12 @@ has been instrumented to generate one.
 Two functional models which generate STFs are documented.
 [Spike-STF](https://github.com/jeffnye-gh/cpm.riscv-isa-sim)
  is the latest model, 
-Dromajo [Dromajo](https://github.com/chipsalliance/dromajo) also can generate
+[Dromajo](https://github.com/chipsalliance/dromajo) also generates
 STFs. 
 
-ISA support in Spike-STF is more upto date. Spike-STF adds other features such as BBV generation. 
+Spike-STF ISA suport is more recent. Spike-STF adds other features such as BBV generation. 
 
-Trace generation for both functional models is provided.
+Documentation for trace generation is provided for both functional models.
 
 ## JSON Inputs
 
@@ -157,7 +157,7 @@ There are multiple ways to trigger tracing. The macro tracing scheme
 instruments source code with trace boundary macros. These
 macros are nops with known operand encodings comprehended by
 the functional models. The macro tracing scheme supports baremetal and 
-linux application tracing
+linux application tracing.
 
 The source code is instrumented by insertion of `START_TRACE` and `STOP_TRACE`.
 
@@ -185,7 +185,7 @@ the macro tracing mode.
 
 ### Build Spike-STF
 The first step to generating an STF with Spike-STF is to clone and build
-the [repo](https://github.com/jeffnye-gh/cpm.riscv-isa-sim.git).
+the Spike-STF [repo](https://github.com/jeffnye-gh/cpm.riscv-isa-sim.git).
 
 This example uses the `riscv-perf-model/traces` directory as a working
 directory.
@@ -193,7 +193,7 @@ directory.
 The steps are: clone the repo, download and add the baremetal compiler to your
 path, and build/regress/install Spike-STF.
 
-The compiler steps are optional if you have riscv64-unknown-elf-gcc in 
+The compiler steps are optional if you have `riscv64-unknown-elf-gcc` in 
 your path.
 
 ```bash
@@ -203,6 +203,11 @@ git clone https://github.com/jeffnye-gh/cpm.riscv-isa-sim.git --recursive
 cd cpm.riscv-isa-sim
 bash scripts/download-bm-compiler.sh
 export PATH=`pwd`/riscv-embecosm-embedded-ubuntu2204-20250309/bin:$PATH
+```
+Exit the conda environment, if enabled, before compiling Spike-STF.
+```
+conda deactivate
+conda deactivate
 
 mkdir -p build install && cd build
 ../configure --prefix=`pwd`/../install
@@ -252,9 +257,9 @@ The compressed trace outputs can then be run on olympia by
 ```
 <cd to the directory containing olympia>
 
-./olympia ../traces/cpm.riscv-isa-sim/dhrystone_opt1.zstf
-./olympia ../traces/cpm.riscv-isa-sim/dhrystone_opt2.zstf
-./olympia ../traces/cpm.riscv-isa-sim/dhrystone_opt3.zstf
+./olympia ../traces/cpm.riscv-isa-sim/trace_out/dhrystone_opt1.zstf
+./olympia ../traces/cpm.riscv-isa-sim/trace_out/dhrystone_opt2.zstf
+./olympia ../traces/cpm.riscv-isa-sim/trace_out/dhrystone_opt3.zstf
 ```
 ## Generating Linux Traces
 
@@ -276,9 +281,9 @@ make -C dhrystone bin-linux
 
 Directory dhrystone/bin will contain:
 ```
-bin/dhrystone_opt1.1000.gcc.linux.riscv
-bin/dhrystone_opt2.1000.gcc.linux.riscv
-bin/dhrystone_opt3.1000.gcc.linux.riscv
+dhrystone/bin/dhrystone_opt1.1000.gcc.linux.riscv
+dhrystone/bin/dhrystone_opt2.1000.gcc.linux.riscv
+dhrystone/bin/dhrystone_opt3.1000.gcc.linux.riscv
 ```
 
 ### Building the Linux Collateral
@@ -296,7 +301,12 @@ cd riscv-perf-model/traces/cpm.riscv-isa-sim
 bash scripts/build-linux-collateral.sh
 ```
 
-Once complete, the directory `riscv-perf-model/traces/cpm.riscv-isa-sim/riscv-linux` will contain the files to boot linux.
+Once complete, the directory `riscv-perf-model/traces/cpm.riscv-isa-sim/riscv-linux` will contain the files necessary to boot linux.
+```
+fw_jump.elf
+rootfs.cpio
+Image
+```
 
 ### Booting Linux on Spike-STF
 With the linux components built, boot linux using the helper script:
@@ -307,7 +317,7 @@ bash scripts/boot-linux.sh
 The credentials are root/root.
 
 Hitting control-c a few times will exit the simulator. Depending on what is
-running under linux it can sometimes be necessary to kill the spike PID.
+running under linux it is sometimes necessary to kill the spike PID.
 
 ### Updating the Root File System
 To trace applications under linux it is necessary to add them to the root
@@ -324,6 +334,15 @@ for use in the next section.
 cd riscv-perf-model/traces/cpm.riscv-isa-sim
 bash scripts/build-trace-rootfs.sh
 ```
+
+This script performs basic checking, and copies the dhrystone linux ELFS to 
+a location in the buildroot tree.
+
+```
+${BUILDROOT}/output/target/root/trace_elfs
+```
+
+This location ensures access to the elfs once the root file system has been recompiled and linux has been booted.
 
 ### Invoke Linux and Generate the Traces
 
@@ -378,12 +397,16 @@ directory will hold the trace file.
 -rw-r--r-- 1 random agroup 12097 Jan 1 00:00 linux_trace.zstf
 ```
 
-Note any trace enabled ELF you run while in spike linux will be added to the
-trace file.
+Note _any_ trace-enabled ELF you run while in spike linux will be added to the
+same trace file.
 
-This is useful in cases. The next section discusses how to configure this
-system to allow hands-free automation of linux based applications, like SPEC,
-coremark, coremark-pro.
+This is useful in cases.
+
+For other use cases, check the USAGE.md file in the Spike-STF repo for
+instructions on how to use initd to automate linux based trace generation.
+
+See [Automating Linux Tracing with INIT.d](https://github.com/jeffnye-gh/cpm.riscv-isa-sim/blob/spike_stf/USAGE.md#Automating-linux-tracing-with-initd)
+
 
 -----------------------------------------------------
 ### Generating an STF Trace with Dromajo

@@ -56,6 +56,10 @@ sparta_named_test(olympia_json_test_missing_opcodes olympia
 sparta_named_test(olympia_json_test_fp_transfers olympia
   --workload json_tests/fp_transfers.json)
 
+# Test sys retire under flush (#253)
+sparta_named_test(olympia_json_test_sys_retire_under_flush_issue_253 olympia
+  --workload json_tests/sys_flush_test.json --arch ../arches/big_core.yaml)
+
 # Test PEvent generation
 sparta_named_test(olympia_json_test_pevents olympia
   --workload traces/dhry_riscv.zstf -i100k

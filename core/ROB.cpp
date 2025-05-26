@@ -205,6 +205,12 @@ namespace olympia
                 if (SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
                     retireSysInst_(ex_inst_ptr);
+		    // Fix for Issue #253
+                    // If a flush is caused by retiring sys inst, then retire no more!
+                    if (expect_flush_ == true) {
+                       break;
+                   }
+
                 }
             }
             else

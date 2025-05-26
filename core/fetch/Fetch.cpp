@@ -260,6 +260,11 @@ namespace olympia
 
         // No longer speculative
         // speculative_path_ = false;
+
+	// Fix for Issue #254
+	// It is possible that we do not have any external trigger to restart
+	// fetch, so force bootstrap it like when initialized
+	ev_fetch_insts->schedule(1);
     }
 
     void Fetch::onROBTerminate_(const bool & stopped)

@@ -81,8 +81,9 @@ namespace olympia
                     // The number of non-tail elements in the uop is used to determine how many
                     // passes are needed
                     const VectorConfigPtr & vector_config = ex_inst->getVectorConfig();
-                    const uint32_t num_elems_per_uop = vector_config->getVLMAX() / vector_config->getLMUL();
-                    const uint32_t num_elems_remaining = \
+                    const uint32_t num_elems_per_uop =
+                        vector_config->getVLMAX() / vector_config->getLMUL();
+                    const uint32_t num_elems_remaining =
                         vector_config->getVL() - (num_elems_per_uop * (ex_inst->getUOpID() - 1));
                     const uint32_t vl = std::min(num_elems_per_uop, num_elems_remaining);
                     const uint32_t num_passes = std::ceil(vl / valu_adder_num_);
@@ -142,10 +143,11 @@ namespace olympia
                      << " VTA: " << vector_config->getVTA() << " VL: " << vector_config->getVL());
                 out_vset_.send(ex_inst);
             }
-            auto reg_file = ex_inst->getRenameData().getDestination().rf;
-            if (reg_file != core_types::RegFile::RF_INVALID)
+
+            for (auto reg_file = 0; reg_file < core_types::RegFile::N_REGFILES; ++reg_file)
             {
-                const auto & dest_bits = ex_inst->getDestRegisterBitMask(reg_file);
+                const auto & dest_bits =
+                    ex_inst->getDestRegisterBitMask(static_cast<core_types::RegFile>(reg_file));
                 scoreboard_views_[reg_file]->setReady(dest_bits);
             }
 

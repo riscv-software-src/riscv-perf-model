@@ -126,7 +126,7 @@ elements of 32 `vlmax_` elements we could use in the logical vector register
 file instance.
 
 Note that the `vta_` (Vector Tail Agnostic) parameter is set to false by 
-default, which indicates that it is undisturbed. 
+default, which indicates that it is undisturbed. When set to true, we are agnostic of the tail elements - and set it to 0s.
 
 
 // <Overview of the unit, what does it do, where does it fit into Olympia
@@ -188,7 +188,7 @@ The files we shall be modifying:
 . `core/vector/VectorUopGenerator.hpp` 
     - Currently has stub for `generatePermuteUops_`
 
-. `core/vector/VectorUopGenerator.cpp`  
+. `core/vector/VectorUopGenerator.cpp` 
     - Add implementation for specific permutation ops and replace `generatePermuteUops_`
 
 ```cpp
@@ -221,21 +221,102 @@ Key points:
     - Operates even if vstart ≥ vl or vl=0
     - Handles SEW vs XLEN width differences
 
+Micro-ops to be generated:
+    
+    - Since this instruction ignores the LMUL and vector register groups, we generate a single micro-op for this instruction - `SCALAR_MOVE`.
+    - 
+ //   - TODO REVIEW SIMPLE IMPLEMENTATION: In a simple implementation, we can permute one element per cycle - in a single cycle pipelined manner, by iterating through all the elements of the source register, check for vstart and vl, and maintain the tail agnostic policy.
+
+    Other Handling: 
+    - Note that if the vstart is greater than or equal to vl, then the micro-op is not generated and is treated as a no-op.
+    - If the vl = 0, then the micro-op is generated but the destination register is not updated.
+    - If the vstart is greater than or equal to vl, then the micro-op is not generated and is treated as a no-op.
+    - The tail elements of the destination register are set to 0 if the vta is set to true (tail agnostic), else they are left undisurbed.
+
+The pseudo code for the execution of the above micro-op `SCALAR_MOVE`:
+
+```
+
+- If we are updating a scalar destination register from the vector source register
+  
+    x_dest[rd] = v_src[0];
+
+- If we are updating a vector destination register from the scalar source register
+  
+    v_dest[0] = x_src[rd];
+
+TODO DOUBT: How do we enforce the rest of the v_dest elements to be set to 0 if vta is true?
 
 ##### Vector Slide Instructions
     
-    . vslideup.vx/vi    # vd[i+OFFSET] = vs2[i]
-    . vslidedown.vx/vi  # vd[i] = vs2[i+OFFSET]
-    . vslide1up.vx      # vd[0]=x[rs1], vd[i+1]=vs2[i]
-    . vslide1down.vx    # vd[i]=vs2[i+1], vd[vl-1]=x[rs1]
+vslideup.vx vd, vs2, rs1, vm        # vd[i+rs1] = vs2[i]
+vslideup.vi vd, vs2, uimm, vm       # vd[i+uimm] = vs2[i]
+
+vslidedown.vx vd, vs2, rs1, vm      # vd[i] = vs2[i+rs1]
+vslidedown.vi vd, vs2, uimm, vm     # vd[i] = vs2[i+uimm]
+
+vslide1up.vx vd, vs2, rs1           # vd[0]=x[rs1], vd[i+1]=vs2[i]
+vslide1up.vi vd, vs2, uimm          # vd[0]=x[uimm], vd[i+1]=vs2[i]
+
+vslide1down.vx vd, vs2, rs1         # vd[i]=vs2[i+1], vd[vl-1]=x[rs1]
+vslide1down.vi vd, vs2, uimm        # vd[i]=vs2[i+uimm], vd[vl-1]=x[uimm]
 
 Critical behaviors:
     
     - No operation if vstart ≥ vl
     - Follows tail/mask policies
     - Source/dest register groups cannot overlap
-    - OFFSET from x-reg or immediatte
-// - TODO MORE
+    - OFFSET from x-reg or immediate
+
+Micro-ops to be generated:
+    
+    - For the vector `SLIDEUP` micro-op, we shall iterate over each element of the source register and update the destination register based on the offset and mask. Note that the lower elements of this destination register remain unchanged.
+    The computation would be as follows in pseudo code:
+
+    ```
+    for (int i = 0; i < vl; i++) {
+        if (mask[i]) {
+            // Note that the offset is either the register value (rs1) or the immediate value (uimm)
+            dest[i + offset] = src[i];
+        }
+    }
+    ```
+
+    - For the vector `SLIDEDOWN` micro-op, we shall iterate over each element of the source register and update the destination register based on the offset and mask. All the upper elements fill in with zero. 
+    The computation would be as follows in pseudo code:
+
+    ```
+    for (int i = 0; i < VLEN; i++) {
+        if (mask[i] && i < vl) {
+            dest[i] = src[i + offset];
+        } else {
+            dest[i] = 0;
+        }
+    }
+    ```
+
+    - For the vector `SLIDE1UP` micro-op, we shall update the destination register based on the offset and mask. Note that we can reuse the `SLIDEUP` micro-op for this instruction by setting the offset to 1:
+
+    ```
+    dest[0] = rs1;
+    for (int i = 0; i < vl; i++) {
+        if (mask[i]) {
+            dest[i + 1] = src[i];
+        }
+    }
+    ```
+
+    - For the vector `SLIDE1DOWN` micro-op, we shall update the destination register based on the offset and mask. Note that we can reuse the `SLIDEDOWN` micro-op for this instruction by setting the offset to 1:
+
+    ```
+    for (int i = 0; i < vl; i++) {
+        if (mask[i]) {
+            dest[i] = src[i + 1];
+        }
+    }
+    // The upper elements of the destination register fill in with the register value
+    dest[vl - 1] = rs1;
+    ```
 
 ##### Vector Register Gather
 
@@ -249,13 +330,60 @@ Requirements:
     - Out-of-range indices return 0
     - No source/dest overlap allowed
     - Handles different element widths
-// - TODO MORE
+
+- Micro-ops to be generated: `RGATHER`
+
+- For instructions for vector to vector gather, we iterate over each element of the source register and update the destination register based on the index and mask. For the case where the index is out of range, we set the destination element to 0. Following is the pseudo code for the same:
+    ```
+    for (int i = 0; i < vl; i++) {
+        if (mask[i]) {
+            // Note that the index is either the register value (rs1) or the immediate value (uimm)
+            int index = (rs1 != 0) ? rs1[i] : uimm;
+            if (index >= VLMAX) {
+                dest[i] = 0;
+            } else {
+                dest[i] = src[index];
+            }
+        }
+    }
+    ```
+    
+- For instructions with vx type gather, we iterate over each element of the source vector register, whose index is specified by the scalar register / immediate value and update the destination register based on this index and mask. For the case where the index is out of range, we set the destination element to 0. Following is the pseudo code for the same:
+    ```
+    for (int i = 0; i < vl; i++) {
+        if (mask[i]) {
+            // Note that the index is either the register value (rs1) or the immediate value (uimm)
+            int index = (rs1 != 0) ? rs1[i] : uimm;
+            if (index >= VLMAX) {
+                dest[i] = 0;
+            } else {
+                dest[i] = src[index];
+            }
+        }
+    }
+    ```
 
 ##### Vector Compress
 
-    . vcompress.vm      # Pack masked elements contiguously
+    . vcompress.vm vd, vs2, vs1     # Pack masked elements contiguously
 
-[[Overview_Block_Diagram]]
+Note that the vs1 acts as the vector mask register, which when enabled (set to 1) shall be used to contiguously pack the elements of vs2 into vd. 
+
+Micro-ops to be generated: `COMPRESS`
+
+The micro-op for this instruction shall iterate over each element of the source register and update the destination register based on the mask. In this implementation, we shall use a register to store the next available index in the destination register (a free pointer). 
+The computation would be as follows in pseudo code:
+
+```
+int next_index = 0;
+for (int i = 0; i < vl; i++) {
+    if (mask[i]) {
+        dest[next_index] = src[i];
+        next_index++;
+    }
+}
+```
+
 
 ##### Whole Vector Register Move
 
@@ -264,11 +392,30 @@ Requirements:
     . vmv4r.v v4, v8        # Copy v4=v8; v5=v9; v6=v10; v7=v11
     . vmv8r.v v0, v8        # Copy v0=v8; v1=v9; ...; v7=v15
 
+- Micro-ops to be generated: `WHOLE_VECTOR_MOVE`
+
+The micro-op for this instruction shall move the complete source register to the destination register, with a number of registers specified by the instruction.
+We shall decode the instruction, and specify the starting index and the number of registers to be moved in the micro-op.
+
+- Pseudo code for the micro-op:
+
+```
+for (int i = v_start; i < v_start + num_registers; i++) {
+    dest[i] = src[i];
+}
+```
 
 === Overview Block Diagram
 
-// <Add an overview block diagram>
-. TODO
+== Block Diagram of the `SCALAR_MOVE` micro-op
+== Block Diagram of the `SLIDE1UP` micro-op
+== Block Diagram of the `SLIDE1DOWN` micro-op
+== Block Diagram of the `SLIDEUP` micro-op
+== Block Diagram of the `SLIDEDOWN` micro-op
+== Block Diagram of the `RGATHER` micro-op
+== Block Diagram of the `COMPRESS` micro-op
+== Block Diagram of the `WHOLE_REG_MOVE` micro-op
+
 
 [[Functional_Description]]
 == Functional Description

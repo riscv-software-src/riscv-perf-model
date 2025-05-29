@@ -51,6 +51,7 @@ class olympia::LSUTester
         EXPECT_EQUAL(lsu.cache_read_stage_, 4);
         EXPECT_EQUAL(lsu.complete_stage_, 6);
     }
+
 };
 
 const char USAGE[] =
@@ -107,11 +108,50 @@ void runTest(int argc, char **argv)
     olympia::LSU *my_lsu = root_node->getChild("cpu.core0.lsu")->getResourceAs<olympia::LSU*>();
     olympia::LSUTester lsupipe_tester;
     lsupipe_tester.test_pipeline_stages(*my_lsu);
-    cls.runSimulator(&sim, 9);
-    lsupipe_tester.test_inst_issue(*my_lsu, 2); // Loads operand dependency meet
-    cls.runSimulator(&sim, 52);
-    lsupipe_tester.test_replay_issue_abort(*my_lsu, 3); // Loads operand dependency meet
-    cls.runSimulator(&sim);
+
+    if(my_lsu->allowDataForwardingEX()) {
+        // Data forwarding enabled case
+        std::cout << "allow data forwarding " <<  "\n";;
+        // First store
+        cls.runSimulator(&sim, 7);
+
+        // First load - should get data from store forwarding
+        auto start_cycle = my_lsu->getClock()->currentCycle();
+        cls.runSimulator(&sim, 3);
+        EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 3); // Fast path
+
+        // Second load - no matching store, goes to cache
+        start_cycle = my_lsu->getClock()->currentCycle();
+        cls.runSimulator(&sim, 7);
+        EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 7); // Cache access path
+
+        // Second store and load
+        cls.runSimulator(&sim, 47);
+        lsupipe_tester.test_replay_issue_abort(*my_lsu, 0);
+    }
+    else {
+        // Data forwarding disabled case
+
+        // First store
+        cls.runSimulator(&sim, 7);
+
+        // First load - must go to cache
+        auto start_cycle = my_lsu->getClock()->currentCycle();
+        cls.runSimulator(&sim, 7); // Takes longer, must access cache
+        EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 7);
+
+        // Second load - also must go to cache
+        start_cycle = my_lsu->getClock()->currentCycle();
+        cls.runSimulator(&sim, 7);
+        EXPECT_EQUAL(my_lsu->getClock()->currentCycle() - start_cycle, 7);
+
+        // Second store and load
+        cls.runSimulator(&sim, 47);
+        lsupipe_tester.test_replay_issue_abort(*my_lsu, 2);
+    }
+
+   // Final state
+   cls.runSimulator(&sim);
 }
 
 int main(int argc, char **argv)

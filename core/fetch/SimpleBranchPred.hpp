@@ -70,6 +70,10 @@ namespace BranchPredictor
     class SimpleBranchPredictor : public BranchPredictorIF<DefaultPrediction, DefaultUpdate, DefaultInput>
     {
     public:
+
+        using BranchPredictorIF<DefaultPrediction, DefaultUpdate, DefaultInput>::getPrediction;
+        using BranchPredictorIF<DefaultPrediction, DefaultUpdate, DefaultInput>::updatePredictor;
+
         SimpleBranchPredictor(uint32_t max_fetch_insts) :
             max_fetch_insts_(max_fetch_insts)
         {}

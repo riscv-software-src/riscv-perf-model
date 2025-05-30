@@ -1,0 +1,30 @@
+#Name:     
+#Cmdline:  
+#Exe:      
+#SimulatorVersion:
+#Repro:    
+#Start:    Tuesday Tue Apr 22 05:37:54 2025
+#Elapsed:  0.001596s
+{0000000000 00000000 top.bpu info} sendCreditsToFetch_: Send 10 credits from BPU to Fetch
+{0000000000 00000000 top.ftq info} sendCreditsToBPU_: Send 5 credits to BPU
+{0000000000 00000000 top.sink info} sendCreditsToFTQ_: Send 5 credits from Fetch to FTQ
+{0000000000 00000000 top.bpu info} getCreditsFromFTQ_: BPU received 5 credits from FTQ
+{0000000000 00000000 top.src info} getCreditsFromBPU_: Received 10 credits from BPU
+{0000000000 00000000 top.src info} sendPredictionRequest_: Sending PredictionRequest from Fetch to BPU
+{0000000000 00000000 top.bpu info} getPredictionRequest_: BPU received PredictionRequest from Fetch
+{0000000001 00000001 top.ftq info} getFetchCredits_: FTQ: Received 5 credits from Fetch
+{0000000001 00000001 top.bpu info} sendFirstPrediction_: Getting direction from base predictor
+{0000000001 00000001 top.bpu info} sendFirstPrediction_: Getting target from base predictor
+{0000000001 00000001 top.bpu info} sendFirstPrediction_: Sending first PredictionOutput from BPU to FTQ
+{0000000002 00000002 top.ftq info} getFirstPrediction_: FTQ receives first PredictionOutput from BPU
+{0000000002 00000002 top.ftq info} sendPrediction_: Send prediction from FTQ to Fetch
+{0000000002 00000002 top.sink info} getPredictionOutput_: Fetch recieves prediction output from FTQ
+{0000000004 00000004 top.bpu info} sendSecondPrediction_: Getting direction prediction from TAGE
+{0000000004 00000004 top.bpu info} sendSecondPrediction_: Sending second PredictionOutput from BPU to FTQ
+{0000000005 00000005 top.ftq info} getSecondPrediction_: FTQ receives second PredictionOutput from BPU
+{0000000005 00000005 top.ftq info} handleMismatch: Checking mismatch between BasePredictor and TAGE_SC_L
+{0000000005 00000005 top.ftq info} handleMismatch: BasePredictor prediction direction: 1
+{0000000005 00000005 top.ftq info} handleMismatch: TAGE_SC_L prediction direction: 0
+{0000000005 00000005 top.ftq info} handleMismatch: Prediction mismatch between tage and base predictor
+{0000000005 00000005 top.ftq info} sendPrediction_: Send prediction from FTQ to Fetch
+{0000000005 00000005 top.sink info} getPredictionOutput_: Fetch recieves prediction output from FTQ

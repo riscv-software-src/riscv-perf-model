@@ -224,7 +224,7 @@ is updated to indicate the current ARF's PRF to be used.
 ```
    auto new_prf = reg_file_components_[reg_file].freelist.pop();
    map_table_[arf] = new_prf;
- ``
+```
 
 
 [[Interfaces]]

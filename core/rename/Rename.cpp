@@ -497,8 +497,8 @@ namespace olympia
         {
             sparta_assert(num_to_rename == 0,
                           "Still have instructions to rename, but we're not partial to that. HA!");
-            sparta_assert(uop_queue_.empty(), "How is the uop queue not empty?")
-                }
+            sparta_assert(uop_queue_.empty(), "How is the uop queue not empty?");
+        }
 
         if (false == insts->empty())
         {

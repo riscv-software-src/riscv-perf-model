@@ -169,7 +169,7 @@ scheduler. This method will determine if Renaming can occur by:
   accept instructions being renamed
 - Examining the `uop_queue_` for any instructions
 
-If both conditions have been met, the event `ev_rename_insts_` will be
+If all conditions have been met, the event `ev_rename_insts_` will be
 scheduled for *this* cycle.
 
 Instructions coming from upstream, credits arriving from downstream,
@@ -188,43 +188,46 @@ maintained.
 
 Renaming works by retrieving the instructions from the `uop_queue_`
 _in order_ and renaming the sources of that instruction followed by
-the destinations. The *order* of renaming is important: renaming must
-rename an instruction's sources _first_ before renaming the
-instruction's destinations.  If this order is not followed, an
-instruction's destination that is the same register as one of it's
-sources will result in an infinite wait.
+the destinations. The *order* of renaming is important: an
+instruction's sources must be renamed _first_ before the instruction's
+destinations.  If this order is not followed and an instruction's
+destination is the same as any of it's sources the machine will
+deadlock.
 
 ===== Renaming Sources
 
 Rename maintains a map of current PRFs that the latest values for a
 given ARF (`map_table_`). During source renaming, the instruction's
 ARF sources are "replaced" by the current PRF sources being written by
-older instructions.  In addition, the instruction updates its current
+older instructions.  The instruction updates its current
 `src_reg_bit_masks_` to reflect that PRF.  This bit mask is used by
 downstream units such as Issue to compare against a "global"
-scoreboard of ready PRFs.  If the Instruction's mask `and`'ed with the
-Scoreboard's `global_reg_ready_mask_` returns the instruction's full
-mask, all of the instruction's sources are ready and the instruction
-is ready to execute.
+scoreboard of ready PRFs.  If the Instruction's mask `and` 'ed with
+the Scoreboard's `global_reg_ready_mask_` returns the instruction's
+full mask then all of the instruction's sources are ready and the
+instruction can be executed.
 
 ===== Renaming Destinations
 
 If an instruction has a destination, that instruction will need to
-write its final value to a renamed register/PRF.  To do this, Rename
-will need to replace the instruction's destination ARF with an
-assigned PRF.
+write its final value to a PRF.  To do this, Rename will need to
+replace the instruction's destination ARF with an assigned PRF.
 
 Free or unused PRFs are maintained by Rename in a freelist contained
 in a structure called `RegFileComponents`.  There is 1
-`RegFileComponents` instance _per regfile_.  The freelist is simply a
-`std::queue` of unused PRFs that can be popped and assigned to an
-instruction.  Once a PRF is popped from the freelist, the `map_table_`
-is updated to indicate the current ARF's PRF to be used.
+`RegFileComponents` instance _per regfile_ (Integer, Float, Vector).
+The freelist is simply a `std::queue` of unused PRFs that can be
+popped and assigned to an instruction.  Once a PRF is popped from the
+freelist, the `map_table_` is updated to indicate the current ARF's
+PRF to be used.
 
 ```
-   auto new_prf = reg_file_components_[reg_file].freelist.pop();
-   auto old_prf = map_table_[arf];
-   map_table_[arf] = new_prf;
+   // pseudo code
+   auto arf = inst->getDestARF()
+   auto new_prf = reg_file_components_[reg_file].freelist.pop()
+   auto old_prf = map_table_[arf]
+   map_table_[arf] = new_prf
+   inst->setDestPRF(new_prf, old_ptf)
 ```
 
 The `old_prf`, however, might still be in use by instructions older
@@ -237,12 +240,12 @@ sucessfully retires.
 As instructions are renamed, the freelist queue will drain.
 Eventually it will run of out PRFs and Rename will stall.
 
-PRFs are reclaimed and pushed into the freelist in one of two ways:
+PRFs are reclaimed and pushed onto the freelist in one of two ways:
 
 - Instructions that retire are sent back to Rename to reclaim the old
-  PRF that the instruction overwrote (see `old_prf` above).
+  PRF (see `old_prf` above)
 - The pipeline experiences a flush, in which the map table and the
-  free list must be restored.
+  free list must be restored/rebuilt.
 
 As Retire retires instructions, it groups them into an `InstGroup` and
 sends the group to Rename via Rename's port `in_rename_retire_ack_`.
@@ -255,7 +258,9 @@ The Rename model supports a concept called "move elimination."  This
 pertains to those RISC-V instructions that simply move a register's
 value from one register to another without changing the value.  As an
 optimization, this can be handled in Rename by having Rename map
-multiple ARFs to the same PRF.  For example:
+multiple ARFs to the same PRF.
+
+Take these `mv` instructions:
 
 ```
 mv x2, x1
@@ -263,7 +268,7 @@ mv x3, x1
 ```
 
 Without move elimination, Rename would assign new PRFs to both `mv`
-operations and send the instruction to the middle machine to "execute."
+operations and send the instruction to the middle machine to be "executed."
 
 ```
 # x55 <- map_table_[x1]
@@ -275,7 +280,9 @@ mv x65, x55
 mv x66, x55
 ```
 
-This is inefficient as two PRFs are now consumed representing the same contents as `x1 -> x55`.
+This is inefficient as two PRFs are now consumed representing the same
+contents as `x1 -> x55`.  In addition, these `mv` instructions are
+consuming middle machine resources and power.
 
 With move elimination, Rename can identify this inefficiency and just update the mapping:
 
@@ -297,6 +304,10 @@ To facilitate the move elimination, Rename must keep track of the
 number of times `x55` in the above example is referenced.  This is
 done using the member variable `reference_counter` found in the
 `RegFileComponents` data structure.
+
+When newer instructions overwrite the map table for `x2` and `x3`,
+Rename cannot push `x55` back onto the freelist until its reference
+count reaches 0.
 
 
 [[Interfaces]]

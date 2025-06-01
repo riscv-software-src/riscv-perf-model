@@ -62,32 +62,32 @@ namespace olympia
 
         auto setup_freelists =
             [this](auto reg_file, const uint32_t num_renames, const uint32_t num_regs_reserved)
-            {
-                auto & rcomp = regfile_components_[reg_file];
-                auto & reference_counter = rcomp.reference_counter;
+        {
+            auto & rcomp = regfile_components_[reg_file];
+            auto & reference_counter = rcomp.reference_counter;
 
-                // for x0 for RF_INTEGER, we don't want to set a PRF for it because x0 is hardwired to 0
-                uint32_t i = 0;
-                if (reg_file == core_types::RegFile::RF_INTEGER)
-                {
-                    reference_counter.emplace_back(0);
-                    i = 1;
-                }
-                for (; i < num_regs_reserved; i++)
-                {
-                    // for the first 32 Float (31 INT) registers, we mark
-                    // their reference_counters 1, as they are the current
-                    // "valid" PRF for that ARF.  This can be
-                    // parameterized to NOT do this if running a trace
-                    // that is "bare metal"
-                    reference_counter.emplace_back(1);
-                }
-                for (uint32_t j = num_regs_reserved; j < num_renames; ++j)
-                {
-                    rcomp.freelist.emplace(j);
-                    reference_counter.emplace_back(0);
-                }
-            };
+            // for x0 for RF_INTEGER, we don't want to set a PRF for it because x0 is hardwired to 0
+            uint32_t i = 0;
+            if (reg_file == core_types::RegFile::RF_INTEGER)
+            {
+                reference_counter.emplace_back(0);
+                i = 1;
+            }
+            for (; i < num_regs_reserved; i++)
+            {
+                // for the first 32 Float (31 INT) registers, we mark
+                // their reference_counters 1, as they are the current
+                // "valid" PRF for that ARF.  This can be
+                // parameterized to NOT do this if running a trace
+                // that is "bare metal"
+                reference_counter.emplace_back(1);
+            }
+            for (uint32_t j = num_regs_reserved; j < num_renames; ++j)
+            {
+                rcomp.freelist.emplace(j);
+                reference_counter.emplace_back(0);
+            }
+        };
 
         for (auto reg_file = 0; reg_file < core_types::RegFile::N_REGFILES; ++reg_file)
         {
@@ -97,17 +97,17 @@ namespace olympia
             uint32_t num_renames = 0;
             switch (reg_file)
             {
-                case core_types::RegFile::RF_INTEGER:
-                    num_renames = p->num_integer_renames;
-                    break;
-                case core_types::RegFile::RF_FLOAT:
-                    num_renames = p->num_float_renames;
-                    break;
-                case core_types::RegFile::RF_VECTOR:
-                    num_renames = p->num_vector_renames;
-                    break;
-                case core_types::RegFile::RF_INVALID:
-                    throw sparta::SpartaException("Invalid register file type.");
+            case core_types::RegFile::RF_INTEGER:
+                num_renames = p->num_integer_renames;
+                break;
+            case core_types::RegFile::RF_FLOAT:
+                num_renames = p->num_float_renames;
+                break;
+            case core_types::RegFile::RF_VECTOR:
+                num_renames = p->num_vector_renames;
+                break;
+            case core_types::RegFile::RF_INVALID:
+                throw sparta::SpartaException("Invalid register file type.");
             }
 
             setup_freelists(reg_file, num_renames, regs_reserved);
@@ -132,9 +132,9 @@ namespace olympia
         {
             const auto reg_file_name = core_types::regfile_names[reg_file];
             sb_tns_.emplace_back(new sparta::ResourceTreeNode(
-                                     sb_tn, reg_file_name, sparta::TreeNode::GROUP_NAME_NONE,
-                                     sparta::TreeNode::GROUP_IDX_NONE, reg_file_name + std::string(" Scoreboard"),
-                                     &sb_facts_[reg_file]));
+                sb_tn, reg_file_name, sparta::TreeNode::GROUP_NAME_NONE,
+                sparta::TreeNode::GROUP_IDX_NONE, reg_file_name + std::string(" Scoreboard"),
+                &sb_facts_[reg_file]));
         }
     }
 
@@ -214,7 +214,7 @@ namespace olympia
                 if (ref.cnt == 0)
                 {
                     ILOG("\tpushing " << dest.op_info.reg_file << " " << prev_dest
-                         << " on freelist for uid:" << inst_ptr->getUniqueID());
+                                      << " on freelist for uid:" << inst_ptr->getUniqueID());
                     rcomp.freelist.emplace(prev_dest);
                 }
             }
@@ -268,7 +268,7 @@ namespace olympia
             if (!criteria.includedInFlush(inst_ptr))
             {
                 ILOG("\t" << inst_ptr << " not included in flush ")
-                    break;
+                break;
             }
             else
             {
@@ -288,7 +288,7 @@ namespace olympia
 
                             // free renamed PRF mapping when reference counter reaches zero
                             ILOG("\t\treclaiming: " << dest.op_info.reg_file
-                                 << " val:" << dest.phys_reg);
+                                                    << " val:" << dest.phys_reg);
                             auto & rcomp = regfile_components_[dest.op_info.reg_file];
                             auto & ref = rcomp.reference_counter[dest.phys_reg];
                             sparta_assert(ref.cnt != 0, "reclaim had a 0 ref for " << inst_ptr);
@@ -637,8 +637,9 @@ namespace olympia
                     freelist.pop();
                 }
 
-                sparta_assert(prf != std::numeric_limits<uint32_t>::max(),
-                              "PRF not assigned neither from the freelist nor move elim (if enabled)");
+                sparta_assert(
+                    prf != std::numeric_limits<uint32_t>::max(),
+                    "PRF not assigned neither from the freelist nor move elim (if enabled)");
 
                 const uint32_t prev_dest = map_table_[reg_file][arch_num];
                 RenameData::Reg renamed_dst({prf, dest, prev_dest});
@@ -712,13 +713,13 @@ namespace olympia
         {
             output << "\t\t" << inst << " S_INT"
                    << sparta::printBitSet(
-                       inst->getSrcRegisterBitMask(core_types::RegFile::RF_INTEGER))
+                          inst->getSrcRegisterBitMask(core_types::RegFile::RF_INTEGER))
                    << " S_DAT"
                    << sparta::printBitSet(
-                       inst->getDataRegisterBitMask(core_types::RegFile::RF_INTEGER))
+                          inst->getDataRegisterBitMask(core_types::RegFile::RF_INTEGER))
                    << " D_INT"
                    << sparta::printBitSet(
-                       inst->getDestRegisterBitMask(core_types::RegFile::RF_INTEGER))
+                          inst->getDestRegisterBitMask(core_types::RegFile::RF_INTEGER))
                    << std::endl;
         }
         output << "\n\toutstanding insts (waiting for retire)" << std::endl;

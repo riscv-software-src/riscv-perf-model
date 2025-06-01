@@ -12,7 +12,6 @@
 #include "Rename.hpp"
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
-#include "sparta/report/DatabaseInterface.hpp"
 
 namespace olympia
 {

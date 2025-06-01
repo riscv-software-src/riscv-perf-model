@@ -18,7 +18,7 @@
 #include "CoreTypes.hpp"
 #include "vector/VectorConfig.hpp"
 #include "MiscUtils.hpp"
-#include "RenameData.hpp"
+#include "rename/RenameData.hpp"
 
 #include <cstdint>
 #include <cstdlib>

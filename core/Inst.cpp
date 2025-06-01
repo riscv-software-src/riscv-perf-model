@@ -1,7 +1,7 @@
 // <Inst.cpp> -*- C++ -*-
 
 #include "Inst.hpp"
-#include "RenameData.hpp"
+#include "rename/RenameData.hpp"
 #include "CoreUtils.hpp"
 #include <unordered_map>
 

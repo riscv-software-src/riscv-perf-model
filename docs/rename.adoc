@@ -215,16 +215,88 @@ will need to replace the instruction's destination ARF with an
 assigned PRF.
 
 Free or unused PRFs are maintained by Rename in a freelist contained
-in a structure called `RegFilecomponents`.  There is 1
-`RegFilecomponents` instance _per regfile_.  The freelist is simply a
+in a structure called `RegFileComponents`.  There is 1
+`RegFileComponents` instance _per regfile_.  The freelist is simply a
 `std::queue` of unused PRFs that can be popped and assigned to an
 instruction.  Once a PRF is popped from the freelist, the `map_table_`
 is updated to indicate the current ARF's PRF to be used.
 
 ```
    auto new_prf = reg_file_components_[reg_file].freelist.pop();
+   auto old_prf = map_table_[arf];
    map_table_[arf] = new_prf;
 ```
+
+The `old_prf`, however, might still be in use by instructions older
+than the current instruction being renamed.  The `old_prf` is stored
+in the instruction to put back on the freelist once the instruction
+sucessfully retires.
+
+===== Reclaiming PRFs
+
+As instructions are renamed, the freelist queue will drain.
+Eventually it will run of out PRFs and Rename will stall.
+
+PRFs are reclaimed and pushed into the freelist in one of two ways:
+
+- Instructions that retire are sent back to Rename to reclaim the old
+  PRF that the instruction overwrote (see `old_prf` above).
+- The pipeline experiences a flush, in which the map table and the
+  free list must be restored.
+
+As Retire retires instructions, it groups them into an `InstGroup` and
+sends the group to Rename via Rename's port `in_rename_retire_ack_`.
+Rename will walk the retiring instruction _in order_ (oldest to
+newest) and collect `old_prf` values.
+
+==== Move Elimination
+
+The Rename model supports a concept called "move elimination."  This
+pertains to those RISC-V instructions that simply move a register's
+value from one register to another without changing the value.  As an
+optimization, this can be handled in Rename by having Rename map
+multiple ARFs to the same PRF.  For example:
+
+```
+mv x2, x1
+mv x3, x1
+```
+
+Without move elimination, Rename would assign new PRFs to both `mv`
+operations and send the instruction to the middle machine to "execute."
+
+```
+# x55 <- map_table_[x1]
+
+# map_table_[x2] = x65
+mv x65, x55
+
+# map_table_[x3] = x66
+mv x66, x55
+```
+
+This is inefficient as two PRFs are now consumed representing the same contents as `x1 -> x55`.
+
+With move elimination, Rename can identify this inefficiency and just update the mapping:
+
+```
+# x55 <- map_table_[x1]
+
+# map_table_[x2] = x55
+mv --, x55  # eliminated!
+
+# map_table_[x3] = x55
+mv --, x55  # eliminated!
+```
+
+The `mv` is "eliminated" because Rename essentially executed it.
+Rename now marks the `mv` as "done" and the instruction is dispatched
+to the Retire block only.
+
+To facilitate the move elimination, Rename must keep track of the
+number of times `x55` in the above example is referenced.  This is
+done using the member variable `reference_counter` found in the
+`RegFileComponents` data structure.
 
 
 [[Interfaces]]

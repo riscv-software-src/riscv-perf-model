@@ -1,0 +1,170 @@
+:doctitle: Olympia Rename Design
+
+:toc:
+
+[[Document_Information]]
+== Document Information
+
+[[Revision_History]]
+=== Revision History
+
+[width="100%",cols="11%,11%,16%,62%",options="header",]
+|===
+|*Revision* | *Date*     | *Author*       | *Summary of Changes*
+| 0.1        | 2025.03.19 | Knute Lingaard | Initial revision
+|===
+
+[[Conventions_and_Terminology]]
+=== Conventions and Terminology
+
+[width="100%",cols="17%,83%",options="header",]
+|===
+|Label |Description
+|PRF | Physical Register File
+|ARF | Architecture Register File
+|===
+
+[[Related_Documents]]
+=== Related Documents
+
+* Register renaming general information https://en.wikipedia.org/wiki/Register_renaming
+
+[[Notes_Open_Issues]]
+=== Notes/Open Issues
+
+* No open issues
+
+[[OVERVIEW]]
+== OVERVIEW
+
+The Rename block of Olympia enables a simple OoO architectural to
+physical mapping design for CPU micro-architectural analysis.  The
+principles are simple: rename architectural registers to an
+available/popped physical register.  For example:
+
+[source,asm]
+----
+# Before renaming
+add x3, x4, x5
+
+# After renaming
+add p41, p53, p62
+----
+
+
+[[Overview_Block_Diagram]]
+=== Overview Block Diagram
+[source, mermaid]
+```mermaid
+classDiagram
+    Unit <|-- Rename
+    class Unit {
+      <<sparta>>
+      - port_set_
+    }
+    class Rename{
+      - in_uop_queue_append_: sparta::DataInPort
+      - out_uop_queue_credits_: sparta::DataOutPort
+      - in_dispatch_credits_ : sparta::DataInPort
+      - out_dispatch_queue_write_ : sparta::DataOutPort
+      - in_rename_retire_ack_ : sparta::DataInPort
+      - credits_dispatch_ : int
+    }
+    class RenameData{
+      - src_ : SrcRegs[]
+      - dest_ : DestRegs[]
+      + addSource(Reg)
+      + addDestination(Reg)
+    }
+   class Reg {
+      - phys_reg: uint32_t
+      - prev_dest: uint32_t
+      - op_info : OpInfoWithRegfile
+    }
+    class Inst {
+        - rename_data_ : RenameData
+        - src_reg_bit_masks_ : RegisterBitMaskArray
+    }
+    class Scoreboard {
+        <<sparta>>
+        - global_reg_ready_mask_
+    }
+    RenameData *-- Reg
+    RenameData <-- Rename
+    Inst o-- RenameData
+    Rename o-- "1..*" Scoreboard
+```
+
+[[Functional_Description]]
+== Functional Description
+
+The class `Rename` is the main `sparta::Unit` that handles all
+renaming functionality in Olympia.
+
+Instructions enter Rename via the `sparta::DataInPort` called
+`in_uop_queue_append_` inside a container class called `InstGroup`.
+The number of instructions in this container is controlled via a
+rename parameter called `num_to_rename`.
+
+When the `InstGroup` is presented to Rename, Rename will attempt
+renaming in one of two ways controlled by the rename parameter
+`partial_rename`:
+
+1. `partial_rename == true`: Rename will rename instructions in the
+   given `InstGroup` until one of the following conditions apply:
+  - Rename has run out of PRFs for the given instruction
+  - Rename has run of out downstream credits to send instructions (`credits_dispatch_`)
+1. `partial_rename == false`: For the given `InstGroup`, Rename will
+   *not* rename any of the instructions until:
+  - Rename ensures there are enough PRFs to rename *all* of the instructions in the group
+  - Rename ensures there are enough downstream credits to send *all*
+    of the instructions in the group (`credits_dispatch_`)
+
+[[Operation]]
+=== Operation
+
+
+[[Interfaces]]
+=== Interfaces
+
+[width="100%",cols="18%,21%,61%",options="header",]
+|===
+|*Name* |*C++ Type* |*Purpose/Description*
+| `in_uop_queue_append_` | `sparta::DataInPort<InstGroupPtr>` | Instruction group sent by upstream unit, typically the Decode blcok
+| `out_uop_queue_credits_` | `sparta::DataOutPort<int>` | The number of instructions Rename has consumed (moved downstream)
+| `in_dispatch_credits_` | `sparta::DataInPort<int>`| The number of instructions Dispatch (or downstream unit) has consumed
+| `out_dispatch_queue_write_` | `sparta::DataOutPort<InstGroupPtr>` | Instruction group that contains newly renamed instructions ready for next stage
+| `in_rename_retire_ack_` |`sparta::DataInPort<InstGroupPtr>` | Instruction group sent by a retirement block of instructions that can commit PRFs
+|===
+
+[[Parameterization]]
+=== Parameterization
+[width="100%",cols="25%,10%,10%,55%",options="header",]
+|===
+| *Name* | *Type* | *Default* | *Description*
+| num_to_rename      |uint32_t|4     |Number of instructions to rename
+| rename_queue_depth |uint32_t|10    |Number of instructions queued for rename
+| num_integer_renames|uint32_t|128   |Number of integer renames
+| num_float_renames  |uint32_t|128   |Number of float renames
+| num_vector_renames |uint32_t|128   |Number of vector renames
+| partial_rename     |bool    |true  |Rename all or partial instructions in a received group
+| move_elimination   |bool    |false |Enable move elimination
+|===
+
+
+[[Test_Bench_Description]]
+== Test Bench Description
+
+The test bench sets up common renaming situations and ensures the
+proper PRFs are assigned
+
+[[Future_Work_or_Features]]
+== Future Work or Features
+
+- Register banking
+- Register dependency streams
+
+[[References_Citations]]
+== References/Citations
+
+* Register renaming general information https://en.wikipedia.org/wiki/Register_renaming

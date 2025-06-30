@@ -31,6 +31,7 @@ namespace olympia
         {"vload", InstArchInfo::TargetPipe::VLOAD},
         {"vstore", InstArchInfo::TargetPipe::VSTORE},
         {"vset", InstArchInfo::TargetPipe::VSET},
+        {"rob", InstArchInfo::TargetPipe::ROB},
         {"sys", InstArchInfo::TargetPipe::SYS},
         {"?", InstArchInfo::TargetPipe::UNKNOWN}};
 
@@ -60,6 +61,7 @@ namespace olympia
         {InstArchInfo::TargetPipe::VLOAD, "VLOAD"},
         {InstArchInfo::TargetPipe::VSTORE, "VSTORE"},
         {InstArchInfo::TargetPipe::VSET, "VSET"},
+        {InstArchInfo::TargetPipe::ROB, "ROB"},
         {InstArchInfo::TargetPipe::SYS, "SYS"},
         {InstArchInfo::TargetPipe::UNKNOWN, "?"}};
 

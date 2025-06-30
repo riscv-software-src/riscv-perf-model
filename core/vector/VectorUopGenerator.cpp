@@ -169,8 +169,15 @@ namespace olympia
         //     Exe Uop 2: vrgather.vv v21, v9
         //     Exe Uop 3: vrgather.vv v22, v10
         //     Exe Uop 4: vrgather.vv v23, v11
-        uop_gen_function_map_.emplace(InstArchInfo::UopGenType::PERMUTE,
-                                      &VectorUopGenerator::generatePermuteUops_);
+        // uop_gen_function_map_.emplace(InstArchInfo::UopGenType::RGATHER,
+        //                               &VectorUopGenerator::generatePermuteUops_);
+
+        // Vector scalar move uop generator
+        // Integer Scalar Move
+        // Floating-Point Scalar Move
+        uop_gen_function_map_.emplace(
+            InstArchInfo::UopGenType::SCALAR_MOVE,
+            &VectorUopGenerator::generateScalarMoveUops_<InstArchInfo::UopGenType::SCALAR_MOVE>);
     }
 
     void VectorUopGenerator::onBindTreeLate_() { mavis_facade_ = getMavis(getContainer()); }
@@ -359,7 +366,7 @@ namespace olympia
             }
         }
 
-        // For narrowing insturction,
+        // For narrowing instruction,
         if constexpr (Type == InstArchInfo::UopGenType::NARROWING)
         {
             sparta_assert(src_rs3.field_id != mavis::InstMetaData::OperandFieldID::NONE,
@@ -479,9 +486,10 @@ namespace olympia
         return makeInst_(srcs, dests);
     }
 
-    InstPtr VectorUopGenerator::generatePermuteUops_()
+    template <InstArchInfo::UopGenType Type>
+    InstPtr VectorUopGenerator::generateScalarMoveUops_()
     {
-        sparta_assert(false, "Vector permute uop generation is currently not supported!");
+        sparta_assert(false, "Vector Scalar move implementation TODO ...");
     }
 
     InstPtr VectorUopGenerator::makeInst_(const mavis::OperandInfo::ElementList & srcs,

@@ -1,0 +1,406 @@
+// ----------------------------------------------------------------
+// FSL syntax test 1
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// TEST:shared prolog
+// ----------------------------------------------------------------
+prolog plog1
+{
+  isa   rv64gc
+  uarch oly
+  ioput iop
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+// 0x2f 0xf511c783 lbu    x15, -175(x3)     I      imm is s12
+// 0x3  0xfbf78793 addi   x15, x15,-65      I      imm is s12
+// ----------------------------------------------------------------
+transform uf1
+{
+  isa   rv64gc   //Isa definition should include G and compressed
+  uarch oly      //Model will supply the uarch needed by MachineInfo.hpp
+  ioput iop      //Model will attach iop to it's instr io structures
+
+  gpr g0,g1,g2,g3
+  s12 c1,c2
+
+  sequence seq_uf1(iop,rv64gc) { //TEST: optional explicit arg form
+    lbu    g1,c1(g2) //Note G1 in the rd and rs1 positions
+    addi   g3,g1,c2
+  }
+
+  //TEST: optional explicit arguments form
+  constraints cns_uf1(seq_uf1,iop,rv64gc,oly) {
+    _pass_
+  }
+
+  conversion cnv_uf1(seq_uf1,iop,cns_uf1) {
+    //TEST: automatic creation of mnemonic, "lbu_addi"
+    //TEST: override auto mnemonic, "lbu_addi"
+    instr lbu_addi
+    lbu_addi.mnemonic(lbu_addix)
+
+    //TEST: automatically merge the operands and instructions in the
+    //sequence in the order listed.
+    lbu_addi.morph(seq_uf1)
+    iop.input.replace(seq_uf1,lbu_addi)
+  }
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+// 0x2f 0xfff5c703 lbu    x14,-1(x11),      I      imm is s12
+// 0x3  0xc799     c.beqz x15, 14           CB     imm is s8
+// ----------------------------------------------------------------
+transform uf4 
+{
+  isa   rv64gc
+  uarch oly
+  ioput iop
+
+  //TEST: implicit arguments
+  sequence seq_uf4 {
+    lbu    g1,c1(g2)
+    c.beqz g3,c2
+  }
+
+  gpr g1,g2,g3
+  s12 c1
+  //SHOULD_FAIL: s5 should be s8
+  s5  c2
+
+  //TEST: implicit arguments
+  constraints cns_uf4 { //showing the proposed implicit arguments feature
+
+    //TEST: redundant _pass_
+    _pass_ 
+  }
+
+  //TEST: implicit arguments
+  conversion cnv_uf4 {
+    instr lbu_bez
+    //TEST: morph command
+    lbu_bez.morph(seq_uf4)
+  }
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+// 0x33 0xf6b41623 sh     x11,-148(x8)      S        s12
+// 0x2f 0x01e74783 lbu    x15,  0(x14)      I        s12
+// ----------------------------------------------------------------
+//TEST: non-typical clause ordering
+transform uf8
+{
+  //TEST: UID sequence
+  sequence seq_uf8 {
+    0x33
+    0x2f
+  }
+
+  ioput iop
+
+  conversion cnv_uf8 {
+    instr ins_uf8
+    lbu_bez.morph(seq_uf8)
+  }
+
+  //TEST: no explicit constraints
+  constraints cns_uf8 {
+    _pass_
+  }
+
+  isa   rv64gc
+  uarch oly
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0xe290     sd    x12,0(x13)       CS       u5
+//  0x35 0xf6743023 sd    x7,-160(x8)      S        s12
+// ----------------------------------------------------------------
+transform uf10
+{
+  //TEST: shared external prolog
+  prolog plog1
+
+  gpr  g1,g2,g3,g4
+  u5   c1
+  s12  c2
+  
+  //showing the UID version of a sequence
+  sequence seq_uf10 { 
+    sd  g1,c1(g2)
+    sd  g3,c2(g4)
+  }
+  
+  constraints cns_uf10 { 
+    //TEST: inequality syntax
+    g1 != g2
+    g3 != g4
+    g1 != g4
+    //TEST implicit _pass_
+  }
+ 
+  //TEST: instr in-line arguments
+  conversion cnv_uf10 {
+    instr ins_uf10(
+      mnemonic="sdsd",
+      opc=0xFFFF,
+      src={g1,g3},
+      rsx={g2,g4},
+      imm={c1,c2},
+      type="fused") //user assigned type
+  }
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands         enc-type  notes
+// -------------------------------------------------------------
+//  0xa  0xdebff0ef jal    x1, -534      J       s20
+//  0xd  0x7139     addi   x2, x2, -64   CI      s6
+// ----------------------------------------------------------------
+transform uf12 {
+  prolog plog1
+  sequence seq_u12 {
+    jal   g1,c1
+    addi  g2,g2,c2
+  }
+
+  gpr g1
+  gpr g2
+  s20 c1
+  s6  c2 
+
+  constraints cns_u12 {
+    _pass_
+  }
+
+  //TEST: instr method call syntax
+  conversion cnv_u12 {
+    instr anyname
+    anyname.mnemonic("jalsp")
+    anyname.opc(*)
+    anyname.dst(g2)
+    anyname.src({g1,g2})
+    anyname.type("branch")
+    //FIXME: add emit or what ever
+  }
+}
+// ----------------------------------------------------------------
+// UF14 - 2%
+//
+// UID  encoding     mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x2e 0x00093783   ld    x15,0(x18)       I       s12
+//  0x35 0xe822       sd    x8,16(x2)       CSS      u6
+// ----------------------------------------------------------------
+transform uf14
+{
+  prolog plog1 
+
+  //TEST: reduced punctuation/boilerplate sequence
+  //TEST: mixed puntuation and reduced punctuation/boilerplate sequence
+  sequence seq_u14 {
+    ld    g1  c1  g2
+    sd    g3  c2(g4)
+  }
+
+  //TEST: operand variables out side constraints clause
+  //TEST: declare variables after use, can linker find the variables
+  gpr g1,g2,g3,g4
+  s12 c1
+  u6  c2
+
+  //TEST:This is to test the constraints checker
+  constraints cns_u14 {
+    g1 == x15
+    g2 == x18
+    g3 == x8
+    g4 == x2
+    c1 == 0
+    c2 == 16
+  }
+
+  conversion cnv_u14 {
+    encoding enc_u14
+    //TEST: separated methods
+    enc_u14.opc(0xFFFF)
+    // u16 opc   //53:38
+    // u6  c2    //37:32
+    // s12 c1    //31:20
+    // gpr g4    //19:15
+    // gpr g3    //14:10
+    // gpr g2    //9:5  
+    // gpr g1    //4:0  
+    //TEST: encode order expression
+    enc_u14.encode_order({opc,c2,c1,g1,g3,g2,g4})
+  }
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x34 0xf401aa23 sw x0, -172(x3)        S        s12
+//  0x9  0x8082     ret                    CR
+// ----------------------------------------------------------------
+transform uf16
+{
+  prolog plog1
+
+  sequence seq_u16 {
+    sw   g0, c1(g1)
+    ret 
+  }
+
+  gpr g0,g1
+  s12 c1
+
+  constraints cns_u16 {
+    g0 == 0
+  }
+
+  conversion cnv_u16 {
+    instr i_uf16
+    i_uf16.morph(seq_u16)
+  }
+}
+// ----------------------------------------------------------------
+// UF18 - 2.6%
+//
+//  UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x34 0x64f72e23 sw     x15,1628(x14)    S       s12
+//  0xa  0xdebff0ef jal    x1,-534          J       s20
+// ----------------------------------------------------------------
+transform uf18
+{
+  prolog plog1
+
+  //SHOULD_WARN: g4 is defined but not used
+  //SHOULD_FAIL: g5 is used but not initialized
+  gpr g1,g2,g3,g4,g5
+  s12 c1
+  s20 c2
+
+  sequence seq_u18 {
+    sw     x15,1628(x14)
+    jal    x1,-534
+    sw     g1,c1(g2)
+    jal    g3,c2
+  }
+
+  //TEST: expression syntax, fsl lib,  comparison
+  constraints cns_u18 {
+    g1 != g2
+    if(abs(c1)+abs(c2) < 1234) _pass_
+    else _fail_
+  }
+
+  //TEST: expression syntax - boolean ops, intermediate variable
+  //FIXME: u20 cx = c2 & { 8'hff,c1 }
+  u20 cx = c2
+
+  conversion cnv_u18 {
+
+    encoding enc_u18
+    //TEST: g5 used, not initialized
+    //TEST: inline opc
+    enc_u18.encode_order({opc=0xF7FF,g1,cx,g3,g2,g5})
+  }
+}
+// ----------------------------------------------------------------
+//  UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0xec06     sd     x1, 24(x2)     CSS        u6
+//  0x18 0x842a     mv     x8, x10        CR
+// ----------------------------------------------------------------
+transform uf20
+{
+  prolog plog1
+  sequence seq_u20 {
+    //TEST: odd operand naming
+    sd  g100,c_5_0x(g__)
+    mv  _gg_,g_share
+  }
+
+    gpr g100,g__,_gg_,g_share
+    u6 c_5_0x
+
+  constraints cns_u20 {
+    _pass_
+  }
+
+  conversion cnv_u20 {
+    //SHOULD_FAIL: no conversion statement(s)
+    _pass_
+  }
+}
+// ----------------------------------------------------------------
+// UF22 - 2.12%
+//
+//  UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x18 0x8522     mv     x10, x8          CR 
+//  0xa  0xfa7ff0ef jal    x1, -90          J        S20
+// ----------------------------------------------------------------
+transform uf22
+{
+  prolog plog1
+  sequence seq_u22 {
+    mv     A, B
+    jal    C, D
+  }
+
+  gpr A,B,C
+  s20 D
+
+  constraints cns_u22 {
+    _pass_
+  }
+
+  //TEST: concatenate operator
+  //TEST: sequence index and getter method
+//  u32  enc_seq0 = xeq_u22[0].encoding
+//  u32  enc_seq1 = xeq_u22[1].encoding
+//  u32  env_seq0 = xeq_u22[0].encoding()
+//  u32  env_seq1 = xeq_u22[1].encoding()
+  conversion cnv_u22 {
+    instr i_u22({xeq_u22[0].encoding,seq_u22[1].encoding})
+  }
+}
+// ----------------------------------------------------------------
+//  UID  encoding    mnem   operands         enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0x00fcb023  sd     x15,0(x25)          S       s12
+//  0x35 0xf5243823  sd     x18,-176(x8)        S       s12
+//  0x35 0xf4943c23  sd     x9, -168(x8)        S       s12
+// ----------------------------------------------------------------
+transform uf24 {
+  prolog plog1
+
+  gpr g1,g2,g3,g4,g5,g6
+  s12 C,D,E
+
+  sequence seq_u24 {
+    sd     x15,0(x25)
+    sd     x18,-176(x8)
+    sd     x9, -168(x8)    
+  }
+
+  //TEST: sequence method call
+  //TEST: uarch method call
+  constraints cns_u24 {
+    seq_u24 <= plog1
+    seq_u24.writePorts() <= plog1.oly.writePorts()
+    seq_u24.readPorts()  <= plog1.oly.readPorts()
+    C.minBits <= 4
+    D.minBits <= c.minBits << 1
+    E.minBits <= C.width
+  }
+
+  //TEST: bit range
+//  conversion cnv_u24 {
+//    instr i_u24({0xCC,c[3:0],D[4:0],E[3:0]})
+//  }
+
+}

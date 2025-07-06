@@ -4,6 +4,3 @@
 [submodule "stf_lib"]
 	path = stf_lib
 	url = https://github.com/sparcians/stf_lib.git
-[submodule "fsl"]
-	path = fsl
-	url = https://github.com/Condor-Performance-Modeling/fsl

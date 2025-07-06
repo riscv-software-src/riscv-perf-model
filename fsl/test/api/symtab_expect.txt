@@ -1,0 +1,8 @@
+
+----------
+Symbol table
+Name Type Line     File
+----------
+
+Symbol table total entries 0
+

@@ -1,0 +1,12 @@
+// Empty definition
+/*
+  Block comment
+*/
+transform t1 { //end of line
+/* in line block */
+}
+
+transform /* messy keywords */ t2 /* messy symbols */ {
+/* in line block */
+/* here */ } //
+// end of file comment

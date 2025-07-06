@@ -1,0 +1,12 @@
+// Empty definition
+/*
+  Block comment
+*/
+fusion fs1 { //end of line
+/* in line block */
+}
+
+fusion /* messy keywords */ fs2 /* messy symbols */ {
+/* in line block */
+/* here */ } //
+// end of file comment

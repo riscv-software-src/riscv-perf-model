@@ -1,0 +1,11 @@
+export gpr fpr cgpr
+
+//          name  mnemonic  encoding
+encode_rule  gpr  x[0..31]  5'h0..5'h1f
+encode_rule  fpr  f[0..31]  5'h0..5'h1f
+encode_rule cgpr  x[8..15]  3'h0..3'h7
+
+//          name  mnemonic alias
+alias_rule  gpr   zero,ra,sp,gp,tp,t0..t2,(s0|fp),s1,a[0..7],s[2..11],t[3..6]
+alias_rule  fpr   ft[0..7],fs0,fs1,fa[0..7],fs[2..11],ft[8..11]
+alias_rule  cgpr  s0,s1,a[0..5]

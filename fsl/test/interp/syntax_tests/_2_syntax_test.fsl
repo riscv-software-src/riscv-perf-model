@@ -1,0 +1,366 @@
+// ----------------------------------------------------------------
+// Fusion group FSL definition set for dhrystone
+// TODO: record dhrystone compile options used
+//
+// ISA definition files are the defined in 
+// mavis isa_rv64g.json isa_rv64c.json
+//
+// This example is using olympia and mavis to help make the
+// discussion concrete.  But mapping of the rv64gc and oly
+// names for isa and uarch can be independent of the specifics
+// of Mavis (isa def) and Olympia (riscv-perf-model).
+//
+// See FSL_ENCODING_FORMATS.md file for RISC-V encoding reference
+//  $TOP/utils/fusion/FSL_ENCODING_FORMATS.md
+//
+// 188390 instructions in small test case trace
+//
+// ----------------------------------------------------------------
+// Shared prolog
+// ----------------------------------------------------------------
+prolog plg
+{
+  isa   rv64gc
+  uarch oly
+  ioput iop
+}
+// ----------------------------------------------------------------
+// UF1 - 11.7% of trace
+//
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+// 0x2f 0xf511c783 lbu    x15, -175(x3)     I      imm is s12
+// 0x0d 0xfbf78793 addi   x15, x15,-65      I      imm is s12
+// ----------------------------------------------------------------
+transform uf1
+{
+  prolog plg
+  //if there are no constraints the explicit constraints clause is not needed
+  //constraints cns_uf1 { _pass_ } 
+  //If the conversion is a morph of the sequence, this
+  //sequence seq_uf1   { 0x2f 0x0d }
+  //conversion cnv_uf1 { plg.iop.input.replace(seq_uf1,instr(morph(seq_uf1))) }
+  //is replaced by this:
+  sequence   { 0x2f 0x0d }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+// 0x2f 0xfff5c703 lbu    x14,-1(x11),      I      imm is s12
+// 0x03 0xc799     c.beqz x15, 14           CB     imm is s8
+// ----------------------------------------------------------------
+transform uf4 
+{
+  prolog plg 
+  sequence   { 0x2f 0x3 }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF8 - minimal
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+// 0x33 0xf6b41623 sh     x11,-148(x8)      S        s12
+// 0x2f 0x01e74783 lbu    x15,  0(x14)      I        s12
+// ----------------------------------------------------------------
+transform uf8
+{
+  prolog plg
+  sequence   { 0x33 0x2f }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF10 - 3.4%
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0xe290     sd    x12,0(x13)       CS       u5
+//  0x35 0xf6743023 sd    x7,-160(x8)      S        s12
+// ----------------------------------------------------------------
+transform uf10
+{
+  prolog plg
+  sequence   { 0x35 0x35 } 
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF12 - 3.4%
+//
+// UID  encoding   mnem   operands         enc-type  notes
+// -------------------------------------------------------------
+//  0xa  0xdebff0ef jal    x1, -534      J       s20
+//  0xd  0x7139     addi   x2, x2, -64   CI      s6
+// ----------------------------------------------------------------
+transform uf12 {
+  prolog plg
+  sequence   { 0xa 0xd }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF14 - 2%
+//
+// UID  encoding     mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x2e 0x00093783   ld    x15,0(x18)       I       s12
+//  0x35 0xe822       sd    x8,16(x2)       CSS      u6
+// ----------------------------------------------------------------
+transform uf14
+{
+  prolog plg 
+  sequence   { 0x2e 0x35 }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF16 - 3.2%
+//
+// UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x34 0xf401aa23 sw x0, -172(x3)        S        s12
+//  0x9  0x8082     ret                    CR
+// ----------------------------------------------------------------
+transform uf16
+{
+  prolog plg
+  sequence   { 0x34 0x09 }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF18 - 2.6%
+//
+//  UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x34 0x64f72e23 sw     x15,1628(x14)    S       s12
+//  0xa  0xdebff0ef jal    x1,-534          J       s20
+// ----------------------------------------------------------------
+transform uf18
+{
+  prolog plg
+  sequence   { 0x34 0x0a }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF20 - 3.2%
+//
+//  UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0xec06     sd     x1, 24(x2)     CSS        u6
+//  0x18 0x842a     mv     x8, x10        CR
+// ----------------------------------------------------------------
+transform uf20
+{
+  prolog plg
+  sequence   { 0x35 0x18 }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF22 - 2.12%
+//
+//  UID  encoding   mnem   operands       enc-type  notes
+// -------------------------------------------------------------
+//  0x18 0x8522     mv     x10, x8          CR 
+//  0xa  0xfa7ff0ef jal    x1, -90          J        S20
+// ----------------------------------------------------------------
+transform uf22
+{
+  prolog plg
+  sequence   { 0x18 0xa }
+  conversion { plg.iop.input.replace(_morph_) }
+}
+// ----------------------------------------------------------------
+// UF24 - 3.4%
+//
+//  UID  encoding    mnem   operands         enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0x00fcb023  sd     x15,0(x25)          S       s12
+//  0x35 0xf5243823  sd     x18,-176(x8)        S       s12
+//  0x35 0xf4943c23  sd     x9, -168(x8)        S       s12
+// ----------------------------------------------------------------
+transform uf24
+{
+
+  prolog plg
+  gpr g1,g2,g3,g4,g5,g6
+  s12 C,D,E
+
+  sequence seq_uf24 {
+    sd g1, c1(g2)
+    sd g3, c2(g4)
+    sd g5, c3(g6)
+  }
+
+  //The only constraints on this tuple are wr/rd port limits
+  //we do not need to test the operands only the wr/rd port
+  //requirements of the combined operand set. Within those
+  //limits any combination of operands will do.
+  constraints cns_uf24 {
+    seq_uf24.writePorts() <= plg.oly.writePorts()
+    seq_uf24.readPorts()  <= plg.oly.readPorts()
+  }
+
+  // This is a generic transform but with mnemonic assigned
+  conversion {
+    instr i_uf24(morph(seq_uf24))
+    plg.iop.input.replace(seq_uf24,i_uf24)
+  }
+}
+// ----------------------------------------------------------------
+// UF24_example - This version has artifical constraints to show
+// syntax options.
+//
+//  UID  encoding    mnem   operands         enc-type  notes
+// -------------------------------------------------------------
+//  0x35 0x00fcb023  sd     x15,0(x25)          S       s12
+//  0x35 0xf5243823  sd     x18,-176(x8)        S       s12
+//  0x35 0xf4943c23  sd     x9, -168(x8)        S       s12
+// ----------------------------------------------------------------
+transform uf24_example
+{
+  prolog plg
+  gpr g1,g2,g3,g4,g5,g6
+  s12 C,D,E
+
+  sequence seq_uf24_example {
+    sd g1, c1(g2)
+    sd g3, c2(g4)
+    sd g5, c3(g6)
+  }
+
+  // We could do these constraints all in one block but what is below
+  // is the example for constraints composition
+
+  //Constraint: the combined encoding for the immediates <= 24bits
+  //Constraint:  the number of wr/rd ports must be compatible with
+  //             the micro architecture limits expressed in plg.oly
+
+  //This constraint checks the ranges on the immediates
+  //If this fails the fusion group can not be matched
+  constraints cns_uf24_examplea {
+    fsl.requiredBits(c1) <= 8
+    fsl.requiredBits(c2) <= 8
+    fsl.requiredBits(c3) <= 8
+  }
+
+  //This constraint just checks for read/write port limits, pass/fail
+  //
+  // Fully generalized with g1-g6 all unique represents 6 required
+  // read ports. If the uarch only supports 4 for example we must
+  // constrain the match function
+  //
+  // This is a simplified all or nothing constraint
+  constraints cns_uf24_exampleb {
+    seq_uf24_example.writePorts() <= plg.oly.writePorts()
+    seq_uf24_example.readPorts()  <= plg.oly.readPorts()
+  }
+
+  constraints cns_uf24_examplec {
+    //We are going to pretend we can only accept 24 bits of immediate
+    //8 for each instruction
+    fsl.requiredBits(c1) <= 8 //if any of these are not true
+    fsl.requiredBits(c2) <= 8 //the clause exits with _fail_
+    fsl.requiredBits(c3) <= 8
+  }
+
+  //Given the way it's coded above this is redundant
+  if(!cns_uf24_examplea || !cns_uf24_exampleb || !cns_uf24_examplec) { _fail_ }
+
+  //The encoding extracts the common info from the S-type format
+  //                               S-type
+  // |---------------------------------------------------------------------|
+  // | 31      25|24       20|19       15|14      12|11       7|6         0|
+  // |---------------------------------------------------------------------|
+  // | imm[11:5] |    rs2    |    rs1    |  funct3  | imm[4:0] |   opcode  |
+  // |---------------------------------------------------------------------|
+  // |  7 bits   |   5 bits  |   5 bits  |  3 bits  | 5 bits   |   7 bits  |
+  // |---------------------------------------------------------------------|
+  //
+  // With the above we are going to assume that since we are executing
+  // the conversion clause, our machine has enough rd/wr ports so we will
+  // express the rs2/rs1/imm for each, but share the opcode and funct3
+  //
+  // seq[0]         seq[1]         seq[0]       funct3 opcode
+  // rs2 rs1 imm    rs2 rs1 imm    rs2 rs1 imm
+  conversion cnv_uf24_example {
+    // Our new encoding contains 24 bits for immediate evenly distributed
+    s8 c1e(fsl.encodeSigned(c1,8))
+    s8 c2e(fsl.encodeSigned(c2,8))
+    s8 c3e(fsl.encodeSigned(c3,8))
+
+    //10b of opcode extracted from the 1st seq element, {funct3,opcode}
+    u10 opcf = {seq_uf24_example[0][14:12],seq_uf24_example[0][6:0]}
+
+    u13 seq0 = {seq_uf24_example[0].rs2,seq_uf24_example[0].rs1,c1e} 
+    u13 seq1 = {seq_uf24_example[1].rs2,seq_uf24_example[1].rs1,c2e} 
+    u13 seq2 = {seq_uf24_example[2].rs2,seq_uf24_example[2].rs1,c3e} 
+
+    //Encoding simply skips the need to explicitly declare an unsigned
+    //bit width, it figures it out
+    encoding enc({seq0,seq1,seq2,opcf}) 
+    //The mnemonic will be "i_uf24_example"
+    instr i_uf24_example(encoding(enc))
+  }
+}
+
+// ----------------------------------------------------------------
+//  Using the sequence composition syntax
+// ----------------------------------------------------------------
+prolog plg
+{
+  isa   rv64gc
+  uarch oly
+  ioput iop
+}
+
+transform composition
+{
+  prolog plg  //new: prolog can be external and shared
+//  gpr g1..9   //new: variable naming expansion syntax
+
+  //setof is a collection type
+  //hasAttr will scan the contents of the isa specification named rv64gc
+  //for objects with the rtype and logical attributes, 'rtype' and 'logical'
+  //must be known to the isa object.
+  setof r_bools = plg.rv64gc.hasAttr(rtype).hasAttr(logical)
+
+  //If the constraints or conversion clauses access g1..g9 then
+  //it would be written this way:
+  sequence comp_seq_a {
+    r_bools g1, g2, g3
+    r_bools g4, g5, g6
+    r_bools g7, g8, g9
+  }
+
+  //Since the constraints do not care about which values g1..9
+  //hold this can be written as simply
+  sequence comp_seq_b {
+    r_bools 
+    r_bools 
+    r_bools
+  }
+
+  //These are redundant, only _a or _b is really needed depending
+  //on the sequence used.
+  constraints {
+    comp_seq_a.writePorts() <= plg.oly.writePorts()
+    comp_seq_a.readPorts()  <= plg.oly.readPorts()
+    comp_seq_b.writePorts() <= plg.oly.writePorts()
+    comp_seq_b.readPorts()  <= plg.oly.readPorts()
+  }
+
+  //fsl is the standard library equivalent
+  //morph() combines the sequence as specified by the
+  //user defined function object registered with the Fusion API
+  //by default this just calls the mavis equivalent
+  conversion {
+    //declare an instruction object, initialize using the fsl.morph()
+    //operation performed on the sequence
+    instr i_comp(fsl.morph(comp_seq_b))
+
+    //by default the mnemonic is the same as the instr object name.
+    //this can be overridden
+    i_comp.mnemonic("r_bool")
+
+    //this is using the replace idiom, the sequence objects in .input 
+    //are removed and replaced with the instruction created by morphing.
+    plg.iop.input.replace(comp_seq_b,i_comp)
+  }
+}
+

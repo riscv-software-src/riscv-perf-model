@@ -1,0 +1,356 @@
+// HEADER PLACEHOLDER
+// contact Jeff Nye, jeffnye-gh
+//
+//! \file Fsl.y  bison grammar for FSL
+// ----------------------------------------------------------------
+// Simplified grammar with ID location info and symbol table
+//
+// There are no expected r/r s/r conflicts in this grammar.
+// Future: %language, variant api, unique_ptr
+// ----------------------------------------------------------------
+%{
+#include "fslparser.h"
+
+#include <cstdio>
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include <iostream>
+using namespace std;
+
+extern FslParser *FP;
+
+extern int yylex();
+extern int yyparse();
+extern FILE *yyin;
+extern char *yytext;
+extern void yyerror(const char *s);
+//std::vector<std::string> sequence_lines;
+
+%}
+
+%union {
+  int     ival;
+  float   fval;
+  char   *sval;
+  std::string *str;
+}
+
+%token CONSTRAINTS
+%token CONVERSION
+%token EMIT
+%token ENCODE_ORDER
+%token ENCODING
+%token FAIL
+%token FUSION
+%token GPR
+%token IF
+%token INPUT_SEQ
+%token INSTR
+%token IOPUT
+%token ISA
+%token MNEMONIC
+%token OPT_TOKEN
+%token PASS
+%token PROLOG
+%token REQ_TOKEN
+%token RET
+%token S0 S1
+%token SEQUENCE
+%token TRANSFORM
+%token UARCH
+%token UID
+%token EQ
+%token NEQ
+%token LE
+%token GE
+%token TRUE
+%token FALSE
+
+%token <str>  UN_CONST S_CONST
+%token <str>  HEX_CONST
+//%type  <str>  id
+%token <ival> DEC_NUM
+%token <ival> INT
+%token <fval> FLOAT
+%token <str>  QSTRING
+%token <sval> ID
+
+%locations
+%start top
+
+%%
+top:
+    source_line
+  | top source_line
+  ;
+
+source_line:
+    transform_decl
+  | prolog_decl
+  ;
+
+transform_decl:
+    TRANSFORM id '{' '}'
+  | TRANSFORM id '{' transform_statements '}'
+  ;
+
+transform_statements:
+    transform_statement
+  | transform_statements transform_statement
+  ;
+
+transform_statement:
+    PROLOG id
+  | isa_decl
+  | uarch_decl
+  | ioput_decl
+  | variable_decl
+  | sequence_decl
+  | constraints_decl
+  | conversion_decl
+  ;
+
+prolog_decl:
+    PROLOG id '{' '}'
+  | PROLOG id '{'  prolog_statements '}'
+  ;
+
+prolog_statements:
+    prolog_statement
+  | prolog_statements prolog_statement
+  ;
+
+prolog_statement:
+    ISA id
+  | UARCH id
+  | IOPUT id
+  ;
+
+isa_decl:   ISA   id ;
+uarch_decl: UARCH id ;
+ioput_decl: IOPUT id ;
+
+sequence_decl:
+    SEQUENCE                    '{' uid_list '}'
+  | SEQUENCE id                 '{' sequence_statements '}'
+  | SEQUENCE id '(' id_list ')' '{'                     '}'
+  | SEQUENCE id '(' id_list ')' '{' sequence_statements '}'
+  | SEQUENCE id                 '{' uid_list            '}'
+  ;
+
+constraints_decl:
+    CONSTRAINTS id                 '{' constraints_statements '}'
+  | CONSTRAINTS id '(' id_list ')' '{'                        '}'
+  | CONSTRAINTS id '(' id_list ')' '{' constraints_statements '}'
+  ;
+
+conversion_decl:
+    CONVERSION id                 '{' conversion_statements '}'
+  | CONVERSION id '(' id_list ')' '{'                       '}'
+  | CONVERSION id '(' id_list ')' '{' conversion_statements '}'
+  ;
+
+sequence_statements:
+    sequence_statement
+  | sequence_statements sequence_statement
+  ;
+
+sequence_statement:
+    assembly_source_line
+  ;
+
+assembly_source_line:
+    mnem  number
+  | mnem  operand ','  '(' operand ')'
+  | mnem  operand ',' number
+  | mnem  operand ',' number '(' operand ')'
+  | mnem  operand ',' operand
+  | mnem  operand ',' operand '(' operand ')'
+  | mnem  operand ',' operand ',' number
+  | mnem  operand ',' operand ',' operand
+  ;
+
+mnem: id ;
+operand: id ;
+
+constraints_statements:
+    constraints_statement
+  | constraints_statements constraints_statement
+  ;
+
+constraints_statement:
+    method_call
+  | pass_fail_statement
+  | expression
+  ;
+
+pass_fail_statement:
+    PASS
+  | FAIL
+  ;
+
+conversion_statements:
+    conversion_statement
+  | conversion_statements conversion_statement
+  ;
+
+conversion_statement:
+    instr_decl
+  | instr_update
+  ;
+
+instr_decl:
+    INSTR id
+  ;
+
+instr_update:
+    id '(' id_list ')'
+    {
+    }
+  ;
+
+method_call:
+    chained_routines '(' id ')'
+  ;
+
+chained_routines:
+    id
+  | chained_routines '.' id
+  ;
+
+variable_decl:
+    GPR      id_list
+  | UN_CONST id_list
+  | S_CONST  id_list
+  ;
+ 
+id_list:
+    id_expression
+  | id_list ',' id_expression
+  ;
+
+id_expression:
+    id
+  | QSTRING
+//  | assignment_expression
+//  | method_expression
+  ;
+
+uid_list:
+    UID
+  | uid_list UID
+  ;
+
+number:
+	  HEX_CONST
+  | DEC_NUM
+  ;
+
+id:
+    ID
+  ;
+
+//assignment_expression:
+//    id '=' number
+//  | id '=' QSTRING
+//  ;
+//
+//method_expression:
+//    id '(' id ')'
+//  | id '(' QSTRING ')'
+//  ;
+
+expression  :  expression 
+             | '!' expression 
+             | number 
+             | id 
+             | TRUE 
+             | FALSE
+             ;  // Terminal cases (leaf elements)
+
+//expression:
+//  '(' expression ')' 
+//  | expression EQ expression 
+//  | expression NEQ expression 
+//  | expression LE expression 
+//  | expression GE expression 
+//  | expression '>' expression 
+//  | expression '<' expression 
+//  | expression '&' expression 
+//  | expression '|' expression 
+//  | expression '^' expression
+//;
+
+//assignment_expression
+//  : MNEMONIC '=' QSTRING
+//  | id '=' number
+//  ;
+//
+//expression:
+//    assignment_expression
+//  | logical_or_expression
+//  | logical_and_expression
+//  | equality_expression
+//  ;
+//
+//assignment_expression:
+//      logical_or_expression
+//    | unary_expression '=' assignment_expression
+//    ;
+//
+//logical_or_expression:
+//      logical_and_expression
+//    | logical_or_expression '|' logical_and_expression
+//    ;
+//
+//logical_and_expression
+//    : equality_expression
+//    | logical_and_expression '&' equality_expression
+//    ;
+//
+//equality_expression
+//    : relational_expression
+//    | equality_expression EQ  relational_expression
+//    | equality_expression NEQ relational_expression
+//    ;
+//
+//relational_expression
+//    : additive_expression
+//    | relational_expression '<' additive_expression
+//    | relational_expression '>' additive_expression
+//    | relational_expression LE  additive_expression
+//    | relational_expression GE  additive_expression
+//    ;
+//
+//additive_expression
+//    : multiplicative_expression
+//    | additive_expression '+' multiplicative_expression
+//    | additive_expression '-' multiplicative_expression
+//    ;
+//
+//multiplicative_expression
+//    : unary_expression
+//    | multiplicative_expression '*' unary_expression
+//    | multiplicative_expression '/' unary_expression
+//    | multiplicative_expression '%' unary_expression
+//    ;
+//
+//unary_expression
+//    : postfix_expression
+//    | '-' unary_expression
+//    | '!' unary_expression
+//    ;
+//
+//postfix_expression
+//    : primary_expression
+//    ;
+//
+//primary_expression
+//    : id
+//    | number
+//    | '(' expression ')'
+//    ;
+
+%%

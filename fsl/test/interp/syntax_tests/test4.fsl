@@ -1,0 +1,76 @@
+//// =========================================================
+//// FUTURE FEATURE: the library form of transform expression
+//// =========================================================
+//fusion fs1 {
+//  sequence seq1 {
+//    c.lui    g1, c1
+//    c.addi   g1, g1, c2
+//    c.xor    g2, g2, g1
+//    c.slli   g2, g2, c3
+//    c.srli   g2,     c3
+//  }
+//
+//  constraints cons1 {
+//    gpr g1,g2
+//    s20 c1
+//    s12 c2
+//    u6  c3
+//
+//    g1 != g2 
+//  }
+//
+//  iword word1 {
+//    u1  f      //59      1b
+//    u1  c      //58      1b
+//    u10 fopc   //57:48   unsigned 10b
+//    u6  c3     //47:42   unsigned 6b
+//    s12 c2     //41:30   signed 12b
+//    s20 c1     //29:10   signed 20b
+//    gpr g1     //9:5     gpr 5b
+//    gpr g2     //4:0     gpr 5b
+//    
+//    encode_order(f,c,fopc,c3,c2,c1,g1,g2)
+//  }
+//  
+//  transform T1 {
+//    encoding word1(f=1,c=0,S1)
+//  }
+//} 
+//// =========================================================
+//sequence S1_A {
+//  li  g1,c1
+//  li  g2,c1 
+//  li  g3,c1
+//  li  g4,c1
+//}     
+//      
+//constraints C1_A {
+//  gpr g1,g2,g3,g4
+//  u12 c1
+//  g1 != g2 != g3 != g4
+//  c1 == 0
+//}
+//
+//iword word2 {
+//  u1  f      //59      1b
+//  u1  c      //58      1b
+//  u10 fopc   //57:48   unsigned 10b
+//  u6  c3     //47:42   unsigned 6b
+//  s12 c2     //41:30   signed 12b
+//  s20 c1     //29:10   signed 20b
+//  gpr g1     //9:5     gpr 5b
+//  gpr g2     //4:0     gpr 5b
+//
+//  encode_order(f,c,fopc,c3,c2,c1,g1,g2)
+//}
+//
+//transform T1 {
+//  encoding word2(f=1,c=0,S1)
+//}
+//
+//fusion fs2 {
+//  sequence S1_A()
+//  constraints C1_A(S1_A)
+//  transform T1_A(S1_A)
+//}
+//

@@ -1,0 +1,293 @@
+[
+  {
+    "mnemonic" : "c.addi4spn",
+    "tags" : ["c"],
+    "expand" : "addi",
+    "form" : "C0",
+    "ignore" : ["func2A"],
+    "xform" : "CIW_sp",
+    "stencil" : "0x0"
+  },
+  {
+    "mnemonic" : "c.lw",
+    "tags" : ["c"],
+    "expand" : "lw",
+    "form" : "C0",
+    "ignore" : ["func2A"],
+    "xform" : "C0_load_word",
+    "stencil" : "0x4000"
+  },
+  {
+    "mnemonic" : "c.ld",
+    "tags" : ["c"],
+    "expand" : "ld",
+    "form" : "C0",
+    "ignore" : ["func2A"],
+    "xform" : "C0_load_double",
+    "stencil" : "0x6000"
+  },
+  {
+    "mnemonic" : "c.sw",
+    "tags" : ["c"],
+    "expand" : "sw",
+    "form" : "C0",
+    "ignore" : ["func2A"],
+    "xform" : "C0_store_word",
+    "stencil" : "0xc000"
+  },
+  {
+    "mnemonic" : "c.sd",
+    "tags" : ["c"],
+    "expand" : "sd",
+    "form" : "C0",
+    "ignore" : ["func2A"],
+    "xform" : "C0_store_double",
+    "stencil" : "0xe000"
+  },
+  {
+    "mnemonic" : "c.addi",
+    "tags" : ["c"],
+    "expand" : "addi",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CI_addi",
+    "stencil" : "0x1"
+  },
+  {
+    "mnemonic" : "c.nop",
+    "tags" : ["c"],
+    "expand" : "nop",
+    "form" : "C1",
+    "ignore" : ["func1", "func2b"],
+    "fixed" : [ "rs1" ],
+    "xform" : "CI_addi",
+    "stencil" : "0x1"
+  },
+  {
+    "mnemonic" : "c.addi16sp",
+    "tags" : ["c"],
+    "expand" : "addi",
+    "form" : "C1",
+    "ignore" : ["func1", "func2b"],
+    "fixed" : [ "rs1" ],
+    "xform" : "CI_sp",
+    "stencil" : "0x6101"
+  },
+  {
+    "mnemonic" : "c.jr",
+    "tags" : ["c"],
+    "expand" : "jalr",
+    "form" : "C2",
+    "fixed" : ["rs2"],
+    "xform" : "CJR",
+    "stencil" : "0x8002"
+  },
+  {
+    "mnemonic" : "c.addiw",
+    "tags" : ["c"],
+    "expand" : "addiw",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CI_addiw",
+    "stencil" : "0x2001"
+  },
+  {
+    "mnemonic" : "c.jalr",
+    "tags" : ["c"],
+    "expand" : "jalr",
+    "form" : "C2",
+    "fixed" : ["rs2"],
+    "xform" : "CJALR",
+    "stencil" : "0x9002"
+  },
+  {
+    "mnemonic" : "c.li",
+    "tags" : ["c"],
+    "expand" : "li",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CI_rD_only",
+    "stencil" : "0x4001"
+  },
+  {
+    "mnemonic" : "c.lui",
+    "tags" : ["c"],
+    "expand" : "lui",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CI_rD_shifted",
+    "stencil" : "0x6001"
+  },
+  {
+    "mnemonic" : "c.srli",
+    "tags" : ["c"],
+    "expand" : "srli",
+    "form" : "C1",
+    "ignore" : ["func1", "func2b"],
+    "xform" : "CIX",
+    "stencil" : "0x8001"
+  },
+  {
+    "mnemonic" : "c.srai",
+    "tags" : ["c"],
+    "expand" : "srai",
+    "form" : "C1",
+    "ignore" : ["func1", "func2b"],
+    "xform" : "CIX",
+    "stencil" : "0x8401"
+  },
+  {
+    "mnemonic" : "c.andi",
+    "tags" : ["c"],
+    "expand" : "andi",
+    "form" : "C1",
+    "ignore" : ["func1", "func2b"],
+    "xform" : "CIX_andi",
+    "stencil" : "0x8801"
+  },
+  {
+    "mnemonic" : "c.sub",
+    "tags" : ["c"],
+    "expand" : "sub",
+    "form" : "C1",
+    "xform" : "CA",
+    "stencil" : "0x8c01"
+  },
+  {
+    "mnemonic" : "c.xor",
+    "tags" : ["c"],
+    "expand" : "xor",
+    "form" : "C1",
+    "xform" : "CA",
+    "stencil" : "0x8c21"
+  },
+  {
+    "mnemonic" : "c.or",
+    "tags" : ["c"],
+    "expand" : "or",
+    "form" : "C1",
+    "xform" : "CA",
+    "stencil" : "0x8c41"
+  },
+  {
+    "mnemonic" : "c.and",
+    "tags" : ["c"],
+    "expand" : "and",
+    "form" : "C1",
+    "xform" : "CA",
+    "stencil" : "0x8c61"
+  },
+  {
+    "mnemonic" : "c.subw",
+    "tags" : ["c"],
+    "expand" : "subw",
+    "form" : "C1",
+    "xform" : "CA",
+    "stencil" : "0x9c01"
+  },
+  {
+    "mnemonic" : "c.addw",
+    "tags" : ["c"],
+    "expand" : "addw",
+    "form" : "C1",
+    "xform" : "CA",
+    "stencil" : "0x9c21"
+  },
+  {
+    "mnemonic" : "c.j",
+    "tags" : ["c"],
+    "expand" : "jal",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CJ",
+    "stencil" : "0xa001"
+  },
+  {
+    "mnemonic" : "c.beqz",
+    "tags" : ["c"],
+    "expand" : "beq",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CB",
+    "stencil" : "0xc001"
+  },
+  {
+    "mnemonic" : "c.bnez",
+    "tags" : ["c"],
+    "expand" : "bne",
+    "form" : "C1",
+    "ignore" : ["func2", "func1", "func2b"],
+    "xform" : "CB",
+    "stencil" : "0xe001"
+  },
+  {
+    "mnemonic" : "c.slli",
+    "tags" : ["c"],
+    "expand" : "slli",
+    "form" : "C2",
+    "ignore" : ["func1"],
+    "xform" : "C2_slli",
+    "stencil" : "0x2"
+  },
+  {
+    "mnemonic" : "c.lwsp",
+    "tags" : ["c"],
+    "expand" : "lw",
+    "form" : "C2",
+    "ignore" : ["func1"],
+    "xform" : "C2_sp_load_word",
+    "stencil" : "0x4002"
+  },
+  {
+    "mnemonic" : "c.ldsp",
+    "tags" : ["c"],
+    "expand" : "ld",
+    "form" : "C2",
+    "ignore" : ["func1"],
+    "xform" : "C2_sp_load_double",
+    "stencil" : "0x6002"
+  },
+  {
+    "mnemonic" : "c.mv",
+    "tags" : ["c"],
+    "expand" : "add",
+    "form" : "C2",
+    "type" : ["move"],
+    "xform" : "C2_mv",
+    "stencil" : "0x8002"
+  },
+  {
+    "mnemonic" : "c.ebreak",
+    "tags" : ["c"],
+    "expand" : "ebreak",
+    "form" : "C2",
+    "fixed" : [ "rs1", "rs2" ],
+    "stencil" : "0x9002"
+  },
+  {
+    "mnemonic" : "c.add",
+    "tags" : ["c"],
+    "expand" : "add",
+    "form" : "C2",
+    "xform" : "C2_add",
+    "stencil" : "0x9002"
+  },
+  {
+    "mnemonic" : "c.swsp",
+    "tags" : ["c"],
+    "expand" : "sw",
+    "form" : "C2",
+    "ignore" : ["func1"],
+    "xform" : "C2_sp_store_word",
+    "stencil" : "0xc002"
+  },
+  {
+    "mnemonic" : "c.sdsp",
+    "tags" : ["c"],
+    "expand" : "sd",
+    "form" : "C2",
+    "ignore" : ["func1"],
+    "xform" : "C2_sp_store_double",
+    "stencil" : "0xe002"
+  }
+]

@@ -1,0 +1,36 @@
+//This is the common test case
+transform fs1 {
+
+  isa   rv64g
+  uarch oly1
+  ioput in_seq
+
+  sequence seq1(in_seq,rv64g) {
+    c.lui    g1, c1
+    c.addi   g1, g1, c2
+    _req_
+    c.xor    g2, g2, g1
+    c.slli   g2, g2, c3
+    _opt_
+    c.srli   g2,     c3
+  }
+
+  gpr g1,g2
+
+  constraints cns1(seq1,in_seq,rv64g,oly1) {
+    g1 != g2
+  }
+
+  conversion cnv1(seq1,cons1) {
+    encoding word1
+    //      u10 opc    //57:48   unsigned 10b
+    //      u6  c3     //47:42   unsigned 6b
+    //      s12 c2     //41:30   signed 12b
+    //      s20 c1     //29:10   signed 20b
+    //      gpr g1     //9:5     gpr 5b
+    //      gpr g2     //4:0     gpr 5b
+    word1.encode_order({opc=0x234,c3,c2,c1,g1,g2})
+    in_seq.input.replace(cns1,word1)
+  }
+}
+

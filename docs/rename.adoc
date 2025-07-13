@@ -196,7 +196,7 @@ deadlock.
 
 ===== Renaming Sources
 
-Rename maintains a map of current PRFs that the latest values for a
+Rename maintains a map of current PRFs that hold the latest values for a
 given ARF (`map_table_`). During source renaming, the instruction's
 ARF sources are "replaced" by the current PRF sources being written by
 older instructions.  The instruction updates its current

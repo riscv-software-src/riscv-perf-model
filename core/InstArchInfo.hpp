@@ -62,6 +62,7 @@ namespace olympia
             VLOAD,
             VSTORE,
             VSET,
+            ROB,
             SYS,
             UNKNOWN
         };

@@ -1,0 +1,356 @@
+:doctitle: Olympia Rename Design
+
+:toc:
+
+[[Document_Information]]
+== Document Information
+
+[[Revision_History]]
+=== Revision History
+
+[width="100%",cols="11%,11%,16%,62%",options="header",]
+|===
+|*Revision* | *Date*     | *Author*       | *Summary of Changes*
+| 0.1        | 2025.03.19 | Knute Lingaard | Initial revision
+|===
+
+[[Conventions_and_Terminology]]
+=== Conventions and Terminology
+
+[width="100%",cols="17%,83%",options="header",]
+|===
+|Label |Description
+|PRF | Physical Register File
+|ARF | Architecture Register File
+|===
+
+[[Related_Documents]]
+=== Related Documents
+
+* Register renaming general information https://en.wikipedia.org/wiki/Register_renaming
+
+[[Notes_Open_Issues]]
+=== Notes/Open Issues
+
+* No open issues
+
+[[OVERVIEW]]
+== OVERVIEW
+
+The Rename block of Olympia enables a simple OoO architectural to
+physical mapping design for CPU micro-architectural analysis.  The
+principles are simple: rename architectural registers to an
+available/popped physical register.  For example:
+
+[source,asm]
+----
+# Before renaming
+add x3, x4, x5
+
+# After renaming
+add p41, p53, p62
+----
+
+
+[[Overview_Block_Diagram]]
+=== Overview Block Diagram
+[source, mermaid]
+```mermaid
+ classDiagram
+    Unit <|-- Rename
+    class Unit {
+      <<sparta>>
+      - port_set_
+    }
+    class Rename{
+      - in_uop_queue_append_: sparta::DataInPort
+      - out_uop_queue_credits_: sparta::DataOutPort
+      - in_dispatch_credits_ : sparta::DataInPort
+      - out_dispatch_queue_write_ : sparta::DataOutPort
+      - in_rename_retire_ack_ : sparta::DataInPort
+      - credits_dispatch_ : int
+      - map_table_ : array[ARF][PRF]
+      - regfile_components_ : std::vector<RegFileComponents>
+      + scheduleRenaming_()
+      + renameInstructions_()
+      + renameSources_()
+      + renameDests_()
+    }
+    class RegFileComponents {
+      - freelist : std::queue<int>
+      - reference_counter : int
+    }
+    class RenameData{
+      - src_ : SrcRegs[]
+      - dest_ : DestRegs[]
+      + addSource(Reg)
+      + addDestination(Reg)
+    }
+   class Reg {
+      - phys_reg: uint32_t
+      - prev_dest: uint32_t
+      - op_info : OpInfoWithRegfile
+    }
+    class Inst {
+        - rename_data_ : RenameData
+        - src_reg_bit_masks_ : RegisterBitMaskArray
+    }
+    class Scoreboard {
+        <<sparta>>
+        - global_reg_ready_mask_
+    }
+    RenameData *-- Reg
+    RenameData <-- Rename
+    Inst o-- RenameData
+    Rename o-- "1..*" Scoreboard
+    Rename o-- "1..*" RegFileComponents
+```
+
+[[Functional_Description]]
+== Functional Description
+
+The class `Rename` is the main `sparta::Unit` that handles all
+renaming functionality in Olympia.
+
+Instructions enter Rename via the `sparta::DataInPort` called
+`in_uop_queue_append_` inside a container class called `InstGroup`.
+The number of instructions in this container is controlled via a
+rename parameter called `num_to_rename`.
+
+When the `InstGroup` is presented to Rename, Rename will attempt
+renaming _in order_ via one of two ways controlled by the parameter
+`partial_rename`:
+
+1. `partial_rename == true`: Rename will rename instructions in the
+   given `InstGroup` until one of the following conditions apply:
+  - Rename has run out of PRFs for the next instruction
+  - Rename has run of out downstream credits to send instructions (`credits_dispatch_`)
+1. `partial_rename == false`: For the given `InstGroup`, Rename will
+   *not* rename any of the instructions until:
+  - Rename ensures there are enough PRFs to rename *all* of the instructions in the group
+  - Rename ensures there are enough downstream credits to send *all*
+    of the instructions in the group (`credits_dispatch_`)
+
+[[Operation]]
+=== Operation
+
+==== Accepting Instructions
+
+Before simulation begins, Rename will send upstream (typically to
+Decode) the maximum number of instructions Rename can receive in
+total.  This is not the _bandwidth_ between the upstream unit and
+Rename, just the total number of instructions Rename can potentially
+buffer.  In Olympia, this value is determined by the parameter
+`num_to_rename` which is modeled to be the same as the bandwidth.
+
+Phrased differently, if the parameter `num_to_rename` is 4 and Rename
+is currently not renaming any instructions, Rename can receive up to 4
+instructions.  If Rename has 2 instructions it cannot rename from the
+previous cycle, the Rename can only accept 2.
+
+==== Processing Arriving Instructions
+
+When instructions arrive on port `in_uop_queue_append_` via the
+container `InstGroup`, Rename will move those instructions to an
+internal UOP queue (`uop_queue_`) for convenience and maintenance.
+Rename will then schedule internal `sparta::Unique` event
+`ev_schedule_rename_` for the same cycle to _possibly_ schedule a
+renaming event for the newly arrived instructions.
+
+==== Scheduling Renaming
+
+The callback `Rename::scheduleRenaming_` (registered by the event
+`ev_schedule_rename_`) will eventually be called by the Sparta
+scheduler. This method will determine if Renaming can occur by:
+
+- Examining the parameter `partial_rename` and determining if there
+  are enough resources to rename instructions
+- Examining downstream credits to ensure the downstream unit can
+  accept instructions being renamed
+- Examining the `uop_queue_` for any instructions
+
+If all conditions have been met, the event `ev_rename_insts_` will be
+scheduled for *this* cycle.
+
+Instructions coming from upstream, credits arriving from downstream,
+and resources being returned from retiring instructions will schedule
+a renaming session.
+
+==== Renaming Instructions
+
+Renaming instructions (`Rename::renameInstructions_` scheduled by the
+event `ev_rename_insts_`) only happens if the scheduling event
+(previous section) determines there are enough resources to do so.
+
+NOTE: Renaming instructions _should only occur_ if the previous step has
+been satisfied.  There are asserts in the code to ensure this flow is
+maintained.
+
+Renaming works by retrieving the instructions from the `uop_queue_`
+_in order_ and renaming the sources of that instruction followed by
+the destinations. The *order* of renaming is important: an
+instruction's sources must be renamed _first_ before the instruction's
+destinations.  If this order is not followed and an instruction's
+destination is the same as any of it's sources the machine will
+deadlock.
+
+===== Renaming Sources
+
+Rename maintains a map of current PRFs that hold the latest values for a
+given ARF (`map_table_`). During source renaming, the instruction's
+ARF sources are "replaced" by the current PRF sources being written by
+older instructions.  The instruction updates its current
+`src_reg_bit_masks_` to reflect that PRF.  This bit mask is used by
+downstream units such as Issue to compare against a "global"
+scoreboard of ready PRFs.  If the Instruction's mask `and` 'ed with
+the Scoreboard's `global_reg_ready_mask_` returns the instruction's
+full mask then all of the instruction's sources are ready and the
+instruction can be executed.
+
+===== Renaming Destinations
+
+If an instruction has a destination, that instruction will need to
+write its final value to a PRF.  To do this, Rename will need to
+replace the instruction's destination ARF with an assigned PRF.
+
+Free or unused PRFs are maintained by Rename in a freelist contained
+in a structure called `RegFileComponents`.  There is 1
+`RegFileComponents` instance _per regfile_ (Integer, Float, Vector).
+The freelist is simply a `std::queue` of unused PRFs that can be
+popped and assigned to an instruction.  Once a PRF is popped from the
+freelist, the `map_table_` is updated to indicate the current ARF's
+PRF to be used.
+
+```
+   // pseudo code
+   auto arf = inst->getDestARF()
+   auto new_prf = reg_file_components_[reg_file].freelist.pop()
+   auto old_prf = map_table_[arf]
+   map_table_[arf] = new_prf
+   inst->setDestPRF(new_prf, old_ptf)
+```
+
+The `old_prf`, however, might still be in use by instructions older
+than the current instruction being renamed.  The `old_prf` is stored
+in the instruction to put back on the freelist once the instruction
+sucessfully retires.
+
+===== Reclaiming PRFs
+
+As instructions are renamed, the freelist queue will drain.
+Eventually it will run of out PRFs and Rename will stall.
+
+PRFs are reclaimed and pushed onto the freelist in one of two ways:
+
+- Instructions that retire are sent back to Rename to reclaim the old
+  PRF (see `old_prf` above)
+- The pipeline experiences a flush, in which the map table and the
+  free list must be restored/rebuilt.
+
+As Retire retires instructions, it groups them into an `InstGroup` and
+sends the group to Rename via Rename's port `in_rename_retire_ack_`.
+Rename will walk the retiring instruction _in order_ (oldest to
+newest) and collect `old_prf` values.
+
+==== Move Elimination
+
+The Rename model supports a concept called "move elimination."  This
+pertains to those RISC-V instructions that simply move a register's
+value from one register to another without changing the value.  As an
+optimization, this can be handled in Rename by having Rename map
+multiple ARFs to the same PRF.
+
+Take these `mv` instructions:
+
+```
+mv x2, x1
+mv x3, x1
+```
+
+Without move elimination, Rename would assign new PRFs to both `mv`
+operations and send the instruction to the middle machine to be "executed."
+
+```
+# x55 <- map_table_[x1]
+
+# map_table_[x2] = x65
+mv x65, x55
+
+# map_table_[x3] = x66
+mv x66, x55
+```
+
+This is inefficient as two PRFs are now consumed representing the same
+contents as `x1 -> x55`.  In addition, these `mv` instructions are
+consuming middle machine resources and power.
+
+With move elimination, Rename can identify this inefficiency and just update the mapping:
+
+```
+# x55 <- map_table_[x1]
+
+# map_table_[x2] = x55
+mv --, x55  # eliminated!
+
+# map_table_[x3] = x55
+mv --, x55  # eliminated!
+```
+
+The `mv` is "eliminated" because Rename essentially executed it.
+Rename now marks the `mv` as "done" and the instruction is dispatched
+to the Retire block only.
+
+To facilitate the move elimination, Rename must keep track of the
+number of times `x55` in the above example is referenced.  This is
+done using the member variable `reference_counter` found in the
+`RegFileComponents` data structure.
+
+When newer instructions overwrite the map table for `x2` and `x3`,
+Rename cannot push `x55` back onto the freelist until its reference
+count reaches 0.
+
+
+[[Interfaces]]
+=== Interfaces
+
+[width="100%",cols="18%,21%,61%",options="header",]
+|===
+|*Name* |*C++ Type* |*Purpose/Description*
+| `in_uop_queue_append_` | `sparta::DataInPort<InstGroupPtr>` | Instruction group sent by upstream unit, typically the Decode blcok
+| `out_uop_queue_credits_` | `sparta::DataOutPort<int>` | The number of instructions Rename has consumed (moved downstream)
+| `in_dispatch_credits_` | `sparta::DataInPort<int>`| The number of instructions Dispatch (or downstream unit) has consumed
+| `out_dispatch_queue_write_` | `sparta::DataOutPort<InstGroupPtr>` | Instruction group that contains newly renamed instructions ready for next stage
+| `in_rename_retire_ack_` |`sparta::DataInPort<InstGroupPtr>` | Instruction group sent by a retirement block of instructions that can commit PRFs
+|===
+
+[[Parameterization]]
+=== Parameterization
+[width="100%",cols="25%,10%,10%,55%",options="header",]
+|===
+| *Name* | *Type* | *Default* | *Description*
+| num_to_rename      |uint32_t|4     |Number of instructions to rename
+| rename_queue_depth |uint32_t|10    |Number of instructions queued for rename
+| num_integer_renames|uint32_t|128   |Number of integer renames
+| num_float_renames  |uint32_t|128   |Number of float renames
+| num_vector_renames |uint32_t|128   |Number of vector renames
+| partial_rename     |bool    |true  |Rename all or partial instructions in a received group
+| move_elimination   |bool    |false |Enable move elimination
+|===
+
+
+[[Test_Bench_Description]]
+== Test Bench Description
+
+The test bench sets up common renaming situations and ensures the
+proper PRFs are assigned
+
+[[Future_Work_or_Features]]
+== Future Work or Features
+
+- Register banking
+- Register dependency streams
+
+[[References_Citations]]
+== References/Citations
+
+* Register renaming general information https://en.wikipedia.org/wiki/Register_renaming

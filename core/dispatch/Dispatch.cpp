@@ -161,7 +161,12 @@ namespace olympia
         }
         else
         {
-            ILOG("no rob credits or no instructions to process");
+            if(0 == credits_rob_) {
+                ILOG("no rob credits");
+            }
+            else {
+                ILOG("no instructions to process");
+            }
         }
     }
 
@@ -336,4 +341,16 @@ namespace olympia
         dispatch_queue_.clear();
         out_reorder_write_.cancel();
     }
+
+    void Dispatch::dumpDebugContent_(std::ostream & output) const
+    {
+        output << "Dispatch Contents" << std::endl;
+        output << "Current stall: " << current_stall_ << std::endl;
+        output << "Dispatch Queue:" << std::endl;
+        for (const auto & inst : dispatch_queue_)
+        {
+            output <<  inst << std::endl;
+        }
+    }
+
 } // namespace olympia

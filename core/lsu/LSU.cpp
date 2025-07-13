@@ -209,20 +209,23 @@ namespace olympia
             // stores this way we avoid two live callbacks
             if (inst_ptr->isStoreInst())
             {
-                const auto rf = inst_ptr->getRenameData().getDataReg().rf;
-                const auto & data_bits = inst_ptr->getDataRegisterBitMask(rf);
-                // if x0 is a data operand, we don't need to check scoreboard
-                if (!inst_ptr->getRenameData().getDataReg().is_x0)
+                for (auto reg_file = 0; reg_file < core_types::RegFile::N_REGFILES; ++reg_file)
                 {
-                    if (!scoreboard_views_[rf]->isSet(data_bits))
+                    const auto & data_bits = inst_ptr->
+                        getDataRegisterBitMask(static_cast<core_types::RegFile>(reg_file));
+                    // if x0 is a data operand, we don't need to check scoreboard
+                    if (!inst_ptr->getRenameData().getDataReg().op_info.is_x0)
                     {
-                        all_ready = false;
-                        scoreboard_views_[rf]->registerReadyCallback(
-                            data_bits, inst_ptr->getUniqueID(),
-                            [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
-                            { this->handleOperandIssueCheck_(inst_ptr); });
-                        ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:"
-                                                       << sparta::printBitSet(data_bits));
+                        if (!scoreboard_views_[reg_file]->isSet(data_bits))
+                        {
+                            all_ready = false;
+                            scoreboard_views_[reg_file]->registerReadyCallback(
+                                data_bits, inst_ptr->getUniqueID(),
+                                [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
+                                { this->handleOperandIssueCheck_(inst_ptr); });
+                            ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:"
+                                 << sparta::printBitSet(data_bits));
+                        }
                     }
                 }
             }

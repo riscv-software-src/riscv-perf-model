@@ -1,4 +1,4 @@
-# QEMU SimPoint Unified Analysis
+# QEMU BBVs Flow
 
 A unified, containerized workflow for running various workloads on QEMU with SimPoint analysis for program phase detection and basic block vector generation.
 
@@ -95,8 +95,9 @@ cd qemu-bbvs-flow
 
 2. **Clone and Setup**:
    ```bash
-   git clone https://github.com/yourusername/qemu-bbvs-flow.git
-   cd qemu-bbvs-flow
+   git clone https://github.com/riscv-software-src/riscv-perf-model.git
+   cd traces/qemu-bbvs-flow
+
    chmod +x *.sh
    ```
 

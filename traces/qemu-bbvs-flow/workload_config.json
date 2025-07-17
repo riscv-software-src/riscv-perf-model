@@ -1,0 +1,36 @@
+{
+  "workloads": {
+    "dhrystone": {
+      "description": "Dhrystone integer arithmetic benchmark",
+      "compiler_flags": "-static",
+      "qemu_arch": "riscv64",
+      "interval": 100,
+      "max_k": 30
+    },
+    "embench": {
+      "description": "Embench IoT benchmark suite",
+      "compiler_flags": "-march=rv32i -mabi=ilp32 -static",
+      "qemu_arch": "riscv32",
+      "interval": 100,
+      "max_k": 30
+    },
+    "custom": {
+      "description": "Custom workload (requires source directory)",
+      "compiler_flags": "-static",
+      "qemu_arch": "riscv64",
+      "interval": 100,
+      "max_k": 30
+    }
+  },
+  "supported_architectures": [
+    "riscv32",
+    "riscv64"
+  ],
+  "supported_compiler_flags": [
+    "-static",
+    "-march=rv32i -mabi=ilp32 -static",
+    "-march=rv64i -mabi=lp64 -static",
+    "-O2 -static",
+    "-O3 -static"
+  ]
+}

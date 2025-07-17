@@ -1,0 +1,4 @@
+simpoint_output/
+*.log
+.DS_Store
+.vscode/settings.json

@@ -27,8 +27,8 @@ This project provides a unified Docker-based environment for:
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/qemu-bbvs-flow.git
-cd qemu-bbvs-flow
+git clone https://github.com/riscv-software-src/riscv-perf-model.git
+cd traces/qemu-bbvs-flow
 ```
 
 ### 2. Run Dhrystone Analysis
@@ -75,8 +75,8 @@ cd qemu-bbvs-flow
 
 3. **Open WSL 2 Terminal** and clone repository:
    ```bash
-   git clone https://github.com/yourusername/qemu-bbvs-flow.git
-   cd qemu-bbvs-flow
+   git clone https://github.com/riscv-software-src/riscv-perf-model.git
+   cd traces/qemu-bbvs-flow
    chmod +x *.sh
    ```
 

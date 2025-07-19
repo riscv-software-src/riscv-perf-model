@@ -85,8 +85,9 @@ RUN bash scripts/download-bm-compiler.sh && \
     COMPILER_DIR=$(find . -maxdepth 1 -type d -name "riscv-embecosm-*" | head -n 1) && \
     [ -n "$COMPILER_DIR" ] || (echo "Error: riscv-embecosm-* directory not found!" && exit 1) && \
     export PATH=$(pwd)/$COMPILER_DIR/bin:$PATH && \
-    echo "export PATH=/riscv/condor.riscv-isa-sim/$COMPILER_DIR/bin:\$PATH" >> /root/.bashrc && \
-    mkdir -p build && cd build && \
+    echo "export PATH=/riscv/condor.riscv-isa-sim/$COMPILER_DIR/bin:\$PATH" >> /root/.bashrc
+        
+RUN mkdir -p build && cd build && \
     ../configure --prefix=$RISCV/condor.riscv-isa-sim/install && \
     make -j$(nproc) && \
     make regress && \
@@ -94,4 +95,3 @@ RUN bash scripts/download-bm-compiler.sh && \
 
 # shell
 CMD ["/bin/bash"]
-

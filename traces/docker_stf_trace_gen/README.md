@@ -50,10 +50,10 @@ docker build -t spike-stf .
 ```bash
 mkdir -p trace_output
 
-docker run --rm \
-  -v "$OUTPUT_DIR":/riscv/condor.riscv-isa-sim/trace_out \
-  "$IMAGE_NAME" \
+docker run --rm \ 
+  -v <output_dir>:/riscv/condor.riscv-isa-sim/trace_out \
+  spike-stf \
   bash -c "
-     bash scripts/run-spike-stf.sh $BINARY_NAME $TRACEOUT_NAME
+     bash scripts/run-spike-stf.sh <binary_name> <traceout_name>
   "
 ```

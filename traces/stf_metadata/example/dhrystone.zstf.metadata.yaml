@@ -1,0 +1,27 @@
+author:
+  name: name
+  company: company
+  email: email
+workload:
+  workload_filename: dhrystone
+  SHA256: 5c35ccfe1d5b81b2e37366b011107eec40e39aa2b930447edc1f83ceaf877066
+  elf_sections:
+    comment: "GCC: (riscv-embecosm-embedded-ubuntu2204-20250309) 15.0.1 20250308
+      (experimental)"
+    riscv.attributes: riscv rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_b1p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_zba1p0_zbb1p0_zbc1p0_zbs1p0
+    GCC.command.line:
+      GNU C99 15.0.1 20250308 (experimental) -mabi=lp64d -mcmodel=medany
+      -misa-spec=20191213 -march=rv64imafdcb_zicsr_zifencei_zmmul_zaamo_zalrsc_zca_zcd_zba_zbb_zbc_zbs
+      -O2 -std=gnu99 -fno-inline -ffast-math -funsafe-math-optimizations -finline-functions
+      -fno-common -fno-builtin-printf
+stf:
+  timestamp: "2025-07-20T21:05:32.840053+00:00"
+  stf_trace_info:
+    VERSION: "1.5"
+    GENERATOR: Spike
+    GEN_VERSION: 2.0.0
+    GEN_COMMENT: SPIKE SHA:32fa34983b853da98b8a17797275d52e0acda940
+    STF_FEATURES:
+      - STF_CONTAIN_PHYSICAL_ADDRESS
+      - STF_CONTAIN_RV64
+      - STF_CONTAIN_EVENT64

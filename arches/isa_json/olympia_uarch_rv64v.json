@@ -1358,25 +1358,25 @@
     {
         "mnemonic": "vmv1r.v",
         "pipe": "vmv",
-        "uop_gen": "ELEMENTWISE",
+        "uop_gen": "WHOLE_REG_MOVE",
         "latency": 1
     },
     {
         "mnemonic": "vmv2r.v",
         "pipe": "vmv",
-        "uop_gen": "ELEMENTWISE",
+        "uop_gen": "WHOLE_REG_MOVE",
         "latency": 1
     },
     {
         "mnemonic": "vmv4r.v",
         "pipe": "vmv",
-        "uop_gen": "ELEMENTWISE",
+        "uop_gen": "WHOLE_REG_MOVE",
         "latency": 1
     },
     {
         "mnemonic": "vmv8r.v",
         "pipe": "vmv",
-        "uop_gen": "ELEMENTWISE",
+        "uop_gen": "WHOLE_REG_MOVE",
         "latency": 1
     },
     {

@@ -89,9 +89,13 @@ namespace olympia
 
         template <InstArchInfo::UopGenType Type> InstPtr generateSlideUops_();
 
+        template <InstArchInfo::UopGenType Type> InstPtr generateSlideGeneralUops_();
+
 // InstPtr generatePermuteUops_();
 
         template <InstArchInfo::UopGenType Type> InstPtr generateScalarMoveUops_();
+
+        template <InstArchInfo::UopGenType Type> InstPtr generateWholeRegMoveUops_();
 
         InstPtr makeInst_(const mavis::OperandInfo::ElementList & srcs,
                           const mavis::OperandInfo::ElementList & dests);

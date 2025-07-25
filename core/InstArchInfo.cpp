@@ -75,6 +75,8 @@ namespace olympia
         {"REDUCTION", InstArchInfo::UopGenType::REDUCTION},
         {"REDUCTION_WIDE", InstArchInfo::UopGenType::REDUCTION_WIDE},
         {"INT_EXT", InstArchInfo::UopGenType::INT_EXT},
+        {"SLIDEUP", InstArchInfo::UopGenType::SLIDEUP},
+        {"SLIDEDOWN", InstArchInfo::UopGenType::SLIDEDOWN},
         {"SLIDE1UP", InstArchInfo::UopGenType::SLIDE1UP},
         {"SLIDE1DOWN", InstArchInfo::UopGenType::SLIDE1DOWN},
         {"SCALAR_MOVE", InstArchInfo::UopGenType::SCALAR_MOVE},

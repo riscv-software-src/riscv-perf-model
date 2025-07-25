@@ -161,16 +161,34 @@ namespace olympia
             InstArchInfo::UopGenType::SLIDE1DOWN,
             &VectorUopGenerator::generateSlideUops_<InstArchInfo::UopGenType::SLIDE1DOWN>);
 
-        // Vector permute uop generator
+        // Vector general slide uop generators
+        uop_gen_function_map_.emplace(
+            InstArchInfo::UopGenType::SLIDEUP,
+            &VectorUopGenerator::generateSlideGeneralUops_<InstArchInfo::UopGenType::SLIDEUP>);
+        
+        uop_gen_function_map_.emplace(
+            InstArchInfo::UopGenType::SLIDEDOWN,
+            &VectorUopGenerator::generateSlideGeneralUops_<InstArchInfo::UopGenType::SLIDEDOWN>);
+
+        // Vector gather uop generator
         // For a "vrgather.vv v20, v8, v4" with an LMUL of 4:
-        //    Load Uop 1: vrgather.vv v4, v5
-        //    Load Uop 1: vrgather.vv v6, v7
-        //     Exe Uop 1: vrgather.vv v20, v8
-        //     Exe Uop 2: vrgather.vv v21, v9
-        //     Exe Uop 3: vrgather.vv v22, v10
-        //     Exe Uop 4: vrgather.vv v23, v11
-        // uop_gen_function_map_.emplace(InstArchInfo::UopGenType::RGATHER,
-        //                               &VectorUopGenerator::generatePermuteUops_);
+        //     Uop 1: vrgather.vv v20, v8, v4
+        //     Uop 2: vrgather.vv v21, v9, v5
+        //     Uop 3: vrgather.vv v22, v10, v6
+        //     Uop 4: vrgather.vv v23, v11, v7
+        uop_gen_function_map_.emplace(
+            InstArchInfo::UopGenType::RGATHER,
+            &VectorUopGenerator::generateUops_<InstArchInfo::UopGenType::RGATHER>);
+
+        // Vector compress uop generator
+        uop_gen_function_map_.emplace(
+            InstArchInfo::UopGenType::COMPRESS,
+            &VectorUopGenerator::generateUops_<InstArchInfo::UopGenType::COMPRESS>);
+
+        // Vector whole register move uop generator
+        uop_gen_function_map_.emplace(
+            InstArchInfo::UopGenType::WHOLE_REG_MOVE,
+            &VectorUopGenerator::generateWholeRegMoveUops_<InstArchInfo::UopGenType::WHOLE_REG_MOVE>);
 
         // Vector scalar move uop generator
         // Integer Scalar Move
@@ -321,7 +339,9 @@ namespace olympia
 
             if constexpr (Type == InstArchInfo::UopGenType::ELEMENTWISE
                           || Type == InstArchInfo::UopGenType::MAC
-                          || Type == InstArchInfo::UopGenType::REDUCTION)
+                          || Type == InstArchInfo::UopGenType::REDUCTION
+                          || Type == InstArchInfo::UopGenType::RGATHER
+                          || Type == InstArchInfo::UopGenType::COMPRESS)
             {
                 src.field_value += num_uops_generated_;
             }
@@ -489,7 +509,89 @@ namespace olympia
     template <InstArchInfo::UopGenType Type>
     InstPtr VectorUopGenerator::generateScalarMoveUops_()
     {
-        sparta_assert(false, "Vector Scalar move implementation TODO ...");
+        static_assert(Type == InstArchInfo::UopGenType::SCALAR_MOVE);
+        sparta_assert(current_inst_.isValid(),
+                      "Cannot generate uops, current instruction is not set");
+
+        // For scalar move instructions, we always generate exactly one uop
+        // regardless of LMUL, VL, or vstart settings
+        auto srcs = current_inst_.getValue()->getSourceOpInfoList();
+        auto dests = current_inst_.getValue()->getDestOpInfoList();
+
+        // Scalar move instructions operate on element 0 only, no register indexing needed
+        // The sources and destinations are used as-is since they already point to
+        // the correct registers (vector element 0 or scalar register)
+
+        return makeInst_(srcs, dests);
+    }
+
+    template <InstArchInfo::UopGenType Type> InstPtr VectorUopGenerator::generateSlideGeneralUops_()
+    {
+        static_assert((Type == InstArchInfo::UopGenType::SLIDEUP)
+                      || (Type == InstArchInfo::UopGenType::SLIDEDOWN));
+        sparta_assert(current_inst_.isValid(),
+                      "Cannot generate uops, current instruction is not set");
+        
+        auto orig_srcs = current_inst_.getValue()->getSourceOpInfoList();
+        mavis::OperandInfo::ElementList srcs;
+        
+        // For general slide operations, we need to handle the offset source
+        // and vector source register indexing based on LMUL
+        for (auto & src : orig_srcs)
+        {
+            if (src.operand_type == mavis::InstMetaData::OperandTypes::VECTOR)
+            {
+                // Vector source register - increment based on current uop
+                srcs.emplace_back(src.field_id, src.operand_type,
+                                  src.field_value + num_uops_generated_);
+            }
+            else
+            {
+                // Scalar offset source (register or immediate) - use as-is
+                srcs.emplace_back(src);
+            }
+        }
+
+        auto dests = current_inst_.getValue()->getDestOpInfoList();
+        for (auto & dest : dests)
+        {
+            dest.field_value += num_uops_generated_;
+        }
+
+        return makeInst_(srcs, dests);
+    }
+
+    template <InstArchInfo::UopGenType Type>
+    InstPtr VectorUopGenerator::generateWholeRegMoveUops_()
+    {
+        static_assert(Type == InstArchInfo::UopGenType::WHOLE_REG_MOVE);
+        sparta_assert(current_inst_.isValid(),
+                      "Cannot generate uops, current instruction is not set");
+
+        // For whole register moves, we generate uops for each register pair
+        // The num_uops_to_generate_ is already set based on the instruction type
+        // (1, 2, 4, or 8 registers)
+        auto srcs = current_inst_.getValue()->getSourceOpInfoList();
+        auto dests = current_inst_.getValue()->getDestOpInfoList();
+
+        // Increment both source and destination register indices for current uop
+        for (auto & src : srcs)
+        {
+            if (src.operand_type == mavis::InstMetaData::OperandTypes::VECTOR)
+            {
+                src.field_value += num_uops_generated_;
+            }
+        }
+
+        for (auto & dest : dests)
+        {
+            if (dest.operand_type == mavis::InstMetaData::OperandTypes::VECTOR)
+            {
+                dest.field_value += num_uops_generated_;
+            }
+        }
+
+        return makeInst_(srcs, dests);
     }
 
     InstPtr VectorUopGenerator::makeInst_(const mavis::OperandInfo::ElementList & srcs,

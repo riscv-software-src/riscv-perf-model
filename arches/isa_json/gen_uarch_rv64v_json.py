@@ -514,10 +514,10 @@ SUPPORTED_INSTS = {
     "vcompress.vm" : {"pipe" : "vpermute", "uop_gen" : "COMPRESS", "latency" : 6},
 
 # Vector Permutation Instructions: Whole Vector Register Move
-    "vmv1r.v" : {"pipe" : "vmv", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vmv2r.v" : {"pipe" : "vmv", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vmv4r.v" : {"pipe" : "vmv", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vmv8r.v" : {"pipe" : "vmv", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vmv1r.v" : {"pipe" : "vmv", "uop_gen" : "WHOLE_REG_MOVE", "latency" : 1},
+    "vmv2r.v" : {"pipe" : "vmv", "uop_gen" : "WHOLE_REG_MOVE", "latency" : 1},
+    "vmv4r.v" : {"pipe" : "vmv", "uop_gen" : "WHOLE_REG_MOVE", "latency" : 1},
+    "vmv8r.v" : {"pipe" : "vmv", "uop_gen" : "WHOLE_REG_MOVE", "latency" : 1},
 }
 
 # Get a list of all vector insts from Mavis

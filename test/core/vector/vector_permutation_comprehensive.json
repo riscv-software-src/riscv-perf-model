@@ -1,0 +1,116 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.x.s",
+    "rd": 1,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vmv.s.x",
+    "vd": 9,
+    "rs1": 2
+  },
+  {
+    "mnemonic": "vfmv.f.s",
+    "rd": 3,
+    "vs2": 10
+  },
+  {
+    "mnemonic": "vfmv.s.f",
+    "vd": 11,
+    "rs1": 4
+  },
+  {
+    "mnemonic": "vslideup.vx",
+    "vd": 12,
+    "vs2": 8,
+    "rs1": 5
+  },
+  {
+    "mnemonic": "vslideup.vi",
+    "vd": 13,
+    "vs2": 9,
+    "imm": 4
+  },
+  {
+    "mnemonic": "vslidedown.vx",
+    "vd": 14,
+    "vs2": 10,
+    "rs1": 6
+  },
+  {
+    "mnemonic": "vslidedown.vi",
+    "vd": 15,
+    "vs2": 11,
+    "imm": 3
+  },
+  {
+    "mnemonic": "vslide1up.vx",
+    "vd": 16,
+    "vs2": 12,
+    "rs1": 7
+  },
+  {
+    "mnemonic": "vslide1down.vx",
+    "vd": 17,
+    "vs2": 13,
+    "rs1": 8
+  },
+  {
+    "mnemonic": "vrgather.vv",
+    "vd": 18,
+    "vs2": 14,
+    "vs1": 15
+  },
+  {
+    "mnemonic": "vrgather.vx",
+    "vd": 19,
+    "vs2": 16,
+    "rs1": 9
+  },
+  {
+    "mnemonic": "vrgather.vi",
+    "vd": 20,
+    "vs2": 17,
+    "imm": 2
+  },
+  {
+    "mnemonic": "vrgatherei16.vv",
+    "vd": 21,
+    "vs2": 18,
+    "vs1": 19
+  },
+  {
+    "mnemonic": "vcompress.vm",
+    "vd": 22,
+    "vs2": 20,
+    "vs1": 21
+  },
+  {
+    "mnemonic": "vmv1r.v",
+    "vd": 23,
+    "vs2": 22
+  },
+  {
+    "mnemonic": "vmv2r.v",
+    "vd": 24,
+    "vs2": 26
+  },
+  {
+    "mnemonic": "vmv4r.v",
+    "vd": 4,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vmv8r.v",
+    "vd": 8,
+    "vs2": 16
+  }
+]

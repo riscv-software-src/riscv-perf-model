@@ -218,8 +218,43 @@ Key points:
     - Handles SEW vs XLEN width differences
 
 Micro-ops to be generated:
-    
-    - Since this instruction ignores the LMUL and vector register groups, we generate a single micro-op for this instruction - `SCALAR_MOVE`.
+
+====== UOP Generation Examples for Scalar Move Instructions
+
+**VMV.X.S Example**: For `vmv.x.s x5, v8` (any LMUL, VL):
+[source]
+----
+Uop 1: vmv.x.s x5, v8               # Single UOP regardless of LMUL/VL
+----
+
+**VMV.S.X Example**: For `vmv.s.x v4, x3` (any LMUL, VL):
+[source]
+----
+Uop 1: vmv.s.x v4, x3               # Single UOP regardless of LMUL/VL
+----
+
+**VFMV.F.S Example**: For `vfmv.f.s f2, v16` (any LMUL, VL):
+[source]
+----
+Uop 1: vfmv.f.s f2, v16             # Single UOP regardless of LMUL/VL
+----
+
+**VFMV.S.F Example**: For `vfmv.s.f v12, f7` (any LMUL, VL):
+[source]
+----
+Uop 1: vfmv.s.f v12, f7             # Single UOP regardless of LMUL/VL
+----
+
+**Key Implementation Details**:
+- Scalar moves **always generate exactly one UOP** regardless of LMUL value
+- These instructions **execute even when vstart ≥ vl or vl=0** (per RISC-V spec)
+- Only element 0 is accessed, no register group iteration needed
+- Vector configuration settings (LMUL, VL, vstart) are ignored for execution
+
+Implementation Details:
+    - These instructions use the `SCALAR_MOVE` UOP generator type
+    - The `VectorUopGenerator` calls `generateScalarMoveUops_<InstArchInfo::UopGenType::SCALAR_MOVE>()`
+    - Single UOP encapsulates the element-0-only operation
 
 [[SCALAR_MOVE_UOP_STRUCTURE]]
 ====== Structure of the `SCALAR_MOVE` Micro-op
@@ -297,8 +332,48 @@ Critical behaviors:
 
 Micro-ops to be generated:
 
-    - Vector slide instructions will generate a `SLIDE` micro-op. The specific type of slide operation (up, down, with scalar insert) will be encoded within this micro-op, typically in its `uop_code` field or through dedicated flags.
-    - The `VectorUopGenerator` will use `UopGenType` values like `SLIDE1UP`, `SLIDE1DOWN`, `SLIDEUP_IDX` (assuming a new UopGenType for general indexed slides if `PERMUTE` isn't used for them), etc., to call specialized functions that construct these micro-ops.
+====== UOP Generation Examples for Slide Instructions
+
+**SLIDE1UP Example**: For `vslide1up.vx v4, v8, x1` with LMUL=4:
+[source]
+----
+Uop 1: vslide1up.vx v4, v8, x1      # First uop sources scalar register
+Uop 2: vslide1up.vx v5, v9, v8      # Subsequent uops chain vector registers
+Uop 3: vslide1up.vx v6, v10, v9
+Uop 4: vslide1up.vx v7, v11, v10
+----
+
+**SLIDE1DOWN Example**: For `vslide1down.vx v4, v8, x1` with LMUL=4:
+[source]
+----
+Uop 1: vslide1down.vx v4, v8, v9    # Chain through vector registers  
+Uop 2: vslide1down.vx v5, v9, v10
+Uop 3: vslide1down.vx v6, v10, v11
+Uop 4: vslide1down.vx v7, v11, x1   # Last uop sources scalar register
+----
+
+**SLIDEUP Example**: For `vslideup.vx v4, v8, x1` with LMUL=4:
+[source]
+----
+Uop 1: vslideup.vx v4, v8, x1       # All uops use same scalar offset
+Uop 2: vslideup.vx v5, v9, x1       # Register indices increment
+Uop 3: vslideup.vx v6, v10, x1
+Uop 4: vslideup.vx v7, v11, x1
+----
+
+**SLIDEDOWN Example**: For `vslidedown.vx v4, v8, x1` with LMUL=4:
+[source]
+----
+Uop 1: vslidedown.vx v4, v8, x1     # All uops use same scalar offset
+Uop 2: vslidedown.vx v5, v9, x1     # Register indices increment  
+Uop 3: vslidedown.vx v6, v10, x1
+Uop 4: vslidedown.vx v7, v11, x1
+----
+
+Implementation Details:
+    - Vector slide instructions use specialized UOP generators: `SLIDE1UP`, `SLIDE1DOWN`, `SLIDEUP`, `SLIDEDOWN`
+    - The `VectorUopGenerator` calls template functions `generateSlideUops_<>()` for slide1 operations and `generateSlideGeneralUops_<>()` for general slide operations
+    - Each UOP maintains the original instruction semantics while operating on decomposed register segments
     - These instructions typically generate one micro-op per vector register group involved, as defined by LMUL. For simplicity in this initial description, we'll focus on the fields for a single micro-op. If LMUL > 1, multiple such micro-ops would be generated, with adjusted `dest_reg_idx` and `src_reg_idx` for each.
 
 [[SLIDE_UOP_STRUCTURE]]
@@ -390,8 +465,49 @@ Requirements:
 
 - Micro-ops to be generated:
 
-    - Vector register gather instructions (`vrgather.vv`, `.vx`, `.vi`, `vrgatherei16.vv`) will generate `RGATHER` micro-ops.
-    - The `VectorUopGenerator` will use the `UopGenType::RGATHER` to call the template function `generateUops_<InstArchInfo::UopGenType::RGATHER>()`.
+====== UOP Generation Examples for RGATHER Instructions
+
+**RGATHER.VV Example**: For `vrgather.vv v20, v8, v4` with LMUL=4:
+[source]
+----
+Uop 1: vrgather.vv v20, v8, v4      # Each uop operates on register group segment
+Uop 2: vrgather.vv v21, v9, v5      # Register indices increment for all operands
+Uop 3: vrgather.vv v22, v10, v6
+Uop 4: vrgather.vv v23, v11, v7
+----
+
+**RGATHER.VX Example**: For `vrgather.vx v20, v8, x2` with LMUL=4:
+[source]
+----
+Uop 1: vrgather.vx v20, v8, x2      # Scalar index used by all uops
+Uop 2: vrgather.vx v21, v9, x2      # Only vector register indices increment
+Uop 3: vrgather.vx v22, v10, x2
+Uop 4: vrgather.vx v23, v11, x2
+----
+
+**RGATHER.VI Example**: For `vrgather.vi v20, v8, 5` with LMUL=4:
+[source]
+----
+Uop 1: vrgather.vi v20, v8, 5       # Immediate index used by all uops
+Uop 2: vrgather.vi v21, v9, 5       # Only vector register indices increment
+Uop 3: vrgather.vi v22, v10, v5
+Uop 4: vrgather.vi v23, v11, 5
+----
+
+**RGATHEREI16.VV Example**: For `vrgatherei16.vv v20, v8, v4` with LMUL=4:
+[source]
+----
+Uop 1: vrgatherei16.vv v20, v8, v4  # 16-bit element indices
+Uop 2: vrgatherei16.vv v21, v9, v5  # Register indices increment
+Uop 3: vrgatherei16.vv v22, v10, v6
+Uop 4: vrgatherei16.vv v23, v11, v7
+----
+
+Implementation Details:
+    - Vector register gather instructions use the `RGATHER` UOP generator type
+    - The `VectorUopGenerator` calls template function `generateUops_<InstArchInfo::UopGenType::RGATHER>()`
+    - Each UOP performs gather operation on its assigned register segment
+    - Index values are preserved across all UOPs for .vx and .vi variants
     - These instructions typically generate one micro-op per destination vector register group element, as they are element-wise operations. If LMUL > 1, multiple `RGATHER` micro-ops would be generated by the `VectorUopGenerator`, with adjusted `dest_reg_idx`, `indices_src_reg_idx` (for `.vv`), and `data_src_reg_idx` for each micro-op to cover all register group elements. For simplicity, the structure below describes a single micro-op.
 
 [[RGATHER_UOP_STRUCTURE]]
@@ -485,8 +601,30 @@ Note that the vs1 acts as the vector mask register, which when enabled (set to 1
 
 Micro-ops to be generated:
 
-    - The vector compress instruction (`vcompress.vm`) will generate a `COMPRESS` micro-op.
-    - The `VectorUopGenerator` will use the `UopGenType::COMPRESS` (which is defined in `InstArchInfo.hpp`) to call the template function `generateUops_<InstArchInfo::UopGenType::COMPRESS>()`.
+====== UOP Generation Examples for COMPRESS Instruction
+
+**COMPRESS.VM Example**: For `vcompress.vm v20, v8, v4` with LMUL=4:
+[source]
+----
+Uop 1: vcompress.vm v20, v8, v4     # Single UOP handles entire compression
+----
+
+**Key Implementation Details**:
+- COMPRESS generates exactly **one UOP** regardless of LMUL value
+- This single UOP processes the entire vector register group atomically
+- The execution unit handles cross-register element movement internally
+- Mask register (v4) guides which elements from source group (v8-v11) are packed into destination group (v20-v23)
+
+**Rationale for Single UOP Strategy**:
+- COMPRESS is inherently a global operation requiring coordination across all register group elements
+- Decomposing into multiple UOPs would require complex inter-UOP coordination
+- Single UOP approach maintains correctness while simplifying implementation
+- Execution unit can optimize internal parallel processing as needed
+
+Implementation Details:
+    - The vector compress instruction uses the `COMPRESS` UOP generator type  
+    - The `VectorUopGenerator` calls template function `generateUops_<InstArchInfo::UopGenType::COMPRESS>()`
+    - Single UOP encapsulates entire register group compression operation
     - Due to the data-dependent nature of compress (the number of elements written to `vd` depends on the mask `vs1`), typically one `COMPRESS` micro-op is generated for the entire macro-instruction, regardless of `LMUL`. The execution unit handling this micro-op will be responsible for iterating through the source elements, applying the mask, and writing selected elements contiguously to the destination. The number of elements actually written will be reflected in the `vl` for subsequent instructions if `vd` is the same as `vl`'s source register in a `vsetvl`.
 
 [[COMPRESS_UOP_STRUCTURE]]
@@ -538,8 +676,49 @@ for (int i = 0; i < vl; i++) {
 
 - Micro-ops to be generated:
 
-    - Whole vector register move instructions (`vmv1r.v`, `vmv2r.v`, `vmv4r.v`, `vmv8r.v`) will generate a `WHOLE_VECTOR_MOVE` micro-op.
-    - The `VectorUopGenerator` uses the `UopGenType::WHOLE_REG_MOVE` (implemented in `InstArchInfo.hpp`) to call the specialized function `generateWholeRegMoveUops_<UopGenType>()`.
+====== UOP Generation Examples for Whole Register Move Instructions
+
+**VMV1R.V Example**: For `vmv1r.v v4, v8`:
+[source]
+----
+Uop 1: vmv1r.v v4, v8               # Single register copy
+----
+
+**VMV2R.V Example**: For `vmv2r.v v4, v8`:
+[source]
+----
+Uop 1: vmv2r.v v4, v8               # Copy v4 = v8
+Uop 2: vmv2r.v v5, v9               # Copy v5 = v9
+----
+
+**VMV4R.V Example**: For `vmv4r.v v4, v8`:
+[source]
+----
+Uop 1: vmv4r.v v4, v8               # Copy v4 = v8
+Uop 2: vmv4r.v v5, v9               # Copy v5 = v9  
+Uop 3: vmv4r.v v6, v10              # Copy v6 = v10
+Uop 4: vmv4r.v v7, v11              # Copy v7 = v11
+----
+
+**VMV8R.V Example**: For `vmv8r.v v0, v8`:
+[source]
+----
+Uop 1: vmv8r.v v0, v8               # Copy v0 = v8
+Uop 2: vmv8r.v v1, v9               # Copy v1 = v9
+Uop 3: vmv8r.v v2, v10              # Copy v2 = v10
+Uop 4: vmv8r.v v3, v11              # Copy v3 = v11
+Uop 5: vmv8r.v v4, v12              # Copy v4 = v12
+Uop 6: vmv8r.v v5, v13              # Copy v5 = v13
+Uop 7: vmv8r.v v6, v14              # Copy v6 = v14
+Uop 8: vmv8r.v v7, v15              # Copy v7 = v15
+----
+
+Implementation Details:
+    - Whole vector register move instructions use the `WHOLE_REG_MOVE` UOP generator type
+    - The `VectorUopGenerator` calls specialized function `generateWholeRegMoveUops_<InstArchInfo::UopGenType::WHOLE_REG_MOVE>()`
+    - Number of UOPs generated depends on instruction suffix: 1, 2, 4, or 8 UOPs respectively
+    - Each UOP performs a simple register-to-register copy of one vector register
+    - These operations ignore LMUL, VL, and vector configuration settings
     - A single `WHOLE_VECTOR_MOVE` micro-op is generated for the entire macro-instruction. This micro-op will specify the number of full vector registers to be moved. The execution unit will then handle the movement of the specified number of registers.
 
 [[WHOLE_VECTOR_MOVE_UOP_STRUCTURE]]
@@ -624,20 +803,23 @@ flowchart TD
     D --> E[VectorUopGenerator]
     
     E --> F{UOP Generation}
-    F --> G1[SCALAR_MOVE]
-    F --> G2[SLIDEUP/DOWN]
-    F --> G3[RGATHER]
-    F --> G4[COMPRESS]
-    F --> G5[WHOLE_REG_MOVE]
+    F --> G1[SCALAR_MOVE_V2S<br/>vmv.x.s, vfmv.f.s]
+    F --> G2[SCALAR_MOVE_S2V<br/>vmv.s.x, vfmv.s.f]
+    F --> G3[SLIDE_GENERAL<br/>vslideup/down.vx/vi]
+    F --> G4[SLIDE1_INT<br/>vslide1up/down.vx]
+    F --> G5[SLIDE1_FP<br/>vfslide1up/down.vf]
+    F --> G6[RGATHER]
+    F --> G7[COMPRESS]
+    F --> G8[WHOLE_REG_MOVE]
     
+    %% Scalar moves bypass vstart check (always execute)
     G1 --> H1[V2S Pipe<br/>1-cycle]
-    G1 --> H2[VMV Pipe<br/>1-cycle]
-    G2 --> H3[VPERMUTE Pipe<br/>6-cycle]
-    G2 --> H4[VINT Pipe<br/>1-cycle]
-    G2 --> H5[VFLOAT Pipe<br/>1-cycle]
-    G3 --> H3
-    G4 --> H3
-    G5 --> H2
+    G2 --> H2[VMV Pipe<br/>1-cycle]
+    G8 --> H2
+    
+    %% Other operations go through normal pipeline
+    G4 --> H4[VINT Pipe<br/>1-cycle]
+    G5 --> H5[VFLOAT Pipe<br/>1-cycle]
     
     H1 --> I[Register File Update]
     H2 --> I
@@ -645,28 +827,62 @@ flowchart TD
     H4 --> I
     H5 --> I
     
+    %% Error handling paths
+    C --> J{Illegal Config?<br/>LMUL/SEW/Overlap}
+    J -->|Yes| K[Exception Handler]
+    J -->|No| D
+    
+    %% vstart handling for restartable ops only
+    G3 --> L{vstart >= vl?}
+    G6 --> L
+    G7 --> L
+    L -->|Yes| M[No Operation]
+    L -->|No| H3[VPERMUTE Pipe<br/>6-cycle]
+    G6 --> H3
+    G7 --> H3
+    
     style E fill:#e1f5fe
     style H3 fill:#fff3e0
     style H1 fill:#f3e5f5
     style H2 fill:#f3e5f5
     style H4 fill:#e8f5e8
     style H5 fill:#fff8e1
+    style K fill:#ffebee
+    style M fill:#f1f8e9
 ....
 
 
 [[Block_Diagram_Description]]
 === Block Diagram Description
 
-**Decode Stage**: Instructions are decoded using Mavis, which identifies vector permutation instructions and their operand types.
+**Decode Stage**: Instructions are decoded using Mavis, which identifies vector permutation instructions and validates configurations for illegal LMUL/SEW combinations and register overlap violations.
 
-**VectorUopGenerator**: Based on the UopGenType (SCALAR_MOVE, SLIDEUP, SLIDEDOWN, etc.), generates appropriate micro-operations with all necessary metadata (register indices, vector configuration, mask information).
+**VectorUopGenerator**: Based on the UopGenType, generates appropriate micro-operations with proper routing:
 
-**Execution Pipes**: UOPs are dispatched to specialized execution units based on instruction type:
-- **VPERMUTE**: Complex operations (`vslideup/down`, `vrgather`, `vcompress`) - 6-cycle latency
-- **VMV**: Simple moves (`vmv.s.x`, `vfmv.s.f`) and whole register operations (`vmv1r/2r/4r/8r.v`) - 1-cycle latency  
-- **V2S**: Vector-to-scalar transfers (`vmv.x.s`, `vfmv.f.s`) - 1-cycle latency
-- **VINT**: Integer slide1 operations (`vslide1up/down.vx`) - 1-cycle latency
-- **VFLOAT**: Floating-point slide1 operations (`vfslide1up/down.vf`) - 1-cycle latency
+**UOP Generation Categories**:
+- **SCALAR_MOVE_V2S**: Vector-to-scalar moves (`vmv.x.s`, `vfmv.f.s`)
+- **SCALAR_MOVE_S2V**: Scalar-to-vector moves (`vmv.s.x`, `vfmv.s.f`) 
+- **SLIDE_GENERAL**: General slide operations (`vslideup/down.vx/vi`)
+- **SLIDE1_INT**: Integer slide1 operations (`vslide1up/down.vx`)
+- **SLIDE1_FP**: Floating-point slide1 operations (`vfslide1up/down.vf`)
+- **RGATHER**: Register gather operations 
+- **COMPRESS**: Vector compress operations
+- **WHOLE_REG_MOVE**: Whole register moves (`vmv1r/2r/4r/8r.v`)
+
+**Execution Pipeline Mapping**:
+- **V2S Pipe** (1-cycle): Vector-to-scalar transfers
+- **VMV Pipe** (1-cycle): Scalar-to-vector moves and whole register operations
+- **VPERMUTE Pipe** (6-cycle): Complex permutations (general slides, gather, compress)
+- **VINT Pipe** (1-cycle): Integer slide1 operations  
+- **VFLOAT Pipe** (1-cycle): Floating-point slide1 operations
+
+**Error Handling**: Illegal configurations trigger exception handling before UOP generation.
+
+**vstart Handling**: 
+- **Scalar moves** (SCALAR_MOVE_V2S, SCALAR_MOVE_S2V) **bypass vstart check entirely** and always execute (per RISC-V spec requirement)
+- **Restartable operations** (general slides, gather, compress) check vstart ≥ vl condition and bypass execution if true
+- **Slide1 operations** execute normally through their dedicated pipes without vstart checks
+- **Whole register moves** always execute (ignore vector configuration)
 
 **Note**: Slide1 operations use separate VINT/VFLOAT pipes (1-cycle) while general slide operations use VPERMUTE pipe (6-cycle) due to their different complexity levels.
 
@@ -731,6 +947,105 @@ The vector permutation implementation interfaces with several key Olympia compon
 - UOP generation strategy (element-wise vs. group-wise)
 - Register group handling for LMUL > 1
 - Mask register indexing and handling
+
+[[UOP_Generation_Summary]]
+== UOP Generation Summary
+
+This section provides a comprehensive overview of UOP generation patterns for all vector permutation instruction types implemented in Olympia.
+
+=== UOP Generator Types and Examples
+
+[width="100%",cols="20%,25%,25%,30%",options="header"]
+|===
+|UOP Generator Type |Example Instruction |UOPs Generated (LMUL=4) |Key Characteristics
+
+|`SCALAR_MOVE`
+|`vmv.x.s x5, v8`
+|1 UOP (always)
+|Single UOP regardless of LMUL/VL. Executes even when vstart ≥ vl
+
+|`SLIDE1UP`
+|`vslide1up.vx v4, v8, x1`
+|4 UOPs with chaining
+|First UOP sources scalar, others chain through vector registers
+
+|`SLIDE1DOWN`
+|`vslide1down.vx v4, v8, x1`
+|4 UOPs with chaining
+|Last UOP sources scalar, others chain through vector registers
+
+|`SLIDEUP`
+|`vslideup.vx v4, v8, x1`
+|4 UOPs (parallel)
+|All UOPs use same scalar offset, register indices increment
+
+|`SLIDEDOWN`
+|`vslidedown.vx v4, v8, x1`
+|4 UOPs (parallel)
+|All UOPs use same scalar offset, register indices increment
+
+|`RGATHER`
+|`vrgather.vv v20, v8, v4`
+|4 UOPs (parallel)
+|Register indices increment for all operands (.vv) or vectors only (.vx/.vi)
+
+|`COMPRESS`
+|`vcompress.vm v20, v8, v4`
+|1 UOP (always)
+|Single UOP handles entire compression across register group
+
+|`WHOLE_REG_MOVE`
+|`vmv4r.v v4, v8`
+|4 UOPs (based on suffix)
+|Number of UOPs: vmv1r=1, vmv2r=2, vmv4r=4, vmv8r=8
+|===
+
+=== LMUL Impact on UOP Generation
+
+**LMUL=1 (No Register Groups)**:
+- Most instructions generate 1 UOP
+- COMPRESS always generates 1 UOP
+- Whole register moves generate 1, 2, 4, or 8 UOPs based on suffix
+
+**LMUL=2**:
+- Element-wise operations generate 2 UOPs
+- SCALAR_MOVE and COMPRESS still generate 1 UOP each
+- Register indices increment: v4,v8 → v4,v8 then v5,v9
+
+**LMUL=4**:
+- Element-wise operations generate 4 UOPs
+- Register progression: v4,v8 → v4,v8 then v5,v9 then v6,v10 then v7,v11
+
+**LMUL=8**:
+- Element-wise operations generate 8 UOPs
+- Maximum register group size supported
+
+=== Execution Pipeline Mapping
+
+[width="100%",cols="30%,35%,35%",options="header"]
+|===
+|Execution Pipe |UOP Generator Types |Latency
+
+|**VPERMUTE** (6-cycle)
+|`SLIDEUP`, `SLIDEDOWN`, `RGATHER`, `COMPRESS`
+|Complex permutation operations
+
+|**VMV** (1-cycle)
+|`SCALAR_MOVE` (vmv.s.x, vfmv.s.f), `WHOLE_REG_MOVE`
+|Simple register moves
+
+|**V2S** (1-cycle)
+|`SCALAR_MOVE` (vmv.x.s, vfmv.f.s)
+|Vector-to-scalar transfers
+
+|**VINT** (1-cycle)
+|`SLIDE1UP`, `SLIDE1DOWN` (integer variants)
+|Integer slide1 operations
+
+|**VFLOAT** (1-cycle)
+|`SLIDE1UP`, `SLIDE1DOWN` (floating-point variants)
+|Floating-point slide1 operations
+|===
 
 [[Test_Bench_Description]]
 == Test Bench Description

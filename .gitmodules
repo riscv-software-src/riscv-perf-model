@@ -1,9 +1,9 @@
 [submodule "mavis"]
 	path = mavis
-	url = https://github.com/sparcians/mavis.git
+	url = https://github.com/riscv-software-src/riscv-mirror-mavis
 [submodule "stf_lib"]
 	path = stf_lib
-	url = https://github.com/sparcians/stf_lib.git
+	url = https://github.com/riscv-software-src/riscv-mirror-stf-library
 [submodule "fsl"]
 	path = fsl
-	url = https://github.com/Condor-Performance-Modeling/fsl
+	url = https://github.com/riscv-software-src/riscv-mirror-fsl

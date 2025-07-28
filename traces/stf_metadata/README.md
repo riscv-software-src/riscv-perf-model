@@ -19,6 +19,7 @@ The STF Metadata Specification defines a standardized YAML format for describing
 Below is the schema for the STF metadata file:
 
 ```yaml
+description: "Optional description, use this to describe scenario, input, etc."
 author:
   name: "Full name of the person or entity generating the trace"
   company: "Organization or affiliation"
@@ -27,6 +28,7 @@ author:
 workload:
   filename: "Binary filename used as workload"
   SHA256: "SHA256 hash of binary file"
+  execution_command: "command line, including arguments, used to execute the workload"
   elf_sections:
     comment: "compiler comment (e.g. GCC: (GNU) 13.3.0)"
     riscv.attributes: "Architecture/ABI info"
@@ -40,11 +42,16 @@ stf:
     GEN_VERSION: "Trace generator version"
     GEN_COMMENT: "Trace generator comment (e.g., git commit SHA for spike-stf)"
     STF_FEATURES: "list of STF features in the STF file"
+  trace_interval:
+    instruction_pc: "Program counter (PC) value at the start of the trace"
+    pc_count: "Program counter execution count value present at the start of the trace"
+    interval_lenght: "Number of instructions executed"
 ```
 
 ### Example: [dhrystone.zstf.metadata.yaml](./example/dhrystone.zstf.metadata.yaml)
 
 ```yaml
+description: null
 author:
   name: Jane Doe
   company: RISCV
@@ -52,6 +59,7 @@ author:
 workload:
   filename: dhrystone
   SHA256: 5c35ccfe1d5b81b2e37366b011107eec40e39aa2b930447edc1f83ceaf877066
+  execution_command: ./dhrystone
   elf_sections:
     comment: "GCC: (riscv-embecosm-embedded-ubuntu2204-20250309) 15.0.1 20250308
       (experimental)"
@@ -72,6 +80,10 @@ stf:
       - STF_CONTAIN_PHYSICAL_ADDRESS
       - STF_CONTAIN_RV64
       - STF_CONTAIN_EVENT64
+  trace_interval:
+    instruction_pc: 0
+    pc_count: 0
+    interval_lenght: 100
 ```
 
 ## File Naming Convention

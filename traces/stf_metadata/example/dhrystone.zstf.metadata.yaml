@@ -1,10 +1,12 @@
+description: null
 author:
   name: name
   company: company
   email: email
 workload:
-  workload_filename: dhrystone
+  filename: dhrystone
   SHA256: 5c35ccfe1d5b81b2e37366b011107eec40e39aa2b930447edc1f83ceaf877066
+  execution_command: ./dhrystone
   elf_sections:
     comment: "GCC: (riscv-embecosm-embedded-ubuntu2204-20250309) 15.0.1 20250308
       (experimental)"
@@ -25,3 +27,4 @@ stf:
       - STF_CONTAIN_PHYSICAL_ADDRESS
       - STF_CONTAIN_RV64
       - STF_CONTAIN_EVENT64
+  trace_interval: null

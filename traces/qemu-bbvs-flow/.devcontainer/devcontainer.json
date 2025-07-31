@@ -1,0 +1,15 @@
+{
+    "name": "QEMU SimPoint Development",
+    "build": {
+        "dockerfile": "../Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "timonwong.shellcheck"
+            ]
+        }
+    },
+    "postCreateCommand": "chmod +x *.sh"
+}

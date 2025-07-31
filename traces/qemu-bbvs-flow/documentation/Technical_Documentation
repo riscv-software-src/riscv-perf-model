@@ -1,0 +1,205 @@
+# QEMU BBVS FLOW-SimPoint Analysis - Technical Documentation
+
+## Overview
+
+This project provides a unified, containerized workflow for running various workloads on QEMU with SimPoint analysis. The system supports Dhrystone, Embench, and custom workloads with configurable compiler flags and QEMU architectures.
+
+## Architecture
+
+### System Components
+
+1. **Docker Container**: Unified environment containing QEMU, SimPoint, and build tools
+2. **Workload Setup Script**: Handles different workload types and compilation
+3. **Analysis Script**: Performs BBV generation and SimPoint analysis
+4. **Configuration System**: JSON-based workload configuration
+5. **Automation Scripts**: Build and run automation
+
+### Workflow Process
+
+```
+Input Parameters → Setup Workload → Compile → BBV Generation → SimPoint Analysis → Results
+```
+
+## File Structure
+
+```
+qemu-bbvs-flow/
+├── Dockerfile                   # Unified Docker image
+├── setup_workload.sh           # Workload setup script
+├── run_analysis.sh             # Analysis execution script
+├── build_docker.sh             # Docker image build script
+├── run_workload.sh             # Workload execution script
+├── build_and_run.sh            # Complete workflow script
+├── workload_config.json        # Workload configuration
+├── README.md                   # User documentation
+├── documentation/
+│   └── technical_details.md    # This file
+└── simpoint_output/            # Generated results (after execution)
+```
+
+## Docker Image Components
+
+### Base System
+- Ubuntu 22.04 LTS
+- Build tools (gcc, make, cmake, etc.)
+- RISC-V cross-compiler (gcc-riscv64-linux-gnu)
+- Python 3 with development tools
+
+### Core Components
+- **QEMU**: Built from source with RISC-V support and BBV plugin
+- **SimPoint**: Compiled from source for program phase analysis
+- **Workload Support**: Infrastructure for multiple workload types
+
+### Environment Variables
+- `QEMU_PLUGINS`: Path to QEMU plugins directory
+- `PATH`: Updated to include SimPoint binaries
+
+## Workload Types
+
+### 1. Dhrystone
+- **Source**: https://github.com/sifive/benchmark-dhrystone.git
+- **Modifications**: Increased iterations to 100,000 for better analysis
+- **Default Architecture**: riscv64
+- **Binary Output**: Single dhrystone executable
+
+### 2. Embench
+- **Source**: https://github.com/embench/embench-iot.git
+- **Components**: Complete IoT benchmark suite
+- **Default Architecture**: riscv32
+- **Binary Output**: Multiple .elf files in bd/ directory
+
+### 3. Custom
+- **Source**: User-provided source directory
+- **Build System**: Makefile or build.sh script
+- **Flexibility**: Configurable compiler flags and architecture
+- **Binary Output**: All executables found in source directory
+
+## Configuration Parameters
+
+### Workload Parameters
+- `WORKLOAD_TYPE`: Type of workload (dhrystone, embench, custom)
+- `WORKLOAD_SOURCE`: Path to source directory (for custom workloads)
+- `COMPILER_FLAGS`: Compilation flags
+- `QEMU_ARCH`: QEMU architecture (riscv32, riscv64)
+
+### Analysis Parameters
+- `INTERVAL`: BBV generation interval (default: 100)
+- `MAX_K`: Maximum number of clusters for SimPoint (default: 30)
+
+## BBV Generation
+
+### Process
+1. Execute binary with QEMU and BBV plugin
+2. Generate basic block vectors at specified intervals
+3. Output binary format files (.bb extension)
+
+### Plugin Usage
+```bash
+qemu-riscv64 -plugin $QEMU_PLUGINS/libbbv.so,interval=100,outfile=output_bbv binary
+```
+
+## SimPoint Analysis
+
+### Process
+1. Load BBV file generated from QEMU
+2. Perform k-means clustering with specified max clusters
+3. Generate simulation points and weights
+
+### Command Usage
+```bash
+simpoint -loadFVFile input.bb -maxK 30 -saveSimpoints output.simpoints -saveSimpointWeights output.weights
+```
+
+## Output Files
+
+### BBV Files (*.bb)
+- Binary format containing basic block execution traces
+- Used as input for SimPoint clustering
+- Size varies based on program complexity and interval
+
+### SimPoint Files (*.simpoints)
+- Text format: `SimPoint_ID Cluster_ID`
+- Represents chosen simulation points for each cluster
+- Used for representative simulation
+
+### Weight Files (*.weights)
+- Text format: `Cluster_ID Weight`
+- Represents relative importance of each cluster
+- Sum of all weights equals 1.0
+
+## Performance Considerations
+
+### Build Time Optimization
+- Multi-stage Docker build process
+- Parallel compilation using `make -j$(nproc)`
+- Cached dependency installation
+
+### Analysis Optimization
+- Configurable BBV interval for performance vs accuracy trade-off
+- Parallel processing where possible
+- Efficient file I/O operations
+
+## Error Handling
+
+### Setup Phase
+- Validation of workload type
+- Source directory existence checks
+- Compilation error detection
+
+### Analysis Phase
+- Binary existence validation
+- BBV generation success verification
+- SimPoint analysis error handling
+
+## Extensibility
+
+### Adding New Workloads
+1. Add workload case to `setup_workload.sh`
+2. Implement source acquisition and compilation
+3. Generate binary list for analysis
+4. Update `workload_config.json`
+
+### Custom Compiler Flags
+- Support for architecture-specific flags
+- Optimization level configuration
+- Linking options (static/dynamic)
+
+## Security Considerations
+
+### Container Security
+- Non-root user execution where possible
+- Read-only file system where appropriate
+- Minimal attack surface
+
+### Source Code Safety
+- Trusted source repositories
+- Checksum verification where available
+- Isolated build environment
+
+## Troubleshooting
+
+### Common Issues
+1. **Build Failures**: Check Docker daemon and available resources
+2. **Permission Errors**: Ensure Docker user permissions
+3. **Memory Issues**: Increase Docker memory limits
+4. **Network Issues**: Verify internet connectivity for source downloads
+
+### Debug Mode
+Enable verbose output by setting environment variables:
+```bash
+export VERBOSE=1
+export DEBUG=1
+```
+
+## Future Enhancements
+
+### Planned Features
+1. Support for additional architectures (ARM, x86)
+2. Integration with performance monitoring tools
+3. Automated result visualization
+4. Distributed analysis support
+
+### Configuration Extensions
+1. YAML-based configuration
+2. Template-based workload definitions
+3. Profile-based execution modes

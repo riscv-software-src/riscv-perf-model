@@ -50,10 +50,14 @@ namespace olympia
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
             PARAMETER(uint32_t, replay_buffer_size, ldst_inst_queue_size, "Replay buffer size")
             PARAMETER(uint32_t, replay_issue_delay, 3, "Replay Issue delay")
+            // PARAMETER(uint32_t, store_buffer_size, ldst_inst_queue_size, "Size of the store buffer")
             // LSU microarchitecture parameters
             PARAMETER(
-                bool, allow_speculative_load_exec, true,
+                bool, allow_speculative_load_exec, false,
                 "Allow loads to proceed speculatively before all older store addresses are known")
+            PARAMETER(
+                bool, allow_data_forwarding, true,
+                "Allow data forwarding to bypass the cache look up / memory access")
             // Pipeline length
             PARAMETER(uint32_t, mmu_lookup_stage_length, 1, "Length of the mmu lookup stage")
             PARAMETER(uint32_t, cache_lookup_stage_length, 1, "Length of the cache lookup stage")
@@ -72,6 +76,11 @@ namespace olympia
 
         //! name of this resource.
         static const char name[];
+
+        // return allow_data_forwarding for test
+        bool allowDataForwardingEX() const {
+            return allow_data_forwarding_;
+        }
 
         ////////////////////////////////////////////////////////////////////////////////
         // Type Name/Alias Declaration
@@ -137,6 +146,10 @@ namespace olympia
         const uint32_t replay_buffer_size_;
         const uint32_t replay_issue_delay_;
 
+        // Store Buffer
+        sparta::Buffer<LoadStoreInstInfoPtr> store_buffer_;
+        const uint32_t store_buffer_size_;
+
         sparta::PriorityQueue<LoadStoreInstInfoPtr> ready_queue_;
         // MMU unit
         bool mmu_busy_ = false;
@@ -169,6 +182,7 @@ namespace olympia
 
         // LSU Microarchitecture parameters
         const bool allow_speculative_load_exec_;
+        const bool allow_data_forwarding_;
 
         // ROB stopped simulation early, transactions could still be inflight.
         bool rob_stopped_simulation_ = false;
@@ -258,6 +272,15 @@ namespace olympia
 
         void allocateInstToIssueQueue_(const InstPtr & inst_ptr);
 
+        // allocate store inst to store buffer
+        void allocateInstToStoreBuffer_(const InstPtr & inst_ptr);
+
+        // check whether load inst could be forwarded by store
+        bool tryStoreToLoadForwarding(const InstPtr& load_inst_ptr) const ;
+
+        // get oldest store
+        LoadStoreInstInfoPtr getOldestStore_() const;
+
         bool olderStoresExists_(const InstPtr & inst_ptr);
 
         bool allOlderStoresIssued_(const InstPtr & inst_ptr);
@@ -314,6 +337,8 @@ namespace olympia
 
         // Flush Replay Buffer
         void flushReplayBuffer_(const FlushCriteria &);
+
+        void flushStoreBuffer_(const FlushCriteria &);
 
         // Counters
         sparta::Counter lsu_insts_dispatched_{getStatisticSet(), "lsu_insts_dispatched",

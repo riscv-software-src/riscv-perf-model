@@ -24,6 +24,8 @@ out_mmu_lookup_req   --> Output to DCache (Send a VA to PA address translation r
 
 `allow_speculative_load_exec` - Allow loads to proceed speculatively before all older store addresses are known.
 
+`allow_data_forwarding` - Allow loads to get data from store instead of cache, by pass mem look up.
+
 `replay_buffer_size` - Size of the replay buffer. Defaults to the same size of the LSU instruction queue.
 
 `replay_issue_delay` - Delay in cycles to replay the instruction.

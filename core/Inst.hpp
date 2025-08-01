@@ -231,6 +231,9 @@ namespace olympia
 
         uint32_t getOpCode() const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
+        // Get the data size in bytes
+        uint32_t getMemAccessSize() const { return static_cast<uint32_t>(opcode_info_->getDataSize() / 8); }  // opcode_info's data size is in bits
+
         mavis::InstructionUniqueID getMavisUid() const
         {
             return opcode_info_->getInstructionUniqueID();

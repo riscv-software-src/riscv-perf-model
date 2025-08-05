@@ -19,7 +19,9 @@ The STF Metadata Specification defines a standardized YAML format for describing
 Below is the schema for the STF metadata file:
 
 ```yaml
+trace_id: "Automatically generated trace ID, used for trace archive solutions"
 description: "Optional description, use this to describe scenario, input, etc."
+
 author:
   name: "Full name of the person or entity generating the trace"
   company: "Organization or affiliation"
@@ -33,6 +35,9 @@ workload:
     comment: "compiler comment (e.g. GCC: (GNU) 13.3.0)"
     riscv.attributes: "Architecture/ABI info"
     GCC.command.line: "GCC command-line flags used for compilation extracted with -frecord-gcc-switches"
+  source_code:
+    repository_url: "URL to source code repository"
+    commit_hash: "Last commit hash used during workload compilation"
 
 stf:
   timestamp: "ISO 8601 date-time of metadata creation"
@@ -46,11 +51,14 @@ stf:
     instruction_pc: "Program counter (PC) value at the start of the trace"
     pc_count: "Program counter execution count value present at the start of the trace"
     interval_lenght: "Number of instructions executed"
+    start_instruction_index: "Instruction index at the beginning of the trace"
+    end_instruction_index: "Instruction index at the end of the trace"
 ```
 
 ### Example: [dhrystone.zstf.metadata.yaml](./example/dhrystone.zstf.metadata.yaml)
 
 ```yaml
+trace_id: dhrystone_v0_part0_rev0
 description: null
 author:
   name: Jane Doe
@@ -69,6 +77,9 @@ workload:
       -misa-spec=20191213 -march=rv64imafdcb_zicsr_zifencei_zmmul_zaamo_zalrsc_zca_zcd_zba_zbb_zbc_zbs
       -O2 -std=gnu99 -fno-inline -ffast-math -funsafe-math-optimizations -finline-functions
       -fno-common -fno-builtin-printf
+  source_code:
+    repository_url: https://github.com/sifive/benchmark-dhrystone
+    commit_hash: 0ddff533cc9052c524990d5ace4560372053314b
 stf:
   timestamp: "2025-07-20T21:05:32.840053+00:00"
   stf_trace_info:
@@ -84,6 +95,8 @@ stf:
     instruction_pc: 0
     pc_count: 0
     interval_lenght: 100
+    start_instruction_index: 0
+    end_instruction_index: 100
 ```
 
 ## File Naming Convention

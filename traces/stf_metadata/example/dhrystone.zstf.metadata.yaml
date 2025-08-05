@@ -16,6 +16,9 @@ workload:
       -misa-spec=20191213 -march=rv64imafdcb_zicsr_zifencei_zmmul_zaamo_zalrsc_zca_zcd_zba_zbb_zbc_zbs
       -O2 -std=gnu99 -fno-inline -ffast-math -funsafe-math-optimizations -finline-functions
       -fno-common -fno-builtin-printf
+  source_code:
+    repository_url: https://github.com/sifive/benchmark-dhrystone
+    commit_hash: 0ddff533cc9052c524990d5ace4560372053314b
 stf:
   timestamp: "2025-07-20T21:05:32.840053+00:00"
   stf_trace_info:

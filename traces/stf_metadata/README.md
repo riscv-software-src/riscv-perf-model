@@ -36,8 +36,8 @@ workload:
     riscv.attributes: "Architecture/ABI info"
     GCC.command.line: "GCC command-line flags used for compilation extracted with -frecord-gcc-switches"
   source_code:
-    repository_url: "URL to source code repository"
-    commit_hash: "Last commit hash used during workload compilation"
+    repository_url: "URL of the source code repository "
+    commit_hash: "Commit hash identifying the exact version used during compilation"
 
 stf:
   timestamp: "ISO 8601 date-time of metadata creation"
@@ -50,7 +50,7 @@ stf:
   trace_interval:
     instruction_pc: "Program counter (PC) value at the start of the trace"
     pc_count: "Program counter execution count value present at the start of the trace"
-    interval_lenght: "Number of instructions executed"
+    interval_length: "Number of instructions executed"
     start_instruction_index: "Instruction index at the beginning of the trace"
     end_instruction_index: "Instruction index at the end of the trace"
 ```
@@ -94,7 +94,7 @@ stf:
   trace_interval:
     instruction_pc: 0
     pc_count: 0
-    interval_lenght: 100
+    interval_length: 100
     start_instruction_index: 0
     end_instruction_index: 100
 ```

@@ -1,4 +1,4 @@
-# Trace Share Tool
+# Trace Archive Tool
 
 A Python command-line interface (CLI) tool to manage shared trace files,such as uploding, searching and downloading traces.
 
@@ -7,14 +7,14 @@ A Python command-line interface (CLI) tool to manage shared trace files,such as 
 Run the script using:
 
 ```bash
-python trace_share.py <command> [options]
+python trace_archive.py <command> [options]
 ```
 
 To view all available commands and options use `--help` or `-h`:
 
 ```bash
-$ python trace_share.py --help
-Usage: python trace_share.py COMMAND [OPTIONS]
+$ python trace_archive.py --help
+Usage: python trace_archive.py COMMAND [OPTIONS]
 
 CLI tool for Olympia traces exploration
 
@@ -25,9 +25,9 @@ Commands:
   list       List items by category.
   get        Download a specified trace file.
 
-Run 'trace_share COMMAND --help' for more information on a command.
+Run 'trace_archive COMMAND --help' for more information on a command.
 
-For more help on how to use trace_share, head to GITHUB_README_LINK
+For more help on how to use trace_archive, head to GITHUB_README_LINK
 ```
 
 ---
@@ -39,8 +39,8 @@ For more help on how to use trace_share, head to GITHUB_README_LINK
 Uploads a trace file along with its associated workload and metadata.
 
 ```bash
-$ python trace_share.py upload --help
-Usage:  python trace_share.py upload [OPTIONS]
+$ python trace_archive.py upload --help
+Usage:  python trace_archive.py upload [OPTIONS]
 
 Upload a workload, trace and metadata to the database
 
@@ -61,8 +61,8 @@ Options:
 Search can be used to search for the given regex term in the list of available traces and metadata matches
 
 ```bash
-$ python trace_share.py search --help
-Usage:  python trace_share.py search [OPTIONS] [REGEX]
+$ python trace_archive.py search --help
+Usage:  python trace_archive.py search [OPTIONS] [REGEX]
 
 Search for traces and metadata using a regular expression.
 
@@ -78,8 +78,8 @@ Options:
 ### `list`
 
 ```bash
-$ python trace_share.py list --help
-Usage:  python trace_share.py list [OPTIONS]
+$ python trace_archive.py list --help
+Usage:  python trace_archive.py list [OPTIONS]
 
 List database traces or related entities.
 
@@ -95,8 +95,8 @@ Options:
 Downloads a specified trace file.
 
 ```bash
-$ python trace_share.py get --help
-Usage:  python trace_share.py get [OPTIONS] TRACE
+$ python trace_archive.py get --help
+Usage:  python trace_archive.py get [OPTIONS] TRACE
 
 Download a specified trace file.
 

@@ -1,6 +1,6 @@
 [
     {
-        "mnemonic": "lw",
+        "mnemonic": "sw",
         "rs1": 5,
         "rs2": 6,
         "vaddr": "0xdeeebeef"
@@ -15,7 +15,7 @@
         "mnemonic": "lw",
         "rs1": 5,
         "rs2": 6,
-        "vaddr": "0xdeeebeef"
+        "vaddr": "0xdeebbeef"
     },
     {
         "mnemonic": "sw",
@@ -33,6 +33,6 @@
         "mnemonic": "lw",
         "rs1": 3,
         "rd":  4,
-        "vaddr" : "0xdeadbeef"
+        "vaddr" : "0xdeeebeef"
     }
 ]

@@ -24,7 +24,7 @@ This setup provides a containerized workflow to generate STF traces using Spike-
 
 ```bash
 qemu-simpoint-dhrystone/
-├── Dockerfile               # Creates a Docker image with the RISC-V GNU toolchain, pk, and Spike-STF
+├── Dockerfile               # Creates a Docker image with the RISC-V GNU toolchain, pk, stf_tools and Spike-STF
 ├── run_in_docker.sh         # Runs an STF trace generation example inside the container
 ├── build_docker.sh          # Builds the Docker image
 ├── build_and_run.sh         # Executes both build_docker and run_in_docker scripts
@@ -50,10 +50,10 @@ docker build -t spike-stf .
 ```bash
 mkdir -p trace_output
 
-docker run --rm \
-  -v ./trace_output:/output \
+docker run --rm \ 
+  -v <output_dir>:/riscv/condor.riscv-isa-sim/trace_out \
   spike-stf \
   bash -c "
-    echo '<REPLACE THIS ECHO COMMAND WITH SPIKE STF TRACE GENERATION COMMAND>' >> /output/EXAMPLE.zstf
+     bash scripts/run-spike-stf.sh <binary_name> <traceout_name>
   "
 ```

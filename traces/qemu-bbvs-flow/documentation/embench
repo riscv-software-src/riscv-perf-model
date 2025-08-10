@@ -1,0 +1,177 @@
+# QEMU-BBVS-Flow with Embench Integration
+
+## Project Overview
+
+This project provides a unified, containerized workflow for running various workloads on QEMU with SimPoint analysis, specifically designed for computer architecture research and performance analysis. The system generates Basic Block Vectors (BBVs) from program execution traces and performs SimPoint clustering analysis to identify representative execution phases for efficient architectural simulation.
+
+## What This Project Does
+
+### Core Functionality
+The system executes benchmarks in QEMU emulation, captures execution traces as Basic Block Vectors, and uses SimPoint analysis to identify representative simulation points. This is essential for computer architecture research where full program simulation is computationally expensive, but representative phases can provide accurate performance insights with significantly reduced simulation time.
+
+### Key Capabilities
+- Executes workloads on RISC-V architecture using QEMU emulation with BBV plugin support
+- Generates BBV traces capturing program execution behavior at configurable intervals
+- Performs SimPoint clustering to identify program phases and representative intervals
+- Supports multiple benchmark suites including Embench IoT, Dhrystone, and custom workloads
+- Provides both integrated workflow and standalone execution options for different use cases
+- Enables custom workload integration with generic handling for any benchmark with build system
+
+## Why This Project Exists
+
+### Research Problem
+Computer architecture simulators require extensive time to simulate complete program execution, often taking hours or days for complex benchmarks. SimPoint methodology solves this by identifying representative execution intervals that capture the program's overall behavior, reducing simulation time from hours to minutes while maintaining statistical accuracy for performance analysis.
+
+### Solution Approach
+This project automates the entire workflow from benchmark compilation to SimPoint analysis, providing researchers with a ready-to-use environment that eliminates the complexity of setting up QEMU cross-compilation, RISC-V toolchains, BBV plugin configuration, and SimPoint analysis tools. The containerized approach ensures reproducibility across different development environments.
+
+## Technical Architecture
+
+### Component Stack
+The system integrates multiple components in a layered architecture:
+
+**Base Infrastructure Layer:**
+- Ubuntu 22.04 LTS containerized environment providing stable Linux foundation
+- Pre-built RISC-V cross-compilation toolchain from ribeirovsilva/riscv-toolchain image
+- QEMU emulator compiled with RISC-V support and BBV plugin capability for trace generation
+- SimPoint clustering analysis tool compiled from source for program phase detection
+
+**Benchmark Integration Layer:**
+- Embench IoT benchmark suite with 20 embedded workloads pre-compiled for immediate execution
+- Dhrystone integer arithmetic benchmark with enhanced iteration count for better analysis
+- Generic workload support system accommodating custom benchmarks with Makefile or build.sh
+
+**Analysis Pipeline Layer:**
+- Automated workload setup and compilation management for different benchmark types
+- BBV trace generation during QEMU execution with configurable interval parameters
+- SimPoint clustering analysis with adjustable cluster count and algorithm parameters
+- Result organization and output management with structured file naming conventions
+
+## How It Works
+
+### Execution Workflow
+The system follows a structured five-stage workflow that begins with workload identification and setup, proceeds through compilation and binary preparation, executes workloads in QEMU with BBV trace collection, performs SimPoint clustering analysis, and concludes with organized result output generation.
+
+### Workload Processing Strategy
+Different workload types are handled through specialized setup procedures optimized for each benchmark category. Embench workloads utilize pre-compiled binaries stored in the container for immediate execution, Dhrystone undergoes source compilation with enhanced iteration counts for extended analysis periods, and custom workloads are processed through generic build systems supporting both Makefile and shell script approaches.
+
+### BBV Generation Process
+During workload execution in QEMU, the BBV plugin captures basic block execution frequencies at user-specified intervals, typically every 100 instructions. These traces form comprehensive input datasets for SimPoint analysis and represent the program's dynamic execution behavior over time, including phase transitions and steady-state regions.
+
+### SimPoint Analysis Methodology
+The generated BBV traces undergo k-means clustering analysis to identify distinct execution phases based on basic block execution patterns. The analysis produces simulation points representing each cluster centroid and statistical weights indicating cluster importance and coverage, enabling representative simulation strategies that maintain accuracy while reducing computational requirements.
+
+## Reproduction Guide
+
+### Prerequisites and System Requirements
+
+**Hardware Requirements:**
+- Minimum 8GB RAM with 16GB recommended for complex benchmarks
+- At least 15GB available disk space for Docker images and build artifacts
+- Multi-core CPU recommended for parallel compilation processes
+- Stable internet connectivity for downloading source repositories and Docker images
+
+**Operating System Support:**
+- Linux distributions with Docker support including Ubuntu, CentOS, Fedora
+- macOS with Docker Desktop installation and sufficient memory allocation
+- Windows 10/11 with WSL2 integration and Docker Desktop configuration
+
+**Software Dependencies:**
+- Docker Engine 20.10 or later with container runtime support
+- Git version control system for repository cloning and management
+- Text editor or IDE for configuration file modification if needed
+- Terminal or command-line interface for script execution
+
+### Installation and Setup Process
+
+**Step 1: Environment Preparation**
+Clone the project repository to your local system and ensure all shell scripts have executable permissions. Verify Docker installation and daemon status, checking available resources and network connectivity for downloading dependencies.
+
+**Step 2: Docker Image Construction**
+Execute the build script which constructs the unified Docker image containing all necessary components including QEMU, SimPoint, RISC-V toolchain, and pre-compiled benchmark suites. This process typically requires 30-45 minutes depending on system performance and network speed.
+
+**Step 3: Workload Execution**
+Use the provided scripts to execute desired benchmarks with configurable parameters including architecture selection, compiler flags, BBV generation intervals, and SimPoint clustering parameters. The system supports both individual workload analysis and batch processing modes.
+
+### Basic Usage Commands
+
+**Complete Workflow Execution:**
+```bash
+./build_and_run.sh [workload_type] [source_path] [compiler_flags] [architecture] [interval] [clusters]
+```
+
+**Individual Component Execution:**
+```bash
+./build_docker.sh
+./run_workload.sh [workload_type] [parameters]
+```
+
+**Workload-Specific Examples:**
+```bash
+./build_and_run.sh dhrystone
+./build_and_run.sh embench
+./build_and_run.sh custom /path/to/source "-O2" riscv64 100 30
+```
+
+### Expected Results and Verification
+
+**Output File Structure:**
+The analysis generates organized results in the simpoint_output directory including BBV trace files with .bb extensions containing binary execution data, SimPoint files with .simpoints extensions listing representative intervals, and weight files with .weights extensions indicating cluster importance values.
+
+**Verification Steps:**
+Successful execution produces multiple file types for each analyzed workload, with BBV files typically ranging from megabytes to gigabytes depending on program complexity and analysis interval, SimPoint files containing text-format cluster assignments, and weight files with normalized importance values summing to unity.
+
+**Performance Benchmarks:**
+Single workload analysis typically completes within 30 seconds to 5 minutes depending on program complexity, while full benchmark suite processing may require 15-30 minutes. Build times vary from 30-60 minutes for initial Docker image construction with subsequent builds leveraging cached layers.
+
+## Development Environment Setup
+
+### VS Code Integration
+
+**Extension Requirements:**
+Install Remote-WSL extension for Windows WSL2 integration, Docker extension for container management and debugging, Remote-Containers extension for development container support, and ShellCheck extension for shell script validation and syntax highlighting.
+
+**Container Development:**
+The project includes devcontainer configuration enabling direct development within the containerized environment, providing consistent toolchain access, integrated debugging capabilities, and simplified dependency management across different host systems.
+
+**Task Configuration:**
+Pre-configured VS Code tasks enable one-click Docker image building, workload execution with parameter selection, result analysis and visualization, and integrated terminal access for manual command execution and debugging.
+
+### Advanced Configuration Options
+
+**Parameter Customization:**
+Modify workload_config.json for benchmark-specific settings including default compiler flags, architecture selections, analysis intervals, and clustering parameters. Custom configurations enable optimization for specific research requirements and performance constraints.
+
+**Workload Extension:**
+Add new benchmark support by extending setup_workload.sh with additional case statements, implementing source acquisition and compilation procedures, updating configuration files with new workload definitions, and testing integration with existing analysis pipeline.
+
+**Performance Optimization:**
+Adjust BBV generation intervals for performance versus accuracy trade-offs, modify SimPoint clustering parameters for different phase detection granularity, configure Docker resource allocation for optimal build and execution performance, and implement parallel processing for batch analysis workflows.
+
+## Troubleshooting and Common Issues
+
+### Build and Setup Problems
+
+**Docker-Related Issues:**
+Verify Docker daemon status and available resources, check internet connectivity for source downloads, ensure sufficient disk space for image construction, and validate user permissions for Docker container operations.
+
+**Compilation Failures:**
+Review build logs for specific error messages, verify RISC-V toolchain installation within container, check source code compatibility with cross-compilation requirements, and ensure proper dependency resolution for complex build systems.
+
+### Execution and Analysis Problems
+
+**QEMU Execution Issues:**
+Validate binary compatibility with selected RISC-V architecture, verify QEMU plugin availability and configuration, check memory allocation for complex workload execution, and ensure proper file permissions for trace output generation.
+
+**SimPoint Analysis Failures:**
+Confirm BBV file generation and format correctness, verify SimPoint tool installation and path configuration, check parameter validity for clustering algorithms, and ensure sufficient computational resources for large trace analysis.
+
+### Performance and Resource Issues
+
+**Memory and Storage Constraints:**
+Monitor Docker container resource usage during build and execution phases, implement cleanup procedures for temporary files and build artifacts, optimize analysis parameters for available system resources, and consider distributed analysis for large-scale benchmark suites.
+
+**Network and Connectivity Problems:**
+Verify stable internet connectivity for source repository access, configure proxy settings if required for corporate environments, implement retry mechanisms for transient network failures, and consider offline mode for environments with restricted connectivity.
+
+This comprehensive guide enables researchers and developers to understand, reproduce, and extend the QEMU-BBVS-Flow system for their specific computer architecture research requirements while maintaining consistency and reproducibility across different environments and use cases.

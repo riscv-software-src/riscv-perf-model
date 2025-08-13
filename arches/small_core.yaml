@@ -2,6 +2,8 @@
 # Set up the pipeline for a 2-wide machine
 #
 
+top.cpu.params.topology: simple
+
 top.cpu.core0:
   fetch.params.num_to_fetch:   2
   decode.params.num_to_decode: 2

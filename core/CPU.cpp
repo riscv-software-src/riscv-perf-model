@@ -8,7 +8,8 @@ constexpr char olympia::CPU::name[];
 
 //! \brief Constructor of this CPU Unit
 olympia::CPU::CPU(sparta::TreeNode* node, const olympia::CPU::CPUParameterSet* params) :
-    sparta::Unit{node}
+    sparta::Unit{node},
+    topology_(params->topology)
 {}
 
 //! \brief Destructor of this CPU Unit

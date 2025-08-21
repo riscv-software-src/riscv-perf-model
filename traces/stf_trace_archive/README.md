@@ -155,7 +155,7 @@ Metadata 0.0.0000_dhrystone saved on ./0.0.0000_dhrystone.zstf.metadata.yaml
 To download the workload `0` (dhrystone), you can run:
 
 ```bash
-$ python trace_share.py get --workload 0
+$ python trace_archive.py get --workload 0
 
 Workload 0 saved on ./dhrystone
 ```

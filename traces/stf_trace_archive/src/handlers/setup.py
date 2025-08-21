@@ -35,8 +35,6 @@ class SetupHandler(CommandHandler):
         with open(self._config_path, 'r') as config_file:
             config_dict = yaml.safe_load(config_file)
             self._config = Config.from_dict(config_dict)
-            print("config")
-            print(self._config)
 
     def _complete_config_file(self) -> None:
         if not self._config or not self._config.storages:

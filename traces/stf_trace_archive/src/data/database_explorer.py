@@ -20,6 +20,7 @@ class DatabaseExplorer:
 
     def upload_workload(self, workload_path: str) -> int:
         workload_id = self._get_next_workload_id()
+        print(f"Uploading workload: {workload_path} with id: {workload_id}")    
         self.storage.insert_workload(workload_path, workload_id)
         return workload_id
 

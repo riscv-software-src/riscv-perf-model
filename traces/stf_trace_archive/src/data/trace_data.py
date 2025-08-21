@@ -3,9 +3,9 @@ from typing import Optional
 
 @dataclass
 class TraceData():
-    path: Optional[str]
-    id: Optional[str]
-    attempt: Optional[str]
-    part: Optional[str]
-    metadata_path: Optional[str]
-    metadata: Optional[str]
+    path: Optional[str] = None
+    id: Optional[str] = None
+    attempt: Optional[str] = None
+    part: Optional[str] = None
+    metadata_path: Optional[str] = None
+    metadata: Optional[str] = None

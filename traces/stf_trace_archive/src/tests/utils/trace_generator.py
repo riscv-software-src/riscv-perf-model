@@ -99,23 +99,17 @@ class TraceDataGenerator():
         self._delete_folder_and_files(self.test_storage_path)
 
     def delete_test_storage(self, type, path):
-        # print(f"Deleting {path}")
         if type == "local-storage":
             self._delete_folder_and_files(path)
 
     def _delete_folder_and_files(self, path):
-        # print(f"\n\nDeleting {path}")
-        # print(f"exist: {os.path.exists(path)}")
         if not os.path.exists(path):
             return
 
         for root, dirs, files in os.walk(path, topdown=False):
             for name in files:
-                # print(f"Deleting file {os.path.join(root, name)}")
                 os.remove(os.path.join(root, name))
             for name in dirs:
-                # print(f"Deleting folder {os.path.join(root, name)}")
                 os.rmdir(os.path.join(root, name))
                 
-        # print(f"Deleting folder {path}\n\n")
         os.rmdir(path)

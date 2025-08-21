@@ -34,7 +34,6 @@ def parseArgs() -> argparse.Namespace:
     )
     group = list_parser.add_mutually_exclusive_group()
     group.add_argument('--traces', action='store_true', help='Lists available traces (default)')
-    group.add_argument('--companies', action='store_true', help='Lists associated companies')
 
     get_parser = subparsers.add_parser(
         'get',
@@ -44,9 +43,9 @@ def parseArgs() -> argparse.Namespace:
     )
     
     group = get_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--trace', help='Id of the trace to download.')
-    group.add_argument('--workload', help='Id of the workload to download.')
-    group.add_argument('--metadata', help='Id of the metadata to download.')
+    group.add_argument('--trace', help='Id of the trace to download.', metavar='TRACE_ID')
+    group.add_argument('--metadata', help='Id of the metadata (same as trace) to download.', metavar='TRACE_ID')
+    group.add_argument('--workload', help='Id of the workload to download.', metavar='WORKLOAD_ID')
     get_parser.add_argument('-o', '--output', help='Output folder or file path')
 
     setup_parser = subparsers.add_parser(

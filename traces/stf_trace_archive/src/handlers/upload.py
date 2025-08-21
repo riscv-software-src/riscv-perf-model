@@ -41,7 +41,7 @@ class UploadHandler(CommandHandler):
                 raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
             
             metadata = MetadataParser.parse_metadata_from_path(metadata_path)
-            traces.append(TraceData(trace_path=trace_path, metadata_path=metadata_path, metadata=metadata))
+            traces.append(TraceData(path=trace_path, metadata_path=metadata_path, metadata=metadata))
 
         if len(traces) <= 0:
             raise ValueError("No traces provided.")

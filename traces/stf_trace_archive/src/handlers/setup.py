@@ -4,7 +4,7 @@ import pathlib
 import yaml
 from dataclasses import asdict
 from data.config import Config, StorageConfig
-from data.source_type_map import SOURCE_TYPE_MAP
+from data.storage_type_map import STORAGE_TYPE_MAP
 from .base import CommandHandler
 
 class SetupHandler(CommandHandler):
@@ -51,51 +51,51 @@ class SetupHandler(CommandHandler):
 
 
     def _add_storage_source(self) -> None:
-        source_types = list(SOURCE_TYPE_MAP.keys())
+        storage_types = list(STORAGE_TYPE_MAP.keys())
         print("Creating a new storage source.")
-        print(f"Registred source type options: {', '.join(source_types)}")
-        source_type = input("Select your source type: ").lower()
+        print(f"Registred storage type options: {', '.join(storage_types)}")
+        storage_type = input("Select your storage type: ").lower()
 
-        if source_type not in source_types:
-            raise ValueError(f"Unknown source type: {source_type}")
+        if storage_type not in storage_types:
+            raise ValueError(f"Unknown storage type: {storage_type}")
 
-        used_source_names = self._get_source_names()
-        source_name = input("Enter your source name: ").lower()
+        used_storage_names = self._get_storage_names()
+        storage_name = input("Enter your storage name: ").lower()
 
-        if source_name in used_source_names:
-            raise ValueError(f"Source name {source_name} already in use")
+        if storage_name in used_storage_names:
+            raise ValueError(f"Storage name {storage_name} already in use")
 
-        source_class = SOURCE_TYPE_MAP.get(source_type)
-        source_specific_config = source_class.setup()
-        source_config = StorageConfig(type = source_type, name=source_name, config=source_specific_config)
+        storage_class = STORAGE_TYPE_MAP.get(storage_type)
+        storage_specific_config = storage_class.setup()
+        storage_config = StorageConfig(type = storage_type, name=storage_name, config=storage_specific_config)
 
         if not self._config:
-            self._config = Config(storages=[source_config], default_storage=source_name)
+            self._config = Config(storages=[storage_config], default_storage=storage_name)
         elif not self._config.storages:
-            self._config.storages = [source_config]
+            self._config.storages = [storage_config]
         else:
-            self._config.storages.append(source_config)
+            self._config.storages.append(storage_config)
 
         if not self._config.default_storage:
-            self._config.default_storage = source_name
+            self._config.default_storage = storage_name
 
-    def _get_source_names(self) -> list[str]:
+    def _get_storage_names(self) -> list[str]:
         if not self._config:
             return []
         
         return [storage.name for storage in self._config.storages]
     
-    def _set_default_storage(self, source_name: str = None) -> None:
-        used_source_names = self._get_source_names()
+    def _set_default_storage(self, storage_name: str = None) -> None:
+        used_storage_names = self._get_storage_names()
 
-        if not source_name:
-            print(f"Enter the default source name: ", end="")
-            source_name = input().lower()
+        if not storage_name:
+            print(f"Enter the default storage source name: ", end="")
+            storage_name = input().lower()
 
-        if source_name not in used_source_names:
-            raise ValueError(f"Source name {source_name} not found on configure storage source names")
+        if storage_name not in used_storage_names:
+            raise ValueError(f"Storage source name {storage_name} not found on configured names")
 
-        self._config.default_storage = source_name
+        self._config.default_storage = storage_name
 
     def _save_config(self) -> None:
         with open(self._config_path, 'w') as config_file:

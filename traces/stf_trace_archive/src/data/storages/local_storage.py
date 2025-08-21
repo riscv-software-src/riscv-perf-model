@@ -9,11 +9,11 @@ from data.workload_table_shema import WorkloadsTableSchema
 from data.config import LocalStorageConfig
 from data.consts import Const
 from data.metadata import Metadata
-from .base import SourceHandler
+from .base import StorageHandler
 from data.trace_table_shema import TracesTableSchema
 from utils.metadata_parser import MetadataParser
 
-class LocalStorageSource(SourceHandler):
+class LocalStorage(StorageHandler):
     def __init__(self, config: LocalStorageConfig):
         if not config.path:
             raise ValueError("Storage path cannot be empty.")

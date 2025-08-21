@@ -1,7 +1,7 @@
 import argparse
 import os
 from tkinter.filedialog import FileDialog
-from database_explorer.database_explorer import DatabaseExplorer
+from data.database_explorer import DatabaseExplorer
 from data.consts import Const
 from .base import CommandHandler
 from utils.metadata_parser import MetadataParser

@@ -26,15 +26,6 @@ def parseArgs() -> argparse.Namespace:
     upload_parser.add_argument('--trace', action='append', help='Path to one or more trace files. If omitted, defaults to <workload>.zstf')
     upload_parser.add_argument('--it', action='store_true', help='Iteractive file selection mode.')
 
-    search_parser = subparsers.add_parser(
-        'search',
-        help='Search traces by specified expression.',
-        description='Search for traces and metadata using a regular expression.',
-        formatter_class=argparse.RawTextHelpFormatter
-    )
-    search_parser.add_argument('regex', nargs='?', help='Regex expression to search with.')
-    search_parser.add_argument('--names-only', action='store_true', help='Search only by trace name (ignore metadata).')
-
     list_parser = subparsers.add_parser(
         'list',
         help='List items by category.',

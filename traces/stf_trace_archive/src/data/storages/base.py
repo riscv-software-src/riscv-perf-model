@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from data.output_path import OutputPaths
 from data.metadata import Metadata
 
-class SourceHandler(ABC):
+class StorageHandler(ABC):
     @property
     def traces_table(self):
         raise NotImplementedError("This method should be overridden by subclasses.")

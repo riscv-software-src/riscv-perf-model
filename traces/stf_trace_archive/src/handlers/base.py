@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import argparse
 
-from database_explorer.database_explorer import DatabaseExplorer
+from data.database_explorer import DatabaseExplorer
 
 class CommandHandler(ABC):
     @abstractmethod

@@ -1,6 +1,6 @@
 import argparse
 from .base import CommandHandler
-from database_explorer.database_explorer import DatabaseExplorer
+from data.database_explorer import DatabaseExplorer
 from utils.ui import print_medatata_details
 
 class ListHandler(CommandHandler):

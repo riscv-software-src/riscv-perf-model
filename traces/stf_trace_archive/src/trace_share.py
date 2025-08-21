@@ -1,10 +1,9 @@
-from data.config import Config, StorageConfig
-from data.source_type_map import SOURCE_TYPE_MAP
-from database_explorer.database_explorer import DatabaseExplorer
+from data.config import Config
+from data.storage_type_map import STORAGE_TYPE_MAP
+from data.database_explorer import DatabaseExplorer
 from utils.cli_parser import parseArgs
 from handlers.upload import UploadHandler
 from handlers.list import ListHandler
-from handlers.search import SearchHandler
 from handlers.get import GetHandler
 from handlers.setup import SetupHandler
 
@@ -13,7 +12,6 @@ def main():
     setupHandler = SetupHandler()
     command_map = {
         'upload': UploadHandler(),
-        'search': SearchHandler(),
         'list': ListHandler(),
         'get': GetHandler(),
         'setup': setupHandler,
@@ -41,9 +39,9 @@ def get_storage(selected_storage: str, config: Config) -> DatabaseExplorer:
     if not storage_config:
         raise ValueError(f"Storage not found: {selected_storage}")
     
-    storage_class = SOURCE_TYPE_MAP.get(storage_config.type)
+    storage_class = STORAGE_TYPE_MAP.get(storage_config.type)
     if not storage_class:
-        raise ValueError(f"Unknown source storage class: {storage_class}")
+        raise ValueError(f"Unknown storage class: {storage_class}")
     
     storage = storage_class(storage_config.config)
     explorer = DatabaseExplorer(storage)

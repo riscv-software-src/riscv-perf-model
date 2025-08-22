@@ -22,6 +22,7 @@ public:
     class CPUParameterSet : public sparta::ParameterSet{
     public:
         CPUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n){}
+        PARAMETER(std::string, topology, "simple", "Selected CPU topology")
     };
 
     //! \brief Name of this resource. Required by sparta::UnitFactory
@@ -37,6 +38,11 @@ public:
 
     //! \brief Destructor of the CPU Unit
     ~CPU();
+
+private:
+
+    // Topology to apply to CPU Unit
+    const std::string topology_;
 
 }; // class CPU
 }  // namespace olympia

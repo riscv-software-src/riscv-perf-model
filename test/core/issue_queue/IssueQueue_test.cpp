@@ -129,7 +129,7 @@ void runIQTest(int argc, char **argv) {
     uint64_t ilimit = 0;
     uint32_t num_cores = 1;
     bool show_factories = false;
-    OlympiaSim full_sim("simple", sched,
+    OlympiaSim full_sim(sched,
                         num_cores, // cores
                         input_file, ilimit, show_factories);
     cls.populateSimulation(&full_sim);

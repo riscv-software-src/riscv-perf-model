@@ -116,7 +116,7 @@ void runTests(int argc, char** argv)
     uint32_t num_cores = 1;
     uint64_t ilimit = 0;
     bool show_factories = false;
-    OlympiaSim sim("simple", scheduler, num_cores, input_file, ilimit, show_factories);
+    OlympiaSim sim(scheduler, num_cores, input_file, ilimit, show_factories);
     sparta::RootTreeNode* root_node = sim.getRoot();
     cls.populateSimulation(&sim);
 

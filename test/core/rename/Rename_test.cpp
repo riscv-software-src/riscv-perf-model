@@ -438,7 +438,7 @@ void runTest(int argc, char** argv)
     uint64_t ilimit = 0;
     uint32_t num_cores = 1;
     bool show_factories = false;
-    OlympiaSim sim("simple", scheduler,
+    OlympiaSim sim(scheduler,
                    num_cores, // cores
                    input_file, ilimit, show_factories);
 

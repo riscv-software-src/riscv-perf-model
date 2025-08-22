@@ -13,14 +13,12 @@
 
 #include "OlympiaAllocators.hpp"
 
-OlympiaSim::OlympiaSim(const std::string& topology,
-                       sparta::Scheduler & scheduler,
+OlympiaSim::OlympiaSim(sparta::Scheduler & scheduler,
                        const uint32_t num_cores,
                        const std::string workload,
                        const uint64_t instruction_limit,
                        const bool show_factories) :
     sparta::app::Simulation("sparta_olympia", &scheduler),
-    cpu_topology_(topology),
     num_cores_(num_cores),
     workload_(workload),
     instruction_limit_(instruction_limit),
@@ -47,9 +45,6 @@ void OlympiaSim::buildTree_()
     // TREE_BUILDING Phase.  See sparta::PhasedObject::TreePhase
     auto cpu_factory = getCPUFactory_();
 
-    // Set the cpu topology that will be built
-    cpu_factory->setTopology(cpu_topology_, num_cores_);
-
     // Create the common Allocators
     allocators_tn_.reset(new olympia::OlympiaAllocators(getRoot()));
 
@@ -60,6 +55,10 @@ void OlympiaSim::buildTree_()
                                                                     sparta::TreeNode::GROUP_IDX_NONE,
                                                                     "CPU Node",
                                                                     cpu_factory);
+
+    // Set the cpu topology that will be built
+    auto topology = cpu_tn->getParameterSet()->getParameter("topology");
+    cpu_factory->setTopology(topology->getValueAsString(), num_cores_);
 
     // You _can_ use sparta::app::Simulation's to_delete_ vector and
     // have the simulation class delete it for you.  However, by doing

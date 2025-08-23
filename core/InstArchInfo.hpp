@@ -91,9 +91,14 @@ namespace olympia
             REDUCTION,
             REDUCTION_WIDE,
             INT_EXT,
+            SLIDEUP,
+            SLIDEDOWN,
             SLIDE1UP,
             SLIDE1DOWN,
-            PERMUTE,
+            SCALAR_MOVE,
+            RGATHER,
+            COMPRESS,
+            WHOLE_REG_MOVE,
             NONE,
             UNKNOWN
         };

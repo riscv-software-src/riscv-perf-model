@@ -1,4 +1,4 @@
-# QEMU BBVs Flow
+# QEMU SimPoint Unified Analysis
 
 A unified, containerized workflow for running various workloads on QEMU with SimPoint analysis for program phase detection and basic block vector generation.
 
@@ -27,23 +27,39 @@ This project provides a unified Docker-based environment for:
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/riscv-software-src/riscv-perf-model.git
-cd traces/qemu-bbvs-flow
+git clone https://github.com/yourusername/qemu-bbvs-flow.git
+cd qemu-bbvs-flow
 ```
 
 ### 2. Run Dhrystone Analysis
 ```bash
-./build_and_run.sh dhrystone
+./build_and_run.sh dhrystone 
+# OR
+
+./build_docker.sh 
+./run_workload.sh dhrystone
 ```
 
 ### 3. Run Embench Analysis
 ```bash
-./build_and_run.sh embench
+#Embench gets compiled during the build itself
+./build_docker.sh 
+
+# Run specific Embench workload with BBV 
+docker run --rm -v $(pwd)/simpoint_output:/output qemu-simpoint-unified /run_embench_simple.sh [workload_name] --bbv
+#[For example] – 
+docker run --rm -v $(pwd)/simpoint_output:/output qemu-simpoint-unified /run_embench_simple.sh crc32 --bbv
+
 ```
 
 ### 4. Run Custom Workload
 ```bash
 ./build_and_run.sh custom /path/to/your/source "-O2 -static" riscv64
+```
+### 5. Individual Component Execution
+```bash
+./build_docker.sh
+./run_workload.sh [workload_type] [parameters]
 ```
 
 ## Prerequisites
@@ -75,8 +91,8 @@ cd traces/qemu-bbvs-flow
 
 3. **Open WSL 2 Terminal** and clone repository:
    ```bash
-   git clone https://github.com/riscv-software-src/riscv-perf-model.git
-   cd traces/qemu-bbvs-flow
+   git clone https://github.com/yourusername/qemu-bbvs-flow.git
+   cd qemu-bbvs-flow
    chmod +x *.sh
    ```
 
@@ -95,9 +111,8 @@ cd traces/qemu-bbvs-flow
 
 2. **Clone and Setup**:
    ```bash
-   git clone https://github.com/riscv-software-src/riscv-perf-model.git
-   cd traces/qemu-bbvs-flow
-
+   git clone https://github.com/yourusername/qemu-bbvs-flow.git
+   cd qemu-bbvs-flow
    chmod +x *.sh
    ```
 
@@ -129,7 +144,8 @@ cd traces/qemu-bbvs-flow
 
 #### Embench with Custom Settings
 ```bash
-./build_and_run.sh embench "" "-march=rv32i -mabi=ilp32 -static" riscv32 50 20
+#Embench gets compiled during the build itself
+./build_docker.sh
 ```
 
 #### Custom Workload
@@ -392,17 +408,18 @@ ls -lh simpoint_output/*.bb
 
 ```
 qemu-bbvs-flow/
-├── README.md                    # This file
 ├── Dockerfile                   # Unified Docker image
 ├── setup_workload.sh           # Workload setup script
 ├── run_analysis.sh             # Analysis execution script
-├── build_docker.sh             # Docker build automation
+├── run_embench_simple.sh       # embench compilation script
+├── build_docker.sh             # Docker image build script
 ├── run_workload.sh             # Workload execution script
 ├── build_and_run.sh            # Complete workflow script
-├── workload_config.json        # Configuration file
+├── workload_config.json        # Workload configuration
+├── README.md                   # User documentation
 ├── documentation/
-│   └── technical_details.md    # Technical documentation
-└── simpoint_output/            # Results directory (created after execution)
+│   └── technical_details.md    # This file
+└── simpoint_output/            # Generated results (after execution)
 ```
 
 ## Contributing

@@ -27,6 +27,7 @@ qemu-bbvs-flow/
 ├── Dockerfile                   # Unified Docker image
 ├── setup_workload.sh           # Workload setup script
 ├── run_analysis.sh             # Analysis execution script
+├── run_embench_simple.sh       # embench compilation script
 ├── build_docker.sh             # Docker image build script
 ├── run_workload.sh             # Workload execution script
 ├── build_and_run.sh            # Complete workflow script
@@ -184,22 +185,3 @@ simpoint -loadFVFile input.bb -maxK 30 -saveSimpoints output.simpoints -saveSimp
 3. **Memory Issues**: Increase Docker memory limits
 4. **Network Issues**: Verify internet connectivity for source downloads
 
-### Debug Mode
-Enable verbose output by setting environment variables:
-```bash
-export VERBOSE=1
-export DEBUG=1
-```
-
-## Future Enhancements
-
-### Planned Features
-1. Support for additional architectures (ARM, x86)
-2. Integration with performance monitoring tools
-3. Automated result visualization
-4. Distributed analysis support
-
-### Configuration Extensions
-1. YAML-based configuration
-2. Template-based workload definitions
-3. Profile-based execution modes

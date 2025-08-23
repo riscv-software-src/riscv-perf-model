@@ -1,14 +1,11 @@
-FROM ubuntu:22.04
+FROM ribeirovsilva/riscv-toolchain:latest
 
 # Avoid interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-# Update package lists
-RUN apt update && apt upgrade -y
-
-# Install all dependencies for QEMU compilation and workloads
-RUN apt install -y \
+# Update package lists and install additional dependencies
+RUN apt-get update && apt-get install -y \
   git-email \
   libaio-dev \
   libbluetooth-dev \
@@ -67,12 +64,14 @@ RUN apt install -y \
   libexpat-dev \
   cmake \
   libglib2.0-dev \
-  gcc-riscv64-linux-gnu \
   libslirp-dev \
   pkg-config \
   libpixman-1-dev \
   python3-dev \
-  python3-venv
+  python3-venv \
+  qemu-user \
+  qemu-user-static \
+  && rm -rf /var/lib/apt/lists/*
 
 # Clone repositories
 RUN git clone https://gitlab.com/qemu-project/qemu.git
@@ -93,14 +92,33 @@ RUN make -j$(nproc)
 ENV PATH="$PATH:/SimPoint/bin"
 
 # Create workload directory and output directory
-RUN mkdir -p /workloads /output
+RUN mkdir -p /workloads /output /workspace
 
-# Copy workload setup script
+# Clone and prepare Embench repository
+WORKDIR /workspace
+RUN git clone --recursive https://github.com/embench/embench-iot.git
+RUN sed -i '36s/^typedef uint8_t bool;/\/\/ &/' /workspace/embench-iot/src/wikisort/libwikisort.c
+
+# Pre-build Embench workloads to avoid build time during analysis
+WORKDIR /workspace/embench-iot
+RUN python3 ./build_all.py \
+    --arch riscv32 \
+    --chip generic \
+    --board ri5cyverilator \
+    --cc riscv64-unknown-elf-gcc \
+    --cflags="-c -O2 -ffunction-sections -march=rv32imfdc -mabi=ilp32d" \
+    --ldflags="-Wl,-gc-sections -march=rv32imfdc -mabi=ilp32d" \
+    --user-libs="-lm"
+
+# Copy setup and analysis scripts
 COPY setup_workload.sh /setup_workload.sh
-RUN chmod +x /setup_workload.sh
-
-# Copy analysis script
 COPY run_analysis.sh /run_analysis.sh
-RUN chmod +x /run_analysis.sh
+COPY run_embench_simple.sh /run_embench_simple.sh
+RUN chmod +x /setup_workload.sh /run_analysis.sh /run_embench_simple.sh
+
+# Verify QEMU works with a test workload
+RUN echo "Testing QEMU with pre-built embench workload..." && \
+    qemu-riscv32 /workspace/embench-iot/bd/src/crc32/crc32 && \
+    echo "QEMU execution test successful"
 
 WORKDIR /

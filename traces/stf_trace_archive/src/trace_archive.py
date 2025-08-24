@@ -7,6 +7,7 @@ from handlers.list import ListHandler
 from handlers.get import GetHandler
 from handlers.setup import SetupHandler
 
+
 def main():
     args = parseArgs()
     setupHandler = SetupHandler()
@@ -26,6 +27,7 @@ def main():
     else:
         print(f"Unknown command: {args.command}")
 
+
 def get_storage(selected_storage: str, config: Config) -> DatabaseExplorer:
     if not selected_storage:
         selected_storage = config.default_storage
@@ -38,14 +40,15 @@ def get_storage(selected_storage: str, config: Config) -> DatabaseExplorer:
 
     if not storage_config:
         raise ValueError(f"Storage not found: {selected_storage}")
-    
+
     storage_class = STORAGE_TYPE_MAP.get(storage_config.type)
     if not storage_class:
         raise ValueError(f"Unknown storage class: {storage_class}")
-    
+
     storage = storage_class(storage_config.config)
     explorer = DatabaseExplorer(storage)
     return explorer
+
 
 if __name__ == "__main__":
     main()

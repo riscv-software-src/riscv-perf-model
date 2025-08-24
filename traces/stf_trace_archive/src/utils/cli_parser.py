@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+
 def parseArgs() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='trace_share',
@@ -41,7 +42,7 @@ def parseArgs() -> argparse.Namespace:
         description='Download a specified trace or workload file.',
         formatter_class=argparse.RawTextHelpFormatter
     )
-    
+
     group = get_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--trace', help='Id of the trace to download.', metavar='TRACE_ID')
     group.add_argument('--metadata', help='Id of the metadata (same as trace) to download.', metavar='TRACE_ID')

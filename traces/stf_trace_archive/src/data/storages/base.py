@@ -4,19 +4,20 @@ from abc import ABC, abstractmethod
 from data.output_path import OutputPaths
 from data.metadata import Metadata
 
+
 class StorageHandler(ABC):
     @property
     def traces_table(self):
         raise NotImplementedError("This method should be overridden by subclasses.")
-    
+
     @property
     def workloads_table(self):
         raise NotImplementedError("This method should be overridden by subclasses.")
-    
+
     @abstractmethod
     def update_traces_table(self) -> pd.DataFrame:
         raise NotImplementedError("This method should be overridden by subclasses.")
-    
+
     @abstractmethod
     def update_workloads_table(self) -> pd.DataFrame:
         raise NotImplementedError("This method should be overridden by subclasses.")
@@ -48,4 +49,3 @@ class StorageHandler(ABC):
     @staticmethod
     def setup():
         raise NotImplementedError("This method should be overridden by subclasses.")
-    

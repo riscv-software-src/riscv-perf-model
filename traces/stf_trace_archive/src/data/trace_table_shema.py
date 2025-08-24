@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class TracesTableSchema:
     TRACE_ID: str = "trace_id"

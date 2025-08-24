@@ -7,6 +7,7 @@ from data.config import Config, StorageConfig
 from data.storage_type_map import STORAGE_TYPE_MAP
 from .base import CommandHandler
 
+
 class SetupHandler(CommandHandler):
     def __init__(self):
         config_folder = pathlib.Path(__file__).parent.parent.resolve()
@@ -47,7 +48,6 @@ class SetupHandler(CommandHandler):
             self._set_default_storage()
             self._save_config()
 
-
     def _add_storage_source(self) -> None:
         storage_types = list(STORAGE_TYPE_MAP.keys())
         print("Creating a new storage source.")
@@ -65,10 +65,12 @@ class SetupHandler(CommandHandler):
 
         storage_class = STORAGE_TYPE_MAP.get(storage_type)
         storage_specific_config = storage_class.setup()
-        storage_config = StorageConfig(type = storage_type, name=storage_name, config=storage_specific_config)
+        storage_config = StorageConfig(
+            type=storage_type, name=storage_name, config=storage_specific_config)
 
         if not self._config:
-            self._config = Config(storages=[storage_config], default_storage=storage_name)
+            self._config = Config(
+                storages=[storage_config], default_storage=storage_name)
         elif not self._config.storages:
             self._config.storages = [storage_config]
         else:
@@ -80,15 +82,14 @@ class SetupHandler(CommandHandler):
     def _get_storage_names(self) -> list[str]:
         if not self._config:
             return []
-        
+
         return [storage.name for storage in self._config.storages]
-    
+
     def _set_default_storage(self, storage_name: str = None) -> None:
         used_storage_names = self._get_storage_names()
 
         if not storage_name:
-            print(f"Enter the default storage source name: ", end="")
-            storage_name = input().lower()
+            storage_name = input("Enter the default storage source name: ").lower()
 
         if storage_name not in used_storage_names:
             raise ValueError(f"Storage source name {storage_name} not found on configured names")

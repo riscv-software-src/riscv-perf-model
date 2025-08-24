@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class WorkloadsTableSchema:
     WORKLOAD_ID: str = "workload_id"

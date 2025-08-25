@@ -22,6 +22,7 @@ DEFAULT_WORKLOADS = {
 }
 
 # 2. Add build logic for your workload type
+# no the build logic is done in the yaml fil need to udpat ehat
 elif workload_type == "my-benchmark":
     # Your build logic here
     benchmarks = get_my_benchmark_list()
@@ -213,7 +214,7 @@ def build_my_benchmark(bench_name, workload_path, cc, base_cflags, platform, boa
     # Compile
     obj_file = f"/workloads/bin/{board}/{bench_name}.o"
     compile_cmd = [cc, "-c"] + cflags + ["-o", obj_file, str(bench_file)]
-    run_cmd(compile_cmd, f"Failed to compile {bench_name}")
+    run_cmd(compile_cmd)
     
     # Link
     exe_path = f"/workloads/bin/{board}/{bench_name}"
@@ -225,7 +226,7 @@ def build_my_benchmark(bench_name, workload_path, cc, base_cflags, platform, boa
     else:
         link_cmd = [cc] + base_cflags.split() + ["-o", exe_path, obj_file] + ["-lm"]
     
-    run_cmd(link_cmd, f"Failed to link {bench_name}")
+    run_cmd(link_cmd)
     return exe_path
 ```
 
@@ -446,11 +447,11 @@ def build_my_benchmark(bench_name, workload_path, cc, base_cflags, platform, boa
         # Use g++ for C++ files
         compiler = cc.replace("gcc", "g++") if source_file.suffix == ".cpp" else cc
         compile_cmd = [compiler, "-c"] + cflags + ["-o", obj_file, str(source_file)]
-        run_cmd(compile_cmd, f"Failed to compile {source_file}")
+        run_cmd(compile_cmd)
     
     # Link all objects
     link_cmd = [cc] + base_cflags.split() + ["-o", exe_path] + obj_files + env_objs + ["-lc", "-lm"]
-    run_cmd(link_cmd, f"Failed to link {bench_name}")
+    run_cmd(link_cmd)
 ```
 
 ## Example: Adding CoreMark

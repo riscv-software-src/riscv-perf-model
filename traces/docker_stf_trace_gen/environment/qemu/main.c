@@ -82,13 +82,10 @@ env_main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
     warm_caches(WARMUP_HEAT);
     
     // Qemu does not support defining ROI.
-    //START_BBV; N
-    //START_TRACE;
+
     
     result = benchmark();
-    
-    //STOP_TRACE;
-    //STOP_BBV;
+
     
     correct = verify_benchmark(result);
     

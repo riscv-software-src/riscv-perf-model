@@ -18,7 +18,7 @@ static int our_errno = 0;
 #define ENFILE 23
 
 
-//#define QEMU
+#define QEMU
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type"

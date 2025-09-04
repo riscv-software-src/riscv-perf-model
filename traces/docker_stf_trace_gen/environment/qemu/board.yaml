@@ -1,0 +1,104 @@
+# Board Configuration for QEMU RISC-V Emulator 
+# YAML format with hierarchical structure
+
+# Board identification and defaults
+board: qemu
+defaults:
+  cc: riscv32-unknown-elf-gcc
+  cpu_mhz: 1
+  warmup_heat: 1
+  defines: [ "CPU_MHZ=1", "WARMUP_HEAT=1"]
+
+# Architecture and platform specific configurations
+architectures:
+  rv32:
+    platforms:
+      baremetal:
+        cc: riscv32-unknown-elf-gcc
+        arch: rv32imafdc
+        abi: ilp32d
+        base_cflags: ["-march=rv32imafdc", "-mabi=ilp32d", "-mcmodel=medany", "-mno-relax", "-mstrict-align"]
+        base_ldflags: ["-march=rv32imafdc", "-mabi=ilp32d", "-nostartfiles", "-Wl,--no-warn-rwx-segments"]
+        linker_script: link.ld
+        libs: ["-lc", "-lm"]
+        includes: []
+      
+      linux:
+        cc: riscv32-linux-gnu-gcc
+        arch: rv32imafdc
+        abi: ilp32d
+        base_cflags: ["-march=rv32imafdc", "-mabi=ilp32d", "-static", "-O2"]
+        base_ldflags: ["-march=rv32imafdc", "-mabi=ilp32d", "-static"]
+        libs: ["-lm"]
+        includes: []
+
+  rv64:
+    platforms:
+      baremetal:
+        cc: riscv64-unknown-elf-gcc
+        arch: rv64imafdc
+        abi: lp64d
+        base_cflags: ["-march=rv64imafdc", "-mabi=lp64d", "-mcmodel=medany", "-mno-relax", "-mstrict-align"]
+        base_ldflags: ["-march=rv64imafdc", "-mabi=lp64d", "-nostartfiles", "-Wl,--no-warn-rwx-segments"]
+        linker_script: link.ld
+        libs: ["-lc", "-lm"]
+        includes: []
+      
+      linux:
+        cc: riscv64-linux-gnu-gcc
+        arch: rv64imafdc
+        abi: lp64d
+        base_cflags: ["-march=rv64imafdc", "-mabi=lp64d", "-static", "-O2"]
+        base_ldflags: ["-march=rv64imafdc", "-mabi=lp64d", "-static"]
+        libs: ["-lm"]
+        includes: []
+
+# Workload specific configurations
+workloads:
+  embench-iot:
+    workload_cflags: ["-Dtrue=1", "-Dfalse=0", "-I/workloads/embench-iot/support/"]
+    workload_ldflags: []
+    workload_defines: []
+    workload_includes: []
+    workload_sources: ["/workloads/embench-iot/support/beebsc.c"]
+    environment_files: ["crt0.S", "main.c", "stub.c", "util.c"]
+    
+    platforms:
+      linux:
+        workload_cflags: ["-std=gnu99"]
+        skip_environment: true
+
+  riscv-tests:
+    workload_cflags: ["-std=gnu99", "-Wno-implicit-int", "-Wno-implicit-function-declaration"]
+    workload_ldflags: []
+    workload_defines: []
+    workload_includes: ["benchmarks/common"]
+    environment_files: ["crt0.S", "main.c", "stub.c", "util.c"]
+    
+    platforms:
+      linux:
+        workload_cflags: ["-std=gnu99"]
+        skip_common_files: ["syscalls.c"]
+        skip_environment: true
+
+  dhrystone:
+    # Inherits from riscv-tests configuration
+    parent: riscv-tests
+    workload_cflags: ["-std=gnu99", "-Wno-implicit-int", "-Wno-implicit-function-declaration"]
+
+# Features and special configurations
+features:
+  bbv:
+    bbv_cflags: ["-DBBV"]
+    bbv_ldflags: []
+
+  trace:
+    trace_cflags: ["-DTRACE"]
+    trace_ldflags: []
+
+  vector:
+    # Vector extension configuration for benchmarks starting with "vec-"
+    vector_rv32_arch: rv32gcv
+    vector_rv64_arch: rv64gcv
+    regular_rv32_arch: rv32gc
+    regular_rv64_arch: rv64gc

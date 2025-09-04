@@ -39,3 +39,6 @@
 
 # Backup files
 *~
+
+# Python cache file
+__pycache__/

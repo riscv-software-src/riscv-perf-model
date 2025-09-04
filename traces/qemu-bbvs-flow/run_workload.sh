@@ -29,9 +29,19 @@ echo "=========================================="
 # Prepare volume mounts
 VOLUME_MOUNTS="-v $OUTPUT_DIR:/output"
 
-# Add workload source volume if provided
-if [ -n "$WORKLOAD_SOURCE" ] && [ -d "$WORKLOAD_SOURCE" ]; then
+# Add workload source volume if provided and not using pre-built workloads
+if [ -n "$WORKLOAD_SOURCE" ] && [ -d "$WORKLOAD_SOURCE" ] && [ "$WORKLOAD_TYPE" != "embench" ]; then
     VOLUME_MOUNTS="$VOLUME_MOUNTS -v $WORKLOAD_SOURCE:/workload_source"
+fi
+
+# Special handling for Embench
+if [ "$WORKLOAD_TYPE" = "embench" ]; then
+    echo "Using pre-built Embench workloads from container"
+    # Set appropriate architecture for Embench
+    QEMU_ARCH="riscv32"
+    if [ -z "$COMPILER_FLAGS" ] || [ "$COMPILER_FLAGS" = "-static" ]; then
+        COMPILER_FLAGS="-c -O2 -ffunction-sections -march=rv32imfdc -mabi=ilp32d"
+    fi
 fi
 
 # Run the workflow inside the container
@@ -52,3 +62,21 @@ echo "=========================================="
 echo "Experiment completed successfully!"
 echo "Results are available in: $OUTPUT_DIR"
 echo "=========================================="
+
+# Display summary of generated files
+if [ -d "$OUTPUT_DIR" ] && [ "$(ls -A $OUTPUT_DIR)" ]; then
+    echo ""
+    echo "Generated files:"
+    ls -la "$OUTPUT_DIR"
+    
+    # Count different file types
+    bbv_files=$(find "$OUTPUT_DIR" -name "*.bb" 2>/dev/null | wc -l)
+    simpoints_files=$(find "$OUTPUT_DIR" -name "*.simpoints" 2>/dev/null | wc -l)
+    weights_files=$(find "$OUTPUT_DIR" -name "*.weights" 2>/dev/null | wc -l)
+    
+    echo ""
+    echo "File Summary:"
+    echo "- BBV files: $bbv_files"
+    echo "- SimPoints files: $simpoints_files"
+    echo "- Weights files: $weights_files"
+fi

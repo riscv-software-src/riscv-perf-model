@@ -298,12 +298,9 @@ QEMU advantage: 2.70x faster
 More in [doc/emulator-comparison](doc/emulator-comparison)
 
 
-### Trace Generation
-**Important**: QEMU and Spike use different trace formats:
-- **Spike**: Detailed STF (System Trace Format) traces for comprehensive analysis
-- **QEMU**: Simple assembly traces using `-d in_asm` output
+### STF Trace Generation
 
-QEMU cannot generate STF traces, making it useful for running large files and basic traces, while Spike provides detailed tracing capabilities.
+Read the [generate trace](generate_trace.md) file for details.
 
 ## Documentation
 

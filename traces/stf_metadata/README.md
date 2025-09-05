@@ -1,7 +1,5 @@
 # STF (Simulation Trace Format) Metadata Specification
 
-> This specification is still under development.
-
 ## Table of Contents
 
 1. [Introduction](#introduction)
@@ -47,6 +45,7 @@ stf:
     GEN_VERSION: "Trace generator version"
     GEN_COMMENT: "Trace generator comment (e.g., git commit SHA for spike-stf)"
     STF_FEATURES: "list of STF features in the STF file"
+  interval_mode: "Tracing Strategy. (Fully traced, Macro defined start and stop, Instructions count, Program counter count)"
   trace_interval:
     instruction_pc: "Program counter (PC) value at the start of the trace"
     pc_count: "Program counter execution count value present at the start of the trace"
@@ -91,10 +90,8 @@ stf:
       - STF_CONTAIN_PHYSICAL_ADDRESS
       - STF_CONTAIN_RV64
       - STF_CONTAIN_EVENT64
+  interval_mode: inst_count
   trace_interval:
-    instruction_pc: 0
-    pc_count: 0
-    interval_length: 100
     start_instruction_index: 0
     end_instruction_index: 100
 ```

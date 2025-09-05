@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 from typing import List
-from utils.util import log, LogLevel, run_cmd, clean_dir, file_exists, write_file_lines
+from utils.util import Util, LogLevel
 from utils.config import BoardConfig
 
 DEFAULT_WORKLOADS = {
@@ -21,7 +21,7 @@ class WorkloadBuilder:
         self.bbv = bbv
         self.trace = trace
         self.config = BoardConfig(board)
-        self.bin_dir = clean_dir(Path(f"/workloads/bin/{board}"))
+        self.bin_dir = Util.clean_dir(Path(f"/workloads/bin/{board}"))
         self.env_dir = Path(f"/workloads/environment/{board}")
         self.executables = []
 
@@ -41,14 +41,14 @@ class WorkloadBuilder:
     def build_environment(self, workload: str):
         """Compile environment runtime files."""
         if self.config.should_skip_environment(self.platform, workload):
-            log(LogLevel.INFO, f"Skipping environment build for {self.platform}")
+            Util.log(LogLevel.INFO, f"Skipping environment build for {self.platform}")
             return
         cc, cflags, _, _ = self._get_flags({}, workload, workload)
         for src in self.config.get_environment_files(workload):
             src_file = self.env_dir / src
             if src_file.exists():
                 obj = self.env_dir / f"{Path(src).stem}.o"
-                run_cmd([cc, "-c", *cflags, "-o", str(obj), str(src_file)])
+                Util.run_cmd([cc, "-c", *cflags, "-o", str(obj), str(src_file)])
 
     def build_common_files(self, workload_path: Path, workload_type: str) -> List[str]:
         """Compile common files for riscv-tests."""
@@ -61,29 +61,29 @@ class WorkloadBuilder:
             if c_file.name in skip:
                 continue
             obj = self.bin_dir / f"{c_file.stem}.o"
-            if run_cmd([cc, "-c", *cflags, "-o", str(obj), str(c_file)]):
+            if Util.run_cmd([cc, "-c", *cflags, "-o", str(obj), str(c_file)]):
                 obj_files.append(str(obj))
         return obj_files
 
     def build_benchmark(self, bench: str, workload_path: Path, workload_type: str, common_objs: List[str]):
         """Compile and link a single benchmark."""
-        log(LogLevel.INFO, f"Building {bench}")
+        Util.log(LogLevel.INFO, f"Building {bench}")
         bench_dir = workload_path / ("src" if workload_type == "embench-iot" else "benchmarks") / bench
         if not bench_dir.exists():
-            log(LogLevel.ERROR, f"Benchmark directory not found: {bench_dir}")
+            Util.log(LogLevel.ERROR, f"Benchmark directory not found: {bench_dir}")
         
         # Find source files
         source_exts = ['.c'] if workload_type == "embench-iot" else ['.c', '.S']
         sources = [f for ext in source_exts for f in bench_dir.glob(f"*{ext}")]
         if not sources:
-            log(LogLevel.ERROR, f"No sources found for {bench}")
+            Util.log(LogLevel.ERROR, f"No sources found for {bench}")
         
         # Compile sources
         cc, cflags, ldflags, config = self._get_flags({}, workload_path, workload_type, bench)
         obj_files = []
         for src in sources:
             obj = self.bin_dir / f"{src.stem}.o"
-            if run_cmd([cc, "-c", *cflags, "-o", str(obj), str(src)]):
+            if Util.run_cmd([cc, "-c", *cflags, "-o", str(obj), str(src)]):
                 obj_files.append(str(obj))
         
         # Compile additional sources for embench-iot
@@ -92,7 +92,7 @@ class WorkloadBuilder:
                 src_path = Path(src)
                 if src_path.exists():
                     obj = self.bin_dir / f"{src_path.stem}_support.o"
-                    if run_cmd([cc, "-c", *cflags, "-o", str(obj), str(src_path)]):
+                    if Util.run_cmd([cc, "-c", *cflags, "-o", str(obj), str(src_path)]):
                         obj_files.append(str(obj))
         
         # Link executable
@@ -104,7 +104,7 @@ class WorkloadBuilder:
             link_cmd.extend([f"-T{self.env_dir / config.get('linker_script', 'link.ld')}",
                              *[str(self.env_dir / f"{Path(f).stem}.o") for f in self.config.get_environment_files(workload_type)]])
         link_cmd.extend(config.get('libs', []))
-        if run_cmd(link_cmd):
+        if Util.run_cmd(link_cmd):
             self.executables.append(str(exe))
 
     def list_benchmarks(self, workload_path: Path, workload_type: str) -> List[str]:
@@ -118,10 +118,10 @@ class WorkloadBuilder:
         """Build specified workload or benchmark."""
         workload_path = Path(custom_path or DEFAULT_WORKLOADS.get(workload, DEFAULT_WORKLOADS["riscv-tests"]))
         workload_type = workload if workload in DEFAULT_WORKLOADS else "custom"
-        if not file_exists(workload_path):
-            log(LogLevel.ERROR, f"Workload path not found: {workload_path}")
+        if not Util.file_exists(workload_path):
+            Util.log(LogLevel.ERROR, f"Workload path not found: {workload_path}")
         
-        log(LogLevel.INFO, f"Building {workload} for {self.arch}/{self.platform}/{self.board}")
+        Util.log(LogLevel.INFO, f"Building {workload} for {self.arch}/{self.platform}/{self.board}")
         self.build_environment(workload_type)
         common_objs = self.build_common_files(workload_path, workload_type)
         benchmarks = [benchmark] if benchmark else (["dhrystone"] if workload == "dhrystone" else self.list_benchmarks(workload_path, workload_type))
@@ -129,7 +129,7 @@ class WorkloadBuilder:
         for bench in benchmarks:
             self.build_benchmark(bench, workload_path, workload_type, common_objs)
         
-        log(LogLevel.INFO, f"Built {len(self.executables)} executables in {self.bin_dir}")
+        Util.log(LogLevel.INFO, f"Built {len(self.executables)} executables in {self.bin_dir}")
 
 def main():
     """Main entry point for building workloads."""
@@ -147,16 +147,16 @@ def main():
 
     if args.list:
         for name, path in DEFAULT_WORKLOADS.items():
-            if file_exists(path):
-                log(LogLevel.INFO, f"{name}: {path}")
+            if Util.file_exists(path):
+                Util.log(LogLevel.INFO, f"{name}: {path}")
                 builder = WorkloadBuilder(args.board, args.arch, args.platform, args.bbv, args.trace)
                 benchmarks = builder.list_benchmarks(Path(path), name)
                 if benchmarks:
-                    log(LogLevel.INFO, f"  Benchmarks: {', '.join(benchmarks[:10])}{'...' if len(benchmarks) > 10 else ''}")
+                    Util.log(LogLevel.INFO, f"  Benchmarks: {', '.join(benchmarks[:10])}{'...' if len(benchmarks) > 10 else ''}")
         return
 
     if not args.workload:
-        log(LogLevel.ERROR, "Workload required. Use --list to see available workloads")
+        Util.log(LogLevel.ERROR, "Workload required. Use --list to see available workloads")
     builder = WorkloadBuilder(args.board, args.arch, args.platform, args.bbv, args.trace)
     builder.build_workload(args.workload, args.benchmark, args.custom_path)
 

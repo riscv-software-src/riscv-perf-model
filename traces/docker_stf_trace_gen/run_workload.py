@@ -3,18 +3,18 @@
 import argparse
 from pathlib import Path
 from typing import Dict
-from utils.util import log, LogLevel, run_cmd, get_time, validate_tool, clean_dir, ensure_dir
+from utils.util import Util, LogLevel
 
 def validate_environment(emulator: str, platform: str, arch: str):
     """Validate emulator tools."""
     if emulator == "spike":
-        validate_tool("spike")
+        Util.validate_tool("spike")
     elif emulator == "qemu":
-        validate_tool(f"qemu-{'system-' if platform == 'baremetal' else ''}riscv{32 if arch == 'rv32' else 64}")
+        Util.validate_tool(f"qemu-{'system-' if platform == 'baremetal' else ''}riscv{32 if arch == 'rv32' else 64}")
 
 def setup_output_dirs(emulator: str) -> Dict[str, Path]:
     """Setup output directories."""
-    base = clean_dir(Path(f"/outputs/{emulator}_output"))
+    base = Util.clean_dir(Path(f"/outputs/{emulator}_output"))
     return {
         'base': base, 'logs': base / "logs", 'bbv': base / "bbv",
         'traces': base / "traces", 'results': base / "results.txt"
@@ -23,7 +23,7 @@ def setup_output_dirs(emulator: str) -> Dict[str, Path]:
 def run_emulator(binary: Path, dirs: Dict[str, Path], emulator: str, bbv: bool, trace: bool, platform: str, arch: str, interval_size: int, enable_stf_tools: bool) -> float:
     """Run workload on emulator."""
     name = binary.stem
-    log(LogLevel.INFO, f"Running {name} on {emulator.upper()} ({platform}/{arch})")
+    Util.log(LogLevel.INFO, f"Running {name} on {emulator.upper()} ({platform}/{arch})")
     if emulator == "qemu" and trace: 
         print("QEMU Cannot generate STF traces, Please use Spike")
         trace = False
@@ -47,16 +47,16 @@ def run_emulator(binary: Path, dirs: Dict[str, Path], emulator: str, bbv: bool, 
     cfg = configs[emulator]
     cmd = cfg["cmd"] + (cfg["bbv"]() if bbv else []) + (cfg["trace"]() if trace else []) + cfg.get("bin", [])
     # build the logs file 
-    start = get_time() 
-    run_cmd(cmd)
-    end = get_time()
+    start = Util.get_time() 
+    Util.run_cmd(cmd)
+    end = Util.get_time()
     
     if emulator == "spike" and trace and enable_stf_tools:
         trace_file = dirs['traces'] / f"{name}.zstf"
         if trace_file.exists():
             stf_dump = Path("/riscv/stf_tools/release/tools/stf_dump/stf_dump")
             if stf_dump.exists():
-                run_cmd([str(stf_dump), str(trace_file)])
+                Util.run_cmd([str(stf_dump), str(trace_file)])
     
     return end - start
 
@@ -65,7 +65,7 @@ def run_workloads(emulator: str, platform: str, arch: str, bbv: bool, trace: boo
     validate_environment(emulator, platform, arch)
     dirs = setup_output_dirs(emulator)
     for d in [dirs['logs'], dirs['bbv'], dirs['traces']]:
-        ensure_dir(d)
+        Util.ensure_dir(d)
     
     # Fetch binaries in /workloads/bin/<emulator>/ 
     binary_dir = Path(f"/workloads/bin/{emulator}")
@@ -76,9 +76,9 @@ def run_workloads(emulator: str, platform: str, arch: str, bbv: bool, trace: boo
     if workload:
         binaries = [b for b in binaries if workload in b.name]
         if not binaries:
-            log(LogLevel.ERROR, f"No workloads matching: {workload}")
+            Util.log(LogLevel.ERROR, f"No workloads matching: {workload}")
     
-    log(LogLevel.INFO, f"Running {len(binaries)} workloads")
+    Util.log(LogLevel.INFO, f"Running {len(binaries)} workloads")
     results = []
     total_time = 0
     with dirs['results'].open('w') as f:
@@ -92,7 +92,7 @@ def run_workloads(emulator: str, platform: str, arch: str, bbv: bool, trace: boo
             except RuntimeError:
                 continue
     
-    log(LogLevel.INFO, f"Summary: {len(results)} workloads, {total_time:.2f}s, results in {dirs['results']}")
+    Util.log(LogLevel.INFO, f"Summary: {len(results)} workloads, {total_time:.2f}s, results in {dirs['results']}")
 
 def main():
     """Main entry point."""

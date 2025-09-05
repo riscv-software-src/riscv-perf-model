@@ -5,13 +5,13 @@ import json
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
-from utils.util import log, LogLevel, run_cmd, ensure_dir, validate_tool, read_file_lines, file_exists
+from utils.util import Util, LogLevel
 
 def find_bbv_files(emulator: str, binaries: List[Path]) -> Dict[str, Path]:
     """Find BBV files for binaries."""
     output_dir = Path(f"/outputs/{emulator}_output/bbv")
     if not output_dir.exists():
-        log(LogLevel.ERROR, f"BBV directory not found: {output_dir}")
+        Util.log(LogLevel.ERROR, f"BBV directory not found: {output_dir}")
     
     bbv_files = {}
     for binary in binaries:
@@ -22,23 +22,23 @@ def find_bbv_files(emulator: str, binaries: List[Path]) -> Dict[str, Path]:
         if bbv_file.exists() and bbv_file.stat().st_size > 0:
             bbv_files[name] = bbv_file
     if not bbv_files:
-        log(LogLevel.ERROR, "No valid BBV files found")
-    log(LogLevel.INFO, f"Found {len(bbv_files)} BBV files")
+        Util.log(LogLevel.ERROR, "No valid BBV files found")
+    Util.log(LogLevel.INFO, f"Found {len(bbv_files)} BBV files")
     return bbv_files
 
 def run_simpoint_analysis(bbv_file: Path, benchmark: str, max_k: int, output_dir: Path) -> Tuple[bool, Path, Path]:
     """Run SimPoint analysis on a BBV file."""
-    ensure_dir(output_dir)
+    Util.ensure_dir(output_dir)
     simpoints = output_dir / f"{benchmark}.simpoints"
     weights = output_dir / f"{benchmark}.weights"
     cmd = ["simpoint", "-loadFVFile", str(bbv_file), "-maxK", str(max_k), "-saveSimpoints", str(simpoints), "-saveSimpointWeights", str(weights)]
-    success, _, _ = run_cmd(cmd, timeout=300)
+    success, _, _ = Util.run_cmd(cmd, timeout=300)
     return success and simpoints.exists() and weights.exists(), simpoints, weights
 
 def parse_simpoint_results(simpoints_file: Path, weights_file: Path) -> List[Tuple[int, float]]:
     """Parse SimPoint intervals and weights."""
-    simpoints = [int(line.split()[0]) for line in read_file_lines(simpoints_file) if line.split()[0].isdigit()] if simpoints_file.exists() else []
-    weights = [float(line.split()[1]) for line in read_file_lines(weights_file) if len(line.split()) > 1] if weights_file.exists() else []
+    simpoints = [int(line.split()[0]) for line in Util.read_file_lines(simpoints_file) if line.split()[0].isdigit()] if simpoints_file.exists() else []
+    weights = [float(line.split()[1]) for line in Util.read_file_lines(weights_file) if len(line.split()) > 1] if weights_file.exists() else []
     return list(zip(simpoints, weights)) if len(simpoints) == len(weights) else []
 
 def generate_summary(results: Dict[str, Dict], output_file: Path):
@@ -63,7 +63,7 @@ def generate_summary(results: Dict[str, Dict], output_file: Path):
     
     with output_file.open('w') as f:
         f.write('\n'.join(lines))
-    log(LogLevel.INFO, '\n'.join(lines))
+    Util.log(LogLevel.INFO, '\n'.join(lines))
 
 def main():
     """Main entry point."""
@@ -74,20 +74,20 @@ def main():
     parser.add_argument("--output-dir", default="/outputs/simpoint_analysis")
     args = parser.parse_args()
 
-    validate_tool("simpoint")
+    Util.validate_tool("simpoint")
     
-    output_dir = ensure_dir(Path(args.output_dir))
-    log(LogLevel.INFO, f"Starting SimPoint analysis for {args.emulator}")
+    output_dir = Util.ensure_dir(Path(args.output_dir))
+    Util.log(LogLevel.INFO, f"Starting SimPoint analysis for {args.emulator}")
     
     binary_list = Path(f"/workloads/binary_list_{args.emulator}.txt")
-    binaries = [Path(line) for line in read_file_lines(binary_list) if file_exists(line)]
+    binaries = [Path(line) for line in Util.read_file_lines(binary_list) if Util.file_exists(line)]
     if args.workload_type:
         binaries = [b for b in binaries if args.workload_type in b.name]
     
     bbv_files = find_bbv_files(args.emulator, binaries)
     results = {}
     for bench, bbv_file in bbv_files.items():
-        log(LogLevel.INFO, f"Analyzing {bench}")
+        Util.log(LogLevel.INFO, f"Analyzing {bench}")
         success, simpoints, weights = run_simpoint_analysis(bbv_file, bench, args.max_k, output_dir)
         result = {'success': success, 'bbv_file': str(bbv_file), 'simpoints_file': str(simpoints), 'weights_file': str(weights)}
         if success:
@@ -110,7 +110,7 @@ def main():
         pass
 
     
-    log(LogLevel.INFO, f"Analysis completed. Summary: {summary_file}")
+    Util.log(LogLevel.INFO, f"Analysis completed. Summary: {summary_file}")
 
 if __name__ == "__main__":
     main()

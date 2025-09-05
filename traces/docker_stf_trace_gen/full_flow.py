@@ -6,8 +6,7 @@ import json
 import time
 from pathlib import Path
 from typing import List, Tuple, Dict
-
-from utils.util import log, run_cmd, LogLevel, file_exists, ensure_dir, read_file_lines
+from utils.util import Util, LogLevel
 from utils.config import BoardConfig
 
 
@@ -20,7 +19,7 @@ def discover_workloads() -> Dict[str, str]:
         "riscv-tests": str(base_dir / "riscv-tests"),
         "dhrystone": str(base_dir / "riscv-tests")
     }
-    return {k: v for k, v in workloads.items() if file_exists(v)}
+    return {k: v for k, v in workloads.items() if Util.file_exists(v)}
 
 def get_benchmarks(workload: str, board: str = 'spike') -> List[str]:
     """Get benchmarks for a workload."""
@@ -46,7 +45,7 @@ def get_board_config(board: str) -> Dict:
             'features': ['bbv', 'trace'] if board == 'spike' else ['bbv', 'trace']
         }
     except Exception as e:
-        log(LogLevel.WARN, f"Could not load board config: {e}")
+        Util.log(LogLevel.WARN, f"Could not load board config: {e}")
         return {'cc': 'unknown', 'supported_archs': ['rv32', 'rv64'], 'supported_platforms': ['baremetal'], 'features': []}
 
 class DockerOrchestrator:
@@ -54,43 +53,43 @@ class DockerOrchestrator:
     def __init__(self, container_name: str, image_name: str, host_output_dir: str):
         self.container_name = container_name
         self.image_name = image_name
-        self.host_output_dir = ensure_dir(Path(host_output_dir).resolve())
-        self.host_bin_dir = ensure_dir(self.host_output_dir / "workloads_bin")
-        self.host_meta_dir = ensure_dir(self.host_output_dir / "workloads_meta")
+        self.host_output_dir = Util.ensure_dir(Path(host_output_dir).resolve())
+        self.host_bin_dir = Util.ensure_dir(self.host_output_dir / "workloads_bin")
+        self.host_meta_dir = Util.ensure_dir(self.host_output_dir / "workloads_meta")
         self.container_output_dir = "/outputs"
         self.container_code_dir = "/flow"
     
     def check_docker(self) -> bool:
         """Check if Docker is available."""
-        success, out, _ = run_cmd(["docker", "--version"], show=False)
+        success, out, _ = Util.run_cmd(["docker", "--version"], show=False)
         if success:
-            log(LogLevel.INFO, f"Docker available: {out.strip()}")
+            Util.log(LogLevel.INFO, f"Docker available: {out.strip()}")
             return True
-        log(LogLevel.ERROR, "Docker not found")
+        Util.log(LogLevel.ERROR, "Docker not found")
         return False
 
     
     def check_image(self) -> bool:
         """Check if Docker image exists."""
-        success, out, _ = run_cmd(["docker", "images", "-q", self.image_name], show=False)
+        success, out, _ = Util.run_cmd(["docker", "images", "-q", self.image_name], show=False)
         if out.strip():
-            log(LogLevel.INFO, f"Image found: {self.image_name}")
+            Util.log(LogLevel.INFO, f"Image found: {self.image_name}")
             return True
-        log(LogLevel.WARN, f"Image not found: {self.image_name}")
+        Util.log(LogLevel.WARN, f"Image not found: {self.image_name}")
         return False
 
     def build_image(self) -> bool:
         """Build Docker image."""
-        log(LogLevel.INFO, "Building Docker image...")
-        if not file_exists("Dockerfile"):
-            log(LogLevel.ERROR, "Dockerfile not found")
+        Util.log(LogLevel.INFO, "Building Docker image...")
+        if not Util.file_exists("Dockerfile"):
+            Util.log(LogLevel.ERROR, "Dockerfile not found")
             return False
         cmd = ["docker", "build", "-t", self.image_name, "."]
-        success, _, _ = run_cmd(cmd)
+        success, _, _ = Util.run_cmd(cmd)
         if success:
-            log(LogLevel.INFO, "Image built successfully")
+            Util.log(LogLevel.INFO, "Image built successfully")
             return True
-        log(LogLevel.ERROR, "Failed to build image")
+        Util.log(LogLevel.ERROR, "Failed to build image")
         return False
 
     def run_command(self, command: List[str], interactive: bool = False) -> Tuple[bool, str, str]:
@@ -113,7 +112,7 @@ class DockerOrchestrator:
         
         docker_cmd = ["docker", "run", "--rm"] + mounts + (["-it"] if interactive else []) + \
                      [self.image_name, "bash", "-c", f"cd {self.container_code_dir} && {' '.join(command)}"]
-        return run_cmd(docker_cmd, interactive=interactive)
+        return Util.run_cmd(docker_cmd, interactive=interactive)
 
 class WorkflowManager:
     """Manages RISC-V analysis workflow."""
@@ -129,11 +128,11 @@ class WorkflowManager:
         """Get validated user input."""
         while True:
             if choices:
-                log(LogLevel.INFO, f"\n{prompt}")
+                Util.log(LogLevel.INFO, f"\n{prompt}")
                 for i, c in enumerate(choices, 1):
-                    log(LogLevel.INFO, f"  {i}. {c}{' (default)' if c == default else ''}")
+                    Util.log(LogLevel.INFO, f"  {i}. {c}{' (default)' if c == default else ''}")
                 if multi:
-                    log(LogLevel.INFO, "  Enter comma-separated numbers")
+                    Util.log(LogLevel.INFO, "  Enter comma-separated numbers")
                 try:
                     resp = input(f"Select [1-{len(choices)}]: ").strip()
                     if not resp and default:
@@ -145,26 +144,26 @@ class WorkflowManager:
                     if 0 <= idx < len(choices):
                         return choices[idx]
                 except (ValueError, IndexError):
-                    log(LogLevel.ERROR, "Invalid selection")
+                    Util.log(LogLevel.ERROR, "Invalid selection")
             else:
                 resp = input(f"{prompt}: ").strip()
                 return resp or default
 
     def configure_interactive(self):
         """Configure workflow interactively."""
-        log(LogLevel.HEADER, "RISC-V Workload Analysis Configuration")
+        Util.log(LogLevel.HEADER, "RISC-V Workload Analysis Configuration")
         
         # Workload selection
         workloads = discover_workloads()
         self.config['workload_suite'] = self.get_input(
             "Select workload suite", list(workloads.keys()), "embench-iot")
         self.config['architecture'] = "rv32" if self.config['workload_suite'] == "embench-iot" else "rv64"
-        log(LogLevel.INFO, f"Selected: {self.config['workload_suite']} ({workloads[self.config['workload_suite']]})")
+        Util.log(LogLevel.INFO, f"Selected: {self.config['workload_suite']} ({workloads[self.config['workload_suite']]})")
 
         # Benchmark selection
         benchmarks = get_benchmarks(self.config['workload_suite'])
         if benchmarks:
-            log(LogLevel.INFO, f"Found {len(benchmarks)} benchmarks: {', '.join(benchmarks[:10])}{'...' if len(benchmarks) > 10 else ''}")
+            Util.log(LogLevel.INFO, f"Found {len(benchmarks)} benchmarks: {', '.join(benchmarks[:10])}{'...' if len(benchmarks) > 10 else ''}")
             if self.get_input("Use all benchmarks? [Y/n]", ["y", "n"], "y") == "y":
                 self.config['benchmarks'] = ['all']
             else:
@@ -175,7 +174,7 @@ class WorkflowManager:
         boards = ['spike', 'qemu']
         self.config['emulator'] = self.get_input("Select emulator", boards, "spike")
         board_config = get_board_config(self.config['emulator'])
-        log(LogLevel.INFO, f"Emulator: {self.config['emulator']} (Features: {', '.join(board_config['features'])})")
+        Util.log(LogLevel.INFO, f"Emulator: {self.config['emulator']} (Features: {', '.join(board_config['features'])})")
 
         # Architecture and platform
         archs = board_config['supported_archs']
@@ -193,9 +192,9 @@ class WorkflowManager:
             self.config['enable_simpoint'] = self.get_input("Enable SimPoint? [y/n]", ["y", "n"], "y") == "y"
 
         # Confirm
-        log(LogLevel.HEADER, "Configuration Summary")
+        Util.log(LogLevel.HEADER, "Configuration Summary")
         for k, v in self.config.items():
-            log(LogLevel.INFO, f"  {k.replace('_', ' ').title():20}: {v}")
+            Util.log(LogLevel.INFO, f"  {k.replace('_', ' ').title():20}: {v}")
         return self.get_input("Proceed? [y/n]", ["y", "n"], "y") == "y"
 
     def _generate_cmd(self, script: str, workload_specific: bool = False) -> List[str]:
@@ -221,32 +220,32 @@ class WorkflowManager:
 
     def run_step(self, step: str, script: str, workload_specific: bool = False) -> bool:
         """Run a workflow step."""
-        log(LogLevel.INFO, f"Executing {step}")
+        Util.log(LogLevel.INFO, f"Executing {step}")
         cmd = self._generate_cmd(script, workload_specific)
         success, stdout, stderr = self.orchestrator.run_command(cmd)
         if success:
-            log(LogLevel.INFO, f"{step} completed")
+            Util.log(LogLevel.INFO, f"{step} completed")
             if stdout:
-                log(LogLevel.DEBUG, stdout[-1000:])
+                Util.log(LogLevel.DEBUG, stdout[-1000:])
         else:
-            log(LogLevel.WARN, f"{step} failed")
+            Util.log(LogLevel.WARN, f"{step} failed")
             if stderr:
-                log(LogLevel.DEBUG, stderr[-1000:])
+                Util.log(LogLevel.DEBUG, stderr[-1000:])
         return success
 
     def collect_results(self):
         """Collect and summarize results."""
-        log(LogLevel.HEADER, "Collecting Results")
+        Util.log(LogLevel.HEADER, "Collecting Results")
         output_files = [
             p for p in self.orchestrator.host_output_dir.rglob("*")
             if p.is_file() and any(s in str(p) for s in ["results.txt", "bbv/", "traces/", "simpoint_analysis/"])
         ]
         if output_files:
-            log(LogLevel.INFO, "Results found:")
+            Util.log(LogLevel.INFO, "Results found:")
             for f in output_files:
-                log(LogLevel.INFO, f"  • {f.relative_to(self.orchestrator.host_output_dir)}")
+                Util.log(LogLevel.INFO, f"  • {f.relative_to(self.orchestrator.host_output_dir)}")
         else:
-            log(LogLevel.WARN, "No results found")
+            Util.log(LogLevel.WARN, "No results found")
 
         summary = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -257,7 +256,7 @@ class WorkflowManager:
         summary_file = self.orchestrator.host_output_dir / "analysis_summary.json"
         with summary_file.open('w') as f:
             json.dump(summary, f, indent=2)
-        log(LogLevel.INFO, f"Summary saved: {summary_file}")
+        Util.log(LogLevel.INFO, f"Summary saved: {summary_file}")
 
 def main():
     """Main entry point for RISC-V analysis."""
@@ -278,7 +277,7 @@ def main():
     parser.add_argument("--skip-run", action="store_true")
     args = parser.parse_args()
 
-    log(LogLevel.HEADER, f"RISC-V Analysis (Output: {Path(args.output_dir).resolve()})")
+    Util.log(LogLevel.HEADER, f"RISC-V Analysis (Output: {Path(args.output_dir).resolve()})")
     orchestrator = DockerOrchestrator(args.container_name, args.image_name, args.output_dir)
     
     if not orchestrator.check_docker():
@@ -291,7 +290,7 @@ def main():
     if args.workload:
         workloads = discover_workloads()
         if args.workload not in workloads:
-            log(LogLevel.ERROR, f"Unknown workload: {args.workload}. Available: {', '.join(workloads.keys())}")
+            Util.log(LogLevel.ERROR, f"Unknown workload: {args.workload}. Available: {', '.join(workloads.keys())}")
         workflow.config.update({
             'workload_suite': args.workload,
             'benchmarks': [args.benchmark] if args.benchmark else ['all'],
@@ -305,7 +304,7 @@ def main():
         })
     else:
         if not workflow.configure_interactive():
-            log(LogLevel.WARN, "Cancelled by user")
+            Util.log(LogLevel.WARN, "Cancelled by user")
             sys.exit(0)
 
     success = True
@@ -317,15 +316,15 @@ def main():
         workflow.run_step("SimPoint Analysis", "run_simpoint.py")
     workflow.collect_results()
 
-    log(LogLevel.HEADER, "Analysis " + ("Completed" if success else "Failed"))
-    log(LogLevel.INFO, f"Results in: {orchestrator.host_output_dir}")
+    Util.log(LogLevel.HEADER, "Analysis " + ("Completed" if success else "Failed"))
+    Util.log(LogLevel.INFO, f"Results in: {orchestrator.host_output_dir}")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        log(LogLevel.WARN, "Interrupted by user")
+        Util.log(LogLevel.WARN, "Interrupted by user")
         sys.exit(1)
     except Exception as e:
-        log(LogLevel.ERROR, f"Unexpected error: {e}")
+        Util.log(LogLevel.ERROR, f"Unexpected error: {e}")
         sys.exit(1)

@@ -3,7 +3,7 @@
 import yaml
 import shlex
 from pathlib import Path
-from utils.util import log
+from utils.util import Util
 
 class BoardConfig:
     """Board configuration parser with support for tagged sections"""
@@ -17,7 +17,7 @@ class BoardConfig:
     def load_config(self):
         """Load configuration from board-specific file"""
         if not self.config_file.exists():
-            log("ERROR", f"Board config not found: {self.config_file}")
+            Util.log("ERROR", f"Board config not found: {self.config_file}")
             return
         
         with open(self.config_file, 'r') as f:
@@ -43,7 +43,7 @@ class BoardConfig:
                 return shlex.split(value)
             except ValueError as e:
                 # Fallback to simple split if shlex fails (e.g., unmatched quotes)
-                log("WARNING", f"Failed to parse config value '{value}' with shlex: {e}")
+                Util.log("WARNING", f"Failed to parse config value '{value}' with shlex: {e}")
                 return value.split()
         
         return []

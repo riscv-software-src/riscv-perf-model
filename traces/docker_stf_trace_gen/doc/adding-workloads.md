@@ -22,7 +22,9 @@ DEFAULT_WORKLOADS = {
 }
 
 # 2. Add build logic for your workload type
-# no the build logic is done in the yaml fil need to udpat ehat
+# 2. Configure build in YAML (preferred)
+# Build logic is driven by the board YAML under environment/<board>/board.yaml.
+# Add workload-specific flags, sources, and environment files there.
 elif workload_type == "my-benchmark":
     # Your build logic here
     benchmarks = get_my_benchmark_list()
@@ -345,23 +347,23 @@ riscv64-linux-gnu-gcc -static -O2 \
 
 ```bash
 # Build specific benchmark
-./build_workload.py --workload my-benchmark --benchmark test1 --board spike
+python3 flow/build_workload.py --workload my-benchmark --benchmark test1 --emulator spike
 
 # Build all benchmarks  
-./build_workload.py --workload my-benchmark --board qemu --arch rv64
+python3 flow/build_workload.py --workload my-benchmark --emulator qemu --arch rv64
 
 # Build with BBV support
-./build_workload.py --workload my-benchmark --bbv --board spike
+python3 flow/build_workload.py --workload my-benchmark --bbv --emulator spike
 ```
 
 ### Run Test
 
 ```bash
 # Run built workloads
-./run_workload.py --emulator spike --workload test1
+python3 flow/run_workload.py --emulator spike --workload test1
 
 # Run with analysis features
-./run_workload.py --emulator qemu --bbv --trace
+python3 flow/run_workload.py --emulator qemu --bbv --trace
 ```
 
 ### Verify Output
@@ -373,10 +375,10 @@ Check that your workload produces expected results:
 ls -la /workloads/bin/spike/test1
 
 # Check execution logs
-cat /output/spike_output/logs/test1.log
+cat /outputs/spike_output/logs/test1.log
 
 # Check BBV generation (if enabled)
-ls -la /output/spike_output/bbv/test1.bbv
+ls -la /outputs/spike_output/bbv/test1.bbv
 ```
 
 ## Advanced Features
@@ -448,7 +450,7 @@ def build_my_benchmark(bench_name, workload_path, cc, base_cflags, platform, boa
         compiler = cc.replace("gcc", "g++") if source_file.suffix == ".cpp" else cc
         compile_cmd = [compiler, "-c"] + cflags + ["-o", obj_file, str(source_file)]
         run_cmd(compile_cmd)
-    
+
     # Link all objects
     link_cmd = [cc] + base_cflags.split() + ["-o", exe_path] + obj_files + env_objs + ["-lc", "-lm"]
     run_cmd(link_cmd)

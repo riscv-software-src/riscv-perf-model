@@ -1,6 +1,11 @@
 # RISC-V Workload Analysis System
 
-A unified system for building and running RISC-V benchmarks with Spike and QEMU emulators, providing seamless switching between emulators and comprehensive trace generation for performance modeling.
+A unified system for building and running RISC-V benchmarks with Spike and QEMU emulators, providing seamless switching between emulators and comprehensive trace generation for performance model
+
+Reproducability is the goal. 
+Along with a trace archive which records information such as:
+  - binary hash, STF Trace, Simpointed Traces...
+
 
 ## Table of Contents
 
@@ -27,209 +32,154 @@ The toolchain uses [riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-g
 
 
 ```mermaid
-flowchart TD
-    %% Main workflow
-    A[Workload Sources<br/>embench-iot, riscv-tests] --> B[Build System<br/>build_workload.py]
-    B --> C[Emulator Execution<br/>run_workload.py]
-    
-    %% Emulator paths - QEMU mainly for BBV
-    C --> C1[QEMU<br/>BBV Generation]
-    C --> C2[Spike<br/>STF Trace Generation]
-    
-    %% BBV from QEMU
-    C1 --> D[.bbv files<br/>Basic Block Vectors]
-    
-    %% Analysis options
-    D --> E[SimPoint Analysis<br/>run_simpoint.py]
-    D --> S1[Workload Slicing<br/>Work in Progress]
-    
-    %% SimPoint outputs guide Spike STF generation
-    E --> E1[.simpoints + .weights]
-    S1 --> S2[Slice Parameters]
-    
-    %% Generate final STF traces using Spike based on analysis
-    E1 --> ST[Spike STF Generation<br/>SimPoint-guided]
-    S2 --> ST2[Spike STF Generation<br/>Slice-guided]
-    C2 --> D2[Full STF Traces<br/>.zstf files]
-    
-    %% Final reduced traces
-    ST --> F[Reduced STF Traces<br/>SimPoint-based]
-    ST2 --> F2[Reduced STF Traces<br/>Slice-based]
-    
-    %% Trace Archive Integration
-    F --> TA[Trace Archive<br/>trace_archive.py]
-    F2 --> TA
-    D2 --> TA
-    TA --> TA1[Upload/Download<br/>with Metadata]
-    TA --> TA2[Community Archive<br/>Shared Storage]
-    
-    %% Performance Model - Direct and Archive paths
-    F --> G[RISC-V Performance Model<br/>Olympia - STF Only]
-    F2 --> G
-    D2 --> G
-    TA2 --> G
+flowchart TB
+classDef node fill
 
-    %% Configuration inputs
-    B1[board.cfg<br/>Compiler flags] --> B
-    B2[Environment Files<br/>crt0.S, main.c, stub.c] --> B
-    B3[Workload Sources<br/>benchmark functions] --> B
+%% Start
+A[Start]:::node --> B[Build]:::node
 
-    %% Docker environment
-    subgraph Docker ["Docker Container Environment"]
-        B
-        C
-        D
-        E
-        S1
-        ST
-        ST2
-    end
+%% Build split
+B --> C[Compile from source<br/>]:::node
+B --> D[Link existing OBJ/ELF<br/>--input-obj + --entrypoint]:::node
 
-    %% Output persistence
-    subgraph Outputs ["./outputs/ (Host Mounted)"]
-        D
-        D2
-        E1
-        S2
-        F
-        F2
-    end
+%% Artifact
+C --> E[OBJ/ELF artifact<br/>board.yaml: flags, includes, env]:::node
+D --> E
 
-    %% Trace Archive System
-    subgraph Archive ["Trace Archive System"]
-        TA
-        TA1
-        TA2
-    end
+%% Run
+E --> F[run_workload.py<br/>→ .bbv / .zstf]:::node
 
-    %% Styling
-    classDef primary fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef config fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef emulator fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef output fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef wip fill:#fff9c4,stroke:#f57f17,stroke-width:2px,stroke-dasharray: 5 5
-    classDef archive fill:#f1f8e9,stroke:#33691e,stroke-width:2px
-    classDef performance fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+%% Outputs
+F --> G[.bbv]:::node
+F --> H[full .zstf]:::node
 
-    class A,B,C,D,E,ST,ST2 primary
-    class B1,B2,B3 config
-    class C1,C2 emulator
-    class D,D2,E1,S2,F,F2 output
-    class S1 wip
-    class TA,TA1,TA2 archive
-    class G performance
+%% Analyze
+G --> I[run_simpoint.py<br/>→ .simpoints &amp; .weights]:::node
+I --> J[generate_trace.py<br/>sliced STF]:::node
+
+%% Model
+J --> K[run_olympia.py<br/>sliced STF or full STF]:::node
+H --> K
+
+%% End
+K --> L[End]:::node
+
 ```
 Dependencies:
-- `board.cfg` files define compiler flags and source files
+- `board.yaml` files define compiler flags and source files
 - Environment files provide runtime support (crt0.S, main.c, stub.c)
 - Workload-specific sources with benchmark functions
 - Docker containers provide consistent build environment
 
+## Quick Start
 
-## Current Development Roadmap:
+### 1. Build Docker Image
+```bash
+git clone https://github.com/Jatin-exe/riscv-perf-model.git
+cd traces/docker_stf_trace_gen
+docker build -t riscv-perf-model:olympia .
+```
 
-**Work to be done to add flow for:**
-- Workload reduction through checkpoint-based slicing (e.g., functional warming, live-cache checkpoints, time-based sampling)
-- Workload reduction through SimPoint analysis results
-- Add visualizations for clustering results if required to understand the projection and clusters
-- Combine with the flow to generate trace metadata and upload to common trace archive
-- Combine with the flow to interact with trace archive and run traces on Olympia
+### 2. End to End flow
+```bash
+./full_flow.py --workload embench-iot --emulator spike --arch rv32 --platform baremetal --bbv --trace --simpoint --interval-size 10000 --slice --benchmark matmult-int
+```
+Interactive mode asks all settings up-front (workload vs wrapper-link, emulator, arch, platform, BBV/trace/simpoint/sliced vs full-trace, Olympia), then runs the selected pipeline end-to-end.
 
-**Additional enhancements:**
-- Add support for real world workloads (CoreMark, SPEC etc.)
+### 3. Interactive Container Access
+```bash
+# Option 1: Helper script, mounts the output to the host for easy access.
+./run_interactive.sh
+```
+
+
+
+### Mounts and Directories
+- `/flow`: your repo (scripts live here)
+- `/default/environment`: minimal baremetal board environment (crt0.S, main.c, stub.c, util.c, link.ld)
+- `/default`: default workload suites in the image (e.g., `/default/embench-iot`, `/default/riscv-tests`)
+- `/workloads`: optional host-provided workload mount (if present)
+- `/outputs`: all outputs (build artifacts, BBV, SimPoint, slices, Olympia reports)
+  - Built binaries: `/outputs/<emulator>/bin/<workload>/<benchmark>/<benchmark>`
+  - Run outputs: `/outputs/<emulator>/<workload>/<benchmark>/{bbv,traces,logs}`
+  - SimPoint: `/outputs/simpoint_analysis/<bench>.{simpoints,weights}`
+  - Sliced STF: `/outputs/simpointed/<emulator>/<workload>/<benchmark>/*.zstf`
+  - Olympia: `/outputs/olympia_reports/<emulator>/<workload>/<benchmark>/*`
+
+### 4. Results & Logs Structure
+```
+./outputs/
+├── spike/                    # Spike execution results
+│   └── embench-iot/
+│       └── md5sum/
+│           ├── bbv/md5sum.bbv
+│           ├── traces/md5sum.zstf
+│           └── logs/  # emulator stdout/stderr are captured here
+├── qemu/                     # QEMU execution results
+│   └── riscv-tests/
+│       └── dhrystone/
+│           ├── bbv/dhrystone.bbv.0.bb
+│           └── logs/
+├── olympia_reports/          # Olympia reports from STF traces
+│   ├── md5sum.txt
+│   └── slre.txt
+└── spike/                    # Built artifacts (per-emulator bin under each)
+    └── bin/embench-iot/md5sum/
+        ├── obj/*.o
+        └── md5sum            # Executable
+```
+
+
+
 ## Primary Developments
 
-**Config-driven approach** - No hardcoded compiler flags, everything configured through `board.cfg` files, easier to configure build time flags.
+**Config-driven approach** - No hardcoded compiler flags, everything configured through `board.yaml` files, easier to configure build time flags.
 **Persistent outputs** - Results saved to `./outputs/` and persist after container exit  
 **Runtime mounting** - Scripts mounted at runtime, to allow access from host device
 **Modular design** - Easy addition of new workloads and boards
 **Logging to allow Debugging** - Logs the commands executed in the flow to reproduce and understand errors.
 
 
-## Quick Start
 
-### 1. Build Docker Image
-```bash
-docker build -t riscv-perf-model:latest .
-```
+## Workloads: Default vs Custom
 
-### 2. Interactive Workflow
-```bash
-./full_flow.py
-```
-
-This provides an interactive interface allowing seamless workflow management.
-
-### 3. Interactive Container Access
-```bash
-# Option 1: Helper script
-./run_interactive.sh
-
-# Option 2: Manual command
-docker run --rm -it \
-    -v "$(pwd)/outputs:/outputs" \
-    -v "$(pwd):/flow" \
-    -v "$(pwd)/environment:/workloads/environment" \
-    -v "$(pwd)/../workloads:/workloads" \
-    -w /flow \
-    riscv-perf-model:latest bash
-```
-
-### 4. Results Structure
-```
-./outputs/
-├── spike_output/              # Spike execution results
-│   ├── results.txt           # Timing and code size summary
-│   ├── logs/                 # Execution logs per workload
-│   │   ├── md5sum.log
-│   │   └── slre.log
-│   ├── bbv/                  # Basic Block Vector files
-│   │   ├── md5sum.bbv_cpu0   # BBV data for SimPoint
-│   │   └── slre.bbv_cpu0
-│   └── traces/               # STF trace files (detailed)
-│       ├── md5sum.zstf       # Compressed STF traces
-│       └── slre.zstf
-├── qemu_output/              # QEMU execution results  
-│   ├── results.txt
-│   ├── logs/
-│   ├── bbv/                  # BBV files from plugin
-│   │   ├── md5sum_bbv.0.bb
-│   │   └── slre_bbv.0.bb
-│   └── traces/               # Assembly traces (basic)
-│       ├── md5sum_trace.log  # Simple assembly output
-│       └── slre_trace.log
-└── simpoint_output/          # SimPoint analysis results
-    ├── md5sum.simpoints      # Representative intervals
-    ├── md5sum.weights        # Interval weights  
-    └── analysis_summary.json # Complete workflow summary
-```
+- Default suites are baked into the image under `/default`: `embench-iot`, `riscv-tests`, `dhrystone`.
+- Custom suites on the host can be placed under `./workloads` and will mount to `/workloads` in the container.
+- Build always prefers `/workloads/<suite>` when present, else falls back to `/default/<suite>`.
 
 ## Configuration System
 
 ### Board Configuration Files
-Located in `environment/{board}/board.cfg`, using space-separated values:
+Located in `environment/{board}/board.yaml`, using hierarchical YAML:
 
-```ini
-[DEFAULT]
-board = spike
-cc = riscv32-unknown-elf-gcc
-defines = SPIKE=1 CPU_MHZ=1
-
-[rv32.baremetal]
-base_cflags = -march=rv32imafdc -mabi=ilp32d -mcmodel=medany
-base_ldflags = -march=rv32imafdc -mabi=ilp32d -nostartfiles
-libs = -lc -lm
-
-[embench-iot]
-workload_cflags = -Dtrue=1 -Dfalse=0
-environment_files = crt0.S main.c stub.c util.c
-
-[riscv-tests]  
-workload_cflags = -std=gnu99 -Wno-implicit-int
-environment_files = crt0.S main.c stub.c util.c
+```yaml
+board: spike
+defaults:
+  cc: riscv32-unknown-elf-gcc
+  defines: ["CPU_MHZ=1", "WARMUP_HEAT=1"]
+architectures:
+  rv32:
+    platforms:
+      baremetal:
+        cc: riscv32-unknown-elf-gcc
+        arch: rv32imafdc
+        abi: ilp32d
+        base_cflags: ["-march=rv32imafdc", "-mabi=ilp32d", "-mcmodel=medany", "-mno-relax", "-mstrict-align"]
+        base_ldflags: ["-march=rv32imafdc", "-mabi=ilp32d", "-nostartfiles", "-Wl,--no-warn-rwx-segments"]
+workloads:
+  embench-iot:
+    workload_cflags: ["-Dtrue=1", "-Dfalse=0"]
+    platforms:
+      baremetal:
+        environment_files: ["crt0.S", "main.c", "stub.c", "util.c"]
+features:
+  bbv:
+    bbv_cflags: ["-DBBV"]
+  trace:
+    trace_cflags: ["-DTRACE"]
 ```
 
-Compiler flags can be changed by editing `/workloads/environment/{qemu,spike}/board.cfg` files. This allows defining specific compiler flags for any workload, source files, and header files, enabling cleaner addition of new workloads without hardcoding compiler options.
+Compiler flags and ISA are derived from these YAML configs at build/run time.
 
 ### Adding New Workloads
 
@@ -242,6 +192,27 @@ environment_files = crt0.S main.c stub.c util.c
 
 Goal here is to get easier additions of newer workloads by adding their compilation settings.
 
+## Using Precompiled Binaries or Objects
+
+Option A: Run an existing ELF directly
+
+```bash
+python3 flow/run_workload.py --emulator spike --arch rv32 --platform baremetal \
+  --binary /path/to/your.elf --bbv --interval-size 10000
+```
+
+Option B: Link objects with environment wrapper and a custom entrypoint
+
+```bash
+python3 flow/build_workload.py --input-obj your.o another.o --entrypoint your_main \
+  --arch rv32 --platform baremetal --emulator spike
+# Then run the produced binary under /outputs/<emu>/bin/custom/<name>/<name>
+python3 flow/run_workload.py --emulator spike --arch rv32 --platform baremetal \
+  --binary /outputs/spike/bin/custom/<name>/<name> --bbv --interval-size 10000
+```
+
+The runner discovers binaries under `/outputs/<emulator>/bin` and generates outputs under `/outputs/<emulator>/<workload>/<benchmark>/`.
+
 ## Command Examples
 
 ### Interactive Mode
@@ -251,23 +222,31 @@ python3 full_flow.py
 
 ### Direct Script Usage
 
-It is required to build your workload with `--bbv` and `--trace` if generating BBV and traces on spike (See [doc/bbv-trace](doc/bbv-trace))
-
+Build with `--bbv` and/or `--trace` to enable instrumentation. Spike produces STF `.zstf` traces. QEMU can produce STF via plugin.
 
 ```bash
-# Build Embench Workload with instrumentation for BBV generation and Trace
-python3 build_workload.py --workload embench-iot --board spike --arch rv32 --bbv --trace
+# Build Embench workload for Spike w/ BBV + STF trace
+python3 flow/build_workload.py --workload embench-iot --emulator spike --arch rv32 --bbv --trace
 
-# Run the compiled Embench workload on spike with BBV and Trace generation 
-python3 run_workload.py --emulator spike --arch rv32 --bbv --trace
+# Run on Spike, generate BBV + STF
+python3 flow/run_workload.py --emulator spike --arch rv32 --workload embench-iot --bbv --trace --clean
+
+# Run on QEMU, generate BBV and STF via plugin (configurable num instructions)
+python3 flow/run_workload.py --emulator qemu --arch rv64 --workload riscv-tests --bbv --trace \
+  --trace-num-instructions 2000000 --trace-start-instruction 0
 ```
+
+Important: BBV Interval Size
+- The BBV interval size (`--interval-size`) sets SimPoint windowing for BBV collection on Spike and QEMU.
+- If the workload is very small and the interval size is very large, the BBV file can end up empty (no full windows observed). Reduce interval size.
+- For testing SimPoint end-to-end, use a small interval like `--interval-size 10000` to ensure BBV and SimPoint outputs are generated quickly.
 
 ## Environment Structure
 
 Essential files providing the baremetal runtime:
 ```
 environment/{board}/
-├── board.cfg    # Configuration (space-separated flags, sources)
+├── board.yaml   # Configuration (YAML, flags, sources)
 ├── main.c       # Unified main with board support
 ├── crt0.S       # Startup assembly providing _start
 ├── link.ld      # Linker script for memory layout
@@ -276,6 +255,30 @@ environment/{board}/
 ```
 
 The `_start` symbol in crt0.S sets up the baremetal environment, then calls `env_main` which invokes benchmark functions. These functions are designed to be overwritten by the benchmarks being linked. The stub.c provides stub implementations so newlib compiles seamlessly for baremetal workloads.
+
+## CLI Arguments
+
+- flow/build_workload.py
+  - `--workload`: suite (embench-iot | riscv-tests | dhrystone)
+  - `--emulator`: spike | qemu
+  - `--arch`: rv32 | rv64
+  - `--platform`: baremetal | linux
+  - `--benchmark`: build only a specific benchmark (optional)
+  - `--bbv`, `--trace`: add instrumentation
+  - DEBUG=1 prints parsed config (cc/cflags/ldflags)
+
+- flow/run_workload.py
+  - `--emulator`: spike | qemu
+  - `--arch`, `--platform`
+  - `--workload`: suite
+  - `--benchmark`: specific benchmark (optional; if omitted, runs all)
+  - `--bbv`, `--trace`, `--interval-size`
+  - `--trace-num-instructions`, `--trace-start-instruction` (QEMU STF plugin)
+
+- flow/run_simpoint.py
+  - `--emulator`: spike | qemu
+  - `--workload`: suite
+  - `--max-k`: SimPoint K
 
 ## Performance Comparison
 
@@ -298,9 +301,37 @@ QEMU advantage: 2.70x faster
 More in [doc/emulator-comparison](doc/emulator-comparison)
 
 
-### STF Trace Generation
+### Trace Generation
+- Spike: Detailed STF (`.zstf`) via `--stf_macro_tracing`.
+- QEMU: STF via plugin (`/usr/lib/libstfmem.so`) using dyn_insn_count mode; configurable with `--trace-num-instructions` and `--trace-start-instruction`.
 
-Read the [generate trace](generate_trace.md) file for details.
+Olympia (riscv-perf-model) is built into the image and exposed as `olympia`.
+
+Generate STF (sliced or full) inside the container:
+
+Inside the container, prefer the container-native generator (uses `/outputs` state):
+```
+# SimPoint-sliced STF for Spike; auto-reads interval_size from run_meta.json
+python3 flow/generate_trace.py --emulator spike --workload embench-iot --benchmark aha-mont64 --sliced --verify --dump --clean
+
+# One-shot slice of N instructions (Spike or QEMU) starting at 0
+python3 flow/generate_trace.py --emulator spike --workload embench-iot --benchmark aha-mont64 --interval-size 2000000 --clean
+
+# Run Olympia on sliced traces
+python3 flow/run_olympia.py --dir /outputs/simpointed/spike/embench-iot/aha-mont64 --interval 10000 --clean
+```
+
+## Current Development Roadmap:
+
+**Work to be done to add flow for:**
+- Add visualizations for clustering results if required to understand the projection and clusters
+- Combine with the flow to generate trace metadata and upload to common trace archive
+- Combine with the flow to interact with trace archive and run traces on Olympia
+
+**Additional enhancements:**
+- Add support for real world workloads (CoreMark, SPEC etc.)
+
+
 
 ## Documentation
 

@@ -1,16 +1,17 @@
 import datetime
 import os
 import re
+from pathlib import Path
 from typing import Dict, Literal, Optional
 from elftools.elf.elffile import ELFFile
-from utils.util import Util
-from utils.docker_orchestrator import DockerOrchestrator
+from utils.util import Util, CommandError
+from data.consts import Const
 from data.metadata import Author, InstructionCountModeInterval, IpModeInterval, Metadata, Stf, Workload
 
 
-class MetadataFactory():
-    def __init__(self, docker: DockerOrchestrator):
-        self.docker = docker
+class MetadataFactory:
+    def __init__(self):
+        pass
 
     def create(
         self,
@@ -83,7 +84,13 @@ class MetadataFactory():
         return result
 
     def _get_stf_info(self, trace_path: str) -> Dict[str, str]:
-        trace_info = self.docker.run_stf_tool("stf_trace_info", trace_path).decode('utf-8')
+        tool = Path(Const.STF_TOOLS) / "stf_trace_info" / "stf_trace_info"
+        try:
+            result = Util.run_cmd([str(tool), trace_path])
+        except CommandError as err:
+            Util.error(f"Failed to run stf_trace_info: {err}")
+            return {}
+        trace_info = result.stdout
 
         metadata = {}
         values_section = []

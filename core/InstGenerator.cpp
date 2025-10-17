@@ -82,11 +82,12 @@ namespace olympia
         }
         else
         {
-            if (const auto it = jinst.find("mnemonic"); it == jinst.end())
+            const auto mit = jinst.find("mnemonic");
+            if (mit == jinst.end())
             {
                 throw sparta::SpartaException() << "Missing mnemonic at " << curr_inst_index_;
             }
-            const std::string mnemonic = boost::json::serialize(jinst.at("mnemonic"));
+            const std::string mnemonic = boost::json::value_to<std::string>(mit->value());
 
             auto addElement = [&jinst](mavis::OperandInfo & operands, const std::string & key,
                                        const mavis::InstMetaData::OperandFieldID operand_field_id,

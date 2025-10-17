@@ -1,8 +1,11 @@
 // <Execute.cpp> -*- C++ -*-
+
+#include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/simulation/ResourceTreeNode.hpp"
+
 #include "execute/Execute.hpp"
 #include "CoreUtils.hpp"
 #include "execute/IssueQueue.hpp"
-#include "sparta/utils/SpartaAssert.hpp"
 
 namespace olympia
 {

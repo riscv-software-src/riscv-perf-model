@@ -63,8 +63,11 @@ set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g -U_FORTIFY_SOURCE")
 # Include directories
 include_directories (core mss sim)
 include_directories (SYSTEM fsl)
-include_directories (SYSTEM mavis)
+include_directories (SYSTEM mavis mavis/elfio)
 include_directories (SYSTEM stf_lib)
+
+# Include dead header files that we can't remove just yet
+include_directories (deprecated)
 
 # Mavis
 add_subdirectory (mavis)
@@ -87,8 +90,9 @@ add_subdirectory (test EXCLUDE_FROM_ALL)
 add_executable(olympia
   sim/OlympiaSim.cpp
   sim/main.cpp
-  )
+)
 target_link_libraries (olympia core mss SPARTA::sparta ${STF_LINK_LIBS})
+
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   target_compile_options (core    PUBLIC -flto)
   target_compile_options (mss     PUBLIC -flto)

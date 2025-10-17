@@ -1,7 +1,7 @@
 
 #include "InstGenerator.hpp"
-#include "json.hpp" // From Mavis
 #include "mavis/Mavis.h"
+#include "mavis/JSONUtils.hpp"
 
 namespace olympia
 {
@@ -43,16 +43,13 @@ namespace olympia
 
         try
         {
-            fs.open(filename);
+            jobj_ = mavis::parseJSON(filename).as_array();
         }
         catch (const std::ifstream::failure & e)
         {
             throw sparta::SpartaException("ERROR: Issues opening ") << filename << ": " << e.what();
         }
-
-        jobj_.reset(new nlohmann::json);
-        fs >> *jobj_;
-        n_insts_ = jobj_->size();
+        n_insts_ = jobj_.size();
     }
 
     bool JSONInstGenerator::isDone() const { return (curr_inst_index_ >= n_insts_); }
@@ -76,28 +73,28 @@ namespace olympia
         }
 
         // Get the JSON record at the current index
-        nlohmann::json jinst = jobj_->at(curr_inst_index_);
+        const auto jinst = jobj_.at(curr_inst_index_).as_object();
         InstPtr inst;
-        if (jinst.find("opcode") != jinst.end())
+        if (const auto it = jinst.find("opcode"); it != jinst.end())
         {
-            uint64_t opcode = std::strtoull(jinst["opcode"].get<std::string>().c_str(), nullptr, 0);
+            uint64_t opcode = std::strtoull(it->value().as_string().c_str(), nullptr, 0);
             inst = mavis_facade_->makeInst(opcode, clk);
         }
         else
         {
-            if (jinst.find("mnemonic") == jinst.end())
+            if (const auto it = jinst.find("mnemonic"); it == jinst.end())
             {
                 throw sparta::SpartaException() << "Missing mnemonic at " << curr_inst_index_;
             }
-            const std::string mnemonic = jinst["mnemonic"];
+            const std::string mnemonic = boost::json::serialize(jinst.at("mnemonic"));
 
             auto addElement = [&jinst](mavis::OperandInfo & operands, const std::string & key,
                                        const mavis::InstMetaData::OperandFieldID operand_field_id,
                                        const mavis::InstMetaData::OperandTypes operand_type)
             {
-                if (jinst.find(key) != jinst.end())
+                if (const auto it = jinst.find(key);  it != jinst.end())
                 {
-                    operands.addElement(operand_field_id, operand_type, jinst[key].get<uint64_t>());
+                    operands.addElement(operand_field_id, operand_type, boost::json::value_to<uint64_t>(it->value()));
                 }
             };
 
@@ -123,9 +120,9 @@ namespace olympia
             addElement(dests, "vd", mavis::InstMetaData::OperandFieldID::RD,
                        mavis::InstMetaData::OperandTypes::VECTOR);
 
-            if (jinst.find("imm") != jinst.end())
+            if (const auto it = jinst.find("imm"); it != jinst.end())
             {
-                const uint64_t imm = jinst["imm"].get<uint64_t>();
+                const uint64_t imm = boost::json::value_to<uint64_t>(it->value());
                 mavis::ExtractorDirectOpInfoList ex_info(mnemonic, srcs, dests, imm);
                 inst = mavis_facade_->makeInstDirectly(ex_info, clk);
             }
@@ -135,19 +132,19 @@ namespace olympia
                 inst = mavis_facade_->makeInstDirectly(ex_info, clk);
             }
 
-            if (jinst.find("vaddr") != jinst.end())
+            if (const auto it = jinst.find("vaddr"); it != jinst.end())
             {
                 uint64_t vaddr =
-                    std::strtoull(jinst["vaddr"].get<std::string>().c_str(), nullptr, 0);
+                    std::strtoull(it->value().as_string().c_str(), nullptr, 0);
                 inst->setTargetVAddr(vaddr);
             }
 
             VectorConfigPtr vector_config = inst->getVectorConfig();
-            if (jinst.find("vtype") != jinst.end())
+            if (const auto it = jinst.find("vtype"); it != jinst.end())
             {
                 // immediate, so decode from hex
                 uint64_t vtype =
-                    std::strtoull(jinst["vtype"].get<std::string>().c_str(), nullptr, 0);
+                    std::strtoull(it->value().as_string().c_str(), nullptr, 0);
                 std::string binaryString = std::bitset<32>(vtype).to_string();
                 uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
                 uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
@@ -155,21 +152,21 @@ namespace olympia
                 vector_config->setSEW(sew);
             }
 
-            if (jinst.find("vta") != jinst.end())
+            if (const auto it = jinst.find("vta"); it != jinst.end())
             {
-                const bool vta = jinst["vta"].get<uint64_t>() > 0 ? true : false;
+                const bool vta = boost::json::value_to<uint64_t>(it->value()) > 0 ? true : false;
                 vector_config->setVTA(vta);
             }
 
-            if (jinst.find("vl") != jinst.end())
+            if (const auto it = jinst.find("vl"); it != jinst.end())
             {
-                const uint64_t vl = jinst["vl"].get<uint64_t>();
+                const uint64_t vl = boost::json::value_to<uint64_t>(it->value());
                 vector_config->setVL(vl);
             }
 
-            if (jinst.find("taken") != jinst.end())
+            if (const auto it = jinst.find("taken"); it != jinst.end())
             {
-                const bool taken = jinst["taken"].get<bool>();
+                const bool taken = boost::json::value_to<uint64_t>(it->value());
                 inst->setTakenBranch(taken);
             }
         }

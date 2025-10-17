@@ -1,7 +1,7 @@
 // Support methods for the fusion decoder
 // 2024.07.25 Jeff Nye
 
-#include "fsl_api/FusionTypes.h"
+//#include "fsl_api/FusionTypes.h"
 #include "Decode.hpp"
 
 #include "sparta/events/StartupEvent.hpp"

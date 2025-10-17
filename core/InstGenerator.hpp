@@ -12,13 +12,10 @@
 
 #include "Inst.hpp"
 #include "decode/MavisUnit.hpp"
+#include "mavis/JSONUtils.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
 
 #include "stf-inc/stf_inst_reader.hpp"
-
-namespace nlohmann {
-    using json = class nlohmann::basic_json<>;
-}
 
 namespace olympia
 {
@@ -61,9 +58,9 @@ namespace olympia
 
 
     private:
-        std::unique_ptr<nlohmann::json> jobj_;
-        uint64_t                        curr_inst_index_ = 0;
-        uint64_t                        n_insts_ = 0;
+        boost::json::array  jobj_;
+        uint64_t            curr_inst_index_ = 0;
+        uint64_t            n_insts_ = 0;
     };
 
     // Generates instructions from an STF Trace file

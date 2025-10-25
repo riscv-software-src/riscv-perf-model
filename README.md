@@ -36,10 +36,14 @@ under development.
    * (libhdf5-dev) HDF5 1.10.7
    * (clang++) Clang, Version: 14.0.0 OR (g++) v13.0.0 or greater
 
-1. Build Olympia, highly optimized, optimzed with debug, or debug.  If
-   sparta was NOT installed in the standand locations, the user can
-   specify the path to sparta by setting
-   `-DSPARTA_SEARCH_DIR=/path/to/sparta/install/` to `cmake`
+1. Build Olympia in one of three modes (see below):
+   * `release`: Highly optimized, no debug w/ LTO (if supported)
+   * `fastdebug`: Optimized, no LTO, with debug information
+   * `debug`: All optimizations are disabled
+
+If sparta was NOT installed in the standand locations, the user can
+specify the path to sparta by setting
+`-DSPARTA_SEARCH_DIR=/path/to/sparta/install/` to `cmake`
 
 ```
 ################################################################################
@@ -50,7 +54,7 @@ mkdir release; cd release
 
 # Assumes sparta was installed on the local machine
 # If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=release
 
 # Just builds the simulator
 make olympia

@@ -29,7 +29,7 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Cmake for Sparta framework failed"
     exit 1
 fi
-make -j$NUM_CORES install
+sudo make -j$NUM_CORES install
 BUILD_SPARTA=$?
 if [ ${BUILD_SPARTA} -ne 0 ]; then
     echo "ERROR: build sparta FAILED!!!"

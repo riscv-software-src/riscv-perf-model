@@ -40,18 +40,11 @@ jobs:
           path: map
           ref: map_v2.0.21
 
-      # Setup Conda and build environment
+      # Setup build environment
       - name: Grab Python v3.8
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-
-      # Cache the conda dependencies to
-      - name: Cache conda deps
-        uses: actions/cache@v3
-        with:
-          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-conda-${{ hashFiles('.github/workflows/conda/environment.yml') }}
-          path: /usr/share/miniconda/envs/riscv_perf_model # Default path for conda
 
       # Setup CCache to cache builds
       - name: ccache
@@ -62,12 +55,11 @@ jobs:
             ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache-master
             ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache
 
-      - name: Setup Conda Environment
+      # Install missing packages to make everything build
+      - name: Install packages needed for sparta/olympia
         run: |
-          # $CONDA is an environment variable pointing to the root of the miniconda directory
-          $CONDA/bin/conda config --set channel_priority strict
-          $CONDA/bin/conda env update --file  ${{ github.workspace }}/.github/workflows/conda/environment.yml
-          $CONDA/bin/conda init bash
+          sudo apt-get update --fix-missing
+          sudo apt-get install libboost-all-dev libyaml-cpp-dev rapidjson-dev libhdf5-dev llvm lld
 
       # Build
       - name: Build & Regress

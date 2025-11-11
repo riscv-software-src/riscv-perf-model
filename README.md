@@ -21,30 +21,40 @@ under development.
 
 ## Building
 
-1. Set up a clean working `conda` environment by following the directions [here](https://github.com/riscv-software-src/riscv-perf-model/tree/master/conda)
-1. Download and build Sparta and checkout branch [map_v2](https://github.com/sparcians/map/tree/map_v2).  Follow the directions on the [Sparta README](https://github.com/sparcians/map/tree/map_v2#building-map) to build _and install_ Sparta
-1. Make sure you have the [required libraries](https://github.com/sparcians/stf_lib#required-packages) for the STF toolsuite installed
-1. Clone olympia
+1. Clone olympia, making sure this is done recursively.
    ```
    git clone --recursive git@github.com:riscv-software-src/riscv-perf-model.git
    ```
-1. Build Olympia in the new `conda` environment created
+1. Before building, make sure the following packages are installed:
+
+   * Sparta v2: https://github.com/sparcians/map?tab=readme-ov-file#simple
+   * (cmake) cmake v3.22
+   * (libboost-all-dev) boost 1.78.0
+   * (yaml-cpp-dev) YAML CPP 0.7.0
+   * (rapidjson-dev) RapidJSON CPP 1.1.0
+   * (libsqlite3-dev) SQLite3 3.37.2
+   * (libhdf5-dev) HDF5 1.10.7
+   * (clang++) Clang, Version: 14.0.0 OR (g++) v13.0.0 or greater
+
+1. Build Olympia in one of three modes (see below):
+   * `release`: Highly optimized, no debug w/ LTO (if supported)
+   * `fastdebug`: Optimized, no LTO, with debug information
+   * `debug`: All optimizations are disabled
+
+If sparta was NOT installed in the standand locations, the user can
+specify the path to sparta by setting
+`-DSPARTA_SEARCH_DIR=/path/to/sparta/install/` to `cmake`
 
 ```
-
-################################################################################
-# Enable conda environment (suggested)
-conda activate sparta
-
 ################################################################################
 # Optimized, no symbols
 
 # A release build
 mkdir release; cd release
 
-# Assumes sparta was installed in the conda environment.
+# Assumes sparta was installed on the local machine
 # If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=release
 
 # Just builds the simulator
 make olympia
@@ -55,7 +65,7 @@ make olympia
 # A FastDebug build
 mkdir fastdebug; cd fastdebug
 
-# Assumes sparta was installed in the conda environment.
+# Assumes sparta was installed on the local machine
 # If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
 cmake .. -DCMAKE_BUILD_TYPE=fastdebug
 
@@ -68,7 +78,7 @@ make olympia
 # A debug build
 mkdir debug; cd debug
 
-# Assumes sparta was installed in the conda environment.
+# Assumes sparta was installed on the local machine
 # If not, use -DSPARTA_SEARCH_DIR=/path/to/sparta/install
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 
@@ -284,11 +294,11 @@ top.cpu.core0.extension.core_extensions:
   # ["0", "3"] means iq0 has exe0, exe1, exe2, and exe3, so it's inclusive
   # if you want just one execution unit to issue queue you can do:
   # ["0"] which would result in iq0 -> exe0
-  # *note if you change the number of issue queues, 
+  # *note if you change the number of issue queues,
   # you need to add it to latency matrix below
 
   issue_queue_to_pipe_map:
-  [ 
+  [
     ["0", "1"], # iq0 -> exe0, exe1
     ["2", "3"], # iq1 -> exe2, exe3
     ["4", "5"], # iq2 -> exe4, exe5
@@ -302,7 +312,7 @@ The `pipelines` section defines for each execution unit, what are it's pipe targ
 The `issue_queue_to_pipe_map` defines which execution units map to which issue queues, with the position being the issue queue number. So in the above `["0", "1"]` in the first row is the first issue queue that connects to `exe0` and `exe1`, so do note it's inclusive of the end value. If one wanted to have a one execution unit to issue queue mapping, the above would turn into:
 ```
 issue_queue_to_pipe_map:
-  [ 
+  [
     ["0"], # iq0 -> exe0
     ["1"], # iq1 -> exe1
     ["2"], # iq2 -> exe2

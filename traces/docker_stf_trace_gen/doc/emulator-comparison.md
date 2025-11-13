@@ -38,7 +38,7 @@ Overall speedup: 0.37x (QEMU 2.70x faster)
 - **Spike**: Generates detailed STF (System Trace Format) traces with instruction-level detail
 - **QEMU**: Generates simple assembly traces using `-d in_asm` output
 
-QEMU can generate STF traces via a plugin (libstfmem), while Spike generates STF natively.
+QEMU can generate STF traces via a plugin (libstfmem), while the Spike [condor computing fork](https://github.com/condorcomputing/condor.riscv-isa-sim) generates STF.
 
 ### Performance Recommendations
 

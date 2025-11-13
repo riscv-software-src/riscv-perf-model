@@ -64,8 +64,6 @@ RUN git config --global url."https://github.com/".insteadOf "git@github.com:" &&
     git config --global user.email "builder@docker.com" && \
     git config --global user.name "Docker Builder"
 
-# Create directory structure
-RUN mkdir -p /workloads /outputs /workspace $RISCV
 
 # Clone repositories in RISCV directory
 WORKDIR $RISCV

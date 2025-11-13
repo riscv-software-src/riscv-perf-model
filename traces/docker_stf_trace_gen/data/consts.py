@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Const:
-    DOCKER_IMAGE_NAME = "riscv-perf-model:olympia"
+    DOCKER_IMAGE_NAME = "riscv-perf-model:latest"
 
     CONTAINER_FLOW_ROOT = "/flow"
     CONTAINER_OUTPUT_ROOT = "/outputs"

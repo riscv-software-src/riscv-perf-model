@@ -21,7 +21,7 @@ from flow.utils.paths import BenchmarkPaths, simpoint_analysis_root
 from flow.utils.util import CommandError, Util
 
 
-def _resolve_output(binary: Path, output: Optional[str]) -> Path:
+def resolve_output(binary: Path, output: Optional[str]) -> Path:
     if output is None:
         return binary.with_suffix(".zstf")
     candidate = Path(output)
@@ -32,7 +32,7 @@ def _resolve_output(binary: Path, output: Optional[str]) -> Path:
     raise SystemExit("--output must point to a directory or .zstf/.stf file")
 
 
-def _run_single(args: argparse.Namespace) -> None:
+def run_single(args: argparse.Namespace) -> None:
     binary = Path(args.binary).resolve()
     if not binary.exists():
         raise SystemExit(f"Binary not found: {binary}")
@@ -124,7 +124,7 @@ def _run_single(args: argparse.Namespace) -> None:
     Util.info(f"Trace generated at {output_path}")
 
 
-def _parse_simpoints(simpoints: Path, weights: Path) -> List[Dict[str, float]]:
+def parse_simpoints(simpoints: Path, weights: Path) -> List[Dict[str, float]]:
     if not simpoints.exists() or not weights.exists():
         raise SystemExit("SimPoint files missing")
 
@@ -151,7 +151,7 @@ def _parse_simpoints(simpoints: Path, weights: Path) -> List[Dict[str, float]]:
     return entries
 
 
-def _verify_trace(trace_path: Path, expected: int) -> Dict[str, object]:
+def verify_trace(trace_path: Path, expected: int) -> Dict[str, object]:
     count_tool = Path(Const.STF_TOOLS) / "stf_count" / "stf_count"
     if not count_tool.exists():
         Util.warn("stf_count not available; skipping verification")
@@ -167,7 +167,7 @@ def _verify_trace(trace_path: Path, expected: int) -> Dict[str, object]:
     return {"verified": verified, "counted": counted}
 
 
-def _dump_trace(trace_path: Path) -> None:
+def dump_trace(trace_path: Path) -> None:
     dump_tool = Path(Const.STF_TOOLS) / "stf_dump" / "stf_dump"
     if not dump_tool.exists():
         Util.warn("stf_dump not available; skipping dump")
@@ -180,7 +180,7 @@ def _dump_trace(trace_path: Path) -> None:
     trace_path.with_suffix(".dump").write_text(dump_result.stdout)
 
 
-def _run_sliced(args: argparse.Namespace) -> None:
+def run_sliced(args: argparse.Namespace) -> None:
     paths = BenchmarkPaths(args.emulator, args.workload, args.benchmark)
     run_meta_path = paths.run_meta_path
     if not run_meta_path.exists():
@@ -322,9 +322,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     if args.command == "single":
-        _run_single(args)
+        run_single(args)
     else:
-        _run_sliced(args)
+        run_sliced(args)
 
 
 if __name__ == "__main__":

@@ -3,21 +3,24 @@
 from __future__ import annotations
 
 import shlex
-import subprocess
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
+
+import docker
+from docker.errors import DockerException
 
 from data.consts import Const
 from flow.utils.util import CommandError, CommandResult, Util
 
 
 class DockerOrchestrator:
-    """Small wrapper around ``docker run`` with the mounts we expect."""
+    """Wrapper around the Python Docker client with our standard mounts."""
 
     def __init__(self, image: str | None = None) -> None:
         self.image = image or Const.DOCKER_IMAGE_NAME
         self.project_root = Path(__file__).resolve().parents[2]
         self.mounts = self._default_mounts()
+        self.client = docker.from_env()
 
     def _default_mounts(self) -> list[tuple[Path, str]]:
         mounts: list[tuple[Path, str]] = []
@@ -33,14 +36,11 @@ class DockerOrchestrator:
             mounts.append((workloads_dir, Const.CONTAINER_WORKLOAD_ROOT))
         return mounts
 
-    def _docker_prefix(self, workdir: str, interactive: bool) -> list[str]:
-        cmd = ["docker", "run", "--rm"]
-        if interactive:
-            cmd.append("-it")
+    def _volume_bindings(self) -> dict[str, dict[str, str]]:
+        volumes: dict[str, dict[str, str]] = {}
         for host, container in self.mounts:
-            cmd.extend(["-v", f"{host.resolve()}:{container}"])
-        cmd.extend(["-w", workdir, self.image])
-        return cmd
+            volumes[str(host.resolve())] = {"bind": container, "mode": "rw"}
+        return volumes
 
     def run(
         self,
@@ -48,10 +48,37 @@ class DockerOrchestrator:
         *,
         workdir: str = Const.CONTAINER_FLOW_ROOT,
         interactive: bool = False,
-    ) -> subprocess.CompletedProcess:
-        docker_cmd = self._docker_prefix(workdir, interactive) + ["bash", "-lc", shlex.join(command)]
-        Util.info("Docker exec: " + " ".join(docker_cmd))
-        result = subprocess.run(docker_cmd)
-        if result.returncode != 0:
-            raise CommandError(CommandResult(tuple(docker_cmd), result.returncode, "", ""))
+    ) -> CommandResult:
+        argv = tuple(str(part) for part in command)
+        inner_cmd = shlex.join(argv)
+        Util.info(f"Docker exec ({workdir}): {inner_cmd}")
+
+        container = None
+        stdout = ""
+        stderr = ""
+        try:
+            container = self.client.containers.run(
+                image=self.image,
+                command=["bash", "-lc", inner_cmd],
+                working_dir=workdir,
+                volumes=self._volume_bindings(),
+                tty=interactive,
+                stdin_open=interactive,
+                detach=True,
+            )
+            exit_status = container.wait()
+            stdout = (container.logs(stdout=True, stderr=False) or b"").decode()
+            stderr = (container.logs(stdout=False, stderr=True) or b"").decode()
+            result = CommandResult(argv, exit_status.get("StatusCode", 1), stdout, stderr)
+        except DockerException as exc:
+            result = CommandResult(argv, 1, stdout, f"Docker error: {exc}")
+        finally:
+            if container is not None:
+                try:
+                    container.remove(force=True)
+                except DockerException as cleanup_err:
+                    Util.warn(f"Docker cleanup failed: {cleanup_err}")
+
+        if not result.ok:
+            raise CommandError(result)
         return result

@@ -25,23 +25,91 @@ def resolve_output(binary: Path, output: Optional[str]) -> Path:
     if output is None:
         return binary.with_suffix(".zstf")
     candidate = Path(output)
-    if candidate.is_dir():
+    if candidate.exists() and candidate.is_dir():
         return candidate / (binary.stem + ".zstf")
     if candidate.suffix in {".zstf", ".stf"}:
         return candidate
+    if not candidate.exists() and not candidate.suffix:
+        return candidate / (binary.stem + ".zstf")
     raise SystemExit("--output must point to a directory or .zstf/.stf file")
 
 
-def run_single(args: argparse.Namespace) -> None:
-    binary = Path(args.binary).resolve()
-    if not binary.exists():
-        raise SystemExit(f"Binary not found: {binary}")
+def write_metadata(trace_path: Path, metadata) -> Path:
+    metadata_path = trace_path.with_suffix(".metadata.json")
+    metadata_path.write_text(json.dumps(asdict(metadata), indent=2) + "\n")
+    return metadata_path
 
-    output_path = _resolve_output(binary, args.output).resolve()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if args.emulator == "spike":
-        cmd = ["spike"]
+def run_stf_tool(tool: str, trace_path: Path) -> Optional[str]:
+    tool_binary = Path(Const.STF_TOOLS) / tool / tool
+    if not tool_binary.exists():
+        Util.warn(f"{tool} tool not available; skipping")
+        return None
+    try:
+        result = Util.run_cmd([str(tool_binary), str(trace_path)])
+    except CommandError as err:
+        Util.warn(f"{tool} failed: {err}")
+        return None
+    return result.stdout
+
+
+def dump_trace(trace_path: Path) -> None:
+    dump_stdout = run_stf_tool("stf_dump", trace_path)
+    if dump_stdout is None:
+        return
+    trace_path.with_suffix(".dump").write_text(dump_stdout)
+
+
+def verify_trace(trace_path: Path, expected: int) -> Dict[str, object]:
+    output = run_stf_tool("stf_count", trace_path)
+    if output is None:
+        return {"verified": None, "counted": None}
+    numbers = [int(x) for x in re.findall(r"\d+", output)]
+    counted = numbers[-1] if numbers else None
+    verified = counted is not None and abs(counted - expected) <= 1
+    return {"verified": verified, "counted": counted}
+
+
+class TraceGenerator:
+    """Encapsulates single-trace generation for reuse across scripts."""
+
+    def __init__(self, metadata_factory: Optional[MetadataFactory] = None) -> None:
+        self.metadata_factory = metadata_factory or MetadataFactory()
+
+    def run(self, args: argparse.Namespace) -> Path:
+        binary = Path(args.binary).resolve()
+        if not binary.exists():
+            raise SystemExit(f"Binary not found: {binary}")
+
+        output_path = resolve_output(binary, args.output).resolve()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self._run_trace(args, binary, output_path)
+        metadata = self._build_metadata(args, binary, output_path)
+        write_metadata(output_path, metadata)
+
+        if getattr(args, "dump", False):
+            dump_trace(output_path)
+
+        Util.info(f"Trace generated at {output_path}")
+        return output_path
+
+    def _run_trace(self, args: argparse.Namespace, binary: Path, output_path: Path) -> None:
+        if args.emulator == "spike":
+            cmd = self._spike_command(args, binary, output_path)
+        elif args.emulator == "qemu":
+            cmd = self._qemu_command(args, binary, output_path)
+        else:
+            raise SystemExit(f"Unsupported emulator: {args.emulator}")
+
+        Util.info("Generating trace: " + " ".join(str(part) for part in cmd))
+        try:
+            Util.run_cmd(cmd)
+        except CommandError as err:
+            raise SystemExit(str(err))
+
+    def _spike_command(self, args: argparse.Namespace, binary: Path, output_path: Path) -> List[str]:
+        cmd: List[str] = ["spike"]
         if args.isa:
             cmd.append(f"--isa={args.isa}")
         cmd.extend(["--stf_trace_memory_records", f"--stf_trace={output_path}"])
@@ -51,25 +119,28 @@ def run_single(args: argparse.Namespace) -> None:
         elif args.mode == "insn_count":
             if args.num_instructions is None:
                 raise SystemExit("--num-instructions is required for insn_count mode")
-            cmd.extend([
-                "--stf_insn_num_tracing",
-                "--stf_insn_start",
-                str(args.start_instruction or 0),
-                "--stf_insn_count",
-                str(args.num_instructions),
-            ])
+            cmd.extend(
+                [
+                    "--stf_insn_num_tracing",
+                    "--stf_insn_start",
+                    str(args.start_instruction or 0),
+                    "--stf_insn_count",
+                    str(args.num_instructions),
+                ]
+            )
         else:
             raise SystemExit("Spike does not support pc_count mode")
 
         if args.pk:
             cmd.append(Const.SPIKE_PK)
         cmd.append(str(binary))
+        return cmd
 
-    else:  # QEMU
+    def _qemu_command(self, args: argparse.Namespace, binary: Path, output_path: Path) -> List[str]:
         bits = 32 if args.arch == "rv32" else 64
-        cmd = [f"qemu-riscv{bits}", str(binary)]
-        plugin = Const.LIBSTFMEM
-        if not Path(plugin).exists():
+        cmd: List[str] = [f"qemu-riscv{bits}", str(binary)]
+        plugin = Path(Const.LIBSTFMEM)
+        if not plugin.exists():
             raise SystemExit(f"STF plugin not found: {plugin}")
 
         if args.mode == "insn_count":
@@ -89,39 +160,29 @@ def run_single(args: argparse.Namespace) -> None:
             )
         else:
             raise SystemExit("Macro tracing is not available via QEMU")
+
         cmd.extend(["-plugin", plugin_cfg, "-d", "plugin"])
+        return cmd
 
-    Util.info("Generating trace: " + " ".join(cmd))
-    try:
-        Util.run_cmd(cmd)
-    except CommandError as err:
-        raise SystemExit(str(err))
-
-    metadata = MetadataFactory().create(
-        workload_path=str(binary),
-        trace_path=str(output_path),
-        trace_interval_mode={
+    def _build_metadata(self, args: argparse.Namespace, binary: Path, output_path: Path):
+        interval_mode = {
             "macro": "macro",
             "insn_count": "instructionCount",
             "pc_count": "ip",
-        }[args.mode],
-        start_instruction=args.start_instruction,
-        num_instructions=args.num_instructions,
-        start_pc=args.start_pc,
-        pc_threshold=args.pc_threshold,
-    )
-    metadata_path = output_path.with_suffix(".metadata.json")
-    metadata_path.write_text(json.dumps(asdict(metadata), indent=2) + "\n")
+        }[args.mode]
+        return self.metadata_factory.create(
+            workload_path=str(binary),
+            trace_path=str(output_path),
+            trace_interval_mode=interval_mode,
+            start_instruction=getattr(args, "start_instruction", None),
+            num_instructions=getattr(args, "num_instructions", None),
+            start_pc=getattr(args, "start_pc", None),
+            pc_threshold=getattr(args, "pc_threshold", None),
+        )
 
-    if args.dump:
-        dump_tool = Path(Const.STF_TOOLS) / "stf_dump" / "stf_dump"
-        if dump_tool.exists():
-            dump_result = Util.run_cmd([str(dump_tool), str(output_path)])
-            output_path.with_suffix(".dump").write_text(dump_result.stdout)
-        else:
-            Util.warn("stf_dump tool not available; skipping dump")
 
-    Util.info(f"Trace generated at {output_path}")
+def run_single(args: argparse.Namespace) -> None:
+    TraceGenerator().run(args)
 
 
 def parse_simpoints(simpoints: Path, weights: Path) -> List[Dict[str, float]]:
@@ -151,35 +212,6 @@ def parse_simpoints(simpoints: Path, weights: Path) -> List[Dict[str, float]]:
     return entries
 
 
-def verify_trace(trace_path: Path, expected: int) -> Dict[str, object]:
-    count_tool = Path(Const.STF_TOOLS) / "stf_count" / "stf_count"
-    if not count_tool.exists():
-        Util.warn("stf_count not available; skipping verification")
-        return {"verified": None, "counted": None}
-    try:
-        result = Util.run_cmd([str(count_tool), str(trace_path)])
-    except CommandError as err:
-        Util.warn(f"stf_count failed: {err}")
-        return {"verified": None, "counted": None}
-    numbers = [int(x) for x in re.findall(r"\d+", result.stdout)]
-    counted = numbers[-1] if numbers else None
-    verified = counted is not None and abs(counted - expected) <= 1
-    return {"verified": verified, "counted": counted}
-
-
-def dump_trace(trace_path: Path) -> None:
-    dump_tool = Path(Const.STF_TOOLS) / "stf_dump" / "stf_dump"
-    if not dump_tool.exists():
-        Util.warn("stf_dump not available; skipping dump")
-        return
-    try:
-        dump_result = Util.run_cmd([str(dump_tool), str(trace_path)])
-    except CommandError as err:
-        Util.warn(f"stf_dump failed: {err}")
-        return
-    trace_path.with_suffix(".dump").write_text(dump_result.stdout)
-
-
 def run_sliced(args: argparse.Namespace) -> None:
     paths = BenchmarkPaths(args.emulator, args.workload, args.benchmark)
     run_meta_path = paths.run_meta_path
@@ -200,7 +232,7 @@ def run_sliced(args: argparse.Namespace) -> None:
 
     simpoints = Path(args.simpoints) if args.simpoints else simpoint_analysis_root() / f"{args.benchmark}.simpoints"
     weights = Path(args.weights) if args.weights else simpoint_analysis_root() / f"{args.benchmark}.weights"
-    entries = _parse_simpoints(simpoints, weights)
+    entries = parse_simpoints(simpoints, weights)
     if not entries:
         raise SystemExit("No SimPoint entries detected")
 
@@ -243,10 +275,10 @@ def run_sliced(args: argparse.Namespace) -> None:
 
         verification = {"verified": None, "counted": None}
         if args.verify:
-            verification = _verify_trace(trace_path, interval_size)
+            verification = verify_trace(trace_path, interval_size)
 
         if args.dump:
-            _dump_trace(trace_path)
+            dump_trace(trace_path)
 
         metadata = metadata_factory.create(
             workload_path=str(binary),
@@ -255,8 +287,7 @@ def run_sliced(args: argparse.Namespace) -> None:
             start_instruction=start,
             num_instructions=interval_size,
         )
-        metadata_path = trace_path.with_suffix(".metadata.json")
-        metadata_path.write_text(json.dumps(asdict(metadata), indent=2) + "\n")
+        metadata_path = write_metadata(trace_path, metadata)
 
         manifest_entries.append(
             {
@@ -292,18 +323,44 @@ def parse_args() -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
 
     single = sub.add_parser("single", help="Generate a single STF trace window")
-    single.add_argument("binary", help="Path to workload binary")
-    single.add_argument("--emulator", required=True, choices=["spike", "qemu"])
-    single.add_argument("--mode", choices=["macro", "insn_count", "pc_count"], default="macro")
-    single.add_argument("--arch", choices=["rv32", "rv64"], default="rv64", help="Used for QEMU target selection")
-    single.add_argument("--isa", help="ISA string for Spike")
-    single.add_argument("--pk", action="store_true", help="Launch Spike with proxy kernel")
-    single.add_argument("--num-instructions", type=int, help="Number of instructions to trace (instruction-count modes)")
-    single.add_argument("--start-instruction", type=int, default=0)
-    single.add_argument("--start-pc", type=lambda x: int(x, 0))
-    single.add_argument("--pc-threshold", type=int, default=1)
-    single.add_argument("-o", "--output", help="Output file or directory")
-    single.add_argument("--dump", action="store_true", help="Emit stf_dump alongside trace")
+    single_modes = single.add_subparsers(dest="mode", required=True, metavar="{macro,insn_count,pc_count}")
+
+    single_common = argparse.ArgumentParser(add_help=False)
+    single_common.add_argument("--emulator", required=True, choices=["spike", "qemu"])
+    single_common.add_argument("--arch", choices=["rv32", "rv64"], default="rv64", help="Used for QEMU target selection")
+    single_common.add_argument("--isa", help="ISA string for Spike")
+    single_common.add_argument("--pk", action="store_true", help="Launch Spike with proxy kernel")
+    single_common.add_argument("-o", "--output", help="Output file or directory")
+    single_common.add_argument("--dump", action="store_true", help="Emit stf_dump alongside trace")
+
+    macro = single_modes.add_parser(
+        "macro",
+        parents=[single_common],
+        help="Trace using START_TRACE/STOP_TRACE markers (Spike only)",
+    )
+    macro.add_argument("binary", help="Path to workload binary")
+    macro.set_defaults(num_instructions=None, start_instruction=None, start_pc=None, pc_threshold=None)
+
+    insn_count = single_modes.add_parser(
+        "insn_count",
+        parents=[single_common],
+        help="Trace a fixed instruction window",
+    )
+    insn_count.add_argument("binary", help="Path to workload binary")
+    insn_count.add_argument("--num-instructions", required=True, type=int, help="Number of instructions to trace")
+    insn_count.add_argument("--start-instruction", type=int, default=0, help="Number of instructions to skip before tracing")
+    insn_count.set_defaults(start_pc=None, pc_threshold=None)
+
+    pc_count = single_modes.add_parser(
+        "pc_count",
+        parents=[single_common],
+        help="Trace starting from a PC hit threshold (QEMU only)",
+    )
+    pc_count.add_argument("binary", help="Path to workload binary")
+    pc_count.add_argument("--num-instructions", required=True, type=int, help="Number of instructions to trace")
+    pc_count.add_argument("--start-pc", required=True, type=lambda x: int(x, 0), help="PC value that triggers tracing")
+    pc_count.add_argument("--pc-threshold", type=int, default=1, help="Number of PC hits before tracing starts")
+    pc_count.set_defaults(start_instruction=None)
 
     sliced = sub.add_parser("sliced", help="Generate SimPoint-sliced traces")
     sliced.add_argument("--emulator", required=True, choices=["spike"], help="Spike is required for slicing")

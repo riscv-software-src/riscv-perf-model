@@ -11,12 +11,12 @@ This utility emits STF traces for RISC-V workloads using Spike or QEMU. It suppo
 
 1. **Spike macro markers**  
    ```bash
-   python3 flow/generate_trace.py single --emulator spike --mode macro build/aha-mont64.elf
+   python3 flow/generate_trace.py single macro --emulator spike build/aha-mont64.elf
    ```
 
 2. **QEMU instruction-count window**  
    ```bash
-   python3 flow/generate_trace.py single --emulator qemu --arch rv64 --mode insn_count \
+   python3 flow/generate_trace.py single insn_count --emulator qemu --arch rv64 \
        --num-instructions 5000 --start-instruction 1000 build/aha-mont64.elf
    ```
 
@@ -49,9 +49,9 @@ Generates a single STF trace from a workload binary.
 
 ### Required arguments
 
+- `macro | insn_count | pc_count` – mode-specific sub-command
 - `binary` – path to the ELF to execute
-- `--emulator {spike,qemu}` – execution engine
-- `--mode {macro,insn_count,pc_count}` – trace extraction strategy
+- `--emulator {spike,qemu}` – execution engine (required for every mode)
 
 ### Optional arguments
 

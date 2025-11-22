@@ -13,7 +13,7 @@ mkdir -p "${OUTPUT_DIR}"
 # Print mounting information
 echo "🐳 Starting interactive Docker container with mounts:"
 echo "  📁 Flow scripts:  ${CURRENT_DIR} -> /flow"
-echo "  📁 Environment:   ${CURRENT_DIR}/environment -> /workloads/environment"
+echo "  📁 Environment:   ${CURRENT_DIR}/environment -> /default/environment"
 echo "  📁 Outputs:       ${OUTPUT_DIR} -> /outputs"
 
 # Check if workloads directory exists
@@ -30,10 +30,10 @@ echo ""
 docker run --rm -it \
     -v "${OUTPUT_DIR}:/outputs" \
     -v "${CURRENT_DIR}:/flow" \
-    -v "${CURRENT_DIR}/environment:/workloads/environment" \
+    -v "${CURRENT_DIR}/environment:/default/environment" \
     ${WORKLOADS_MOUNT} \
     -w /flow \
-    riscv-perf-model:latest \
+    riscv-perf-model:olympia \
     bash
 
 echo "🏁 Container exited. Outputs preserved in: ${OUTPUT_DIR}"

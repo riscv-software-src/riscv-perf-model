@@ -22,20 +22,20 @@ This guide explains how to use Basic Block Vector (BBV) generation and instructi
 
 ```bash
 # Build with BBV and trace support
-./build_workload.py --workload embench-iot --benchmark md5sum --board spike --bbv --trace
+python3 flow/build_workload.py --workload embench-iot --benchmark md5sum --emulator spike --bbv --trace
 
 # Run with BBV and tracing enabled
-./run_workload.py --emulator spike --bbv --trace --workload md5sum
+python3 flow/run_workload.py --emulator spike --bbv --trace --workload md5sum
 ```
 
 ### Check Output
 
 ```bash
 # BBV files
-ls /output/spike_output/bbv/md5sum.bbv
+ls /outputs/spike_output/bbv/md5sum.bbv
 
 # Trace files  
-ls /output/spike_output/traces/md5sum.zstf
+ls /outputs/spike_output/traces/md5sum.zstf
 
 # Use stf_tools based stf_dump to convert STF trace files to human readable dump
 ```
@@ -151,7 +151,7 @@ Spike uses Control and Status Register (CSR) accesses to mark BBV regions:
 **Build Requirements:**
 ```bash
 # Must use --bbv flag during build to enable CSR markers
-./build_workload.py --workload embench-iot --benchmark aha-mont64 --board spike --bbv
+python3 flow/build_workload.py --workload embench-iot --benchmark aha-mont64 --emulator spike --bbv
 ```
 
 **Runtime Behavior:**
@@ -169,7 +169,7 @@ QEMU uses a plugin architecture for BBV generation:
 **Build Requirements:**
 ```bash
 # --bbv flag adds -DBBV but QEMU doesn't need source markers
-./build_workload.py --workload embench-iot --benchmark aha-mont64 --board qemu --bbv
+python3 flow/build_workload.py --workload embench-iot --benchmark aha-mont64 --emulator qemu --bbv
 ```
 
 **Runtime Behavior:**
@@ -189,10 +189,10 @@ BBV generation uses intervals to sample execution:
 **Choosing Intervals:**
 ```bash
 # Fine-grained analysis (more data)
-./run_workload.py --emulator qemu --bbv --interval-size 1000000    # 1M instructions
+python3 flow/run_workload.py --emulator qemu --bbv --interval-size 1000000    # 1M instructions
 
 # Coarse-grained analysis (less data)  
-./run_workload.py --emulator spike --bbv --interval-size 1000000000 # 1B instructions
+python3 flow/run_workload.py --emulator spike --bbv --interval-size 1000000000 # 1B instructions
 ```
 
 ## Instruction Tracing
@@ -204,7 +204,7 @@ Spike generates System Trace Format (STF) traces:
 **Build Requirements:**
 ```bash
 # Use --trace flag to enable trace markers
-./build_workload.py --workload embench-iot --benchmark md5sum --board spike --trace
+python3 flow/build_workload.py --workload embench-iot --benchmark md5sum --emulator spike --trace
 ```
 
 **Runtime Command:**
@@ -222,7 +222,7 @@ QEMU generates human-readable assembly traces:
 **Build Requirements:**
 ```bash
 # --trace flag adds -DTRACE for potential source-level control
-./build_workload.py --workload embench-iot --benchmark md5sum --board qemu --trace  
+python3 flow/build_workload.py --workload embench-iot --benchmark md5sum --emulator qemu --trace  
 ```
 
 **Runtime Command:**
@@ -303,7 +303,7 @@ result = benchmark();
 BBV and trace files are organized by emulator:
 
 ```
-/output/
+/outputs/
 ├── spike_output/
 │   ├── bbv/                    # Spike BBV files
 │   │   ├── md5sum.bbv
@@ -422,10 +422,10 @@ BBV files are designed for SimPoint analysis:
 
 ```bash
 # Generate BBV files
-./run_workload.py --emulator spike --bbv --workload embench-iot
+python3 flow/run_workload.py --emulator spike --bbv --workload embench-iot
 
 # Run SimPoint analysis (using generated BBV files)
-./run_simpoint.py --workload embench-iot --emulator spike --max-k 30
+python3 flow/run_simpoint.py --workload embench-iot --emulator spike --max-k 30
 
 # Results: .simpoints and .weights files for representative intervals
 ```

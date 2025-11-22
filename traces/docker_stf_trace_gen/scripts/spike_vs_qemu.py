@@ -92,8 +92,8 @@ class BenchmarkRunner:
         self.logger = logging.getLogger(__name__)
         
         # Build script paths
-        self.build_script = Path("build_workload.py")
-        self.run_script = Path("run_workload.py")
+        self.build_script = Path("flow/build_workload.py")
+        self.run_script = Path("flow/run_workload.py")
         
         # Validate scripts exist
         if not self.build_script.exists():
@@ -191,7 +191,7 @@ class BenchmarkRunner:
             "--benchmark", benchmark,  # Specify individual benchmark
             "--arch", arch,
             "--platform", platform,
-            "--board", board
+            "--emulator", board
         ]
         
         if bbv:
@@ -239,17 +239,20 @@ class BenchmarkRunner:
         
         if bbv:
             # Check for BBV files (different formats for spike vs qemu)
+            output_base = Path(f"/outputs/{board}_output/bbv")
             if board == "spike":
-                bbv_file = Path(f"/output/{board}_output/bbv/{workload}.bbv_cpu0")
-            else:  # qemu
-                bbv_file = Path(f"/output/{board}_output/bbv/{workload}.bb")
+                # Spike may produce .bbv or .bbv_cpu0
+                candidates = [output_base / f"{workload}.bbv", output_base / f"{workload}.bbv_cpu0"]
+            else:  # qemu: outfile prefix <name>.bbv -> files like <name>.bbv.0.bb
+                candidates = [output_base / f"{workload}.bbv.0.bb", output_base / f"{workload}_bbv.0.bb"]
+            bbv_file = next((p for p in candidates if p.exists()), output_base / f"{workload}.bbv")
             
             bbv_generated = bbv_file.exists() and bbv_file.stat().st_size > 0
             self.logger.debug(f"BBV file {bbv_file}: {'found' if bbv_generated else 'not found'}")
         
         if trace:
-            # Check for trace files
-            trace_file = Path(f"{workload}.stf")  # Adjust extension as needed
+            # Check for STF trace files generated into /outputs/<board>_output/traces
+            trace_file = Path(f"/outputs/{board}_output/traces/{workload}.zstf")
             trace_generated = trace_file.exists() and trace_file.stat().st_size > 0
             self.logger.debug(f"Trace file {trace_file}: {'found' if trace_generated else 'not found'}")
         

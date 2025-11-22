@@ -14,9 +14,9 @@
 #include <cinttypes>
 #include <map>
 
-#include "sparta/utils/SpartaSharedPointer.hpp"
+#include "mavis/JSONUtils.hpp"
 
-#include "json.hpp"
+#include "sparta/utils/SpartaSharedPointer.hpp"
 
 namespace olympia
 {
@@ -69,7 +69,7 @@ namespace olympia
 
         static constexpr uint32_t N_TARGET_PIPES = static_cast<uint32_t>(TargetPipe::UNKNOWN);
 
-        using TargetPipeMap = std::map<std::string, TargetPipe>;
+        using TargetPipeMap = std::map<std::string, TargetPipe, mavis::JSONStringMapCompare>;
         static const TargetPipeMap execution_pipe_map;
 
         using TargetPipeStringMap = std::map<TargetPipe, std::string>;
@@ -100,15 +100,15 @@ namespace olympia
 
         static constexpr uint32_t N_UOP_GEN_TYPES = static_cast<uint32_t>(UopGenType::NONE);
 
-        using UopGenMap = std::map<std::string, UopGenType>;
+        using UopGenMap = std::map<std::string, UopGenType, mavis::JSONStringMapCompare>;
         static const UopGenMap uop_gen_type_map;
 
         // Called by Mavis during its initialization
-        explicit InstArchInfo(const nlohmann::json & jobj) { update(jobj); }
+        explicit InstArchInfo(const boost::json::object & jobj) { update(jobj); }
 
         // Called by Mavis if, during initialization, changes are
         // dynamically made to an instruction.
-        void update(const nlohmann::json & jobj);
+        void update(const boost::json::object & jobj);
 
         //! Return the target unit for this instruction type
         TargetPipe getTargetPipe() const { return tgt_pipe_; }

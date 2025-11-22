@@ -5,6 +5,8 @@
 #include <string>
 #include <algorithm>
 
+#include "CoreExtensions.hpp"
+
 /**
  * @brief Constructor for CPUFactory
  */

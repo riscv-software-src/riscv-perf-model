@@ -82,30 +82,30 @@ namespace olympia
         {"PERMUTE", InstArchInfo::UopGenType::PERMUTE},
         {"NONE", InstArchInfo::UopGenType::NONE}};
 
-    void InstArchInfo::update(const nlohmann::json & jobj)
+    void InstArchInfo::update(const boost::json::object & jobj)
     {
-        if (jobj.find("pipe") != jobj.end())
+        if (const auto it = jobj.find("pipe"); it != jobj.end())
         {
-            auto pipe_name = jobj["pipe"].get<std::string>();
+            auto pipe_name = it->value().as_string();
             const auto itr = execution_pipe_map.find(pipe_name);
             sparta_assert(itr != execution_pipe_map.end(),
                           "Unknown pipe target: " << pipe_name << " for inst: "
-                                                  << jobj["mnemonic"].get<std::string>());
+                                                  << jobj.at("mnemonic").as_string());
             tgt_pipe_ = itr->second;
         }
 
-        if (jobj.find("latency") != jobj.end())
+        if (const auto it = jobj.find("latency"); it != jobj.end())
         {
-            execute_time_ = jobj["latency"].get<uint32_t>();
+            execute_time_ = boost::json::value_to<uint32_t>(it->value());
         }
 
-        if (jobj.find("uop_gen") != jobj.end())
+        if (const auto it = jobj.find("uop_gen"); it != jobj.end())
         {
-            auto uop_gen_name = jobj["uop_gen"].get<std::string>();
+            auto uop_gen_name = it->value().as_string();
             const auto itr = uop_gen_type_map.find(uop_gen_name);
             sparta_assert(itr != uop_gen_type_map.end(),
                           "Unknown uop gen: " << uop_gen_name << " for inst: "
-                                              << jobj["mnemonic"].get<std::string>());
+                                              << jobj.at("mnemonic").as_string());
             uop_gen_ = itr->second;
         }
 

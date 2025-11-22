@@ -17,6 +17,7 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 
 #include "mavis/DecoderTypes.h"
+#include "mavis/extension_managers/RISCVExtensionManager.hpp"
 
 #include "Inst.hpp"
 #include "InstAllocation.hpp"
@@ -69,6 +70,9 @@ namespace olympia
             PARAMETER(std::string,   isa_file_path,    "mavis_isa_files", "Where are the mavis isa files?")
             PARAMETER(std::string,   uarch_file_path,  "arches/isa_json", "Where are the mavis uarch files?")
             PARAMETER(std::string,   pseudo_file_path,  "", "Where are the mavis pseudo isa/usarch files? (default: uarch_file_path)")
+            PARAMETER(std::string,   isa_string,
+                      "rv64gbcv",
+                      "The supported ISA string by Olympia.  This is directly tied to the JSON files in arches/isa_json")
             PARAMETER(std::string,   uarch_overrides_json, "", "JSON uArch overrides")
             PARAMETER(std::vector<std::string>, uarch_overrides, {}, R"(uArch overrides.
     Format : <mnemonic>, <attribute> : <value>
@@ -118,6 +122,7 @@ namespace olympia
 	};
 
         const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
+        const mavis::extension_manager::riscv::RISCVExtensionManager ext_man_;
         std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object
     };
 

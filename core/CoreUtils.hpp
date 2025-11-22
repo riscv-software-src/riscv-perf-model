@@ -6,7 +6,11 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/utils/Utils.hpp"
 
-#include "CPUTopology.hpp"
+#include "mavis/InstMetaData.h"
+#include "mavis/OperandInfo.hpp"
+
+#include "CoreExtensions.hpp"
+#include "CoreTypes.hpp"
 
 namespace olympia::coreutils
 {

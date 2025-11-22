@@ -12,6 +12,7 @@
 #include "Rename.hpp"
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
+#include "sparta/simulation/ResourceTreeNode.hpp"
 
 namespace olympia
 {

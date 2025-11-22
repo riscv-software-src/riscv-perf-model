@@ -8,30 +8,11 @@
 #include "mavis/Mavis.h"
 #include "MavisUnit.hpp"
 
+
 #include "OlympiaAllocators.hpp"
 
 namespace olympia
 {
-
-    std::vector<std::string> getISAFiles(sparta::TreeNode *n, const std::string & isa_file_path,
-                                         const std::string& pseudo_file_path)
-    {
-        std::vector<std::string> isa_files = {isa_file_path + "/isa_rv64i.json",
-                                              isa_file_path + "/isa_rv64m.json",
-                                              isa_file_path + "/isa_rv64a.json",
-                                              isa_file_path + "/isa_rv64f.json",
-                                              isa_file_path + "/isa_rv64d.json",
-                                              isa_file_path + "/isa_rv64zba.json",
-                                              isa_file_path + "/isa_rv64zbb.json",
-                                              isa_file_path + "/isa_rv64zbs.json",
-                                              isa_file_path + "/isa_rv64zicsr.json",
-                                              isa_file_path + "/isa_rv64c.json",
-                                              isa_file_path + "/isa_rv64cf.json",
-                                              isa_file_path + "/isa_rv64cd.json",
-                                              isa_file_path + "/isa_rv64v.json",
-                                              isa_file_path + "/isa_rv64vf.json"};
-        return isa_files;
-    }
 
     std::vector<std::string> getUArchFiles(sparta::TreeNode *n, const MavisUnit::MavisParameters* p,
                                            const std::string & uarch_file_path, const std::string& pseudo_file_path)
@@ -65,7 +46,6 @@ namespace olympia
         return annotations;
     }
 
-
     /**
      * \brief Construct a new Mavis unit
      * \param n Tree node parent for this unit
@@ -74,13 +54,15 @@ namespace olympia
     MavisUnit::MavisUnit(sparta::TreeNode *n, const MavisParameters* p) :
         sparta::Unit(n),
         pseudo_file_path_(std::string(p->pseudo_file_path).empty() ? p->uarch_file_path : p->pseudo_file_path),
-        mavis_facade_ (new MavisType(getISAFiles(n, p->isa_file_path, pseudo_file_path_),
-                                     getUArchFiles(n, p, p->uarch_file_path, pseudo_file_path_),
-                                     mavis_uid_list_, getUArchAnnotationOverrides(p),
-                                     InstPtrAllocator<InstAllocator>
-                                     (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_allocator),
-                                     InstPtrAllocator<InstArchInfoAllocator>
-                                     (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_arch_info_allocator)))
+        ext_man_(mavis::extension_manager::riscv::RISCVExtensionManager::fromISA(p->isa_string,
+                                                                                 std::string(p->isa_file_path) + "/riscv_isa_spec.json",
+                                                                                 p->isa_file_path)),
+        mavis_facade_ (std::make_unique<MavisType>(ext_man_.constructMavis<Inst, InstArchInfo, InstPtrAllocator<InstAllocator>, InstPtrAllocator<InstArchInfoAllocator>>
+                                                       (getUArchFiles(n, p, p->uarch_file_path, pseudo_file_path_),
+                                                        mavis_uid_list_,
+                                                        getUArchAnnotationOverrides(p),
+                                                        InstPtrAllocator<InstAllocator> (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_allocator),
+                                                        InstPtrAllocator<InstArchInfoAllocator> (sparta::notNull(OlympiaAllocators::getOlympiaAllocators(n))->inst_arch_info_allocator))))
     {}
 
     /**

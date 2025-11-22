@@ -6,6 +6,10 @@
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 #include "rename/Rename.hpp"
+#include "decode/Decode.hpp"
+#include "execute/IssueQueue.hpp"
+#include "ROB.hpp"
+#include "execute/Execute.hpp"
 #include "sim/OlympiaSim.hpp"
 
 #include "test/core/common/SinkUnit.hpp"

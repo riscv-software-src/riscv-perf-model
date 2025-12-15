@@ -83,7 +83,7 @@ RUN git clone https://github.com/riscv-software-src/riscv-tests.git && \
     git clone -b spike-as-board https://github.com/widlarizer/embench-iot.git
 
 # Copy and execute toolchain setup script
-COPY utils/get-tool.sh $RISCV/get-tool.sh
+COPY flow/utils/get-tool.sh $RISCV/get-tool.sh
 RUN chmod +x $RISCV/get-tool.sh
 RUN $RISCV/get-tool.sh || true
 RUN echo "Toolchain version:" && (riscv64-unknown-linux-gnu-gcc --version 2>/dev/null || echo "Toolchain setup pending")

@@ -1,4 +1,19 @@
 project (core)
+
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+
+if(NOT GIT_COMMIT_HASH)
+    set(GIT_COMMIT_HASH "unknown")
+endif()
+
+add_definitions(-DGIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+
 add_library(core
   Core.cpp
   ROB.cpp

@@ -1,10 +1,14 @@
 on:
-  pull_request:
-    branches:
-      - master
   push:
-    branches: [ main ]
-  workflow_dispatch: 
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:    
+    inputs:             
+      reason:
+        description: 'Reason for manual run'
+        required: false
+        default: 'Testing Git SHA output'
 
 env:
   CACHE_VERSION: v1

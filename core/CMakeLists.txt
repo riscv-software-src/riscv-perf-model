@@ -1,7 +1,8 @@
 project (core)
 
+# Get the current git commit hash and dirty status
 execute_process(
-    COMMAND git rev-parse --short HEAD
+    COMMAND git describe --always --dirty
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE

@@ -35,11 +35,17 @@ int main(int argc, char **argv)
 
     const std::string olympia_version = " " + std::string(OLYMPIA_VERSION);
     sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("Olympia RISC-V Perf Model ",
-                                                                   argc, argv, olympia_version.c_str(),
-                                                                   "", {});
+                                                                argc, argv, olympia_version.c_str(),
+                                                                "", {});
     const bool show_field_names = true;
     sparta::SimulationInfo::getInstance().write(std::cout, "# ", "\n", show_field_names);
     std::cout << "# Sparta Version: " << sparta::SimulationInfo::sparta_version << std::endl;
+
+    #ifndef GIT_COMMIT_HASH
+    #define GIT_COMMIT_HASH "unknown"
+    #endif
+    std::cout << "# Git SHA: " << GIT_COMMIT_HASH << std::endl;
+    ```
 
     // try/catch block to ensure proper destruction of the cls/sim classes in
     // the event of an error

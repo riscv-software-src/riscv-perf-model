@@ -46,7 +46,7 @@ target_include_directories(core SYSTEM PRIVATE ${SPARTA_INCLUDE_PROP})
 
 # Make core library depend on git_version_target
 add_dependencies(core git_version_target)
-target_include_directories(core PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(core PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_subdirectory(fetch)
 add_subdirectory(decode)

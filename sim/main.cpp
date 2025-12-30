@@ -8,6 +8,7 @@
 #include "sparta/app/CommandLineSimulator.hpp"
 #include "sparta/app/MultiDetailOptions.hpp"
 #include "sparta/sparta.hpp"
+#include "git_version.h"
 
 // User-friendly usage that correspond with sparta::app::CommandLineSimulator
 // options
@@ -34,18 +35,13 @@ int main(int argc, char **argv)
     DEFAULTS.arch_search_dirs = {"arches"}; // Where --arch will be resolved by default
 
     const std::string olympia_version = " " + std::string(OLYMPIA_VERSION);
+    const std::string reproduction_info = "Git SHA: " + std::string(GIT_COMMIT_HASH);
     sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("Olympia RISC-V Perf Model ",
                                                                 argc, argv, olympia_version.c_str(),
-                                                                "", {});
+                                                            reproduction_info.c_str(), {});
     const bool show_field_names = true;
     sparta::SimulationInfo::getInstance().write(std::cout, "# ", "\n", show_field_names);
     std::cout << "# Sparta Version: " << sparta::SimulationInfo::sparta_version << std::endl;
-
-    #ifndef GIT_COMMIT_HASH
-    #define GIT_COMMIT_HASH "unknown"
-    #endif
-    std::cout << "# Git SHA: " << GIT_COMMIT_HASH << std::endl;
-    ```
 
     // try/catch block to ensure proper destruction of the cls/sim classes in
     // the event of an error

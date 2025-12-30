@@ -1,19 +1,24 @@
 project (core)
 
-# Get the current git commit hash and dirty status
-execute_process(
-    COMMAND git describe --always --dirty
+# Generate git version header at build time
+set(GIT_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/git_version.h")
+
+add_custom_command(
+    OUTPUT ${GIT_VERSION_FILE}
+    COMMAND ${CMAKE_COMMAND}
+        -DGIT_VERSION_FILE=${GIT_VERSION_FILE}
+        -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/GenerateGitVersion.cmake
+    DEPENDS 
+        ${CMAKE_SOURCE_DIR}/.git/HEAD
+        ${CMAKE_SOURCE_DIR}/.git/index
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_COMMIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
+    COMMENT "Generating git version information"
+    VERBATIM
 )
 
-if(NOT GIT_COMMIT_HASH)
-    set(GIT_COMMIT_HASH "unknown")
-endif()
-
-add_definitions(-DGIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+# Create a custom target that depends on the generated header
+add_custom_target(git_version_target DEPENDS ${GIT_VERSION_FILE})
 
 add_library(core
   Core.cpp
@@ -38,6 +43,10 @@ target_link_libraries(instgen stf zstd mavis Boost::json)
 
 get_property(SPARTA_INCLUDE_PROP TARGET SPARTA::sparta PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(core SYSTEM PRIVATE ${SPARTA_INCLUDE_PROP})
+
+# Make core library depend on git_version_target
+add_dependencies(core git_version_target)
+target_include_directories(core PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(fetch)
 add_subdirectory(decode)

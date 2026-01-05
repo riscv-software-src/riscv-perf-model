@@ -37,8 +37,10 @@ int main(int argc, char **argv)
     const std::string olympia_version = " " + std::string(OLYMPIA_VERSION);
     const std::string reproduction_info = "Git SHA: " + std::string(GIT_COMMIT_HASH);
     sparta::SimulationInfo::getInstance() = sparta::SimulationInfo("Olympia RISC-V Perf Model ",
-                                                                argc, argv, olympia_version.c_str(),
-                                                            reproduction_info.c_str(), {});
+                                                                    argc, 
+                                                                    argv, 
+                                                                    olympia_version.c_str(),
+                                                                    reproduction_info.c_str(), {});
     const bool show_field_names = true;
     sparta::SimulationInfo::getInstance().write(std::cout, "# ", "\n", show_field_names);
     std::cout << "# Sparta Version: " << sparta::SimulationInfo::sparta_version << std::endl;

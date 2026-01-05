@@ -81,11 +81,8 @@ env_main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
     initialise_benchmark();
     warm_caches(WARMUP_HEAT);
     
-    // Qemu does not support defining ROI.
-
-    
+    // QEMU does not support ROI markers in this setup
     result = benchmark();
-
     
     correct = verify_benchmark(result);
     

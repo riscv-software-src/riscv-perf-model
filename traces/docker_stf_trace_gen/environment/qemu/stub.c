@@ -174,4 +174,3 @@ char *_sbrk (int delta)
 	return ptr;
 }
 
-

@@ -2,9 +2,15 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Const():
+class Const:
     DOCKER_IMAGE_NAME = "riscv-perf-model:latest"
-    DOCKER_TEMP_FOLDER = "/host"
+
+    CONTAINER_FLOW_ROOT = "/flow"
+    CONTAINER_OUTPUT_ROOT = "/outputs"
+    CONTAINER_ENV_ROOT = "/default/environment"
+    CONTAINER_WORKLOAD_ROOT = "/workloads"
+
     LIBSTFMEM = "/usr/lib/libstfmem.so"
+    QEMU_PLUGIN_FALLBACK = "/qemu/build/contrib/plugins/libstfmem.so"
     STF_TOOLS = "/riscv/stf_tools/release/tools"
-    SPKIE_PK = "/riscv/riscv-pk/build/pk"
+    SPIKE_PK = "/riscv/riscv-pk/build/pk"

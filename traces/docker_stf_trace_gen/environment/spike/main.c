@@ -37,7 +37,7 @@ int __attribute__((weak)) main(void) {
     return -1; 
 }
 
-int __attribute__((weak)) benchmark(void) {  //  Coremark main()
+int __attribute__((weak)) benchmark(void) { 
     return main(); 
 }
 

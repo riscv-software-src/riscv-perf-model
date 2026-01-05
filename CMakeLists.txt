@@ -30,6 +30,7 @@ else()
 endif()
 
 include_directories(${SPARTA_INCLUDE_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 ################################################################################
 # Set up STF library
@@ -42,7 +43,6 @@ if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
 endif()
 include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
 setup_stf_linker(false)
-
 
 # Use ccache if installed
 find_program (CCACHE_PROGRAM ccache)

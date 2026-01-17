@@ -161,7 +161,7 @@ public:
         // testing RAW dependency for ExecutePipe
         // only alu0 should have an issued instruction
         // so alu0's total_insts_issued should be 1
-        EXPECT_EQUAL(issuequeue.total_insts_issued_, 1);
+        EXPECT_EQUAL(issuequeue.total_insts_issued_, 1ull);
     }
 
     void test_dependent_integer_second_instruction(olympia::IssueQueue & issuequeue)
@@ -170,7 +170,7 @@ public:
         // only alu0 should have an issued instruction
         // alu1 shouldn't, hence this test is checking for alu1's issued inst count
         // is 0
-        EXPECT_EQUAL(issuequeue.total_insts_issued_, 0);
+        EXPECT_EQUAL(issuequeue.total_insts_issued_, 0ull);
     }
 };
 
@@ -185,7 +185,7 @@ public:
         // we can't STORE until the add instruction runs, so we test
         // while the ADD instruction is running, the STORE instruction should NOT
         // issue
-        EXPECT_EQUAL(lsu.lsu_insts_issued_, 0);
+        EXPECT_EQUAL(lsu.lsu_insts_issued_, 0ull);
     }
 
     void clear_entries(olympia::LSU & lsu)

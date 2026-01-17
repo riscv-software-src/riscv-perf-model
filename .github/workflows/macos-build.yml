@@ -12,8 +12,8 @@ jobs:
     strategy:
       # Strategy is a matrix of debug and release builds/regression
       matrix:
-        os: [macos-latest]
-        BUILD_TYPE: [Debug]
+        os: [macos-15]
+        BUILD_TYPE: [Release]
         COMPILER: [clang]
 
     name: MacOS-${{ matrix.BUILD_TYPE }}-${{matrix.COMPILER}}
@@ -40,18 +40,11 @@ jobs:
           path: map
           ref: map_v2.0.21
 
-      # Setup Conda and build environment
+      # Setup build environment
       - name: Grab Python v3.8
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-
-      # Cache the conda dependencies to
-      - name: Cache conda deps
-        uses: actions/cache@v3
-        with:
-          key: ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-conda-${{ hashFiles('.github/workflows/conda/macos_env.yml') }}
-          path: /usr/share/miniconda/envs/riscv_perf_model # Default path for conda
 
       # Setup CCache to cache builds
       - name: ccache
@@ -62,13 +55,10 @@ jobs:
             ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache-master
             ${{ matrix.os }}-${{ matrix.BUILD_TYPE }}-${{ matrix.COMPILER }}-ccache
 
-      - name: Setup Conda Environment
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          channels: conda-forge,defaults
-          channel-priority: true
-          activate-environment: riscv_perf_model
-          environment-file: .github/workflows/conda/macos_env.yml
+      # Install missing packages to make everything build
+      - name: Install packages needed for sparta/olympia
+        run: |
+          brew install boost bison ccache cmake libyaml rapidjson xz zstd yaml-cpp
 
       # Build
       - name: Build & Regress

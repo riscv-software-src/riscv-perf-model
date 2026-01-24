@@ -36,11 +36,11 @@ TEST_INIT
 class olympia::LSUTester
 {
   public:
-    void test_inst_issue(olympia::LSU &lsu, int count){
+    void test_inst_issue(olympia::LSU &lsu, uint64_t count){
         EXPECT_EQUAL(lsu.lsu_insts_issued_, count);
     }
 
-    void test_replay_issue_abort(olympia::LSU &lsu, int count) {
+    void test_replay_issue_abort(olympia::LSU &lsu, uint64_t count) {
         EXPECT_EQUAL(lsu.replay_buffer_.size(), count);
     }
 

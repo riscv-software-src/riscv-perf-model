@@ -1,4 +1,5 @@
 #include "NextLinePrefetchEngine.hpp"
+#include "MemoryAccessInfo.hpp" 
 
 namespace olympia
 {

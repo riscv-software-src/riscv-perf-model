@@ -1,5 +1,6 @@
 #include "InstructionPrefetcher.hpp"
 #include "NextLinePrefetchEngine.hpp"
+#include "StridePrefetchEngine.hpp"
 
 namespace olympia
 {
@@ -26,6 +27,11 @@ namespace olympia
             {
                 prefetch_engine.reset(
                     new NextLinePrefetchEngine(p->num_to_prefetch, p->cacheline_size));
+            }
+            else if (p->prefetcher_type == std::string("stride"))
+            {
+                prefetch_engine.reset(
+                    new StridePrefetchEngine(p->num_to_prefetch, p->cacheline_size));
             }
             else
             {

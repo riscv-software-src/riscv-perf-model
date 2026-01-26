@@ -1,5 +1,6 @@
 #include "DataPrefetcher.hpp"
 #include "NextLinePrefetchEngine.hpp"
+#include "StridePrefetchEngine.hpp"
 
 namespace olympia
 {

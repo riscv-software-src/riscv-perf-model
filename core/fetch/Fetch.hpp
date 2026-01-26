@@ -20,6 +20,7 @@
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
 #include "MemoryAccessInfo.hpp"
+#include<memory>
 
 namespace olympia
 {
@@ -43,8 +44,7 @@ namespace olympia
         class FetchParameterSet : public sparta::ParameterSet
         {
         public:
-            sparta::Parameter<bool> enable_prefetcher{
-                "enable_prefetcher", false, "Enable instruction prefetcher"};
+            PARAMETER(bool, enable_prefetcher, false, "Enable instruction prefetcher")
             FetchParameterSet(sparta::TreeNode* n) :
                 sparta::ParameterSet(n)
             {

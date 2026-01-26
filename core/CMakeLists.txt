@@ -27,7 +27,7 @@ add_library(core
   Preloader.cpp
   CPU.cpp
   CPUFactory.cpp
-  CPUTopology.cpp      
+  CPUTopology.cpp 
 )
 
 add_library(instgen

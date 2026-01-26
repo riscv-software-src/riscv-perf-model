@@ -1,4 +1,5 @@
 #include "StridePrefetchEngine.hpp"
+#include "MemoryAccessInfo.hpp" 
 
 namespace olympia
 {

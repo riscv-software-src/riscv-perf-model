@@ -30,6 +30,7 @@
 #include "LoadStoreInstInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"
+#include<memory>
 
 namespace olympia
 {

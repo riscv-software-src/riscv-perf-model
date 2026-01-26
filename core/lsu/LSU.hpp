@@ -33,6 +33,7 @@
 
 namespace olympia
 {
+    class DataPrefetcher;
     class LSU : public sparta::Unit
     {
       public:
@@ -92,6 +93,7 @@ namespace olympia
         using FlushCriteria = FlushManager::FlushingCriteria;
 
       private:
+        std::unique_ptr<DataPrefetcher> data_prefetcher_;
         using ScoreboardViews =
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
 

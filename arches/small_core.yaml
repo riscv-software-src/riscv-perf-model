@@ -73,3 +73,8 @@ top.cpu.core0.rename.scoreboards:
       ["iq1",    1,     1,     1,     1,     1],
       ["iq2",    1,     1,     1,     1,     1],
       ["iq3",    1,     1,     1,     1,     1]]
+
+# Wiring for Prefetchers
+binds:
+  - top.cpu.core0.fetch.instruction_prefetcher.out_prefetcher_write top.cpu.core0.icache.in_fetch_req
+  - top.cpu.core0.lsu.data_prefetcher.out_prefetcher_write top.cpu.core0.dcache.in_lsu_lookup_req

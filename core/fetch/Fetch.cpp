@@ -30,9 +30,12 @@ namespace olympia
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                      ->memory_access_allocator)
     {
-        sparta::TreeNode * prefetch_node = new sparta::TreeNode(node, InstructionPrefetcher::name, "Instruction Prefetcher Unit");
-        auto prefetch_params = new InstructionPrefetcher::InstructionPrefetcherParameterSet(prefetch_node);       
-        prefetcher_.reset(new InstructionPrefetcher(prefetch_node, prefetch_params));
+        if (p->enable_prefetcher)
+        {
+            sparta::TreeNode * prefetch_node = new sparta::TreeNode(node, InstructionPrefetcher::name, "Instruction Prefetcher Unit");
+            auto prefetch_params = new InstructionPrefetcher::InstructionPrefetcherParameterSet(prefetch_node);       
+            prefetcher_.reset(new InstructionPrefetcher(prefetch_node, prefetch_params));
+        }
         in_fetch_queue_credits_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
 

@@ -120,9 +120,12 @@ namespace olympia
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle
         // Here we give cache the higher priority
-        sparta::TreeNode * prefetch_node = new sparta::TreeNode(node, DataPrefetcher::name, "Data Prefetcher Unit");
-        auto prefetch_params = new DataPrefetcher::DataPrefetcherParameterSet(prefetch_node);
-        data_prefetcher_.reset(new DataPrefetcher(prefetch_node, prefetch_params));
+       if (p->enable_prefetcher)
+        {
+            sparta::TreeNode * prefetch_node = new sparta::TreeNode(node, DataPrefetcher::name, "Data Prefetcher Unit");
+            auto prefetch_params = new DataPrefetcher::DataPrefetcherParameterSet(prefetch_node);
+            data_prefetcher_.reset(new DataPrefetcher(prefetch_node, prefetch_params));
+        }
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
 

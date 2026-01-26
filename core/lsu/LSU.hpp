@@ -46,6 +46,7 @@ namespace olympia
           public:
             //! Constructor for LSUParameterSet
             LSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+            PARAMETER(bool, enable_prefetcher, false, "Enable data prefetcher")
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")

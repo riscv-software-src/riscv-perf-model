@@ -27,7 +27,7 @@ add_library(core
   Preloader.cpp
   CPU.cpp
   CPUFactory.cpp
-  CPUTopology.cpp
+  CPUTopology.cpp      
 )
 
 add_library(instgen
@@ -55,5 +55,7 @@ add_subdirectory(dispatch)
 add_subdirectory(execute)
 add_subdirectory(vector)
 add_subdirectory(lsu)
+add_subdirectory(test)
+
 
 target_link_libraries(core fetch decode rename dispatch execute vector lsu instgen)

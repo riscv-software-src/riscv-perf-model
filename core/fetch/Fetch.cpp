@@ -10,7 +10,7 @@
 #include "InstGenerator.hpp"
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
-
+#include "InstructionPrefetcher.hpp"
 #include "sparta/utils/MathUtils.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
@@ -30,6 +30,9 @@ namespace olympia
         memory_access_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
                                      ->memory_access_allocator)
     {
+        sparta::TreeNode * prefetch_node = new sparta::TreeNode(node, InstructionPrefetcher::name, "Instruction Prefetcher Unit");
+        auto prefetch_params = new InstructionPrefetcher::InstructionPrefetcherParameterSet(prefetch_node);       
+        prefetcher_.reset(new InstructionPrefetcher(prefetch_node, prefetch_params));
         in_fetch_queue_credits_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(Fetch, receiveFetchQueueCredits_, uint32_t));
 
@@ -121,7 +124,9 @@ namespace olympia
 
         // Associate the icache transaction with the instructions
         memory_access_ptr->setFetchGroup(fetch_group_ptr);
-
+        if (prefetcher_) {
+            prefetcher_->processIncomingReq(memory_access_ptr);
+        }
         ILOG("requesting: " << fetch_group_ptr);
 
         out_fetch_icache_req_.send(memory_access_ptr);

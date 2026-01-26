@@ -35,6 +35,7 @@ namespace olympia
      * required to release fetch from holding out on branch
      * resolution.
      */
+    class InstructionPrefetcher;
     class Fetch : public sparta::Unit
     {
     public:
@@ -79,7 +80,7 @@ namespace olympia
 
         ////////////////////////////////////////////////////////////////////////////////
         // Ports
-
+        std::unique_ptr<InstructionPrefetcher> prefetcher_;
         // Internal DataOutPort to the decode unit's fetch queue
         sparta::DataOutPort<InstGroupPtr> out_fetch_queue_write_ {&unit_port_set_, "out_fetch_queue_write"};
 

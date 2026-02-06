@@ -210,6 +210,8 @@ namespace olympia
             {
                 const InstPtr uop = vec_uop_gen_->generateUop();
                 insts->emplace_back(uop);
+                // Record decode timestamp for CPI attribution
+                uop->getTimestamps().decode_enter = getClock()->currentCycle();
                 uop->setStatus(Inst::Status::DECODED);
             }
             else if (fetch_queue_.size() > 0)
@@ -265,11 +267,15 @@ namespace olympia
 
                     const InstPtr uop = vec_uop_gen_->generateUop();
                     insts->emplace_back(uop);
+                    // Record decode timestamp for CPI attribution
+                    uop->getTimestamps().decode_enter = getClock()->currentCycle();
                     uop->setStatus(Inst::Status::DECODED);
                 }
                 else
                 {
                     insts->emplace_back(inst);
+                    // Record decode timestamp for CPI attribution
+                    inst->getTimestamps().decode_enter = getClock()->currentCycle();
                     inst->setStatus(Inst::Status::DECODED);
                 }
 

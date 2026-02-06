@@ -473,6 +473,8 @@ namespace olympia
             // Rename the instruction
             renameSources_(inst_to_rename);
             renameDests_(inst_to_rename);
+            // Record rename timestamp for CPI attribution
+            inst_to_rename->getTimestamps().rename_enter = getClock()->currentCycle();
             inst_to_rename->setStatus(Inst::Status::RENAMED);
             insts->emplace_back(std::move(uop_queue_.access(0)));
 

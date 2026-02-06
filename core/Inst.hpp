@@ -69,6 +69,40 @@ namespace olympia
             __LAST
         };
 
+        //! \brief CPI breakdown tracking structure
+        //! Tracks cycles attributed to different microarchitectural events
+        struct CPIBreakdown {
+            uint64_t fetch_stall_cycles = 0;          //! I-cache miss, branch mispred wait
+            uint64_t decode_stall_cycles = 0;         //! VSET blocking, fusion wait
+            uint64_t rename_stall_cycles = 0;         //! No free PRFs, no dispatch credits
+            uint64_t dispatch_stall_cycles = 0;       //! Issue queue full, ROB full
+            uint64_t issue_queue_stall_cycles = 0;    //! Dependency waiting
+            uint64_t execute_cycles = 0;              //! Actual execution time
+            uint64_t memory_stall_cycles = 0;         //! TLB miss, cache miss, store wait
+            uint64_t rob_stall_cycles = 0;            //! Waiting to become oldest
+            
+            //! Get total cycles across all categories
+            uint64_t getTotalCycles() const {
+                return fetch_stall_cycles + decode_stall_cycles + rename_stall_cycles +
+                       dispatch_stall_cycles + issue_queue_stall_cycles + execute_cycles +
+                       memory_stall_cycles + rob_stall_cycles;
+            }
+        };
+
+        //! \brief Pipeline stage timestamp tracking
+        //! Records cycle counts when instruction enters/exits each stage
+        struct StageTimestamps {
+            sparta::Clock::Cycle fetch_enter = 0;
+            sparta::Clock::Cycle decode_enter = 0;
+            sparta::Clock::Cycle rename_enter = 0;
+            sparta::Clock::Cycle dispatch_enter = 0;
+            sparta::Clock::Cycle issue_ready = 0;      //! When all operands ready
+            sparta::Clock::Cycle execute_start = 0;
+            sparta::Clock::Cycle execute_complete = 0;
+            sparta::Clock::Cycle retire_ready = 0;     //! When marked COMPLETED
+            sparta::Clock::Cycle retired = 0;
+        };
+
         /*!
          * \brief Construct an Instruction
          * \param opcode_info    Mavis Opcode information
@@ -441,6 +475,18 @@ namespace olympia
 
         mavis::OpcodeInfo::PtrType getOpCodeInfo() { return opcode_info_; }
 
+        // CPI breakdown accessors
+        CPIBreakdown& getCPIBreakdown() { return cpi_breakdown_; }
+        const CPIBreakdown& getCPIBreakdown() const { return cpi_breakdown_; }
+        
+        // Stage timestamp accessors
+        StageTimestamps& getTimestamps() { return timestamps_; }
+        const StageTimestamps& getTimestamps() const { return timestamps_; }
+
+        //! \brief Finalize CPI breakdown by calculating cycle durations from timestamps
+        //! This should be called when the instruction is ready to retire
+        void finalizeCPIBreakdown();
+
         // Duplicates stream operator but does not change EXPECT logs
         std::string info()
         {
@@ -541,6 +587,11 @@ namespace olympia
         RegisterBitMaskArray dest_reg_bit_masks_;
         RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
+        
+        // CPI attribution tracking
+        CPIBreakdown cpi_breakdown_;
+        StageTimestamps timestamps_;
+        
         static const std::unordered_map<Inst::Status, std::string> status2String;
     };
 

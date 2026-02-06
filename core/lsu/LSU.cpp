@@ -498,6 +498,8 @@ namespace olympia
         if (inst_ptr->isStoreInst() && (inst_ptr->getStatus() == Inst::Status::SCHEDULED))
         {
             ILOG("Store marked as completed " << inst_ptr);
+            // Record execution complete timestamp for CPI attribution
+            inst_ptr->getTimestamps().execute_complete = getClock()->currentCycle();
             inst_ptr->setStatus(Inst::Status::COMPLETED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
@@ -733,6 +735,8 @@ namespace olympia
             }
 
             // Mark instruction as completed
+            // Record execution complete timestamp for CPI attribution
+            inst_ptr->getTimestamps().execute_complete = getClock()->currentCycle();
             inst_ptr->setStatus(Inst::Status::COMPLETED);
 
             // Remove completed instruction from queues

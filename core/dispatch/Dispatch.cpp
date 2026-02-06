@@ -263,6 +263,8 @@ namespace olympia
                     ++unit_distribution_context_.context(target_pipe);
                     ++weighted_unit_distribution_context_.context(target_pipe);
 
+                    // Record dispatch timestamp for CPI attribution
+                    ex_inst_ptr->getTimestamps().dispatch_enter = getClock()->currentCycle();
                     ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
                     ILOG("Sending instruction: " << ex_inst_ptr << " to "
                                                  << best_dispatcher->getName()
@@ -281,6 +283,8 @@ namespace olympia
                         ++(unit_distribution_context_.context(target_pipe));
                         ++(weighted_unit_distribution_context_.context(target_pipe));
 
+                        // Record dispatch timestamp for CPI attribution
+                        ex_inst_ptr->getTimestamps().dispatch_enter = getClock()->currentCycle();
                         ex_inst_ptr->setStatus(Inst::Status::DISPATCHED);
                         ILOG("Sending instruction: " << ex_inst_ptr << " to " << disp->getName());
                         dispatched = true;

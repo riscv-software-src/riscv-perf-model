@@ -26,6 +26,31 @@ namespace olympia
                      sparta::Counter::COUNT_NORMAL),
         overall_ipc_si_(&stat_ipc_),
         period_ipc_si_(&stat_ipc_),
+        // CPI breakdown counters initialization
+        cpi_fetch_stalls_(&unit_stat_set_, "cpi_fetch_stalls",
+                          "Total cycles stalled in fetch across all instructions",
+                          sparta::Counter::COUNT_NORMAL),
+        cpi_decode_stalls_(&unit_stat_set_, "cpi_decode_stalls",
+                           "Total cycles stalled in decode across all instructions",
+                           sparta::Counter::COUNT_NORMAL),
+        cpi_rename_stalls_(&unit_stat_set_, "cpi_rename_stalls",
+                           "Total cycles stalled in rename across all instructions",
+                           sparta::Counter::COUNT_NORMAL),
+        cpi_dispatch_stalls_(&unit_stat_set_, "cpi_dispatch_stalls",
+                             "Total cycles stalled in dispatch across all instructions",
+                             sparta::Counter::COUNT_NORMAL),
+        cpi_issue_queue_stalls_(&unit_stat_set_, "cpi_issue_queue_stalls",
+                                "Total cycles waiting for operands in issue queue",
+                                sparta::Counter::COUNT_NORMAL),
+        cpi_execute_cycles_(&unit_stat_set_, "cpi_execute_cycles",
+                            "Total cycles in execution across all instructions",
+                            sparta::Counter::COUNT_NORMAL),
+        cpi_memory_stalls_(&unit_stat_set_, "cpi_memory_stalls",
+                           "Total cycles stalled on memory operations",
+                           sparta::Counter::COUNT_NORMAL),
+        cpi_rob_stalls_(&unit_stat_set_, "cpi_rob_stalls",
+                        "Total cycles waiting in ROB",
+                        sparta::Counter::COUNT_NORMAL),
         retire_timeout_interval_(p->retire_timeout_interval),
         num_to_retire_(p->num_to_retire),
         num_insts_to_retire_(p->num_insts_to_retire),
@@ -168,6 +193,22 @@ namespace olympia
 
                 reorder_buffer_.pop();
                 ILOG("retiring " << ex_inst);
+
+                // Finalize CPI breakdown for this instruction
+                ex_inst.getTimestamps().retired = getClock()->currentCycle();
+                ex_inst.finalizeCPIBreakdown();
+
+
+                // Aggregate CPI breakdown from this instruction
+                const auto& breakdown = ex_inst.getCPIBreakdown();
+                cpi_fetch_stalls_ += breakdown.fetch_stall_cycles;
+                cpi_decode_stalls_ += breakdown.decode_stall_cycles;
+                cpi_rename_stalls_ += breakdown.rename_stall_cycles;
+                cpi_dispatch_stalls_ += breakdown.dispatch_stall_cycles;
+                cpi_issue_queue_stalls_ += breakdown.issue_queue_stall_cycles;
+                cpi_execute_cycles_ += breakdown.execute_cycles;
+                cpi_memory_stalls_ += breakdown.memory_stall_cycles;
+                cpi_rob_stalls_ += breakdown.rob_stall_cycles;
 
                 retire_event_.collect(*ex_inst_ptr);
                 last_inst_retired_ = ex_inst_ptr;

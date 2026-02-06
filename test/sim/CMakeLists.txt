@@ -63,7 +63,6 @@ sparta_named_test(olympia_json_test_sys_retire_under_flush_issue_253 olympia
 sparta_named_test(olympia_json_test_branch_rewind_issue_16 olympia
   --workload json_tests/branch_rewind_test.json
   -p top.cpu.core0.execute.br*.params.enable_random_misprediction 1)
-
 # Test PEvent generation
 sparta_named_test(olympia_json_test_pevents olympia
   --workload traces/dhry_riscv.zstf -i100k

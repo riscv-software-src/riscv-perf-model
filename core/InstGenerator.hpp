@@ -14,6 +14,8 @@
 #include "decode/MavisUnit.hpp"
 #include "mavis/JSONUtils.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/log/MessageSource.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 #include "stf-inc/stf_inst_reader.hpp"
 
@@ -30,16 +32,20 @@ namespace olympia
     class InstGenerator
     {
     public:
-        InstGenerator(MavisType * mavis_facade) : mavis_facade_(mavis_facade) {}
+        InstGenerator(sparta::log::MessageSource & info_logger, MavisType * mavis_facade) :
+            info_logger_(info_logger),
+            mavis_facade_(mavis_facade) {}
         virtual ~InstGenerator() {}
         virtual InstPtr getNextInst(const sparta::Clock * clk) = 0;
-        static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
+        static std::unique_ptr<InstGenerator> createGenerator(sparta::log::MessageSource & info_logger,
+                                                              MavisType * mavis_facade,
                                                               const std::string & filename,
                                                               const bool skip_nonuser_mode);
         virtual bool isDone() const = 0;
         virtual void reset(const InstPtr &, const bool) = 0;
 
     protected:
+        sparta::log::MessageSource & info_logger_;
         MavisType * mavis_facade_ = nullptr;
         uint64_t    unique_id_ = 0;
         uint64_t    program_id_ = 1;
@@ -49,7 +55,8 @@ namespace olympia
     class JSONInstGenerator : public InstGenerator
     {
     public:
-        JSONInstGenerator(MavisType * mavis_facade,
+        JSONInstGenerator(sparta::log::MessageSource & info_logger,
+                          MavisType * mavis_facade,
                           const std::string & filename);
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
@@ -70,7 +77,8 @@ namespace olympia
         // Creates a TraceInstGenerator with the given mavis facade
         // and filename.  The parameter skip_nonuser_mode allows the
         // trace generator to skip system instructions if present
-        TraceInstGenerator(MavisType * mavis_facade,
+        TraceInstGenerator(sparta::log::MessageSource & info_logger,
+                           MavisType * mavis_facade,
                            const std::string & filename,
                            const bool skip_nonuser_mode);
 

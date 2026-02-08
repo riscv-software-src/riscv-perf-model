@@ -45,7 +45,7 @@ namespace core_test
             if (params->input_file != "")
             {
                 inst_generator_ = olympia::InstGenerator::createGenerator(
-                    mavis_facade_, params->input_file, false);
+                    info_logger_, mavis_facade_, params->input_file, false);
             }
         }
 

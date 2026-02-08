@@ -71,7 +71,8 @@ namespace olympia
         auto cpu_node   = getContainer()->getParent()->getParent();
         auto extension  = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
         auto workload   = extension->getParameters()->getParameter("workload");
-        inst_generator_ = InstGenerator::createGenerator(getMavis(getContainer()),
+        inst_generator_ = InstGenerator::createGenerator(info_logger_,
+                                                         getMavis(getContainer()),
                                                          workload->getValueAsString(),
                                                          skip_nonuser_mode_);
 

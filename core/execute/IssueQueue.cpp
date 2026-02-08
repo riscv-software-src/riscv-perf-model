@@ -230,8 +230,11 @@ namespace olympia
             {
                 issue_queue_.erase(delete_iter);
 
-                scoreboard_views_[core_types::RegFile::RF_INTEGER]->clearCallbacks(
-                    inst_ptr->getUniqueID());
+                // Clear scoreboard callbacks for all register file types
+                for (uint32_t rf = 0; rf < core_types::N_REGFILES; ++rf)
+                {
+                    scoreboard_views_[rf]->clearCallbacks(inst_ptr->getUniqueID());
+                }
 
                 ++credits_to_send;
 

@@ -36,6 +36,8 @@ namespace olympia_mss
 
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_latency, 1, "Send bus request latency")
+            PARAMETER(uint64_t, i2c_addr, 0x40000000, "I2C start address")
+            PARAMETER(uint64_t, i2c_size, 0x1000, "I2C address space size")
         };
 
         // Constructor for BIU
@@ -62,6 +64,9 @@ namespace olympia_mss
         sparta::SyncInPort<bool> in_mss_ack_sync_
             {&unit_port_set_, "in_mss_ack_sync", getClock()};
 
+        sparta::SyncInPort<bool> in_i2c_ack_sync_
+            {&unit_port_set_, "in_i2c_ack_sync", getClock()};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -76,6 +81,9 @@ namespace olympia_mss
         sparta::SyncOutPort<olympia::MemoryAccessInfoPtr> out_mss_req_sync_
             {&unit_port_set_, "out_mss_req_sync", getClock()};
 
+        sparta::SyncOutPort<olympia::MemoryAccessInfoPtr> out_i2c_req_sync_
+            {&unit_port_set_, "out_i2c_req_sync", getClock()};
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -86,6 +94,8 @@ namespace olympia_mss
 
         const uint32_t biu_req_queue_size_;
         const uint32_t biu_latency_;
+        const uint64_t i2c_addr_;
+        const uint64_t i2c_size_;
 
         bool biu_busy_ = false;
 
@@ -102,6 +112,10 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_mss_ack_
             {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handleMSSAck_)};
 
+        // Event to handle I2C Ack
+        sparta::UniqueEvent<> ev_handle_i2c_ack_
+            {&unit_event_set_, "handle_i2c_ack", CREATE_SPARTA_HANDLER(BIU, handleI2CAck_)};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
@@ -115,9 +129,15 @@ namespace olympia_mss
         // Handle MSS Ack
         void handleMSSAck_();
 
+        // Handle I2C Ack
+        void handleI2CAck_();
+
         // Receive MSS access acknowledge
         // Q: Does the argument list has to be "const DataType &" ?
         void getAckFromMSS_(const bool &);
+
+        // Receive I2C access acknowledge
+        void getAckFromI2C_(const bool &);
 
         // Sending initial credits to L2Cache
         void sendInitialCredits_();

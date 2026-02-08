@@ -141,6 +141,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->mss_rf
         },
         {
+            "i2c",
+            "cpu.core*",
+            "I2C Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->i2c_rf
+        },
+        {
             "rob",
             "cpu.core*",
             "ROB Unit",
@@ -295,6 +303,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.biu.ports.in_mss_ack_sync",
             "cpu.core*.mss.ports.out_mss_ack_sync"
+        },
+        {
+            "cpu.core*.biu.ports.out_i2c_req_sync",
+            "cpu.core*.i2c.ports.in_i2c_req_sync"
+        },
+        {
+            "cpu.core*.biu.ports.in_i2c_ack_sync",
+            "cpu.core*.i2c.ports.out_i2c_ack_sync"
         },
         {
             "cpu.core*.rob.ports.out_retire_flush",

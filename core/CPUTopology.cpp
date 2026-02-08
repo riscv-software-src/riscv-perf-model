@@ -460,6 +460,35 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             const std::string flush_manager = flushmanager_ports + ".out_flush_upper";
             bind_ports(exe_flush_in, flush_manager);
         }
+
+        // Bind prefetcher ports if they exist (dynamically created when enable_prefetcher is true)
+        // Instruction Prefetcher -> ICache
+        const std::string inst_prefetcher_path = core_node + ".fetch.instruction_prefetcher";
+        try
+        {
+            root_node->getChild(inst_prefetcher_path);
+            const std::string inst_prefetcher_out = inst_prefetcher_path + ".ports.out_prefetcher_write";
+            const std::string icache_in = core_node + ".icache.ports.in_fetch_req";
+            bind_ports(inst_prefetcher_out, icache_in);
+        }
+        catch (const sparta::SpartaException&)
+        {
+            // Instruction prefetcher not enabled, skip binding
+        }
+
+        // Data Prefetcher -> DCache
+        const std::string data_prefetcher_path = core_node + ".lsu.data_prefetcher";
+        try
+        {
+            root_node->getChild(data_prefetcher_path);
+            const std::string data_prefetcher_out = data_prefetcher_path + ".ports.out_prefetcher_write";
+            const std::string dcache_in = core_node + ".dcache.ports.in_lsu_lookup_req";
+            bind_ports(data_prefetcher_out, dcache_in);
+        }
+        catch (const sparta::SpartaException&)
+        {
+            // Data prefetcher not enabled, skip binding
+        }
     }
 }
 

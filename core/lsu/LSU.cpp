@@ -20,7 +20,7 @@ namespace olympia
         replay_buffer_("replay_buffer", p->replay_buffer_size, getClock()),
         replay_buffer_size_(p->replay_buffer_size),
         replay_issue_delay_(p->replay_issue_delay),
-        store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()),  // Add this line
+        store_buffer_("store_buffer", p->ldst_inst_queue_size, getClock()), // Add this line
         store_buffer_size_(p->ldst_inst_queue_size),
         ready_queue_(),
         load_store_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))
@@ -108,9 +108,9 @@ namespace olympia
         node->getParent()->registerForNotification<bool, LSU, &LSU::onROBTerminate_>(
             this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
 
-
         auto & events = ldst_pipeline_.getEventsAtStage(cache_read_stage_);
-        for (auto & event : events) {
+        for (auto & event : events)
+        {
             in_cache_lookup_ack_.registerConsumerEvent(event->getScheduleable());
         }
 
@@ -221,8 +221,8 @@ namespace olympia
             {
                 for (auto reg_file = 0; reg_file < core_types::RegFile::N_REGFILES; ++reg_file)
                 {
-                    const auto & data_bits = inst_ptr->
-                        getDataRegisterBitMask(static_cast<core_types::RegFile>(reg_file));
+                    const auto & data_bits = inst_ptr->getDataRegisterBitMask(
+                        static_cast<core_types::RegFile>(reg_file));
                     // if x0 is a data operand, we don't need to check scoreboard
                     if (!inst_ptr->getRenameData().getDataReg().op_info.is_x0)
                     {
@@ -234,7 +234,7 @@ namespace olympia
                                 [this, inst_ptr](const sparta::Scoreboard::RegisterBitMask &)
                                 { this->handleOperandIssueCheck_(inst_ptr); });
                             ILOG("Instruction NOT ready: " << inst_ptr << " Bits needed:"
-                                 << sparta::printBitSet(data_bits));
+                                                           << sparta::printBitSet(data_bits));
                         }
                     }
                 }
@@ -263,7 +263,7 @@ namespace olympia
             // either a new issue event, or a re-issue event
             // however, we can ONLY update instruction status as SCHEDULED for a new issue event
 
-            ILOG("Inst fully readdy: " << inst_ptr);
+            ILOG("Inst fully ready: " << inst_ptr);
 
             if (isReadyToIssueInsts_())
             {
@@ -281,16 +281,17 @@ namespace olympia
         if (inst_ptr->isStoreInst())
         {
             auto oldest_store = getOldestStore_();
-            sparta_assert(oldest_store && oldest_store->getInstPtr()->getUniqueID() == inst_ptr->getUniqueID(),
-                     "Attempting to retire store out of order! Expected: " 
-                     << (oldest_store ? oldest_store->getInstPtr()->getUniqueID() : 0)
-                     << " Got: " << inst_ptr->getUniqueID());
-        
+            sparta_assert(oldest_store
+                              && oldest_store->getInstPtr()->getUniqueID()
+                                     == inst_ptr->getUniqueID(),
+                          "Attempting to retire store out of order! Expected: "
+                              << (oldest_store ? oldest_store->getInstPtr()->getUniqueID() : 0)
+                              << " Got: " << inst_ptr->getUniqueID());
+
             // Remove from store buffer -> don't actually need to send cache request
-            store_buffer_.erase(store_buffer_.begin());;
+            store_buffer_.erase(store_buffer_.begin());
             ++stores_retired_;
         }
-
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
         if (isReadyToIssueInsts_())
@@ -508,7 +509,8 @@ namespace olympia
             return;
         }
 
-        // Loads don't perform a cache lookup if there are older stores haven't issued in the load store queue
+        // Loads don't perform a cache lookup if there are older stores haven't issued in the load
+        // store queue
         if (!inst_ptr->isStoreInst() && !allOlderStoresIssued_(inst_ptr)
             && allow_speculative_load_exec_)
         {
@@ -946,13 +948,14 @@ namespace olympia
         ILOG("Store added to store buffer: " << inst_ptr);
     }
 
-    bool LSU::tryStoreToLoadForwarding(const InstPtr& load_inst_ptr) const
+    bool LSU::tryStoreToLoadForwarding(const InstPtr & load_inst_ptr) const
     {
         const uint64_t load_addr = load_inst_ptr->getTargetVAddr();
         const uint32_t load_size = load_inst_ptr->getMemAccessSize();
 
         // A load must have a non-zero size to access memory.
-        if (load_size == 0) {
+        if (load_size == 0)
+        {
             return false;
         }
 
@@ -964,30 +967,33 @@ namespace olympia
         // the data from the youngest store is effectively used.
         for (auto it = store_buffer_.rbegin(); it != store_buffer_.rend(); ++it)
         {
-            const auto& store_info_ptr = *it; // LoadStoreInstInfoPtr
-            const InstPtr& store_inst_ptr = store_info_ptr->getInstPtr();
+            const auto & store_info_ptr = *it; // LoadStoreInstInfoPtr
+            const InstPtr & store_inst_ptr = store_info_ptr->getInstPtr();
 
             const uint64_t store_addr = store_inst_ptr->getTargetVAddr();
             const uint32_t store_size = store_inst_ptr->getMemAccessSize();
 
-            if (store_size == 0) {
+            if (store_size == 0)
+            {
                 continue; // Skip stores that don't actually write data.
             }
 
             // Determine the overlapping region [overlap_start_addr, overlap_end_addr)
             // The overlap is in terms of global memory addresses.
             uint64_t overlap_start_addr = std::max(load_addr, store_addr);
-            uint64_t overlap_end_addr   = std::min(load_addr + load_size, store_addr + store_size);
+            uint64_t overlap_end_addr = std::min(load_addr + load_size, store_addr + store_size);
 
             // If there's an actual overlap (i.e., the range is not empty)
             if (overlap_start_addr < overlap_end_addr)
             {
                 // Iterate over the bytes *within the load's address range* that this store covers.
-                for (uint64_t current_byte_global_addr = overlap_start_addr; current_byte_global_addr < overlap_end_addr; ++current_byte_global_addr)
+                for (uint64_t current_byte_global_addr = overlap_start_addr;
+                     current_byte_global_addr < overlap_end_addr; ++current_byte_global_addr)
                 {
                     // Calculate the index of this byte relative to the load's start address.
                     // This index is used for the coverage_mask.
-                    uint32_t load_byte_idx = static_cast<uint32_t>(current_byte_global_addr - load_addr);
+                    uint32_t load_byte_idx =
+                        static_cast<uint32_t>(current_byte_global_addr - load_addr);
 
                     // If this byte within the load's coverage_mask hasn't been marked true yet
                     // (meaning it hasn't been covered by an even younger store), mark it.
@@ -1000,7 +1006,8 @@ namespace olympia
             }
 
             // If all bytes of the load are now covered, no need to check even older stores
-            if (bytes_covered_count == load_size) {
+            if (bytes_covered_count == load_size)
+            {
                 break;
             }
         }
@@ -1009,10 +1016,10 @@ namespace olympia
         return bytes_covered_count == load_size;
     }
 
-
-    LoadStoreInstInfoPtr  LSU::getOldestStore_() const
+    LoadStoreInstInfoPtr LSU::getOldestStore_() const
     {
-        if(store_buffer_.empty()) {
+        if (store_buffer_.empty())
+        {
             return nullptr;
         }
         return store_buffer_.read(0);
@@ -1495,14 +1502,18 @@ namespace olympia
     void LSU::flushStoreBuffer_(const FlushCriteria & criteria)
     {
         auto sb_iter = store_buffer_.begin();
-        while(sb_iter != store_buffer_.end()) {
+        while (sb_iter != store_buffer_.end())
+        {
             auto inst_ptr = (*sb_iter)->getInstPtr();
-            if(criteria.includedInFlush(inst_ptr)) {
+            if (criteria.includedInFlush(inst_ptr))
+            {
                 auto delete_iter = sb_iter++;
                 // store buffer didn't return an iterator
                 store_buffer_.erase(delete_iter);
                 ILOG("Flushed store from store buffer: " << inst_ptr);
-            } else {
+            }
+            else
+            {
                 ++sb_iter;
             }
         }

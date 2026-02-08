@@ -1,0 +1,793 @@
+[
+    {
+        "mnemonic": "vwsubu.vv",
+        "vd": 7,
+        "vs1": 1,
+        "vs2": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vzext.vf4",
+        "vs2": 14,
+        "vd": 8,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vle16ff.v",
+        "vd": 5,
+        "rs1": 27,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfsub.vv",
+        "vd": 1,
+        "vs1": 5,
+        "vs2": 13,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vredxor.vs",
+        "vd": 1,
+        "vs1": 12,
+        "vs2": 26,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmv4r.v",
+        "vs2": 28,
+        "vd": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfsgnjx.vf",
+        "vs2": 10,
+        "vd": 27,
+        "fs1": 21,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwsubu.vv",
+        "vd": 9,
+        "vs1": 13,
+        "vs2": 21,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vle16ff.v",
+        "vd": 5,
+        "rs1": 24,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsoxei32.v",
+        "vs2": 22,
+        "vs3": 22,
+        "rs1": 16,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmflt.vv",
+        "vd": 29,
+        "vs1": 7,
+        "vs2": 24,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vlm.v",
+        "vd": 18,
+        "rs1": 23,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsadd.vi",
+        "vs2": 12,
+        "vd": 4,
+        "imm": 1,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmulhu.vx",
+        "vs2": 14,
+        "vd": 18,
+        "rs1": 5,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vredxor.vs",
+        "vd": 6,
+        "vs1": 24,
+        "vs2": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vluxei8.v",
+        "vs2": 23,
+        "vd": 10,
+        "rs1": 23,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsoxei64.v",
+        "vs2": 13,
+        "vs3": 17,
+        "rs1": 4,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsext.vf2",
+        "vs2": 10,
+        "vd": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmaxu.vv",
+        "vd": 29,
+        "vs1": 24,
+        "vs2": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwsub.vv",
+        "vd": 14,
+        "vs1": 20,
+        "vs2": 3,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vnclip.wi",
+        "vs2": 2,
+        "vd": 20,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfsgnjx.vv",
+        "vd": 17,
+        "vs1": 4,
+        "vs2": 13,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vadc.vim",
+        "vs2": 20,
+        "vd": 13,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vslide1up.vx",
+        "vs2": 31,
+        "vd": 25,
+        "rs1": 29,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmsle.vx",
+        "vs2": 16,
+        "vd": 8,
+        "rs1": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vand.vi",
+        "vs2": 16,
+        "vd": 27,
+        "imm": 12,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfadd.vf",
+        "vs2": 14,
+        "vd": 8,
+        "fs1": 31,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vloxei32.v",
+        "vs2": 3,
+        "vd": 7,
+        "rs1": 9,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vremu.vv",
+        "vd": 10,
+        "vs1": 27,
+        "vs2": 4,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfmsub.vf",
+        "vs2": 24,
+        "vd": 29,
+        "fs1": 16,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vnsrl.wv",
+        "vd": 0,
+        "vs1": 7,
+        "vs2": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwaddu.wv",
+        "vd": 21,
+        "vs1": 7,
+        "vs2": 18,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsetvl",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vnclipu.wx",
+        "vs2": 29,
+        "vd": 0,
+        "rs1": 16,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmsne.vx",
+        "vs2": 11,
+        "vd": 6,
+        "rs1": 19,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwsubu.vv",
+        "vd": 12,
+        "vs1": 9,
+        "vs2": 23,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vminu.vv",
+        "vd": 0,
+        "vs1": 20,
+        "vs2": 31,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfrdiv.vf",
+        "vs2": 7,
+        "vd": 23,
+        "fs1": 19,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vasubu.vv",
+        "vd": 3,
+        "vs1": 15,
+        "vs2": 5,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vlse32.v",
+        "vd": 31,
+        "rs2": 4,
+        "rs1": 8,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vxor.vx",
+        "vs2": 30,
+        "vd": 10,
+        "rs1": 16,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vor.vv",
+        "vd": 27,
+        "vs1": 13,
+        "vs2": 12,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsse64.v",
+        "vs3": 19,
+        "rs2": 25,
+        "rs1": 23,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vle16.v",
+        "vd": 28,
+        "rs1": 7,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsext.vf2",
+        "vs2": 14,
+        "vd": 4,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfwadd.vv",
+        "vd": 1,
+        "vs1": 14,
+        "vs2": 14,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfslide1up.vf",
+        "vs2": 4,
+        "vd": 3,
+        "fs1": 14,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfncvt.rtz.x.f.w",
+        "vs2": 2,
+        "vd": 21,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfrec7.v",
+        "vs2": 15,
+        "vd": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwaddu.vx",
+        "vs2": 31,
+        "vd": 13,
+        "rs1": 8,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmseq.vi",
+        "vs2": 30,
+        "vd": 15,
+        "imm": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfdiv.vv",
+        "vd": 12,
+        "vs1": 6,
+        "vs2": 6,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vdiv.vx",
+        "vs2": 27,
+        "vd": 22,
+        "rs1": 27,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfmsub.vv",
+        "vd": 29,
+        "vs1": 3,
+        "vs2": 6,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfncvt.xu.f.w",
+        "vs2": 25,
+        "vd": 21,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vl2re32.v",
+        "vd": 15,
+        "rs1": 12,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vssrl.vv",
+        "vd": 28,
+        "vs1": 8,
+        "vs2": 27,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsadd.vv",
+        "vd": 17,
+        "vs1": 29,
+        "vs2": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vle8.v",
+        "vd": 28,
+        "rs1": 6,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfnmsub.vv",
+        "vd": 0,
+        "vs1": 5,
+        "vs2": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vor.vv",
+        "vd": 26,
+        "vs1": 31,
+        "vs2": 30,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmsgtu.vi",
+        "vs2": 25,
+        "vd": 3,
+        "imm": 5,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfdiv.vf",
+        "vs2": 0,
+        "vd": 24,
+        "fs1": 16,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vluxei16.v",
+        "vs2": 18,
+        "vd": 27,
+        "rs1": 31,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vssra.vx",
+        "vs2": 12,
+        "vd": 18,
+        "rs1": 13,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfcvt.f.x.v",
+        "vs2": 3,
+        "vd": 20,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfcvt.f.xu.v",
+        "vs2": 3,
+        "vd": 30,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmslt.vx",
+        "vs2": 10,
+        "vd": 3,
+        "rs1": 5,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsll.vv",
+        "vd": 4,
+        "vs1": 4,
+        "vs2": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmfle.vv",
+        "vd": 7,
+        "vs1": 15,
+        "vs2": 2,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmsof.m",
+        "vs2": 5,
+        "vd": 26,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vdivu.vx",
+        "vs2": 20,
+        "vd": 16,
+        "rs1": 13,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwaddu.vx",
+        "vs2": 20,
+        "vd": 15,
+        "rs1": 16,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfredmin.vs",
+        "vd": 8,
+        "vs1": 19,
+        "vs2": 29,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwmulu.vx",
+        "vs2": 4,
+        "vd": 0,
+        "rs1": 29,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "viota.m",
+        "vs2": 6,
+        "vd": 4,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmseq.vv",
+        "vd": 13,
+        "vs1": 16,
+        "vs2": 8,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vle64.v",
+        "vd": 4,
+        "rs1": 15,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfslide1down.vf",
+        "vs2": 18,
+        "vd": 10,
+        "fs1": 28,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsaddu.vv",
+        "vd": 19,
+        "vs1": 0,
+        "vs2": 19,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmulhsu.vx",
+        "vs2": 6,
+        "vd": 8,
+        "rs1": 16,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vs1r.v",
+        "vs3": 6,
+        "rs1": 9,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmadd.vv",
+        "vd": 18,
+        "vs1": 13,
+        "vs2": 21,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vslideup.vi",
+        "vs2": 16,
+        "vd": 31,
+        "imm": 8,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfmacc.vv",
+        "vd": 5,
+        "vs1": 27,
+        "vs2": 17,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmfne.vv",
+        "vd": 0,
+        "vs1": 21,
+        "vs2": 8,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vwaddu.vv",
+        "vd": 16,
+        "vs1": 10,
+        "vs2": 28,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vssrl.vv",
+        "vd": 27,
+        "vs1": 0,
+        "vs2": 7,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vle8.v",
+        "vd": 9,
+        "rs1": 2,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfslide1down.vf",
+        "vs2": 9,
+        "vd": 27,
+        "fs1": 8,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmfeq.vv",
+        "vd": 19,
+        "vs1": 23,
+        "vs2": 2,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vl1re64.v",
+        "vd": 13,
+        "rs1": 15,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vnmsub.vx",
+        "vs2": 6,
+        "vd": 22,
+        "rs1": 26,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmsif.m",
+        "vs2": 9,
+        "vd": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmin.vv",
+        "vd": 11,
+        "vs1": 26,
+        "vs2": 1,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vmslt.vv",
+        "vd": 21,
+        "vs1": 26,
+        "vs2": 15,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vrem.vv",
+        "vd": 10,
+        "vs1": 6,
+        "vs2": 24,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vfsgnjn.vv",
+        "vd": 30,
+        "vs1": 14,
+        "vs2": 12,
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsuxei16.v",
+        "vs2": 22,
+        "vs3": 19,
+        "rs1": 14,
+        "vaddr": "0x1000",
+        "vl": 32,
+        "vtype": "0x18"
+    },
+    {
+        "mnemonic": "vsra.vi",
+        "vs2": 1,
+        "vd": 12,
+        "imm": 12,
+        "vl": 32,
+        "vtype": "0x18"
+    }
+]

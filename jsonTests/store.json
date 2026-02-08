@@ -1,0 +1,614 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse64.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse64.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei64.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei64.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsm.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse8.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse16.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse32.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse8.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse16.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse32.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei8.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei16.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei32.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei8.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei16.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei32.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs1r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs2r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs4r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs8r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsm.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse8.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse16.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse32.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse8.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse16.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse32.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei8.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei16.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei32.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei8.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei16.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei32.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs1r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs2r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs4r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vs8r.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vse64.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsse64.v",
+    "rs2": 5,
+    "rs1": 3,
+    "vs3": 8,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsoxei64.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsuxei64.v",
+    "rs1": 3,
+    "vs3": 8,
+    "vs2": 12,
+    "vaddr": "0x1000"
+  }
+]

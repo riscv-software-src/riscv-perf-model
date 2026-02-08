@@ -3,6 +3,19 @@ project(Vector_test)
 add_executable(Vector_test Vector_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
 target_link_libraries(Vector_test core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
 
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} ${SIM_BASE}/scripts/generate_vector_tests.py
+    WORKING_DIRECTORY ${SIM_BASE}
+    RESULT_VARIABLE GEN_RESULT
+)
+
+if(NOT GEN_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to generate vector test JSON files")
+endif()
+
+message(STATUS "Generated vector test JSON files in ${SIM_BASE}/jsonTests/")
+
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
 
@@ -64,3 +77,24 @@ sparta_named_test(Vector_test_slide          Vector_test -l top info vuop_slide.
 #sparta_named_test(Vector_test_vstore Vector_test -l top info vstore.out -c test_cores/test_big_core.yaml --input-file vstore.json --expected-num-uops 8)
 sparta_named_test(Vector_test_vfirst Vector_test -l top info vfirst.out -c test_cores/test_big_core.yaml --input-file vfirst.json --expected-num-uops 0)
 sparta_named_test(Vector_test_vmv4r  Vector_test -l top info vmv4r.out  -c test_cores/test_big_core.yaml --input-file vmv4r.json  --expected-num-uops 4)
+
+file(GLOB GENERATED_JSON_TESTS "${SIM_BASE}/jsonTests/*.json")
+
+foreach(JSON_FILE ${GENERATED_JSON_TESTS})
+    get_filename_component(JSON_NAME ${JSON_FILE} NAME_WE)
+    
+    file(CREATE_LINK ${JSON_FILE} 
+         ${CMAKE_CURRENT_BINARY_DIR}/${JSON_NAME}.json 
+         SYMBOLIC)
+    
+    sparta_named_test(
+        Vector_test_gen_${JSON_NAME}
+        Vector_test 
+        -l top info gen_${JSON_NAME}.out 
+        -c test_cores/test_big_core.yaml 
+        --input-file ${JSON_NAME}.json
+    )
+endforeach()
+
+list(LENGTH GENERATED_JSON_TESTS NUM_GENERATED_TESTS)
+message(STATUS "Added ${NUM_GENERATED_TESTS} generated vector tests to regress target")

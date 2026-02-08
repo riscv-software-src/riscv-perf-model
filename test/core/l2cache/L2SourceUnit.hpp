@@ -47,7 +47,7 @@ namespace l2cache_test
                 (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveCredits_, uint32_t));
 
             if(params->input_file != "") {
-                inst_generator_ = olympia::InstGenerator::createGenerator(mavis_facade_, params->input_file, false);
+                inst_generator_ = olympia::InstGenerator::createGenerator(info_logger_, mavis_facade_, params->input_file, false);
             }
 
             if (unit_enable_ == true)

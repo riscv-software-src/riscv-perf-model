@@ -50,3 +50,4 @@ if [ ${BUILD_OLYMPIA} -ne 0 ]; then
     echo "ERROR: build/regress of olympia FAILED!!!"
     exit 1
 fi
+

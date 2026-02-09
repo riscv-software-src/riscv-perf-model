@@ -6,12 +6,10 @@ top.cpu.params.topology: simple
 
 top.cpu.core0:
   fetch.params.num_to_fetch:   2
-  fetch.params.enable_prefetcher: true
   decode.params.num_to_decode: 2
   rename.params.num_to_rename: 2
   dispatch.params.num_to_dispatch: 2
   rob.params.num_to_retire:    2
-  lsu.params.enable_prefetcher: true
   dcache.params:
     l1_size_kb: 16
 

@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Tuesday Tue Dec  3 12:50:48 2024
-#Elapsed:  0.001469s
+#Start:    Monday Mon Feb  9 02:27:39 2026
+#Elapsed:  0.031011s
 {0000000000 00000000 top.dut info} receiveInpQueueCredits_: Received credits: [bound to] {o_restore_credits (top.sink.ports.o_restore_credits)}
 {0000000000 00000000 top.src info} inCredits: Got credits from dut: 10
 {0000000000 00000000 top.src info} Sending group: 0x80002aa6 UID(0)  PID(1)  csrrwi

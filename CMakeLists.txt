@@ -94,10 +94,10 @@ add_executable(olympia
 target_link_libraries (olympia core mss SPARTA::sparta ${STF_LINK_LIBS})
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
-  target_compile_options (core    PUBLIC -flto)
-  target_compile_options (mss     PUBLIC -flto)
-  target_compile_options (olympia PUBLIC -flto)
-  target_link_options    (olympia PUBLIC -flto)
+#   target_compile_options (core    PUBLIC -flto)
+#   target_compile_options (mss     PUBLIC -flto)
+  # target_compile_options (olympia PUBLIC -flto)
+  # target_link_options    (olympia PUBLIC -flto)
 endif()
 
 # Create a few links like reports and arch directories

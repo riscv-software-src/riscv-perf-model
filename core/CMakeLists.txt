@@ -55,7 +55,7 @@ add_subdirectory(dispatch)
 add_subdirectory(execute)
 add_subdirectory(vector)
 add_subdirectory(lsu)
-add_subdirectory(test)
+add_subdirectory(prefetcher)
 
 
-target_link_libraries(core fetch decode rename dispatch execute vector lsu instgen)
+target_link_libraries(core fetch decode rename dispatch execute vector lsu prefetcher instgen)

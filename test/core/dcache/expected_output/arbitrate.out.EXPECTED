@@ -3,8 +3,8 @@
 #Exe:      
 #SimulatorVersion:
 #Repro:    
-#Start:    Saturday Sat Oct 19 15:35:23 2024
-#Elapsed:  0.002073s
+#Start:    Monday Mon Feb  9 02:27:39 2026
+#Elapsed:  0.03476s
 {0000000000 00000000 top.lsu info} req_inst_: Instruction: 'uid:0 BEFORE_FETCH 0 pid:1 uopid:0 'lw	5,3' ' Requested
 {0000000000 00000000 top.dcache info} receiveMemReqFromLSU_: Received memory access request from LSU memptr: deadbeef uid:0 BEFORE_FETCH 0 pid:1 uopid:0 'lw	5,3' 
 {0000000000 00000000 top.dcache info} arbitrateL2LsuReq_: Received LSU request memptr: deadbeef uid:0 BEFORE_FETCH 0 pid:1 uopid:0 'lw	5,3' 

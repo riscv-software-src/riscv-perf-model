@@ -3,8 +3,8 @@
 #include "LSU.hpp"
 #include <string>
 
+
 #include "OlympiaAllocators.hpp"
-#include "DataPrefetcher.hpp"
 
 namespace olympia
 {
@@ -120,12 +120,6 @@ namespace olympia
         // To resolve the race condition when:
         // Both cache and MMU try to drive the single BIU port at the same cycle
         // Here we give cache the higher priority
-       if (p->enable_prefetcher)
-        {
-            sparta::TreeNode * prefetch_node = new sparta::TreeNode(node, DataPrefetcher::name, "Data Prefetcher Unit");
-            auto prefetch_params = new DataPrefetcher::DataPrefetcherParameterSet(prefetch_node);
-            data_prefetcher_.reset(new DataPrefetcher(prefetch_node, prefetch_params));
-        }
         ILOG("LSU construct: #" << node->getGroupIdx());
     }
 
@@ -568,9 +562,6 @@ namespace olympia
                 sparta_assert(false, "Cache access is bypassed without a valid reason!");
             }
             return;
-        }
-        if (data_prefetcher_) {
-            data_prefetcher_->processIncomingReq(mem_access_info_ptr);
         }
 
         out_cache_lookup_req_.send(mem_access_info_ptr);

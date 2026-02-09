@@ -1,0 +1,14 @@
+# Name:     Olympia RISC-V Perf Model 
+# Cmdline:  ./release/olympia -c arches/medium_core.yaml
+# Exe:      ./release/olympia
+# SimulatorVersion: v0.1.0
+# Repro:    Git SHA: 4e81388-dirty
+# Start:    Monday Mon Feb  9 04:41:25 2026
+# Elapsed:  0.009474s
+# Sparta Version: map_v2.0.26
+terminate called after throwing an instance of 'sparta::SpartaException'
+  what():  Could not resolve location of included file: 'small_core.yaml' in source file: arches/medium_core.yaml
+Search paths: 
+	./
+
+

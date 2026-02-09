@@ -163,6 +163,22 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
             &factories->mavis_rf
+        },
+        {
+            "instruction_prefetcher",
+            "cpu.core*",
+            "Instruction Prefetcher Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->prefetcher_rf
+        },
+        {
+            "data_prefetcher",
+            "cpu.core*",
+            "Data Prefetcher Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->prefetcher_rf
         }
     };
 
@@ -461,15 +477,19 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             bind_ports(exe_flush_in, flush_manager);
         }
 
-        // Bind prefetcher ports if they exist (dynamically created when enable_prefetcher is true)
+        // Bind prefetcher ports if they exist (optional units)
         // Instruction Prefetcher -> ICache
-        const std::string inst_prefetcher_path = core_node + ".fetch.instruction_prefetcher";
+        const std::string inst_prefetcher_path = core_node + ".instruction_prefetcher";
         try
         {
             root_node->getChild(inst_prefetcher_path);
             const std::string inst_prefetcher_out = inst_prefetcher_path + ".ports.out_prefetcher_write";
-            const std::string icache_in = core_node + ".icache.ports.in_fetch_req";
-            bind_ports(inst_prefetcher_out, icache_in);
+            const std::string icache_prefetch_in = core_node + ".icache.ports.in_fetch_req";
+            bind_ports(inst_prefetcher_out, icache_prefetch_in);
+
+            // Instruction Prefetcher flush
+            const std::string inst_prefetcher_flush = inst_prefetcher_path + ".ports.in_reorder_flush";
+            bind_ports(inst_prefetcher_flush, flushmanager_ports + ".out_flush_upper");
         }
         catch (const sparta::SpartaException&)
         {
@@ -477,13 +497,17 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
         }
 
         // Data Prefetcher -> DCache
-        const std::string data_prefetcher_path = core_node + ".lsu.data_prefetcher";
+        const std::string data_prefetcher_path = core_node + ".data_prefetcher";
         try
         {
             root_node->getChild(data_prefetcher_path);
             const std::string data_prefetcher_out = data_prefetcher_path + ".ports.out_prefetcher_write";
-            const std::string dcache_in = core_node + ".dcache.ports.in_lsu_lookup_req";
-            bind_ports(data_prefetcher_out, dcache_in);
+            const std::string dcache_prefetch_in = core_node + ".dcache.ports.in_lsu_lookup_req";
+            bind_ports(data_prefetcher_out, dcache_prefetch_in);
+
+            // Data Prefetcher flush
+            const std::string data_prefetcher_flush = data_prefetcher_path + ".ports.in_reorder_flush";
+            bind_ports(data_prefetcher_flush, flushmanager_ports + ".out_flush_upper");
         }
         catch (const sparta::SpartaException&)
         {

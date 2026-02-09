@@ -1,27 +1,28 @@
-#include "InstructionPrefetcher.hpp"
+#include "Prefetcher.hpp"
 #include "NextLinePrefetchEngine.hpp"
 #include "StridePrefetchEngine.hpp"
 
 namespace olympia
 {
 
-    InstructionPrefetcher::InstructionPrefetcher(sparta::TreeNode* node, 
-                                                 const InstructionPrefetcherParameterSet* p) :
+    Prefetcher::Prefetcher(sparta::TreeNode* node, 
+                           const PrefetcherParameterSet* p) :
         sparta::Unit(node),
         PrefetcherIF<PrefetchEngineIF<>>(dynamic_cast<sparta::Unit*>(this)),
         prefetcher_enabled_(p->enable_prefetcher),
         prefetcher_credits_(p->req_queue_size),
         req_queue_("Req_Queue", p->req_queue_size, getClock()),
         ev_gen_prefetch_{getEventSet(), "gen_prefetch_event",
-                         CREATE_SPARTA_HANDLER(InstructionPrefetcher, generatePrefetch_)},
+                         CREATE_SPARTA_HANDLER(Prefetcher, generatePrefetch_)},
         ev_handle_incoming_req_{getEventSet(), "handle_incoming_event",
-                                CREATE_SPARTA_HANDLER(InstructionPrefetcher, handleIncomingReq_)},
-        prefetcher_queue_credits_in_{getPortSet(), "in_prefetcher_queue_credits",
-                                     sparta::SchedulingPhase::Tick, 0},
-        req_queue_credits_out_{getPortSet(), "out_req_queue_credit"}
+                                CREATE_SPARTA_HANDLER(Prefetcher, handleIncomingReq_)}
     {
         if (prefetcher_enabled_)
         {
+            prefetcher_queue_credits_in_.reset(new sparta::DataInPort<uint32_t>(getPortSet(), "in_prefetcher_queue_credits",
+                                                                                sparta::SchedulingPhase::Tick, 0));
+            req_queue_credits_out_.reset(new sparta::DataOutPort<uint32_t>(getPortSet(), "out_req_queue_credit"));
+
             std::unique_ptr<PrefetchEngineIF<>> prefetch_engine;
             if (p->prefetcher_type == std::string("next_line"))
             {
@@ -39,25 +40,34 @@ namespace olympia
             }
             setEngine(std::move(prefetch_engine));
 
-            prefetcher_queue_credits_in_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
-                InstructionPrefetcher, receivePrefetchQueueCredits_, uint32_t));
+            prefetcher_queue_credits_in_->registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
+                Prefetcher, receivePrefetchQueueCredits_, uint32_t));
+        }
+        else
+        {
+            p->prefetcher_type.ignore();
+            p->num_to_prefetch.ignore();
+            p->cacheline_size.ignore();
         }
 
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(InstructionPrefetcher, sendInitialCredits_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Prefetcher, sendInitialCredits_));
     }
 
     // Send the initial credit count
-    void InstructionPrefetcher::sendInitialCredits_()
+    void Prefetcher::sendInitialCredits_()
     {
-        req_queue_credits_out_.send(req_queue_.capacity());
+        if (prefetcher_enabled_)
+        {
+            req_queue_credits_out_->send(req_queue_.capacity());
+        }
     }
 
     //////////////////////////////////////////////////////////////////////
     // callbacks
 
-    //! Process the incoming instruction fetch access
+    //! Process the incoming memory access
     void
-    InstructionPrefetcher::processIncomingReq(const olympia::MemoryAccessInfoPtr & mem_access_info_ptr)
+    Prefetcher::processIncomingReq(const olympia::MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         // Queue incoming buffer
         req_queue_.push(mem_access_info_ptr);
@@ -65,12 +75,12 @@ namespace olympia
     }
 
     //! Handler for incoming requests
-    void InstructionPrefetcher::handleIncomingReq_()
+    void Prefetcher::handleIncomingReq_()
     {
         auto access = req_queue_.read(0);
         req_queue_.pop();
         // Send a credit back
-        req_queue_credits_out_.send(1);
+        req_queue_credits_out_->send(1);
 
         // Only generate prefetches if enabled
         if (prefetcher_enabled_)
@@ -90,7 +100,7 @@ namespace olympia
     }
 
     //! \brief Receive prefetcher queue credits
-    void InstructionPrefetcher::receivePrefetchQueueCredits_(const uint32_t & credits)
+    void Prefetcher::receivePrefetchQueueCredits_(const uint32_t & credits)
     {
         prefetcher_credits_ += credits;
         if (prefetcher_enabled_ && getPrefetchEngine()->isPrefetchReady())
@@ -103,9 +113,12 @@ namespace olympia
     }
 
     //! \brief Flush handler
-    void InstructionPrefetcher::handleFlush(const olympia::FlushManager::FlushingCriteria & criteria)
+    void Prefetcher::handleFlush(const olympia::FlushManager::FlushingCriteria & criteria)
     {
-        req_queue_credits_out_.send(req_queue_.size());
+        if (prefetcher_enabled_)
+        {
+            req_queue_credits_out_->send(req_queue_.size());
+        }
         req_queue_.clear();
 
         ev_gen_prefetch_.cancel();
@@ -113,7 +126,7 @@ namespace olympia
     }
 
     //! Handle to generate a prefetch
-    void InstructionPrefetcher::generatePrefetch_()
+    void Prefetcher::generatePrefetch_()
     {
         if (!prefetcher_enabled_)
         {

@@ -30,11 +30,10 @@
 #include "LoadStoreInstInfo.hpp"
 #include "MMU.hpp"
 #include "DCache.hpp"
-#include<memory>
+
 
 namespace olympia
 {
-    class DataPrefetcher;
     class LSU : public sparta::Unit
     {
       public:
@@ -47,7 +46,6 @@ namespace olympia
           public:
             //! Constructor for LSUParameterSet
             LSUParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
-            PARAMETER(bool, enable_prefetcher, false, "Enable data prefetcher")
 
             // Parameters for ldst_inst_queue
             PARAMETER(uint32_t, ldst_inst_queue_size, 8, "LSU ldst inst queue size")
@@ -95,7 +93,6 @@ namespace olympia
         using FlushCriteria = FlushManager::FlushingCriteria;
 
       private:
-        std::unique_ptr<DataPrefetcher> data_prefetcher_;
         using ScoreboardViews =
             std::array<std::unique_ptr<sparta::ScoreboardView>, core_types::N_REGFILES>;
 

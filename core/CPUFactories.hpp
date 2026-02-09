@@ -23,6 +23,7 @@
 #include "Preloader.hpp"
 #include "decode/MavisUnit.hpp"
 #include "execute/IssueQueue.hpp"
+#include "Prefetcher.hpp"
 
 namespace olympia{
 
@@ -112,5 +113,9 @@ namespace olympia{
 
         //! \brief Set up the Mavis Decode functional unit
         MavisFactory  mavis_rf;
+
+        //! \brief Resource Factory to build a Prefetcher Unit
+        sparta::ResourceFactory<olympia::Prefetcher,
+                                olympia::Prefetcher::PrefetcherParameterSet> prefetcher_rf;
     }; // struct CPUFactories
 }  // namespace olympia

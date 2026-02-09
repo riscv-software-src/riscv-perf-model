@@ -316,6 +316,12 @@ namespace olympia
 
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr);
+        
+        // Record execution start timestamp for CPI attribution
+        // This corresponds to the Execute stage for LSU instructions
+        win_ptr->getInstPtr()->setStatus(Inst::Status::SCHEDULED, getClock()->currentCycle());
+        
+
 
         // We append to replay queue to prevent ref count of the shared pointer to drop before
         // calling pop below
@@ -499,8 +505,7 @@ namespace olympia
         {
             ILOG("Store marked as completed " << inst_ptr);
             // Record execution complete timestamp for CPI attribution
-            inst_ptr->getTimestamps().execute_complete = getClock()->currentCycle();
-            inst_ptr->setStatus(Inst::Status::COMPLETED);
+            inst_ptr->setStatus(Inst::Status::COMPLETED, getClock()->currentCycle());
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
@@ -736,8 +741,7 @@ namespace olympia
 
             // Mark instruction as completed
             // Record execution complete timestamp for CPI attribution
-            inst_ptr->getTimestamps().execute_complete = getClock()->currentCycle();
-            inst_ptr->setStatus(Inst::Status::COMPLETED);
+            inst_ptr->setStatus(Inst::Status::COMPLETED, getClock()->currentCycle());
 
             // Remove completed instruction from queues
             ILOG("Removed issue queue " << inst_ptr);

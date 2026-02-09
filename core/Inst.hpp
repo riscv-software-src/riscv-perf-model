@@ -91,17 +91,8 @@ namespace olympia
 
         //! \brief Pipeline stage timestamp tracking
         //! Records cycle counts when instruction enters/exits each stage
-        struct StageTimestamps {
-            sparta::Clock::Cycle fetch_enter = 0;
-            sparta::Clock::Cycle decode_enter = 0;
-            sparta::Clock::Cycle rename_enter = 0;
-            sparta::Clock::Cycle dispatch_enter = 0;
-            sparta::Clock::Cycle issue_ready = 0;      //! When all operands ready
-            sparta::Clock::Cycle execute_start = 0;
-            sparta::Clock::Cycle execute_complete = 0;
-            sparta::Clock::Cycle retire_ready = 0;     //! When marked COMPLETED
-            sparta::Clock::Cycle retired = 0;
-        };
+        //! Indexed by Status enum
+        using TimestampContainer = std::array<sparta::Clock::Cycle, static_cast<uint32_t>(Status::__LAST)>;
 
         /*!
          * \brief Construct an Instruction
@@ -125,7 +116,7 @@ namespace olympia
 
         bool getFlushedStatus() const { return getStatus() == olympia::Inst::Status::FLUSHED; }
 
-        void setStatus(Status status)
+        void setStatus(Status status, sparta::Clock::Cycle timestamp)
         {
             sparta_assert(status_state_ != status,
                           "Status being set twice to the same value: " << status << " " << *this);
@@ -133,6 +124,8 @@ namespace olympia
                                                       << status_state_ << " New: " << status
                                                       << *this);
             status_state_ = status;
+            timestamps_[static_cast<uint32_t>(status)] = timestamp;
+
             if (getStatus() == Status::COMPLETED)
             {
                 if (ev_retire_ != 0)
@@ -140,6 +133,14 @@ namespace olympia
                     ev_retire_->schedule();
                 }
             }
+        }
+        
+        void setStatus(Status status) {
+             setStatus(status, 0); 
+        }
+
+        sparta::Clock::Cycle getTimestamp(Status status) const {
+            return timestamps_[static_cast<uint32_t>(status)];
         }
 
         const Status & getExtendedStatus() const { return extended_status_state_; }
@@ -479,9 +480,6 @@ namespace olympia
         CPIBreakdown& getCPIBreakdown() { return cpi_breakdown_; }
         const CPIBreakdown& getCPIBreakdown() const { return cpi_breakdown_; }
         
-        // Stage timestamp accessors
-        StageTimestamps& getTimestamps() { return timestamps_; }
-        const StageTimestamps& getTimestamps() const { return timestamps_; }
 
         //! \brief Finalize CPI breakdown by calculating cycle durations from timestamps
         //! This should be called when the instruction is ready to retire
@@ -590,7 +588,7 @@ namespace olympia
         
         // CPI attribution tracking
         CPIBreakdown cpi_breakdown_;
-        StageTimestamps timestamps_;
+        TimestampContainer timestamps_ = {0};
         
         static const std::unordered_map<Inst::Status, std::string> status2String;
     };

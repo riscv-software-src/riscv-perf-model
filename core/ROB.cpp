@@ -163,7 +163,7 @@ namespace olympia
             if (ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
-                ex_inst.setStatus(Inst::Status::RETIRED);
+                ex_inst.setStatus(Inst::Status::RETIRED, getClock()->currentCycle());
                 if (ex_inst.isStoreInst())
                 {
                     out_rob_retire_ack_.send(ex_inst_ptr);
@@ -195,7 +195,6 @@ namespace olympia
                 ILOG("retiring " << ex_inst);
 
                 // Finalize CPI breakdown for this instruction
-                ex_inst.getTimestamps().retired = getClock()->currentCycle();
                 ex_inst.finalizeCPIBreakdown();
 
 

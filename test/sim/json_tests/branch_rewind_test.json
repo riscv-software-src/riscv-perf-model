@@ -1,0 +1,122 @@
+[
+  {
+    "mnemonic": "addi",
+    "rd": 5,
+    "rs1": 0,
+    "imm": 10
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 6,
+    "rs1": 0,
+    "imm": 5
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 7,
+    "rs1": 0,
+    "imm": 1
+  },
+  {
+    "mnemonic": "beq",
+    "rs1": 5,
+    "rs2": 6,
+    "taken": 0
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 8,
+    "rs1": 5,
+    "imm": 1
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 9,
+    "rs1": 6,
+    "imm": 2
+  },
+  {
+    "mnemonic": "sub",
+    "rd": 10,
+    "rs1": 8,
+    "rs2": 9
+  },
+  {
+    "mnemonic": "beq",
+    "rs1": 8,
+    "rs2": 9,
+    "taken": 0
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 11,
+    "rs1": 10,
+    "imm": 3
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 12,
+    "rs1": 8,
+    "rs2": 9
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 13,
+    "rs1": 11,
+    "rs2": 12
+  },
+  {
+    "mnemonic": "div",
+    "rd": 14,
+    "rs1": 13,
+    "rs2": 7
+  },
+  {
+    "mnemonic": "beq",
+    "rs1": 13,
+    "rs2": 14,
+    "taken": 0
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 15,
+    "rs1": 14,
+    "imm": 4
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 16,
+    "rs1": 14,
+    "rs2": 15
+  },
+  {
+    "mnemonic": "mul",
+    "rd": 17,
+    "rs1": 15,
+    "rs2": 16
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 18,
+    "rs1": 17,
+    "imm": 5
+  },
+  {
+    "mnemonic": "sub",
+    "rd": 19,
+    "rs1": 18,
+    "rs2": 16
+  },
+  {
+    "mnemonic": "beq",
+    "rs1": 18,
+    "rs2": 19,
+    "taken": 0
+  },
+  {
+    "mnemonic": "addi",
+    "rd": 20,
+    "rs1": 19,
+    "imm": 6
+  }
+]

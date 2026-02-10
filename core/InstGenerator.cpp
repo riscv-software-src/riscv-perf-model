@@ -5,7 +5,8 @@
 
 namespace olympia
 {
-    std::unique_ptr<InstGenerator> InstGenerator::createGenerator(MavisType* mavis_facade,
+    std::unique_ptr<InstGenerator> InstGenerator::createGenerator(sparta::log::MessageSource & info_logger,
+                                                                  MavisType* mavis_facade,
                                                                   const std::string & filename,
                                                                   const bool skip_nonuser_mode)
     {
@@ -14,7 +15,7 @@ namespace olympia
             && filename.substr(filename.size() - json_ext.size()) == json_ext)
         {
             std::cout << "olympia: JSON file input detected" << std::endl;
-            return std::unique_ptr<InstGenerator>(new JSONInstGenerator(mavis_facade, filename));
+            return std::unique_ptr<InstGenerator>(new JSONInstGenerator(info_logger, mavis_facade, filename));
         }
 
         const std::string stf_ext = "stf"; // Should cover both zstf and stf
@@ -23,7 +24,7 @@ namespace olympia
         {
             std::cout << "olympia: STF file input detected" << std::endl;
             return std::unique_ptr<InstGenerator>(
-                new TraceInstGenerator(mavis_facade, filename, skip_nonuser_mode));
+                new TraceInstGenerator(info_logger, mavis_facade, filename, skip_nonuser_mode));
         }
 
         // Dunno what it is...
@@ -34,8 +35,10 @@ namespace olympia
 
     ////////////////////////////////////////////////////////////////////////////////
     // JSON Inst Generator
-    JSONInstGenerator::JSONInstGenerator(MavisType* mavis_facade, const std::string & filename) :
-        InstGenerator(mavis_facade)
+    JSONInstGenerator::JSONInstGenerator(sparta::log::MessageSource & info_logger,
+                                         MavisType* mavis_facade,
+                                         const std::string & filename) :
+        InstGenerator(info_logger, mavis_facade)
     {
         std::ifstream fs;
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
@@ -56,8 +59,20 @@ namespace olympia
 
     void JSONInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
-        curr_inst_index_ = inst_ptr->getRewindIterator<uint64_t>();
+        const uint64_t saved_index = inst_ptr->getRewindIterator<uint64_t>();
+
+        // Validate that the saved index is within bounds
+        sparta_assert(saved_index < n_insts_,
+                      "Rewind index " << saved_index << " is out of bounds for JSON trace with "
+                      << n_insts_ << " instructions.");
+
+        curr_inst_index_ = saved_index;
         program_id_ = inst_ptr->getProgramID();
+
+        ILOG("Rewinding JSON trace to instruction pid:" << program_id_
+             << " uid:" << inst_ptr->getUniqueID() << " index:" << curr_inst_index_
+             << (skip ? " (skipping to next)" : " (inclusive)"));
+
         if (skip)
         {
             ++curr_inst_index_;
@@ -181,9 +196,11 @@ namespace olympia
 
     ////////////////////////////////////////////////////////////////////////////////
     // STF Inst Generator
-    TraceInstGenerator::TraceInstGenerator(MavisType* mavis_facade, const std::string & filename,
+    TraceInstGenerator::TraceInstGenerator(sparta::log::MessageSource & info_logger,
+                                           MavisType* mavis_facade,
+                                           const std::string & filename,
                                            const bool skip_nonuser_mode) :
-        InstGenerator(mavis_facade)
+        InstGenerator(info_logger, mavis_facade)
     {
         std::ifstream fs;
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
@@ -216,8 +233,24 @@ namespace olympia
 
     void TraceInstGenerator::reset(const InstPtr & inst_ptr, const bool skip = false)
     {
-        next_it_ = inst_ptr->getRewindIterator<stf::STFInstReader::iterator>();
+        auto saved_it = inst_ptr->getRewindIterator<stf::STFInstReader::iterator>();
+
+        // Validate that the saved iterator is still valid (within buffer bounds)
+        // The STF reader uses a sliding window buffer - if too many instructions
+        // have been read since this instruction was fetched, the iterator becomes invalid
+        sparta_assert(saved_it.valid(),
+                      "Rewind iterator is no longer valid for instruction uid:"
+                      << inst_ptr->getUniqueID() << " pid:" << inst_ptr->getProgramID()
+                      << " - instruction has moved outside the STF buffer window. "
+                      << "Consider increasing the STF buffer size (currently 4096).");
+
+        next_it_ = saved_it;
         program_id_ = inst_ptr->getProgramID();
+
+        ILOG("Rewinding STF trace to instruction pid:" << program_id_
+             << " uid:" << inst_ptr->getUniqueID()
+             << (skip ? " (skipping to next)" : " (inclusive)"));
+
         if (skip)
         {
             ++next_it_;

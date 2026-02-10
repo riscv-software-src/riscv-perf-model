@@ -142,14 +142,6 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             &factories->mss_rf
         },
         {
-            "i2c",
-            "cpu.core*",
-            "I2C Unit",
-            sparta::TreeNode::GROUP_NAME_NONE,
-            sparta::TreeNode::GROUP_IDX_NONE,
-            &factories->i2c_rf
-        },
-        {
             "rob",
             "cpu.core*",
             "ROB Unit",

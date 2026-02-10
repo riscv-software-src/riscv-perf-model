@@ -18,7 +18,6 @@
 #include "BIU.hpp"
 #include "L2Cache.hpp"
 #include "MSS.hpp"
-#include "I2C.hpp"
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
@@ -94,10 +93,6 @@ namespace olympia{
         //! \brief Resource Factory to build a MSS Unit
         sparta::ResourceFactory<olympia_mss::MSS,
                                 olympia_mss::MSS::MSSParameterSet> mss_rf;
-
-        //! \brief Resource Factory to build an I2C Unit
-        sparta::ResourceFactory<olympia_mss::I2C,
-                                olympia_mss::I2C::I2CParameterSet> i2c_rf;
 
         //! \brief Resource Factory to build a ROB Unit
         sparta::ResourceFactory<olympia::ROB,

@@ -48,15 +48,24 @@ namespace std {
             if (is >> c && c == ',') {
                 is >> std::hex >> md.size >> std::dec;
                 if (is >> c && c == ',') {
-                    if (is >> c && c == '"') {
+                    while(isspace(is.peek())) is.get(); 
+
+                    if (is.peek() == '"') {
+                        is >> c; // consume "
                         std::getline(is, md.device_name, '"');
                     } else {
-                        is.putback(c);
-                        is >> md.device_name;
+                        std::string temp;
+                        char ch;
+                        while(is.get(ch)) {
+                            if (ch == ']' || ch == ',') {
+                                is.putback(ch);
+                                break;
+                            }
+                            if (!isspace(ch)) temp += ch;
+                        }
+                        md.device_name = temp;
                     }
-                    if (is >> c && c == ']') {
-                        return is;
-                    }
+                    if (is >> c && c == ']') return is;
                 }
             }
         }
@@ -85,7 +94,7 @@ namespace olympia_mss
 
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_latency, 1, "Send bus request latency")
-            PARAMETER(std::vector<MappedDevice>, mapped_devices, (std::vector<MappedDevice>{{0x40000000, 0x1000, "i2c"}}), R"(Vector of Mapped Devices in simulation.
+            PARAMETER(std::vector<MappedDevice>, mapped_devices, {}, R"(Vector of Mapped Devices in simulation.
 
 Example:
     top.*.biu.mapped_devices "[[0x40000000, 0x1000, \"i2c\"]]"

@@ -1,6 +1,11 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+#include <iostream>
+#include <iomanip>
+
 #include "sparta/ports/PortSet.hpp"
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/ports/DataPort.hpp"
@@ -22,6 +27,50 @@
 
 namespace olympia_mss
 {
+    struct MappedDevice
+    {
+        uint64_t addr = 0;
+        uint32_t size = 0;
+        std::string device_name;
+
+        // to compare two devices
+        bool operator==(const MappedDevice& other) const {
+            return addr == other.addr && size == other.size && device_name == other.device_name;
+        }
+    };
+}
+
+namespace std {
+    inline istream& operator>>(istream& is, olympia_mss::MappedDevice& md) {
+        char c;
+        if (is >> c && c == '[') {
+            is >> std::hex >> md.addr >> std::dec;
+            if (is >> c && c == ',') {
+                is >> std::hex >> md.size >> std::dec;
+                if (is >> c && c == ',') {
+                    if (is >> c && c == '"') {
+                        std::getline(is, md.device_name, '"');
+                    } else {
+                        is.putback(c);
+                        is >> md.device_name;
+                    }
+                    if (is >> c && c == ']') {
+                        return is;
+                    }
+                }
+            }
+        }
+        is.setstate(std::ios::failbit);
+        return is;
+    }
+    inline ostream& operator<<(ostream& os, const olympia_mss::MappedDevice& md) {
+        os << "[" << std::hex << md.addr << ", " << md.size << ", \"" << md.device_name << "\"]" << std::dec;
+        return os;
+    }
+}
+
+namespace olympia_mss
+{
     class BIU : public sparta::Unit
     {
     public:
@@ -36,8 +85,12 @@ namespace olympia_mss
 
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_latency, 1, "Send bus request latency")
-            PARAMETER(uint64_t, i2c_addr, 0x40000000, "I2C start address")
-            PARAMETER(uint64_t, i2c_size, 0x1000, "I2C address space size")
+            PARAMETER(std::vector<MappedDevice>, mapped_devices, (std::vector<MappedDevice>{{0x40000000, 0x1000, "i2c"}}), R"(Vector of Mapped Devices in simulation.
+
+Example:
+    top.*.biu.mapped_devices "[[0x40000000, 0x1000, \"i2c\"]]"
+
+)")
         };
 
         // Constructor for BIU
@@ -64,9 +117,7 @@ namespace olympia_mss
         sparta::SyncInPort<bool> in_mss_ack_sync_
             {&unit_port_set_, "in_mss_ack_sync", getClock()};
 
-        sparta::SyncInPort<bool> in_i2c_ack_sync_
-            {&unit_port_set_, "in_i2c_ack_sync", getClock()};
-
+        std::vector<std::unique_ptr<sparta::SyncInPort<bool>>> in_device_ack_sync_;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -81,8 +132,7 @@ namespace olympia_mss
         sparta::SyncOutPort<olympia::MemoryAccessInfoPtr> out_mss_req_sync_
             {&unit_port_set_, "out_mss_req_sync", getClock()};
 
-        sparta::SyncOutPort<olympia::MemoryAccessInfoPtr> out_i2c_req_sync_
-            {&unit_port_set_, "out_i2c_req_sync", getClock()};
+        std::vector<std::unique_ptr<sparta::SyncOutPort<olympia::MemoryAccessInfoPtr>>> out_device_req_sync_;
 
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -94,8 +144,7 @@ namespace olympia_mss
 
         const uint32_t biu_req_queue_size_;
         const uint32_t biu_latency_;
-        const uint64_t i2c_addr_;
-        const uint64_t i2c_size_;
+        std::vector<MappedDevice> mapped_devices_;
 
         bool biu_busy_ = false;
 
@@ -112,9 +161,9 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_mss_ack_
             {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handleMSSAck_)};
 
-        // Event to handle I2C Ack
-        sparta::UniqueEvent<> ev_handle_i2c_ack_
-            {&unit_event_set_, "handle_i2c_ack", CREATE_SPARTA_HANDLER(BIU, handleI2CAck_)};
+        // Generic event to handle Device Ack
+        sparta::UniqueEvent<> ev_handle_device_ack_
+            {&unit_event_set_, "handle_device_ack", CREATE_SPARTA_HANDLER(BIU, handleDeviceAck_)};
 
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
@@ -129,15 +178,15 @@ namespace olympia_mss
         // Handle MSS Ack
         void handleMSSAck_();
 
-        // Handle I2C Ack
-        void handleI2CAck_();
+        // Handle Device Ack
+        void handleDeviceAck_();
 
         // Receive MSS access acknowledge
         // Q: Does the argument list has to be "const DataType &" ?
         void getAckFromMSS_(const bool &);
 
-        // Receive I2C access acknowledge
-        void getAckFromI2C_(const bool &);
+        // Receive generic device access acknowledge
+        void getAckFromDevice_(const bool &);
 
         // Sending initial credits to L2Cache
         void sendInitialCredits_();

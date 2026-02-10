@@ -2,6 +2,7 @@
 
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/utils/SpartaException.hpp"
 
 #include "BIU.hpp"
 
@@ -17,8 +18,7 @@ namespace olympia_mss
         sparta::Unit(node),
         biu_req_queue_size_(p->biu_req_queue_size),
         biu_latency_(p->biu_latency),
-        i2c_addr_(p->i2c_addr),
-        i2c_size_(p->i2c_size)
+        mapped_devices_(p->mapped_devices)
     {
         in_biu_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, receiveReqFromL2Cache_, olympia::MemoryAccessInfoPtr));
@@ -27,15 +27,42 @@ namespace olympia_mss
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromMSS_, bool));
         in_mss_ack_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
 
-        in_i2c_ack_sync_.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromI2C_, bool));
-        in_i2c_ack_sync_.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
+        // Validate mapped devices and create ports
+        for (size_t i = 0; i < mapped_devices_.size(); ++i) {
+            const auto& device = mapped_devices_[i];
+            
+            // Check for overlaps with previous devices
+            for (size_t j = 0; j < i; ++j) {
+                const auto& other = mapped_devices_[j];
+                bool overlap = std::max(device.addr, other.addr) < std::min(device.addr + device.size, other.addr + other.size);
+                if (overlap) {
+                    throw sparta::SpartaException("BIU: Overlapping address ranges detected between devices: ")
+                        << device.device_name << " [0x" << std::hex << device.addr << ", 0x" << (device.addr + device.size) << ") and "
+                        << other.device_name << " [0x" << other.addr << ", 0x" << (other.addr + other.size) << ")";
+                }
+            }
+
+            // Create output port for request
+            std::string out_port_name = "out_" + device.device_name + "_req_sync";
+            out_device_req_sync_.emplace_back(
+                new sparta::SyncOutPort<olympia::MemoryAccessInfoPtr>(&unit_port_set_, out_port_name, getClock()));
+
+            // Create input port for ack
+            std::string in_port_name = "in_" + device.device_name + "_ack_sync";
+            in_device_ack_sync_.emplace_back(
+                new sparta::SyncInPort<bool>(&unit_port_set_, in_port_name, getClock()));
+
+            // Register handler for ack
+            in_device_ack_sync_.back()->registerConsumerHandler(
+                CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromDevice_, bool));
+            in_device_ack_sync_.back()->setPortDelay(static_cast<sparta::Clock::Cycle>(1));
+        }
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BIU, sendInitialCredits_));
         ILOG("BIU construct: #" << node->getGroupIdx());
 
         ev_handle_mss_ack_ >> ev_handle_biu_req_;
-        ev_handle_i2c_ack_ >> ev_handle_biu_req_;
+        ev_handle_device_ack_ >> ev_handle_biu_req_;
     }
 
 
@@ -80,10 +107,18 @@ namespace olympia_mss
         const auto & req = biu_req_queue_.front();
         const uint64_t addr = req->getPhyAddr();
 
-        if (addr >= i2c_addr_ && addr < i2c_addr_ + i2c_size_) {
-            out_i2c_req_sync_.send(req, biu_latency_);
-            ILOG("BIU request sent to I2C! Addr: 0x" << std::hex << addr);
-        } else {
+        bool routed = false;
+        for (size_t i = 0; i < mapped_devices_.size(); ++i) {
+            const auto& device = mapped_devices_[i];
+            if (addr >= device.addr && addr < device.addr + device.size) {
+                out_device_req_sync_[i]->send(req, biu_latency_);
+                ILOG("BIU request sent to " << device.device_name << "! Addr: 0x" << std::hex << addr);
+                routed = true;
+                break;
+            }
+        }
+
+        if (!routed) {
             out_mss_req_sync_.send(req, biu_latency_);
             ILOG("BIU request sent to MSS! Addr: 0x" << std::hex << addr);
         }
@@ -110,8 +145,8 @@ namespace olympia_mss
         ILOG("BIU response sent back (from MSS)!");
     }
 
-    // Handle I2C Ack
-    void BIU::handleI2CAck_()
+    // Handle Generic Device Ack
+    void BIU::handleDeviceAck_()
     {
         out_biu_resp_.send(biu_req_queue_.front(), biu_latency_);
 
@@ -128,7 +163,7 @@ namespace olympia_mss
             ev_handle_biu_req_.schedule(sparta::Clock::Cycle(0));
         }
 
-        ILOG("BIU response sent back (from I2C)!");
+        ILOG("BIU response sent back (from Device)!");
     }
 
     // Receive MSS access acknowledge
@@ -146,19 +181,19 @@ namespace olympia_mss
         sparta_assert(false, "MSS is NOT done!");
     }
 
-    // Receive I2C access acknowledge
-    void BIU::getAckFromI2C_(const bool & done)
+    // Receive Generic Device access acknowledge
+    void BIU::getAckFromDevice_(const bool & done)
     {
         if (done) {
-            ev_handle_i2c_ack_.schedule(sparta::Clock::Cycle(0));
+            ev_handle_device_ack_.schedule(sparta::Clock::Cycle(0));
 
-            ILOG("I2C Ack is received!");
+            ILOG("Device Ack is received!");
 
             return;
         }
 
-        // Right now we expect I2C ack is always true
-        sparta_assert(false, "I2C is NOT done!");
+        // Right now we expect Device ack is always true
+        sparta_assert(false, "Device is NOT done!");
     }
 
     ////////////////////////////////////////////////////////////////////////////////

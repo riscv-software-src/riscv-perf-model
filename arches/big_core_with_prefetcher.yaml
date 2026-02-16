@@ -1,0 +1,18 @@
+#
+# Big core (8-wide) with prefetcher enabled
+#
+# This arch extends the big_core configuration with an active
+# next-line prefetcher so that performance reports can be compared
+# with and without prefetching on the wide pipeline.
+#
+
+# Build on top of the big core
+include: big_core.yaml
+
+top.cpu.core0:
+  prefetcher.params:
+    enable_prefetcher: true
+    prefetcher_type:   "next_line"
+    num_to_prefetch:   4
+    cacheline_size:    64
+    req_queue_size:    16

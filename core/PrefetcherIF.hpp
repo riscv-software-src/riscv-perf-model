@@ -53,7 +53,7 @@ namespace olympia
          * \param Sparta Unit this prefetcher belongs to
          */
         PrefetcherIF(sparta::Unit* unit) :
-            in_req_{unit->getPortSet(), "in_req", 0},
+            in_req_{unit->getPortSet(), "in_req", 1},
             prefetcher_outp_{unit->getPortSet(), "out_prefetcher_write"},
             in_reorder_flush_{unit->getPortSet(), "in_reorder_flush",
                               sparta::SchedulingPhase::Flush, 1},

@@ -3,7 +3,6 @@
 #include "PrefetcherIF.hpp"
 #include "FlushManager.hpp"
 #include "sparta/resources/Queue.hpp"
-#include <memory>
 
 namespace olympia
 {
@@ -49,11 +48,11 @@ namespace olympia
         void processIncomingReq(const olympia::MemoryAccessInfoPtr & access) override;
 
         /*!
-         * \brief Handle memory access with credit-based flow control
+         * \brief Handle memory access with internal flow control
          *
          * Overrides the base PrefetcherIF::handleMemoryAccess to feed the engine
          * without immediately sending prefetches. Prefetches are sent via
-         * generatePrefetch_() which respects credit-based flow control.
+         * generatePrefetch_() which uses self-managed flow control.
          *
          * \param access Incoming memory access
          * \return true if the engine accepted the access
@@ -74,7 +73,7 @@ namespace olympia
         //! Prefetcher enabled flag
         const bool prefetcher_enabled_;
 
-        //! Prefetcher Queue credits
+        //! Self-managed prefetcher credits (initialized from req_queue_size)
         uint32_t prefetcher_credits_ = 0;
 
         //! Incoming request queue
@@ -86,21 +85,8 @@ namespace olympia
         //! Event to handle incoming requests
         sparta::UniqueEvent<> ev_handle_incoming_req_;
 
-        //! Incoming prefetcher queue credits (from consumer)
-        std::unique_ptr<sparta::DataInPort<uint32_t>> prefetcher_queue_credits_in_;
-
-        //! Credits out for req queue (to producer)
-        std::unique_ptr<sparta::DataOutPort<uint32_t>> req_queue_credits_out_;
-
-        //! Send the initial credits
-        void sendInitialCredits_();
-
         //! Helper function to handle incoming requests
         void handleIncomingReq_();
-
-        //! Callback function called by prefetcher_queue_credits_in_ when credits
-        //  come back from consumer
-        void receivePrefetchQueueCredits_(const uint32_t & credits);
 
         //! Helper function used to generate prefetches
         void generatePrefetch_();

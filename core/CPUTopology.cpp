@@ -3,6 +3,7 @@
 #include "CPUTopology.hpp"
 #include "CoreUtils.hpp"
 #include "sparta/utils/SpartaException.hpp"
+#include "BIU.hpp"
 
 /**
  * @br0ief Constructor for CPUTopology_1
@@ -365,6 +366,33 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             olympia::coreutils::getPipeTopology(root_node->getChild(core_node), "exe_pipe_rename");
         const auto issue_queue_rename = olympia::coreutils::getPipeTopology(
             root_node->getChild(core_node), "issue_queue_rename");
+
+        auto biu_node = root_node->getChild(core_node + ".biu");
+        if(biu_node) {
+            auto params_extension = biu_node->getExtension("params");
+            auto param_set = dynamic_cast<sparta::ParameterSet*>(params_extension);
+            if (param_set) {
+                auto device_param = param_set->getParameter("mapped_devices");
+                auto casted_param = dynamic_cast<sparta::Parameter<std::vector<olympia_mss::MappedDevice>>*>(device_param);
+                
+                if (casted_param) {
+                    const auto & mapped_devices = casted_param->getValue();
+                    for (const auto & device : mapped_devices) {
+                        std::string device_unit_path = core_node + "." + device.device_name;
+                        auto device_node = root_node->getChild(device_unit_path);
+                        
+                        if (device_node) {
+                             bind_ports(core_node + ".biu.ports.out_" + device.device_name + "_req_sync",
+                                        device_unit_path + ".ports.in_" + device.device_name + "_req_sync");
+                                        
+                             bind_ports(core_node + ".biu.ports.in_" + device.device_name + "_ack_sync",
+                                        device_unit_path + ".ports.out_" + device.device_name + "_ack_sync");
+                        }
+                    }
+                }
+            }
+        }
+
         for (size_t pipeidx = 0; pipeidx < pipelines.size(); ++pipeidx)
         {
             std::string unit_name = "exe" + std::to_string(pipeidx);

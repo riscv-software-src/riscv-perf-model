@@ -1,10 +1,8 @@
 project(Lsu_test)
 
-target_link_libraries(core mss)
-
 add_executable(Lsu_test Lsu_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
 
-target_link_libraries (Lsu_test core common_test ${STF_LINK_LIBS} SPARTA::sparta)
+target_link_libraries (Lsu_test lsu core_cpu core_inst core_memory core_sim_engine core_utils mss common_test ${STF_LINK_LIBS} SPARTA::sparta)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)

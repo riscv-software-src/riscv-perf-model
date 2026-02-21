@@ -12,10 +12,12 @@ namespace olympia
         cache_line_size_(cache_line_size),
         table_size_(table_size),
         confidence_threshold_(confidence_threshold),
-        // FIX: stride_table_ MUST be initialized before prefetch_queue_
+        //stride_table_ MUST be initialized before prefetch_queue_
         stride_table_(table_size),
         prefetch_queue_(num_lines_to_prefetch * 2)
     {
+        sparta_assert(table_size > 0, "StridePrefetchEngine: table_size must be positive");
+        sparta_assert(cache_line_size > 0, "StridePrefetchEngine: cache_line_size must be positive");
     }
 
     bool StridePrefetchEngine::isPrefetchReady() const 
@@ -74,8 +76,12 @@ namespace olympia
 
         if (current_stride == entry.last_stride && current_stride != 0)
         {
-            // Stride matches - increase confidence
-            entry.confidence++;
+            // Stride matches - increase confidence (capped to prevent overflow)
+            static constexpr uint32_t MAX_CONFIDENCE = 255;
+            if (entry.confidence < MAX_CONFIDENCE)
+            {
+                entry.confidence++;
+            }
 
             if (entry.confidence >= confidence_threshold_)
             {

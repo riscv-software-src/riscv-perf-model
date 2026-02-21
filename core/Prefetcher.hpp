@@ -66,6 +66,15 @@ namespace olympia
          */
         void handleFlush(const olympia::FlushManager::FlushingCriteria & criteria) override;
 
+        /*!
+         * \brief Restore a prefetch credit
+         *
+         * Called by DCache (or downstream consumer) when a prefetch request
+         * has been serviced (hit or miss resolved). This restores flow-control
+         * credits so the prefetcher can issue more requests.
+         */
+        void restorePrefetchCredit();
+
         //! \brief Name of this resource. Required by sparta::UnitFactory
         static constexpr char name[] = "prefetcher";
 
@@ -73,8 +82,13 @@ namespace olympia
         //! Prefetcher enabled flag
         const bool prefetcher_enabled_;
 
-        //! Self-managed prefetcher credits (initialized from req_queue_size)
+        //! Self-managed prefetcher credits (initialized from req_queue_size).
+        //! Decremented in generatePrefetch_() when a prefetch is sent.
+        //! Restored via restorePrefetchCredit() when DCache completes a prefetch.
         uint32_t prefetcher_credits_ = 0;
+
+        //! Maximum credits (saved from constructor for bounds-checking)
+        const uint32_t max_prefetcher_credits_ = 0;
 
         //! Incoming request queue
         sparta::Queue<olympia::MemoryAccessInfoPtr> req_queue_;

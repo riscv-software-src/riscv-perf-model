@@ -50,6 +50,7 @@ void testNextLinePrefetcher()
 {
     cout << "Testing NextLinePrefetchEngine..." << endl;
 
+    // num_lines_to_prefetch=2 (prefetch 2 cache lines ahead), cache_line_size=64 bytes
     olympia::NextLinePrefetchEngine engine(2, 64);
 
     // input access (use SpartaSharedPointer so it upcasts to MemoryAccessInfoPtr)
@@ -90,6 +91,7 @@ void testNextLinePrefetcher()
 void testStridePrefetcher()
 {
     cout << "Testing StridePrefetchEngine..." << endl;
+    // num_lines_to_prefetch=2, cache_line_size=64 bytes, table_size=256 entries, confidence_threshold=1
     olympia::StridePrefetchEngine engine(2, 64, 256, 1);
 
     auto a1 = sparta::SpartaSharedPointer<olympia::MockMemoryAccessInfo>(new olympia::MockMemoryAccessInfo(0x1000));
@@ -120,6 +122,7 @@ void testEdgeCases()
 {
     cout << "Testing edge cases..." << endl;
 
+    // num_lines_to_prefetch=1, cache_line_size=64 bytes
     olympia::NextLinePrefetchEngine e1(1, 64);
     auto a = sparta::SpartaSharedPointer<olympia::MockMemoryAccessInfo>(new olympia::MockMemoryAccessInfo(0x1000));
     e1.handleMemoryAccess(a);
@@ -127,6 +130,7 @@ void testEdgeCases()
     e1.popPrefetchMemoryAccess();
     EXPECT_FALSE(e1.isPrefetchReady());
 
+    // num_lines_to_prefetch=2, cache_line_size=64 bytes, table_size=256 entries, confidence_threshold=2
     olympia::StridePrefetchEngine e2(2, 64, 256, 2);
     auto b1 = sparta::SpartaSharedPointer<olympia::MockMemoryAccessInfo>(new olympia::MockMemoryAccessInfo(0x2000));
     auto b2 = sparta::SpartaSharedPointer<olympia::MockMemoryAccessInfo>(new olympia::MockMemoryAccessInfo(0x2000));

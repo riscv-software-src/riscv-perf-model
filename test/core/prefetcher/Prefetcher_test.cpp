@@ -32,6 +32,7 @@ void testNextLinePrefetcher()
 {
     cout << "Testing NextLinePrefetchEngine..." << endl;
 
+    // num_lines_to_prefetch=2 (prefetch 2 cache lines ahead), cache_line_size=64 bytes
     olympia::NextLinePrefetchEngine engine(2, 64);
 
     auto access = makeAccess(0x1000);
@@ -70,6 +71,7 @@ void testStridePrefetcher()
     cout << "Testing StridePrefetchEngine..." << endl;
 
     // confidence_threshold = 1 means after 2 accesses with same stride, prefetch on 3rd
+    // num_lines_to_prefetch=2, cache_line_size=64 bytes, table_size=256 entries, confidence_threshold=1
     olympia::StridePrefetchEngine engine(2, 64, 256, 1);
 
     auto a1 = makeAccess(0x1000);
@@ -89,16 +91,18 @@ void testStridePrefetcher()
     EXPECT_TRUE(ret);
     EXPECT_TRUE(engine.isPrefetchReady());
 
-    // Consume all prefetches
-    uint32_t prefetch_count = 0;
-    while (engine.isPrefetchReady())
-    {
-        auto p = engine.getPrefetchMemoryAccess();
-        EXPECT_TRUE(p != nullptr);
-        engine.popPrefetchMemoryAccess();
-        prefetch_count++;
-    }
-    EXPECT_EQUAL(prefetch_count, static_cast<uint32_t>(2));
+    // Verify prefetch addresses: stride is 0x100 (0x1000->0x1100->0x1200)
+    // First prefetch should be at 0x1200 + 0x100 = 0x1300
+    auto p1 = engine.getPrefetchMemoryAccess();
+    EXPECT_TRUE(p1 != nullptr);
+    EXPECT_EQUAL(p1->getVAddr(), static_cast<sparta::memory::addr_t>(0x1300));
+    engine.popPrefetchMemoryAccess();
+
+    // Second prefetch should be at 0x1300 + 0x100 = 0x1400
+    auto p2 = engine.getPrefetchMemoryAccess();
+    EXPECT_TRUE(p2 != nullptr);
+    EXPECT_EQUAL(p2->getVAddr(), static_cast<sparta::memory::addr_t>(0x1400));
+    engine.popPrefetchMemoryAccess();
 
     EXPECT_FALSE(engine.isPrefetchReady());
     cout << "StridePrefetchEngine tests: PASSED" << endl;
@@ -110,6 +114,7 @@ void testEdgeCases()
 
     // Single prefetch next-line engine
     {
+    // num_lines_to_prefetch=1, cache_line_size=64 bytes
         olympia::NextLinePrefetchEngine e1(1, 64);
         auto a = makeAccess(0x1000);
         e1.handleMemoryAccess(a);
@@ -120,6 +125,7 @@ void testEdgeCases()
 
     // Stride engine with zero stride (same address repeated) — should NOT generate prefetches
     {
+        // num_lines_to_prefetch=2, cache_line_size=64, table_size=256, confidence_threshold=2
         olympia::StridePrefetchEngine e2(2, 64, 256, 2);
         auto b1 = makeAccess(0x2000);
         auto b2 = makeAccess(0x2000);
@@ -132,6 +138,7 @@ void testEdgeCases()
 
     // NextLine engine: verify prefetches are cleared on new access
     {
+        // num_lines_to_prefetch=2, cache_line_size=64 bytes
         olympia::NextLinePrefetchEngine e3(2, 64);
         auto a1 = makeAccess(0x3000);
         e3.handleMemoryAccess(a1);

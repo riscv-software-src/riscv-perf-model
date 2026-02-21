@@ -28,6 +28,9 @@ add_library(core
   CPU.cpp
   CPUFactory.cpp
   CPUTopology.cpp
+  Prefetcher.cpp
+  NextLinePrefetchEngine.cpp
+  StridePrefetchEngine.cpp
 )
 
 add_library(instgen

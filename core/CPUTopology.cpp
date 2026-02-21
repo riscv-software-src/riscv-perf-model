@@ -163,6 +163,14 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
             sparta::TreeNode::GROUP_NAME_NONE,
             sparta::TreeNode::GROUP_IDX_NONE,
             &factories->mavis_rf
+        },
+        {
+            "prefetcher",
+            "cpu.core*",
+            "Prefetcher Unit",
+            sparta::TreeNode::GROUP_NAME_NONE,
+            sparta::TreeNode::GROUP_IDX_NONE,
+            &factories->prefetcher_rf
         }
     };
 
@@ -339,6 +347,20 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.flushmanager.ports.out_flush_lower",
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
+        },
+        {
+            "cpu.core*.flushmanager.ports.out_flush_upper",
+            "cpu.core*.prefetcher.ports.in_reorder_flush"
+        },
+        // Prefetcher snoops DCache misses (DCache -> L2Cache req path)
+        {
+            "cpu.core*.dcache.ports.out_l2cache_req",
+            "cpu.core*.prefetcher.ports.in_req"
+        },
+        // Prefetcher sends prefetches to DCache for L1 reload
+        {
+            "cpu.core*.prefetcher.ports.out_prefetcher_write",
+            "cpu.core*.dcache.ports.in_lsu_lookup_req"
         }
     };
 }

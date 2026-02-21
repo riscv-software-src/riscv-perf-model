@@ -21,6 +21,7 @@
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
+#include "Prefetcher.hpp"
 #include "decode/MavisUnit.hpp"
 #include "execute/IssueQueue.hpp"
 
@@ -105,6 +106,10 @@ namespace olympia{
         //! \brief Resource Factory to build a Preloader Unit
         sparta::ResourceFactory<olympia::Preloader,
                                 olympia::Preloader::PreloaderParameterSet> preloader_rf;
+
+        //! \brief Resource Factory to build a Prefetcher Unit
+        sparta::ResourceFactory<olympia::Prefetcher,
+                                olympia::Prefetcher::PrefetcherParameterSet> prefetcher_rf;
 
         // //! \brief Resource Factory to build a IssueQueue Unit
         // sparta::ResourceFactory<olympia::IssueQueue,

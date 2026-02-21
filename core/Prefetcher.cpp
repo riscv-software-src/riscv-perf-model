@@ -11,6 +11,7 @@ namespace olympia
         PrefetcherIF<PrefetchEngineIF<>>(dynamic_cast<sparta::Unit*>(this)),
         prefetcher_enabled_(p->enable_prefetcher),
         prefetcher_credits_(p->req_queue_size),
+        max_prefetcher_credits_(p->req_queue_size),
         req_queue_("Req_Queue", p->req_queue_size, getClock()),
         ev_gen_prefetch_{getEventSet(), "gen_prefetch_event",
                          CREATE_SPARTA_HANDLER(Prefetcher, generatePrefetch_)},
@@ -127,6 +128,20 @@ namespace olympia
             {
                 ev_gen_prefetch_.schedule(sparta::Clock::Cycle(1));
             }
+        }
+    }
+
+    //! Restore a single prefetch credit (called by DCache on prefetch completion)
+    void Prefetcher::restorePrefetchCredit()
+    {
+        sparta_assert(prefetcher_credits_ < max_prefetcher_credits_,
+                      "Attempted to restore prefetch credit beyond max");
+        prefetcher_credits_++;
+
+        // If engine has pending prefetches, resume generation
+        if (prefetcher_enabled_ && getPrefetchEngine()->isPrefetchReady())
+        {
+            ev_gen_prefetch_.schedule(sparta::Clock::Cycle(0));
         }
     }
 

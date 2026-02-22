@@ -19,8 +19,8 @@ namespace olympia
                      "The total number of instructions retired by this core",
                      sparta::Counter::COUNT_NORMAL),
         num_uops_retired_(&unit_stat_set_, "total_uops_retired",
-                     "The total number of uops retired by this core",
-                     sparta::Counter::COUNT_NORMAL),
+                          "The total number of uops retired by this core",
+                          sparta::Counter::COUNT_NORMAL),
         num_flushes_(&unit_stat_set_, "total_number_of_flushes",
                      "The total number of flushes performed by the ROB",
                      sparta::Counter::COUNT_NORMAL),
@@ -48,8 +48,7 @@ namespace olympia
         cpi_memory_stalls_(&unit_stat_set_, "cpi_memory_stalls",
                            "Total cycles stalled on memory operations",
                            sparta::Counter::COUNT_NORMAL),
-        cpi_rob_stalls_(&unit_stat_set_, "cpi_rob_stalls",
-                        "Total cycles waiting in ROB",
+        cpi_rob_stalls_(&unit_stat_set_, "cpi_rob_stalls", "Total cycles waiting in ROB",
                         sparta::Counter::COUNT_NORMAL),
         retire_timeout_interval_(p->retire_timeout_interval),
         num_to_retire_(p->num_to_retire),
@@ -178,13 +177,13 @@ namespace olympia
 
                     // Use the program ID to verify that the program order has been maintained.
                     sparta_assert(ex_inst.getProgramID() == expected_program_id_,
-                        "\nUnexpected program ID when retiring instruction" <<
-                        "\n(suggests wrong program order)" <<
-                        "\n expected: " << expected_program_id_ <<
-                        "\n received: " << ex_inst.getProgramID() <<
-                        "\n UID: " << ex_inst_ptr->getMavisUid() <<
-                        "\n incr: " << ex_inst_ptr->getProgramIDIncrement() <<
-                        "\n inst " << ex_inst);
+                                  "\nUnexpected program ID when retiring instruction"
+                                      << "\n(suggests wrong program order)"
+                                      << "\n expected: " << expected_program_id_
+                                      << "\n received: " << ex_inst.getProgramID()
+                                      << "\n UID: " << ex_inst_ptr->getMavisUid()
+                                      << "\n incr: " << ex_inst_ptr->getProgramIDIncrement()
+                                      << "\n inst " << ex_inst);
 
                     // The fused op records the number of insts that
                     // were eliminated and adjusts the progID as needed
@@ -197,17 +196,19 @@ namespace olympia
                 // Finalize CPI breakdown for this instruction
                 ex_inst.finalizeCPIBreakdown();
 
-
                 // Aggregate CPI breakdown from this instruction
-                const auto& breakdown = ex_inst.getCPIBreakdown();
-                cpi_fetch_stalls_ += breakdown.fetch_stall_cycles;
-                cpi_decode_stalls_ += breakdown.decode_stall_cycles;
-                cpi_rename_stalls_ += breakdown.rename_stall_cycles;
-                cpi_dispatch_stalls_ += breakdown.dispatch_stall_cycles;
-                cpi_issue_queue_stalls_ += breakdown.issue_queue_stall_cycles;
-                cpi_execute_cycles_ += breakdown.execute_cycles;
-                cpi_memory_stalls_ += breakdown.memory_stall_cycles;
-                cpi_rob_stalls_ += breakdown.rob_stall_cycles;
+                const auto & breakdown = ex_inst.getCPIBreakdown();
+                cpi_fetch_stalls_ +=
+                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::FETCH)];
+                cpi_decode_stalls_ +=
+                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::DECODE)];
+                cpi_rename_stalls_ +=
+                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::RENAME)];
+                cpi_dispatch_stalls_ +=
+                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::DISPATCH)];
+                cpi_execute_cycles_ +=
+                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::EXECUTE)];
+                cpi_rob_stalls_ += breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::ROB)];
 
                 retire_event_.collect(*ex_inst_ptr);
                 last_inst_retired_ = ex_inst_ptr;
@@ -245,12 +246,12 @@ namespace olympia
                 if (SPARTA_EXPECT_FALSE(ex_inst.getPipe() == InstArchInfo::TargetPipe::SYS))
                 {
                     retireSysInst_(ex_inst_ptr);
-		    // Fix for Issue #253
+                    // Fix for Issue #253
                     // If a flush is caused by retiring sys inst, then retire no more!
-                    if (expect_flush_ == true) {
-                       break;
-                   }
-
+                    if (expect_flush_ == true)
+                    {
+                        break;
+                    }
                 }
             }
             else
@@ -259,7 +260,8 @@ namespace olympia
             }
         }
 
-        if(false == retired_insts->empty()) {
+        if (false == retired_insts->empty())
+        {
             // sending retired instruction to rename
             out_rob_retire_ack_rename_.send(retired_insts);
         }
@@ -321,7 +323,7 @@ namespace olympia
     }
 
     // sys gets flushed unless it is csr rd
-    void ROB::retireSysInst_(InstPtr &ex_inst)
+    void ROB::retireSysInst_(InstPtr & ex_inst)
     {
         // All sys instructions use integer registers
         auto srclist = ex_inst->getRenameData().getSourceList(core_types::RegFile::RF_INTEGER);
@@ -330,17 +332,15 @@ namespace olympia
         // if SYS instr is a csr but src1 is not x0, flush
         // otherwise it is a csr read, therefore don't flush
         if (ex_inst->isCSR())
-        {   // this is the case if csr instr with src != x0
-            DLOG("retiring SYS wr instr with src reg " << ex_inst->getMnemonic() );
+        { // this is the case if csr instr with src != x0
+            DLOG("retiring SYS wr instr with src reg " << ex_inst->getMnemonic());
 
             FlushManager::FlushingCriteria criteria(FlushManager::FlushCause::POST_SYNC, ex_inst);
-                    out_retire_flush_.send(criteria);
-                    expect_flush_ = true;
-                    ++num_flushes_;
-                    ILOG("Instigating flush due to SYS instruction... " << *ex_inst);
-
+            out_retire_flush_.send(criteria);
+            expect_flush_ = true;
+            ++num_flushes_;
+            ILOG("Instigating flush due to SYS instruction... " << *ex_inst);
         }
-
     }
 
-}
+} // namespace olympia

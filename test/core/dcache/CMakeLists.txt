@@ -2,7 +2,7 @@ project(Dcache_test)
 
 add_executable(Dcache_test Dcache_test.cpp)
 
-target_link_libraries(Dcache_test core common_test mss ${STF_LINK_LIBS} SPARTA::sparta)
+target_link_libraries(Dcache_test core_cpu core_inst core_memory core_rob core_preloader core_utils core_sim_engine fetch decode rename dispatch execute vector lsu mss common_test ${STF_LINK_LIBS} SPARTA::sparta)
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/test_arches     ${CMAKE_CURRENT_BINARY_DIR}/test_arches SYMBOLIC)

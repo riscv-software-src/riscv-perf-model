@@ -18,9 +18,9 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 
 #include "dispatch/Dispatcher.hpp"
-#include "CoreTypes.hpp"
-#include "InstGroup.hpp"
-#include "FlushManager.hpp"
+#include "utils/CoreTypes.hpp"
+#include "inst/InstGroup.hpp"
+#include "cpu/FlushManager.hpp"
 
 namespace olympia
 {

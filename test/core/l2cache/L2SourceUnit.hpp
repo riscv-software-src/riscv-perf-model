@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "core/MemoryAccessInfo.hpp"
-#include "core/InstGenerator.hpp"
+#include "core/memory/MemoryAccessInfo.hpp"
+#include "core/inst/InstGenerator.hpp"
 #include "core/decode/MavisUnit.hpp"
 #include "mavis/ExtractorDirectInfo.h"
 #include "sparta/simulation/TreeNode.hpp"

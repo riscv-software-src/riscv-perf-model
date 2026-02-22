@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "core/MemoryAccessInfo.hpp"
+#include "core/memory/MemoryAccessInfo.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"

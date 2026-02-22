@@ -4,9 +4,9 @@
 
 #include "mavis/OpcodeInfo.h"
 
-#include "InstArchInfo.hpp"
-#include "CoreTypes.hpp"
-#include "MiscUtils.hpp"
+#include "inst/InstArchInfo.hpp"
+#include "utils/CoreTypes.hpp"
+#include "utils/MiscUtils.hpp"
 
 #include <map>
 #include <functional>

@@ -16,10 +16,10 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
-#include "CoreTypes.hpp"
-#include "InstGroup.hpp"
-#include "FlushManager.hpp"
-#include "MemoryAccessInfo.hpp"
+#include "utils/CoreTypes.hpp"
+#include "inst/InstGroup.hpp"
+#include "cpu/FlushManager.hpp"
+#include "memory/MemoryAccessInfo.hpp"
 
 namespace olympia
 {

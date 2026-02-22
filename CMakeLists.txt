@@ -86,15 +86,16 @@ add_subdirectory (mss)
 # Add testing, but do not build as part of the 'all' target
 add_subdirectory (test EXCLUDE_FROM_ALL)
 
+find_package(Threads REQUIRED)
+
 # The simulator
 add_executable(olympia
   sim/OlympiaSim.cpp
   sim/main.cpp
 )
-target_link_libraries (olympia core mss SPARTA::sparta ${STF_LINK_LIBS})
+target_link_libraries (olympia mss SPARTA::sparta ${STF_LINK_LIBS} core_cpu core_inst core_memory core_rob core_preloader core_utils core_sim_engine fetch decode rename dispatch execute vector lsu Threads::Threads)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
-  target_compile_options (core    PUBLIC -flto)
   target_compile_options (mss     PUBLIC -flto)
   target_compile_options (olympia PUBLIC -flto)
   target_link_options    (olympia PUBLIC -flto)

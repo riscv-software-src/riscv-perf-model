@@ -1,7 +1,7 @@
 // <CPUTopology.cpp> -*- C++ -*-
 
-#include "CPUTopology.hpp"
-#include "CoreUtils.hpp"
+#include "cpu/CPUTopology.hpp"
+#include "utils/CoreUtils.hpp"
 #include "sparta/utils/SpartaException.hpp"
 
 /**

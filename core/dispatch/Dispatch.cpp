@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "dispatch/Dispatch.hpp"
 #include "sparta/events/StartupEvent.hpp"
-#include "../utils/CoreUtils.hpp"
+#include "utils/CoreUtils.hpp"
 
 namespace olympia
 {

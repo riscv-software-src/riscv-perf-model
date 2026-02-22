@@ -5,7 +5,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
-#include "Inst.hpp"
+#include "inst/Inst.hpp"
 #include "execute/ExecutePipe.hpp"
 #include "execute/IssueQueue.hpp"
 

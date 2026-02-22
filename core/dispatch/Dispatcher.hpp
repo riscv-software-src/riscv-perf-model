@@ -9,8 +9,8 @@
 #include "sparta/log/MessageSource.hpp"
 #include "sparta/utils/LogUtils.hpp"
 
-#include "Inst.hpp"
-#include "CoreTypes.hpp"
+#include "inst/Inst.hpp"
+#include "utils/CoreTypes.hpp"
 
 namespace olympia
 {

@@ -19,8 +19,8 @@
 #include "mavis/DecoderTypes.h"
 #include "mavis/extension_managers/RISCVExtensionManager.hpp"
 
-#include "Inst.hpp"
-#include "InstAllocation.hpp"
+#include "inst/Inst.hpp"
+#include "inst/InstAllocation.hpp"
 
 // To reduce compile time and binary bloat, foward declare Mavis
 template<typename InstType,

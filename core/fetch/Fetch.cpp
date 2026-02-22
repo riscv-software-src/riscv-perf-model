@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include "fetch/Fetch.hpp"
-#include "InstGenerator.hpp"
+#include "inst/InstGenerator.hpp"
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 

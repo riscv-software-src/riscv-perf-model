@@ -22,10 +22,10 @@
 #include "sparta/resources/Pipe.hpp"
 #include "sparta/resources/Pipeline.hpp"
 
-#include "CoreTypes.hpp"
-#include "MemoryAccessInfo.hpp"
+#include "utils/CoreTypes.hpp"
+#include "memory/MemoryAccessInfo.hpp"
 
-#include "CacheFuncModel.hpp"
+#include "memory/CacheFuncModel.hpp"
 #include "lsu/LSU.hpp"
 
 namespace olympia_mss

@@ -22,14 +22,14 @@
 
 #include "cache/TreePLRUReplacement.hpp"
 
-#include "Inst.hpp"
-#include "CoreTypes.hpp"
-#include "FlushManager.hpp"
-#include "CacheFuncModel.hpp"
-#include "MemoryAccessInfo.hpp"
-#include "LoadStoreInstInfo.hpp"
-#include "MMU.hpp"
-#include "DCache.hpp"
+#include "inst/Inst.hpp"
+#include "utils/CoreTypes.hpp"
+#include "cpu/FlushManager.hpp"
+#include "memory/CacheFuncModel.hpp"
+#include "memory/MemoryAccessInfo.hpp"
+#include "inst/LoadStoreInstInfo.hpp"
+#include "memory/MMU.hpp"
+#include "lsu/DCache.hpp"
 
 namespace olympia
 {

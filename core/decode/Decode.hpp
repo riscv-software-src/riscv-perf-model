@@ -2,8 +2,8 @@
 //! \file Decode.hpp
 #pragma once
 
-#include "InstGroup.hpp"
-#include "../cpu/FlushManager.hpp"
+#include "inst/InstGroup.hpp"
+#include "cpu/FlushManager.hpp"
 #include "decode/MavisUnit.hpp"
 
 #include "fsl_api/FieldExtractor.h"

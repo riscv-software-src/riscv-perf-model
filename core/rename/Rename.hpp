@@ -26,9 +26,9 @@
 #include "sparta/pevents/PeventCollector.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 
-#include "CoreTypes.hpp"
-#include "FlushManager.hpp"
-#include "InstGroup.hpp"
+#include "utils/CoreTypes.hpp"
+#include "cpu/FlushManager.hpp"
+#include "inst/InstGroup.hpp"
 
 namespace olympia
 {

@@ -1,7 +1,7 @@
 // Source for ICache
 #pragma once
 
-#include "core/MemoryAccessInfo.hpp"
+#include "core/memory/MemoryAccessInfo.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"

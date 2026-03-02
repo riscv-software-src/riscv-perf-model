@@ -3,6 +3,8 @@
 #include "CPUTopology.hpp"
 #include "CoreUtils.hpp"
 #include "sparta/utils/SpartaException.hpp"
+#include "BIU.hpp"
+#include "MappedDevice.hpp"
 
 /**
  * @br0ief Constructor for CPUTopology_1
@@ -365,6 +367,51 @@ void olympia::CoreTopologySimple::bindTree(sparta::RootTreeNode* root_node)
             olympia::coreutils::getPipeTopology(root_node->getChild(core_node), "exe_pipe_rename");
         const auto issue_queue_rename = olympia::coreutils::getPipeTopology(
             root_node->getChild(core_node), "issue_queue_rename");
+
+        auto biu_node = root_node->getChild(core_node + ".biu");
+        if(biu_node) {
+            auto biu_res = biu_node->getResourceAs<olympia_mss::BIU>();
+            biu_res->setFactories(factories.get());
+
+            auto params_extension = biu_node->getExtension("params");
+            auto param_set = dynamic_cast<sparta::ParameterSet*>(params_extension);
+            if (param_set) {
+                auto device_param = param_set->getParameter("mapped_devices");
+                auto casted_param = dynamic_cast<sparta::Parameter<std::string>*>(device_param);
+                
+                if (casted_param && !casted_param->getValue().empty()) {
+                    std::vector<olympia_mss::MappedDevice> mapped_devices;
+                    std::stringstream ss(casted_param->getValue());
+                    char c;
+                    if (ss >> std::ws && ss.peek() == '[') {
+                        ss >> c; // consume '['
+                        while (ss >> std::ws && ss.peek() != ']') {
+                            olympia_mss::MappedDevice md;
+                            if (ss >> md) {
+                                mapped_devices.push_back(md);
+                            }
+                            if (ss >> std::ws && ss.peek() == ',') {
+                                ss >> c; // consume ','
+                            }
+                        }
+                    }
+
+                    for (const auto & device : mapped_devices) {
+                        std::string device_unit_path = core_node + "." + device.device_name;
+                        auto device_node = root_node->getChild(device_unit_path);
+                        
+                        if (device_node) {
+                             bind_ports(core_node + ".biu.ports.out_" + device.device_name + "_req_sync",
+                                        device_unit_path + ".ports.in_" + device.device_name + "_req_sync");
+                                        
+                             bind_ports(core_node + ".biu.ports.in_" + device.device_name + "_ack_sync",
+                                        device_unit_path + ".ports.out_" + device.device_name + "_ack_sync");
+                        }
+                    }
+                }
+            }
+        }
+
         for (size_t pipeidx = 0; pipeidx < pipelines.size(); ++pipeidx)
         {
             std::string unit_name = "exe" + std::to_string(pipeidx);

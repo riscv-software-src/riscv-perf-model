@@ -1,6 +1,13 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+#include <iostream>
+#include <iomanip>
+#include <regex>
+
+#include "sparta/utils/SpartaException.hpp"
 #include "sparta/ports/PortSet.hpp"
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/ports/DataPort.hpp"
@@ -15,10 +22,15 @@
 #include "MemoryAccessInfo.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
+#include "MappedDevice.hpp"
 
 // UPDATE
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/resources/Pipe.hpp"
+
+namespace olympia {
+    struct CPUFactories;
+}
 
 namespace olympia_mss
 {
@@ -36,11 +48,21 @@ namespace olympia_mss
 
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_latency, 1, "Send bus request latency")
+            PARAMETER(std::string, mapped_devices, "", R"(JSON-like list of Mapped Devices in simulation.
+
+Example:
+    top.*.biu.mapped_devices "[[0x40000000, 0x1000, \"i2c\"]]"
+
+)")
         };
 
         // Constructor for BIU
         // node parameter is the node that represent the BIU and p is the BIU parameter set
         BIU(sparta::TreeNode* node, const BIUParameterSet* p);
+
+        void setFactories(olympia::CPUFactories * factories) {
+            factories_ = factories;
+        }
 
         // name of this resource.
         static const char name[];
@@ -62,6 +84,7 @@ namespace olympia_mss
         sparta::SyncInPort<bool> in_mss_ack_sync_
             {&unit_port_set_, "in_mss_ack_sync", getClock()};
 
+        std::vector<std::unique_ptr<sparta::SyncInPort<bool>>> in_device_ack_sync_;
 
         ////////////////////////////////////////////////////////////////////////////////
         // Output Ports
@@ -76,6 +99,8 @@ namespace olympia_mss
         sparta::SyncOutPort<olympia::MemoryAccessInfoPtr> out_mss_req_sync_
             {&unit_port_set_, "out_mss_req_sync", getClock()};
 
+        std::vector<std::unique_ptr<sparta::SyncOutPort<olympia::MemoryAccessInfoPtr>>> out_device_req_sync_;
+
 
         ////////////////////////////////////////////////////////////////////////////////
         // Internal States
@@ -86,6 +111,8 @@ namespace olympia_mss
 
         const uint32_t biu_req_queue_size_;
         const uint32_t biu_latency_;
+        std::vector<MappedDevice> mapped_devices_;
+        olympia::CPUFactories * factories_ = nullptr;
 
         bool biu_busy_ = false;
 
@@ -102,6 +129,10 @@ namespace olympia_mss
         sparta::UniqueEvent<> ev_handle_mss_ack_
             {&unit_event_set_, "handle_mss_ack", CREATE_SPARTA_HANDLER(BIU, handleMSSAck_)};
 
+        // Generic event to handle Device Ack
+        sparta::UniqueEvent<> ev_handle_device_ack_
+            {&unit_event_set_, "handle_device_ack", CREATE_SPARTA_HANDLER(BIU, handleDeviceAck_)};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Callbacks
         ////////////////////////////////////////////////////////////////////////////////
@@ -115,9 +146,15 @@ namespace olympia_mss
         // Handle MSS Ack
         void handleMSSAck_();
 
+        // Handle Device Ack
+        void handleDeviceAck_();
+
         // Receive MSS access acknowledge
         // Q: Does the argument list has to be "const DataType &" ?
         void getAckFromMSS_(const bool &);
+
+        // Receive generic device access acknowledge
+        void getAckFromDevice_(const bool &);
 
         // Sending initial credits to L2Cache
         void sendInitialCredits_();

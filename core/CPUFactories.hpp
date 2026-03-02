@@ -18,6 +18,7 @@
 #include "BIU.hpp"
 #include "L2Cache.hpp"
 #include "MSS.hpp"
+#include "DummyDevice.hpp"
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
@@ -93,6 +94,10 @@ namespace olympia{
         //! \brief Resource Factory to build a MSS Unit
         sparta::ResourceFactory<olympia_mss::MSS,
                                 olympia_mss::MSS::MSSParameterSet> mss_rf;
+
+        //! \brief Resource Factory to build a Dummy Device Unit
+        sparta::ResourceFactory<olympia_mss::DummyDevice,
+                                olympia_mss::DummyDevice::DummyDeviceParameterSet> dummy_device_rf;
 
         //! \brief Resource Factory to build a ROB Unit
         sparta::ResourceFactory<olympia::ROB,

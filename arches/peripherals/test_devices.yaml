@@ -1,0 +1,1 @@
+top.cpu.core0.biu.params.mapped_devices: '[[0x40000000, 0x1000, "i2c"], [0x40001000, 0x1000, "gpio"], [0x40002000, 0x1000, "uart"]]'

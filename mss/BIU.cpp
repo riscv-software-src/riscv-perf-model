@@ -3,8 +3,10 @@
 #include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/SpartaException.hpp"
+#include "sparta/simulation/ResourceTreeNode.hpp"
 
 #include "BIU.hpp"
+#include "CPUFactories.hpp"
 
 namespace olympia_mss
 {
@@ -17,9 +19,27 @@ namespace olympia_mss
     BIU::BIU(sparta::TreeNode *node, const BIUParameterSet *p) :
         sparta::Unit(node),
         biu_req_queue_size_(p->biu_req_queue_size),
-        biu_latency_(p->biu_latency),
-        mapped_devices_(p->mapped_devices)
+        biu_latency_(p->biu_latency)
     {
+        // Parse mapped_devices string
+        const std::string& mapped_dev_str = p->mapped_devices;
+        if (!mapped_dev_str.empty()) {
+            std::stringstream ss(mapped_dev_str);
+            char c;
+            if (ss >> std::ws && ss.peek() == '[') {
+                ss >> c; // consume '['
+                while (ss >> std::ws && ss.peek() != ']') {
+                    MappedDevice md;
+                    if (ss >> md) {
+                        mapped_devices_.push_back(md);
+                    }
+                    if (ss >> std::ws && ss.peek() == ',') {
+                        ss >> c; // consume ','
+                    }
+                }
+            }
+        }
+
         in_biu_req_.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(BIU, receiveReqFromL2Cache_, olympia::MemoryAccessInfoPtr));
 
@@ -56,6 +76,17 @@ namespace olympia_mss
             in_device_ack_sync_.back()->registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(BIU, getAckFromDevice_, bool));
             in_device_ack_sync_.back()->setPortDelay(static_cast<sparta::Clock::Cycle>(1));
+
+            // Dynamically create the device unit if factories are available
+            if (factories_) {
+                new sparta::ResourceTreeNode(getContainer()->getParent(), 
+                                             device.device_name, 
+                                             sparta::TreeNode::GROUP_NAME_NONE,
+                                             sparta::TreeNode::GROUP_IDX_NONE,
+                                             device.device_name,
+                                             &factories_->dummy_device_rf);
+                // The CPUTopology handles the binding since its done after BIU construction
+            }
         }
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(BIU, sendInitialCredits_));

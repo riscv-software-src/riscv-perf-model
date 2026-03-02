@@ -22,65 +22,14 @@
 #include "MemoryAccessInfo.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
+#include "MappedDevice.hpp"
 
 // UPDATE
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/resources/Pipe.hpp"
 
-namespace olympia_mss
-{
-    struct MappedDevice
-    {
-        uint64_t addr = 0;
-        uint32_t size = 0;
-        std::string device_name;
-
-        // to compare two devices
-        bool operator==(const MappedDevice& other) const {
-            return addr == other.addr && size == other.size && device_name == other.device_name;
-        }
-    };
-}
-
-namespace olympia_mss {
-    inline std::istream& operator>>(std::istream& is, MappedDevice& md) {
-        std::string s;
-        char c;
-        if (!(is >> std::ws) || is.peek() != '[') {
-            is.setstate(std::ios::failbit);
-            return is;
-        }
-
-        int balance = 0;
-        while (is.get(c)) {
-            s += c;
-            if (c == '[') balance++;
-            else if (c == ']') balance--;
-            if (balance == 0) break;
-        }
-
-        // the regex matches [addr, size, "name"] or [addr, size, name]
-        // addr and size can be hex (0x...) or dec
-        static const std::regex device_re("\\[\\s*(0x[0-9a-fA-F]+|[0-9]+)\\s*,\\s*(0x[0-9a-fA-F]+|[0-9]+)\\s*,\\s*(?:\"([^\"]*)\"|([^,\\]\\s]+))\\s*\\]");
-        std::match_results<std::string::const_iterator> match;
-        if (std::regex_match(s, match, device_re)) {
-            try {
-                md.addr = std::stoull(match[1].str(), nullptr, 0);
-                md.size = std::stoul(match[2].str(), nullptr, 0);
-                md.device_name = match[3].matched ? match[3].str() : match[4].str();
-                return is;
-            } catch (const std::exception & e) {
-                throw sparta::SpartaException("Malformed parameter for mapped device: ") << s
-                    << ". Expected: [addr, size, \"name\"]. Internal error: " << e.what();
-            }
-        }
-        throw sparta::SpartaException("Malformed parameter for mapped device: ") << s
-            << ". Expected: [addr, size, \"name\"]";
-    }
-    inline std::ostream& operator<<(std::ostream& os, const MappedDevice& md) {
-        os << "[" << std::hex << md.addr << ", " << md.size << ", \"" << md.device_name << "\"]" << std::dec;
-        return os;
-    }
+namespace olympia {
+    struct CPUFactories;
 }
 
 namespace olympia_mss
@@ -99,7 +48,7 @@ namespace olympia_mss
 
             PARAMETER(uint32_t, biu_req_queue_size, 4, "BIU request queue size")
             PARAMETER(uint32_t, biu_latency, 1, "Send bus request latency")
-            PARAMETER(std::vector<MappedDevice>, mapped_devices, {}, R"(Vector of Mapped Devices in simulation.
+            PARAMETER(std::string, mapped_devices, "", R"(JSON-like list of Mapped Devices in simulation.
 
 Example:
     top.*.biu.mapped_devices "[[0x40000000, 0x1000, \"i2c\"]]"
@@ -110,6 +59,10 @@ Example:
         // Constructor for BIU
         // node parameter is the node that represent the BIU and p is the BIU parameter set
         BIU(sparta::TreeNode* node, const BIUParameterSet* p);
+
+        void setFactories(olympia::CPUFactories * factories) {
+            factories_ = factories;
+        }
 
         // name of this resource.
         static const char name[];
@@ -159,6 +112,7 @@ Example:
         const uint32_t biu_req_queue_size_;
         const uint32_t biu_latency_;
         std::vector<MappedDevice> mapped_devices_;
+        olympia::CPUFactories * factories_ = nullptr;
 
         bool biu_busy_ = false;
 

@@ -1,0 +1,44 @@
+[
+    {
+        "mnemonic": "addi",
+        "rs1": 0,
+        "imm": 1073741824,
+        "rd": 1,
+        "comment": "Load base address 0x40000000 into x1 (I2C)"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 1,
+        "rd":  2,
+        "vaddr" : "0x40000000",
+        "comment": "Load from I2C device"
+    },
+    {
+        "mnemonic": "addi",
+        "rs1": 0,
+        "imm": 1073745920,
+        "rd": 3,
+        "comment": "Load base address 0x40001000 into x3 (GPIO)"
+    },
+    {
+        "mnemonic": "sw",
+        "rs1": 3,
+        "rs2": 2,
+        "vaddr" : "0x40001000",
+        "comment": "Store to GPIO device"
+    },
+    {
+        "mnemonic": "addi",
+        "rs1": 0,
+        "imm": 1073750016,
+        "rd": 4,
+        "comment": "Load base address 0x40002000 into x4 (UART)"
+    },
+    {
+        "mnemonic": "lw",
+        "rs1": 4,
+        "rd":  5,
+        "vaddr" : "0x40002010",
+        "comment": "Load from UART device (offset 0x10)"
+    }
+]

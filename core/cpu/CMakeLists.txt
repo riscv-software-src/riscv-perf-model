@@ -21,4 +21,4 @@ target_include_directories(core_cpu PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(core_cpu PUBLIC core_sim_engine core_utils fetch core_rob core_preloader)
+target_link_libraries(core_cpu PUBLIC core_sim_engine core_utils fetch core_rob core_preloader mss decode rename dispatch execute vector lsu)

@@ -1,6 +1,6 @@
 // core/test/test_prefetcher.cpp
-#include "NextLinePrefetchEngine.hpp"
-#include "StridePrefetchEngine.hpp"
+#include "engines/NextLinePrefetchEngine.hpp"
+#include "engines/StridePrefetchEngine.hpp"
 #include "Prefetcher.hpp"
 
 #include "sparta/sparta.hpp"

@@ -309,6 +309,13 @@ namespace olympia
         l2_mem_access_info_ = memory_access_info_ptr;
         const auto & mshr_itb = memory_access_info_ptr->getMSHRInfoIterator();
         if(mshr_itb.isValid()){
+            // Return credit for prefetch requests before erasing the MSHR entry.
+            // handleDeallocate_ won't be able to return the credit because the MSHR
+            // is erased here before the refill reaches the deallocate stage.
+            MemoryAccessInfoPtr dependant_req = (*mshr_itb)->getMemRequest();
+            if (dependant_req && !dependant_req->getInstPtr()) {
+                out_prefetch_credits_.send(1);
+            }
             ILOG("Removing mshr entry for " << memory_access_info_ptr);
             mshr_file_.erase(memory_access_info_ptr->getMSHRInfoIterator());
         }

@@ -21,7 +21,7 @@
 #include "ROB.hpp"
 #include "FlushManager.hpp"
 #include "Preloader.hpp"
-#include "Prefetcher.hpp"
+#include "prefetcher/Prefetcher.hpp"
 #include "decode/MavisUnit.hpp"
 #include "execute/IssueQueue.hpp"
 

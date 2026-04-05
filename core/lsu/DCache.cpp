@@ -19,6 +19,9 @@ namespace olympia
         in_lsu_lookup_req_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveMemReqFromLSU_, MemoryAccessInfoPtr));
 
+        in_prefetcher_req_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveMemReqFromPrefetcher_, MemoryAccessInfoPtr));
+
         in_l2cache_resp_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveRespFromL2Cache_, MemoryAccessInfoPtr));
 
@@ -26,6 +29,7 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getCreditsFromL2Cache_, uint32_t));
 
         in_lsu_lookup_req_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
+        in_prefetcher_req_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
         in_l2cache_resp_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
         setupL1Cache_(p);
 
@@ -301,6 +305,13 @@ namespace olympia
         lsu_mem_access_info_ = memory_access_info_ptr;
     }
 
+    void DCache::receiveMemReqFromPrefetcher_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    {
+        ILOG("Received memory access request from Prefetcher " << memory_access_info_ptr);
+        in_l2_cache_resp_receive_event_.schedule();
+        prefetch_mem_access_info_ = memory_access_info_ptr;
+    }
+
     void DCache::receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received cache refill " << memory_access_info_ptr);
@@ -309,6 +320,13 @@ namespace olympia
         l2_mem_access_info_ = memory_access_info_ptr;
         const auto & mshr_itb = memory_access_info_ptr->getMSHRInfoIterator();
         if(mshr_itb.isValid()){
+            // Return credit for prefetch requests before erasing the MSHR entry.
+            // handleDeallocate_ won't be able to return the credit because the MSHR
+            // is erased here before the refill reaches the deallocate stage.
+            MemoryAccessInfoPtr dependant_req = (*mshr_itb)->getMemRequest();
+            if (dependant_req && !dependant_req->getInstPtr()) {
+                out_prefetch_credits_.send(1);
+            }
             ILOG("Removing mshr entry for " << memory_access_info_ptr);
             mshr_file_.erase(memory_access_info_ptr->getMSHRInfoIterator());
         }

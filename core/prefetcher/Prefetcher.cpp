@@ -147,7 +147,7 @@ namespace olympia
         // If engine has pending prefetches, resume generation
         if (prefetcher_enabled_ && getPrefetchEngine()->isPrefetchReady())
         {
-            ev_gen_prefetch_.schedule(sparta::Clock::Cycle(0));
+            ev_gen_prefetch_.schedule(sparta::Clock::Cycle(1));
         }
     }
 

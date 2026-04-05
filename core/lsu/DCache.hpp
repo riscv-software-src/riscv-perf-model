@@ -90,6 +90,8 @@ namespace olympia
 
         void receiveMemReqFromLSU_(const MemoryAccessInfoPtr & memory_access_info_ptr);
 
+        void receiveMemReqFromPrefetcher_(const MemoryAccessInfoPtr & memory_access_info_ptr);
+
         void receiveAckFromL2Cache_(const uint32_t & ack);
 
         void receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr);
@@ -106,6 +108,9 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         sparta::DataInPort<MemoryAccessInfoPtr> in_lsu_lookup_req_{&unit_port_set_,
                                                                    "in_lsu_lookup_req", 0};
+
+        sparta::DataInPort<MemoryAccessInfoPtr> in_prefetcher_req_{&unit_port_set_,
+                                                                   "in_prefetcher_req", 0};
 
         sparta::DataInPort<uint32_t> in_l2cache_credits_{&unit_port_set_, "in_l2cache_credits", 1};
 
@@ -138,29 +143,35 @@ namespace olympia
 
         sparta::utils::ValidValue<MemoryAccessInfoPtr> l2_mem_access_info_;
         sparta::utils::ValidValue<MemoryAccessInfoPtr> lsu_mem_access_info_;
+        sparta::utils::ValidValue<MemoryAccessInfoPtr> prefetch_mem_access_info_;
 
         void arbitrateL2LsuReq_()
         {
-            if (l2_mem_access_info_.isValid())
-            {
-                auto mem_access_info_ptr = l2_mem_access_info_.getValue();
-                ILOG("Received Refill request " << mem_access_info_ptr);
+            sparta::utils::ValidValue<MemoryAccessInfoPtr>* selected = nullptr;
+
+            // Prioritize L2 Cache Refill -> LSU Request -> Prefetch Request
+            if (l2_mem_access_info_.isValid()) {
+                selected = &l2_mem_access_info_;
+                ILOG("Arbitrating L2 Refill request " << selected->getValue());
+            } else if (lsu_mem_access_info_.isValid()) {
+                selected = &lsu_mem_access_info_;
+                ILOG("Arbitrating LSU request " << selected->getValue());
+            } else if (prefetch_mem_access_info_.isValid()) {
+                selected = &prefetch_mem_access_info_;
+                ILOG("Arbitrating Prefetch request " << selected->getValue());
+            }
+
+            if (selected != nullptr) {
+                auto mem_access_info_ptr = selected->getValue();
                 cache_pipeline_.append(mem_access_info_ptr);
+                selected->clearValid();
             }
-            else
-            {
-                auto mem_access_info_ptr = lsu_mem_access_info_.getValue();
-                ILOG("Received LSU request " << mem_access_info_ptr);
-                cache_pipeline_.append(mem_access_info_ptr);
+
+            // If there are still pending requests, schedule the arbitrator again for the next cycle
+            if (l2_mem_access_info_.isValid() || lsu_mem_access_info_.isValid() || prefetch_mem_access_info_.isValid()) {
+                in_l2_cache_resp_receive_event_.schedule(1);
             }
-            if (l2_mem_access_info_.isValid())
-            {
-                l2_mem_access_info_.clearValid();
-            }
-            if (lsu_mem_access_info_.isValid())
-            {
-                lsu_mem_access_info_.clearValid();
-            }
+
             uev_mshr_request_.schedule(1);
         }
 

@@ -360,7 +360,7 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         // Prefetcher sends prefetches to DCache for L1 reload
         {
             "cpu.core*.prefetcher.ports.out_prefetcher_write",
-            "cpu.core*.dcache.ports.in_lsu_lookup_req"
+            "cpu.core*.dcache.ports.in_prefetcher_req"
         },
         // DCache sends credits back to Prefetcher when prefetch requests complete
         {

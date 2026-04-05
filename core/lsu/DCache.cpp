@@ -131,6 +131,10 @@ namespace olympia
             if (mem_access_info_ptr->getInstPtr()) {
                 out_lsu_lookup_ack_.send(mem_access_info_ptr);
             }
+            else {
+                // Prefetch request completed (cache hit) — return credit
+                out_prefetch_credits_.send(1);
+            }
             return;
         }
 
@@ -141,7 +145,13 @@ namespace olympia
         {
             // Should be Nack but miss should work for now
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            if (mem_access_info_ptr->getInstPtr()) {
+                out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            }
+            else {
+                // Prefetch request dropped (MSHR full) — return credit
+                out_prefetch_credits_.send(1);
+            }
             return;
         }
 
@@ -270,6 +280,10 @@ namespace olympia
                 // Only send ack to LSU for instruction-backed requests
                 if (dependant_load_inst && dependant_load_inst->getInstPtr()) {
                     out_lsu_lookup_ack_.send(dependant_load_inst);
+                }
+                else if (dependant_load_inst) {
+                    // Prefetch request completed (refill done) — return credit
+                    out_prefetch_credits_.send(1);
                 }
 
                 ILOG("Removing mshr entry for " << mem_access_info_ptr);

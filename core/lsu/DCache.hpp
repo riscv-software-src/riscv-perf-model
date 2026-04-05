@@ -126,6 +126,10 @@ namespace olympia
         sparta::DataOutPort<MemoryAccessInfoPtr> out_l2cache_req_{&unit_port_set_,
                                                                   "out_l2cache_req", 0};
 
+        //! Out port to send credits back to the Prefetcher
+        sparta::DataOutPort<uint32_t> out_prefetch_credits_{&unit_port_set_,
+                                                            "out_prefetch_credits", 0};
+
         ////////////////////////////////////////////////////////////////////////////////
         // Events
         ////////////////////////////////////////////////////////////////////////////////

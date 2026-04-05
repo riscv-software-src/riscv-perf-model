@@ -1,7 +1,7 @@
 // test/core/prefetcher/Prefetcher_test.cpp
-#include "NextLinePrefetchEngine.hpp"
-#include "StridePrefetchEngine.hpp"
-#include "Prefetcher.hpp"
+#include "prefetcher/engines/NextLinePrefetchEngine.hpp"
+#include "prefetcher/engines/StridePrefetchEngine.hpp"
+#include "prefetcher/Prefetcher.hpp"
 
 #include "sparta/sparta.hpp"
 #include "sparta/simulation/ClockManager.hpp"

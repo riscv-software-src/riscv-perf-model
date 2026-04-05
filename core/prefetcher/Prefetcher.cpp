@@ -103,19 +103,10 @@ namespace olympia
     //! \brief Flush handler
     void Prefetcher::handleFlush(const olympia::FlushManager::FlushingCriteria & criteria)
     {
-        // Restore credits for any pending requests in the queue
-        uint32_t credits_to_restore = req_queue_.size();
         req_queue_.clear();
 
         ev_gen_prefetch_.cancel();
         ev_handle_incoming_req_.cancel();
-
-        // Restore credits for any in-flight prefetches that were flushed
-        if (credits_to_restore > 0)
-        {
-            prefetcher_credits_ = std::min(prefetcher_credits_ + credits_to_restore,
-                                           max_prefetcher_credits_);
-        }
     }
 
     //! Handle to generate a prefetch

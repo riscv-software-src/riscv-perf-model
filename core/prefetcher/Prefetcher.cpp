@@ -59,7 +59,10 @@ namespace olympia
     {
         // Queue incoming buffer
         req_queue_.push(mem_access_info_ptr);
-        ev_handle_incoming_req_.schedule(sparta::Clock::Cycle(0));
+        if(!ev_handle_incoming_req_.isScheduled())
+        {
+            ev_handle_incoming_req_.schedule(sparta::Clock::Cycle(0));
+        }
     }
 
     //! \brief Override handleMemoryAccess to use credit-based flow control
@@ -70,7 +73,7 @@ namespace olympia
         if (getPrefetchEngine()->handleMemoryAccess(access))
         {
             // Don't send prefetches immediately — schedule credit-based generation
-            if (prefetcher_credits_ > 0)
+            if (prefetcher_credits_ > 0 && !ev_gen_prefetch_.isScheduled())
             {
                 ev_gen_prefetch_.schedule(sparta::Clock::Cycle(0));
             }
@@ -91,9 +94,9 @@ namespace olympia
             handleMemoryAccess(access);
         }
 
-        if (!req_queue_.empty())
+        if (!req_queue_.empty() && !ev_handle_incoming_req_.isScheduled())
         {
-            ev_handle_incoming_req_.schedule(sparta::Clock::Cycle(1));
+            ev_handle_incoming_req_.schedule(sparta::Clock::Cycle(0));
         }
         return;
     }
@@ -147,7 +150,7 @@ namespace olympia
         // If engine has pending prefetches, resume generation
         if (prefetcher_enabled_ && getPrefetchEngine()->isPrefetchReady())
         {
-            ev_gen_prefetch_.schedule(sparta::Clock::Cycle(1));
+            ev_gen_prefetch_.schedule(sparta::Clock::Cycle(0));
         }
     }
 

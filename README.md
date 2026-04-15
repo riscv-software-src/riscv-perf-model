@@ -27,7 +27,7 @@ under development.
    ```
 1. Before building, make sure the following packages are installed:
 
-   * Sparta v2: https://github.com/sparcians/map?tab=readme-ov-file#simple
+   * Sparta v2.1: https://github.com/sparcians/map?tab=readme-ov-file#simple
    * (cmake) cmake v3.22
    * (libboost-all-dev) boost 1.78.0
    * (yaml-cpp-dev) YAML CPP 0.7.0

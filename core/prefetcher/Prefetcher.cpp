@@ -70,6 +70,7 @@ namespace olympia
     //! Prefetches are sent via generatePrefetch_() which checks credits.
     bool Prefetcher::handleMemoryAccess(const MemoryAccessInfoPtr & access)
     {
+        cnt_req_rcvd_++;
         if (getPrefetchEngine()->handleMemoryAccess(access))
         {
             // Don't send prefetches immediately — schedule credit-based generation
@@ -128,6 +129,7 @@ namespace olympia
 
             // Send access to output port and consume credit
             sendPrefetch(access);
+            cnt_prefetch_snd_++;
             prefetcher_credits_--;
 
             // Schedule next prefetch generation if more are ready and we have credits

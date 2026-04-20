@@ -79,6 +79,7 @@ namespace olympia
             mmu_access_state_(MMUState::NO_ACCESS),
             cache_access_state_(CacheState::NO_ACCESS),
             cache_data_ready_(false),
+            is_refill_(false),
             src_(ArchUnit::NO_ACCESS),
             dest_(ArchUnit::NO_ACCESS),
             vaddr_(addr),

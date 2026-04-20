@@ -1,5 +1,6 @@
 include: big_core.yaml
 top.cpu.core0:
+  fetch.params.branch_predictor: simple
   decode:
     params:
       num_to_decode: 8

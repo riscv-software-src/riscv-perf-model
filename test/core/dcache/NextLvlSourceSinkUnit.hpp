@@ -4,7 +4,7 @@
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/utils/LogUtils.hpp"
-#include "core/MemoryAccessInfo.hpp"
+#include "core/memory/MemoryAccessInfo.hpp"
 #include "core/decode/MavisUnit.hpp"
 
 namespace dcache_test

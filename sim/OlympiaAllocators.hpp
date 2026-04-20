@@ -10,10 +10,10 @@
 
 #include "sparta/simulation/TreeNode.hpp"
 
-#include "Inst.hpp"
-#include "LoadStoreInstInfo.hpp"
-#include "MemoryAccessInfo.hpp"
-#include "MSHREntryInfo.hpp"
+#include "inst/Inst.hpp"
+#include "inst/LoadStoreInstInfo.hpp"
+#include "memory/MemoryAccessInfo.hpp"
+#include "memory/MSHREntryInfo.hpp"
 
 namespace olympia
 {

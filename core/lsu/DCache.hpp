@@ -7,11 +7,11 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/utils/LogUtils.hpp"
-#include "CacheFuncModel.hpp"
-#include "Inst.hpp"
+#include "memory/CacheFuncModel.hpp"
+#include "inst/Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
-#include "MemoryAccessInfo.hpp"
-#include "MSHREntryInfo.hpp"
+#include "memory/MemoryAccessInfo.hpp"
+#include "memory/MSHREntryInfo.hpp"
 
 namespace olympia
 {

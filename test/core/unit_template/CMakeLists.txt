@@ -21,7 +21,7 @@ project(${PRJ})
 add_executable(${EXE} Testbench.cpp Dut.cpp Src.cpp)
 target_include_directories(${EXE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${EXE} core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
+target_link_libraries(${EXE} core_cpu core_inst core_memory core_rob core_preloader core_utils core_sim_engine fetch decode rename dispatch execute vector lsu mss common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json
                  ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)

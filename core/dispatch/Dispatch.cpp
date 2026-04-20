@@ -1,9 +1,9 @@
 // <Dispatch.cpp> -*- C++ -*-
 
 #include <algorithm>
-#include "CoreUtils.hpp"
 #include "dispatch/Dispatch.hpp"
 #include "sparta/events/StartupEvent.hpp"
+#include "utils/CoreUtils.hpp"
 
 namespace olympia
 {

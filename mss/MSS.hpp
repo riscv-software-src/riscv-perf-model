@@ -14,9 +14,9 @@
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/resources/Pipe.hpp"
 
-#include "MemoryAccessInfo.hpp"
-#include "CoreTypes.hpp"
-#include "FlushManager.hpp"
+#include "memory/MemoryAccessInfo.hpp"
+#include "utils/CoreTypes.hpp"
+#include "cpu/FlushManager.hpp"
 
 namespace olympia_mss
 {

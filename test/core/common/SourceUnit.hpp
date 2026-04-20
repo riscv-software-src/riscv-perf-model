@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "core/InstGenerator.hpp"
+#include "core/inst/InstGenerator.hpp"
 #include "core/decode/MavisUnit.hpp"
-#include "core/InstGroup.hpp"
+#include "core/inst/InstGroup.hpp"
 
 #include "mavis/ExtractorDirectInfo.h"
 

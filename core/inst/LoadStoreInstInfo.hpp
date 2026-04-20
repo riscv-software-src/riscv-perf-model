@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MemoryAccessInfo.hpp"
+#include "memory/MemoryAccessInfo.hpp"
 
 #include "sparta/simulation/State.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"

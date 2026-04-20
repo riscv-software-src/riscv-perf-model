@@ -17,7 +17,7 @@
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/ValidValue.hpp"
 
-#include "Inst.hpp"
+#include "../inst/Inst.hpp"
 
 namespace olympia
 {

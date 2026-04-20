@@ -1,7 +1,7 @@
 
 #include "L2Cache.hpp"
 #include "decode/MavisUnit.hpp"
-#include "CoreUtils.hpp"
+#include "utils/CoreUtils.hpp"
 
 #include "test/core/common/SourceUnit.hpp"
 #include "test/core/common/SinkUnit.hpp"

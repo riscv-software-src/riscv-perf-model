@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
@@ -20,6 +21,7 @@
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
 #include "MemoryAccessInfo.hpp"
+#include "fetch/SimpleBranchPred.hpp"
 
 namespace olympia
 {
@@ -59,6 +61,14 @@ namespace olympia
             PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
             PARAMETER(uint32_t, block_width,          16, "Block width of memory read requests, in bytes")
             PARAMETER(uint32_t, fetch_buffer_size,     8, "Size of fetch buffer in blocks")
+            PARAMETER(std::string, branch_predictor, "simple",
+                      "Branch predictor implementation to use: simple|enhanced")
+            PARAMETER(uint32_t, enhanced_btb_entries, 256,
+                      "Enhanced predictor BTB entry count (power-of-two, divisible by ways)")
+            PARAMETER(uint32_t, enhanced_btb_ways, 2,
+                      "Enhanced predictor BTB associativity (ways)")
+            PARAMETER(uint32_t, enhanced_bht_entries, 512,
+                      "Enhanced predictor BHT entry count (power-of-two)")
         };
 
         /**
@@ -110,6 +120,21 @@ namespace olympia
         const sparta::Clock * my_clk_ = nullptr;
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
+
+        // Active branch predictor selected by fetch.params.branch_predictor.
+        using BranchPredictorIFType = BranchPredictor::BranchPredictorIF<
+            BranchPredictor::DefaultPrediction,
+            BranchPredictor::DefaultUpdate,
+            BranchPredictor::DefaultInput>;
+        std::unique_ptr<BranchPredictorIFType> branch_predictor_;
+
+        // Kept for logging/debug visibility (normalized to lowercase in ctor).
+        std::string branch_predictor_name_;
+
+        // Geometry knobs consumed when enhanced predictor is selected.
+        const uint32_t enhanced_btb_entries_;
+        const uint32_t enhanced_btb_ways_;
+        const uint32_t enhanced_bht_entries_;
 
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
@@ -172,6 +197,9 @@ namespace olympia
         // Read instructions from the fetch buffer and send them to decode
         void sendInstructions_();
 
+        // Compare prediction with resolved trace outcome, then train predictor.
+        void evaluateBranchPrediction_(const InstGroupPtr &);
+
         // Receive flush from FlushManager
         void flushFetch_(const FlushManager::FlushingCriteria &);
 
@@ -188,6 +216,25 @@ namespace olympia
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
+
+        // Fetch-side branch prediction accounting.
+        sparta::Counter branch_predictions_{
+            getStatisticSet(),
+            "branch_predictions",
+            "Number of branches evaluated against predictor output",
+            sparta::Counter::COUNT_NORMAL};
+
+        sparta::Counter branch_correct_predictions_{
+            getStatisticSet(),
+            "branch_correct_predictions",
+            "Number of correctly predicted branches",
+            sparta::Counter::COUNT_NORMAL};
+
+        sparta::Counter branch_mispredictions_{
+            getStatisticSet(),
+            "branch_mispredictions",
+            "Number of mispredicted branches",
+            sparta::Counter::COUNT_NORMAL};
     };
 
 }

@@ -166,17 +166,6 @@ namespace olympia
             prefetcher_outp_.send(access);
         }
 
-      protected:
-        ////////////////////////////////////////////////////////////////////////////////
-        // Counters (protected so derived classes can update them)
-        ////////////////////////////////////////////////////////////////////////////////
-
-        //! Count of requests received
-        sparta::Counter cnt_req_rcvd_;
-
-        //! Count of prefetches generated
-        sparta::Counter cnt_prefetch_snd_;
-
       private:
         //! Helper function to generate the next prefetch
         void generatePrefetch_();
@@ -206,6 +195,18 @@ namespace olympia
         //! For flush
         sparta::DataInPort<FlushManager::FlushingCriteria> in_reorder_flush_;
 
+      protected:
+        ////////////////////////////////////////////////////////////////////////////////
+        // Counters (protected so derived classes can update them)
+        ////////////////////////////////////////////////////////////////////////////////
+
+        //! Count of requests received
+        sparta::Counter cnt_req_rcvd_;
+
+        //! Count of prefetches generated
+        sparta::Counter cnt_prefetch_snd_;
+
+      private:
         //! Sparta unit to use to house ports and stats
         sparta::Unit* unit_;
     }; // class PrefetcherIF

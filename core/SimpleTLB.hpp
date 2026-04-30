@@ -1,129 +1,91 @@
-
 #pragma once
 
-#include "sparta/utils/SpartaAssert.hpp"
-#include "sparta/utils/MathUtils.hpp"
-#include "sparta/utils/LogUtils.hpp"
-#include "sparta/simulation/ParameterSet.hpp"
-
+#include <cinttypes>
 #include "cache/TreePLRUReplacement.hpp"
 #include "cache/BasicCacheItem.hpp"
 #include "cache/SimpleCache2.hpp"
 #include "cache/ReplacementIF.hpp"
+#include "sparta/utils/SpartaAssert.hpp"
 
-namespace olympia
-{
-    class SimpleTLBEntry : public sparta::cache::BasicCacheItem
+namespace olympia {
+
+class SimpleTLBEntry : public sparta::cache::BasicCacheItem {
+public:
+    SimpleTLBEntry() = delete;
+
+    SimpleTLBEntry(uint64_t page_size) :
+        page_size_(page_size),
+        valid_(false)
     {
-    public:
-        SimpleTLBEntry() = delete;
+        sparta_assert(sparta::utils::is_power_of_2(page_size),
+                      "TLBEntry: Page size must be a power of 2. page_size=" << page_size);
+    }
 
-        SimpleTLBEntry(uint64_t page_size) :
-            page_size_(page_size),
-            valid_(false)
-        {
+    // Copy constructor
+    SimpleTLBEntry(const SimpleTLBEntry & rhs) :
+        BasicCacheItem(rhs),
+        page_size_(rhs.page_size_),
+        valid_(rhs.valid_)
+    {}
 
-            sparta_assert(sparta::utils::is_power_of_2(page_size),
-            "TLBEntry: Page size must be a power of 2. page_size=" << page_size);
-        }
+    // Copy assignment operator
+    SimpleTLBEntry &operator=(const SimpleTLBEntry & rhs) {
+        BasicCacheItem::operator=(rhs);
+        page_size_ = rhs.page_size_;
+        valid_ = rhs.valid_;
+        return *this;
+    }
 
-        // Copy constructor
-        SimpleTLBEntry(const SimpleTLBEntry & rhs) :
-            BasicCacheItem(rhs),
-            page_size_(rhs.page_size_),
-            valid_(rhs.valid_)
-        {
-        }
+    virtual ~SimpleTLBEntry() {}
 
-        // Copy assignment operator
-        SimpleTLBEntry &operator=(const SimpleTLBEntry & rhs)
-        {
-            BasicCacheItem::operator=(rhs);
-            page_size_ = rhs.page_size_;
-            valid_ = rhs.valid_;
+    // Required by SimpleCache2
+    void reset(uint64_t addr) {
+        setValid(true);
+        BasicCacheItem::setAddr(addr);
+    }
 
-            return *this;
-        }
+    // Required by SimpleCache2
+    void setValid(bool v) { valid_ = v; }
 
-        virtual ~SimpleTLBEntry() {}
+    // Required by BasicCacheSet
+    bool isValid() const { return valid_; }
 
-        // Required by SimpleCache2
-        void reset(uint64_t addr)
-        {
-            setValid(true);
-            BasicCacheItem::setAddr(addr);
-        }
+    // Required by SimpleCache2
+    void setModified(bool m) { (void) m; }
 
-        // Required by SimpleCache2
-        void setValid(bool v) { valid_ = v; }
+    // Required by SimpleCache2
+    bool read(uint64_t offset, uint32_t size, uint32_t *buf) const {
+        (void) offset;
+        (void) size;
+        (void) buf;
+        sparta_assert(false);
+        return true;
+    }
 
-        // Required by BasicCacheSet
-        bool isValid() const { return valid_; }
+    // Required by SimpleCache2
+    bool write(uint64_t offset, uint32_t size, uint32_t *buf) const {
+        (void) offset;
+        (void) size;
+        (void) buf;
+        sparta_assert(false);
+        return true;
+    }
 
-        // Required by SimpleCache2
-        void setModified(bool m) { (void) m; }
+private:
+    uint64_t page_size_ = 0;
+    bool valid_ = false;
 
-        // Required by SimpleCache2
-        bool read(uint64_t offset, uint32_t size, uint32_t *buf) const
-        {
-            (void) offset;
-            (void) size;
-            (void) buf;
-            sparta_assert(false);
-            return true;
-        }
+}; // class SimpleTLBEntry
 
-        // Required by SimpleCache2
-        bool write(uint64_t offset, uint32_t size, uint32_t *buf) const
-        {
-            (void) offset;
-            (void) size;
-            (void) buf;
-            sparta_assert(false);
-            return true;
-        }
-
-    private:
-        uint64_t page_size_ = 0;
-        bool valid_ = false;
-
-    };  // class SimpleTLBEntry
-
-    class SimpleTLB : public sparta::cache::SimpleCache2<SimpleTLBEntry>,
-                      public sparta::Unit
-    {
-    public:
-        static constexpr const char* name = "tlb";
-        class TLBParameterSet : public sparta::ParameterSet
-        {
-        public:
-            TLBParameterSet(sparta::TreeNode* n) :
-                sparta::ParameterSet(n)
-            {}
-            PARAMETER(uint64_t, tlb_page_size, 4096, "Page size in bytes (power of 2)")
-            PARAMETER(uint64_t, tlb_num_of_entries, 32, "L1 TLB # of entries (power of 2)")
-            PARAMETER(uint32_t, tlb_associativity, 32, "L1 TLB associativity (power of 2)")
-        };
-        using Handle = std::shared_ptr<SimpleTLB>;
-
-        SimpleTLB(sparta::TreeNode* node, const TLBParameterSet* p) :
-            sparta::cache::SimpleCache2<SimpleTLBEntry> ( (p->tlb_page_size * p->tlb_num_of_entries) >> 10,
-                                                        p->tlb_page_size,
-                                                        p->tlb_page_size,
-                                                        SimpleTLBEntry(p->tlb_page_size),
-                                                        sparta::cache::TreePLRUReplacement(p->tlb_associativity)),
-            sparta::Unit(node),
-            hits(&unit_stat_set_, "tlb_hits", "number of TLB hits", sparta::Counter::COUNT_NORMAL)
-        {}
-
-        void touch(const SimpleTLBEntry& entry)
-        {
-            DLOG("TLB HIT");
-            touchMRU(entry);
-            hits++;
-        }
-    private:
-        sparta::Counter hits;
-    }; // class SimpleTLB
+class SimpleTLB : public sparta::cache::SimpleCache2<SimpleTLBEntry> {
+public:
+    SimpleTLB(uint64_t tlb_page_size, uint64_t tlb_num_entries, uint64_t tlb_associativity) :
+        sparta::cache::SimpleCache2<SimpleTLBEntry> ((tlb_page_size * tlb_num_entries) >> 10,
+                                                     tlb_page_size,
+                                                     tlb_page_size,
+                                                     SimpleTLBEntry(tlb_page_size),
+                                                     sparta::cache::TreePLRUReplacement(tlb_associativity))
+    {}
+}; // class SimpleTLB
 
 } // namespace olympia

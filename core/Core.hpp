@@ -26,6 +26,8 @@ namespace olympia
                 sparta::ParameterSet(n)
             { }
 
+            PARAMETER(double, ghz, 2.5, "Processor frequency in GHz")
+
         };
 
         //! \brief Name of this resource. Required by sparta::UnitFactory
@@ -47,5 +49,13 @@ namespace olympia
         Core(sparta::TreeNode * node, const CoreParameterSet * params);
 
         ~Core() {}
+
+    private:
+        // Stats and counters
+        sparta::StatisticDef stat_ghz_;   // Processor freq (simply reports the param value)
+
+        // Parameter constants
+        const double ghz_;                // Processor frequency
+
     };
 }

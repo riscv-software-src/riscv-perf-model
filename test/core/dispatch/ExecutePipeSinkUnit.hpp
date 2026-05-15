@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "core/InstGenerator.hpp"
+#include "core/inst/InstGenerator.hpp"
 
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/statistics/StatisticSet.hpp"

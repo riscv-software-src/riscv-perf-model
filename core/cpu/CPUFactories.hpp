@@ -4,7 +4,7 @@
 #pragma once
 
 #include "sparta/simulation/ResourceFactory.hpp"
-#include "Core.hpp"
+#include "sim_engine/Core.hpp"
 #include "fetch/ICache.hpp"
 #include "fetch/Fetch.hpp"
 #include "decode/Decode.hpp"
@@ -13,14 +13,14 @@
 #include "dispatch/Dispatch.hpp"
 #include "execute/Execute.hpp"
 #include "lsu/LSU.hpp"
-#include "MMU.hpp"
-#include "SimpleTLB.hpp"
+#include "memory/MMU.hpp"
+#include "memory/SimpleTLB.hpp"
 #include "BIU.hpp"
 #include "L2Cache.hpp"
 #include "MSS.hpp"
-#include "ROB.hpp"
-#include "FlushManager.hpp"
-#include "Preloader.hpp"
+#include "rob/ROB.hpp"
+#include "cpu/FlushManager.hpp"
+#include "preloader/Preloader.hpp"
 #include "decode/MavisUnit.hpp"
 #include "execute/IssueQueue.hpp"
 

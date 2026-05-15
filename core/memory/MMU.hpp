@@ -3,9 +3,9 @@
 #include <sparta/simulation/Unit.hpp>
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/ports/DataPort.hpp"
-#include "Inst.hpp"
-#include "SimpleTLB.hpp"
-#include "MemoryAccessInfo.hpp"
+#include "inst/Inst.hpp"
+#include "memory/SimpleTLB.hpp"
+#include "memory/MemoryAccessInfo.hpp"
 
 namespace olympia {
 

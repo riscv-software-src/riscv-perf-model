@@ -1,8 +1,8 @@
 #pragma once
 
 #include "sparta/utils/LogUtils.hpp"
-#include "core/MemoryAccessInfo.hpp"
-#include "core/InstGenerator.hpp"
+#include "core/memory/MemoryAccessInfo.hpp"
+#include "core/inst/InstGenerator.hpp"
 #include "sparta/utils/LogUtils.hpp"
 
 namespace dcache_test

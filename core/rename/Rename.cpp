@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <ranges>
 
-#include "CoreUtils.hpp"
+#include "utils/CoreUtils.hpp"
 #include "Rename.hpp"
 #include "sparta/events/StartupEvent.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"

@@ -2,9 +2,8 @@
 //! \file Decode.hpp
 #pragma once
 
-#include "CoreTypes.hpp"
-#include "FlushManager.hpp"
-#include "InstGroup.hpp"
+#include "inst/InstGroup.hpp"
+#include "cpu/FlushManager.hpp"
 #include "decode/MavisUnit.hpp"
 
 #include "fsl_api/FieldExtractor.h"

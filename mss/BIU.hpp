@@ -12,9 +12,9 @@
 #include "sparta/collection/Collectable.hpp"
 #include "sparta/events/StartupEvent.hpp"
 
-#include "MemoryAccessInfo.hpp"
-#include "CoreTypes.hpp"
-#include "FlushManager.hpp"
+#include "memory/MemoryAccessInfo.hpp"
+#include "utils/CoreTypes.hpp"
+#include "cpu/FlushManager.hpp"
 
 // UPDATE
 #include "sparta/ports/SyncPort.hpp"

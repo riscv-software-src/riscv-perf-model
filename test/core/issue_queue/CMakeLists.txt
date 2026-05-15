@@ -1,7 +1,7 @@
 project(IssueQueue_test)
 
 add_executable(IssueQueue_test IssueQueue_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
-target_link_libraries(IssueQueue_test core common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
+target_link_libraries(IssueQueue_test core_cpu core_inst core_memory core_rob core_preloader core_utils core_sim_engine fetch decode rename dispatch execute vector lsu mss common_test ${STF_LINK_LIBS} mavis SPARTA::sparta)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)

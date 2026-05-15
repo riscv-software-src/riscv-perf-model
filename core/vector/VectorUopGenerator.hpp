@@ -6,8 +6,8 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
-#include "Inst.hpp"
-#include "FlushManager.hpp"
+#include "inst/Inst.hpp"
+#include "cpu/FlushManager.hpp"
 #include "decode/MavisUnit.hpp"
 
 #include <optional>

@@ -18,10 +18,10 @@
 
 #include "sparta/resources/PriorityQueue.hpp"
 
-#include "CoreTypes.hpp"
+#include "utils/CoreTypes.hpp"
 #include "execute/ExecutePipe.hpp"
-#include "FlushManager.hpp"
-#include "Inst.hpp"
+#include "cpu/FlushManager.hpp"
+#include "inst/Inst.hpp"
 
 namespace olympia
 {

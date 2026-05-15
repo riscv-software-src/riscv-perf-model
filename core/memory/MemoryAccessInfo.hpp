@@ -7,8 +7,8 @@
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
-#include "Inst.hpp"
-#include "InstGroup.hpp"
+#include "inst/Inst.hpp"
+#include "inst/InstGroup.hpp"
 
 namespace olympia
 {

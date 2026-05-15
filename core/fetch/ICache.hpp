@@ -14,10 +14,10 @@
 #include "sparta/resources/Buffer.hpp"
 #include "sparta/utils/LogUtils.hpp"
 
-#include "CacheFuncModel.hpp"
-#include "Inst.hpp"
+#include "memory/CacheFuncModel.hpp"
+#include "inst/Inst.hpp"
 #include "cache/TreePLRUReplacement.hpp"
-#include "MemoryAccessInfo.hpp"
+#include "memory/MemoryAccessInfo.hpp"
 
 namespace olympia
 {

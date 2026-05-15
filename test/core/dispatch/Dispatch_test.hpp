@@ -1,6 +1,6 @@
 
-#include "CPUFactory.hpp"
-#include "CoreUtils.hpp"
+#include "cpu/CPUFactory.hpp"
+#include "utils/CoreUtils.hpp"
 #include "dispatch/Dispatch.hpp"
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"

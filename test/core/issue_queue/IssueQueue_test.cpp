@@ -1,10 +1,10 @@
 
-#include "CPUFactory.hpp"
-#include "CoreUtils.hpp"
+#include "cpu/CPUFactory.hpp"
+#include "utils/CoreUtils.hpp"
 #include "dispatch/Dispatch.hpp"
 #include "decode/MavisUnit.hpp"
-#include "OlympiaAllocators.hpp"
-#include "OlympiaSim.hpp"
+#include "sim/OlympiaAllocators.hpp"
+#include "sim/OlympiaSim.hpp"
 #include "execute/IssueQueue.hpp"
 #include "test/core/dispatch/Dispatch_test.hpp"
 

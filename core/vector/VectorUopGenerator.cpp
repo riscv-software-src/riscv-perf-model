@@ -1,5 +1,5 @@
 #include "vector/VectorUopGenerator.hpp"
-#include "InstArchInfo.hpp"
+#include "inst/InstArchInfo.hpp"
 #include "mavis/Mavis.h"
 #include "mavis/InstMetaData.h"
 #include "sparta/utils/LogUtils.hpp"

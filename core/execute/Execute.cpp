@@ -4,7 +4,7 @@
 #include "sparta/simulation/ResourceTreeNode.hpp"
 
 #include "execute/Execute.hpp"
-#include "CoreUtils.hpp"
+#include "utils/CoreUtils.hpp"
 #include "execute/IssueQueue.hpp"
 
 namespace olympia

@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <iostream>
-#include "CoreTypes.hpp"
+#include "utils/CoreTypes.hpp"
 
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"

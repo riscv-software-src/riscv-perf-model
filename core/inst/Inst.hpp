@@ -15,9 +15,9 @@
 #include "stf-inc/stf_inst_reader.hpp"
 
 #include "InstArchInfo.hpp"
-#include "CoreTypes.hpp"
+#include "utils/CoreTypes.hpp"
 #include "vector/VectorConfig.hpp"
-#include "MiscUtils.hpp"
+#include "utils/MiscUtils.hpp"
 #include "rename/RenameData.hpp"
 
 #include <cstdint>

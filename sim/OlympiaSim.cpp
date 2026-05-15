@@ -8,8 +8,8 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/utils/StringUtils.hpp"
 
-#include "CPUFactory.hpp"
-#include "SimulationConfiguration.hpp"
+#include "cpu/CPUFactory.hpp"
+#include "sim_engine/SimulationConfiguration.hpp"
 
 #include "OlympiaAllocators.hpp"
 

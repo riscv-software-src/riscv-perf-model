@@ -5,9 +5,9 @@
 
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/RootTreeNode.hpp"
-#include "CPU.hpp"
+#include "cpu/CPU.hpp"
 #include "sparta/simulation/ResourceTreeNode.hpp"
-#include "CPUTopology.hpp"
+#include "cpu/CPUTopology.hpp"
 
 namespace olympia{
 

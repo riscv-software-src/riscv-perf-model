@@ -1,6 +1,6 @@
-#include "OlympiaSim.hpp"
+#include "sim/OlympiaSim.hpp"
 #include "decode/Decode.hpp"
-#include "ROB.hpp"
+#include "rob/ROB.hpp"
 #include "vector/VectorUopGenerator.hpp"
 
 #include "sparta/app/CommandLineSimulator.hpp"

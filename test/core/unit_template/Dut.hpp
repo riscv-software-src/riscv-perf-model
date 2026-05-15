@@ -1,7 +1,7 @@
 #pragma once
 
-#include "FlushManager.hpp"
-#include "InstGroup.hpp"
+#include "cpu/FlushManager.hpp"
+#include "inst/InstGroup.hpp"
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"

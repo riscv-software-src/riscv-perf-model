@@ -19,6 +19,9 @@ namespace olympia
         in_lsu_lookup_req_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveMemReqFromLSU_, MemoryAccessInfoPtr));
 
+        in_prefetcher_req_.registerConsumerHandler(
+            CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveMemReqFromPrefetcher_, MemoryAccessInfoPtr));
+
         in_l2cache_resp_.registerConsumerHandler(
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, receiveRespFromL2Cache_, MemoryAccessInfoPtr));
 
@@ -26,6 +29,7 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(DCache, getCreditsFromL2Cache_, uint32_t));
 
         in_lsu_lookup_req_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
+        in_prefetcher_req_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
         in_l2cache_resp_.registerConsumerEvent(in_l2_cache_resp_receive_event_);
         setupL1Cache_(p);
 
@@ -69,7 +73,7 @@ namespace olympia
     bool DCache::dataLookup_(const MemoryAccessInfoPtr & mem_access_info_ptr)
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        uint64_t phyAddr = inst_ptr->getRAdr();
+        uint64_t phyAddr = inst_ptr ? inst_ptr->getRAdr() : mem_access_info_ptr->getPhyAddr();
 
         bool cache_hit = false;
 
@@ -127,7 +131,14 @@ namespace olympia
         if (hit)
         {
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::HIT);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            // Only send ack to LSU for instruction-backed requests
+            if (mem_access_info_ptr->getInstPtr()) {
+                out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            }
+            else {
+                // Prefetch request completed (cache hit) — return credit
+                out_prefetch_credits_.send(1);
+            }
             return;
         }
 
@@ -138,7 +149,13 @@ namespace olympia
         {
             // Should be Nack but miss should work for now
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
-            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            if (mem_access_info_ptr->getInstPtr()) {
+                out_lsu_lookup_ack_.send(mem_access_info_ptr);
+            }
+            else {
+                // Prefetch request dropped (MSHR full) — return credit
+                out_prefetch_credits_.send(1);
+            }
             return;
         }
 
@@ -154,7 +171,8 @@ namespace olympia
         const auto & mshr_it = mem_access_info_ptr->getMSHRInfoIterator();
         const uint64_t block_addr = getBlockAddr(mem_access_info_ptr);
         const bool data_arrived = (*mshr_it)->isDataArrived();
-        const bool is_store_inst = mem_access_info_ptr->getInstPtr()->isStoreInst();
+        const bool is_store_inst = mem_access_info_ptr->getInstPtr()
+            ? mem_access_info_ptr->getInstPtr()->isStoreInst() : false;
 
         // All ST are considered Hit
         if (is_store_inst)
@@ -177,13 +195,16 @@ namespace olympia
             (*mshr_it)->setMemRequest(mem_access_info_ptr);
             mem_access_info_ptr->setCacheState(MemoryAccessInfo::CacheState::MISS);
         }
-        out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        // Only send ack to LSU for instruction-backed requests
+        if (mem_access_info_ptr->getInstPtr()) {
+            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        }
     }
 
     uint64_t DCache::getBlockAddr(const MemoryAccessInfoPtr & mem_access_info_ptr) const
     {
         const InstPtr & inst_ptr = mem_access_info_ptr->getInstPtr();
-        const auto & inst_target_addr = inst_ptr->getRAdr();
+        const auto inst_target_addr = inst_ptr ? inst_ptr->getRAdr() : mem_access_info_ptr->getPhyAddr();
         return addr_decoder_->calcBlockAddr(inst_target_addr);
     }
 
@@ -216,7 +237,10 @@ namespace olympia
                 uev_mshr_request_.schedule(sparta::Clock::Cycle(1));
             }
         }
-        out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        // Only send ack to LSU for instruction-backed requests
+        if (mem_access_info_ptr->getInstPtr()) {
+            out_lsu_lookup_ack_.send(mem_access_info_ptr);
+        }
     }
 
     void DCache::mshrRequest_()
@@ -257,7 +281,14 @@ namespace olympia
             if (mshr_it.isValid())
             {
                 MemoryAccessInfoPtr dependant_load_inst = (*mshr_it)->getMemRequest();
-                out_lsu_lookup_ack_.send(dependant_load_inst);
+                // Only send ack to LSU for instruction-backed requests
+                if (dependant_load_inst && dependant_load_inst->getInstPtr()) {
+                    out_lsu_lookup_ack_.send(dependant_load_inst);
+                }
+                else if (dependant_load_inst) {
+                    // Prefetch request completed (refill done) — return credit
+                    out_prefetch_credits_.send(1);
+                }
 
                 ILOG("Removing mshr entry for " << mem_access_info_ptr);
                 mshr_file_.erase(mem_access_info_ptr->getMSHRInfoIterator());
@@ -274,6 +305,13 @@ namespace olympia
         lsu_mem_access_info_ = memory_access_info_ptr;
     }
 
+    void DCache::receiveMemReqFromPrefetcher_(const MemoryAccessInfoPtr & memory_access_info_ptr)
+    {
+        ILOG("Received memory access request from Prefetcher " << memory_access_info_ptr);
+        in_l2_cache_resp_receive_event_.schedule();
+        prefetch_mem_access_info_ = memory_access_info_ptr;
+    }
+
     void DCache::receiveRespFromL2Cache_(const MemoryAccessInfoPtr & memory_access_info_ptr)
     {
         ILOG("Received cache refill " << memory_access_info_ptr);
@@ -282,6 +320,13 @@ namespace olympia
         l2_mem_access_info_ = memory_access_info_ptr;
         const auto & mshr_itb = memory_access_info_ptr->getMSHRInfoIterator();
         if(mshr_itb.isValid()){
+            // Return credit for prefetch requests before erasing the MSHR entry.
+            // handleDeallocate_ won't be able to return the credit because the MSHR
+            // is erased here before the refill reaches the deallocate stage.
+            MemoryAccessInfoPtr dependant_req = (*mshr_itb)->getMemRequest();
+            if (dependant_req && !dependant_req->getInstPtr()) {
+                out_prefetch_credits_.send(1);
+            }
             ILOG("Removing mshr entry for " << memory_access_info_ptr);
             mshr_file_.erase(memory_access_info_ptr->getMSHRInfoIterator());
         }

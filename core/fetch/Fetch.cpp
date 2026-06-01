@@ -196,7 +196,8 @@ namespace olympia
             ILOG("Cache hit response recieved for insts: " << fetched_insts);
             // Mark instructions as fetched
             for(auto & inst : *fetched_insts) {
-                inst->setStatus(Inst::Status::FETCHED);
+                // Record fetch timestamp for CPI attribution
+                inst->setStatus(Inst::Status::FETCHED, my_clk_->currentCycle());
             }
             ev_send_insts->schedule(sparta::Clock::Cycle(0));
         }

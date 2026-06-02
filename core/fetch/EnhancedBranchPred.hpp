@@ -1,5 +1,3 @@
-// <EnhancedBranchPred.hpp> -*- C++ -*-
-
 /*
  * EnhancedBranchPredictor models a bounded predictor with practical storage
  * limits:
@@ -92,8 +90,8 @@ namespace BranchPredictor
 
         // SimpleCache2 uses 1KB pseudo-lines here; shift fetch PC so BTB
         // indexing keeps PC[9:1] behavior (important for compressed support).
-        uint64_t btbCacheAddress_(uint64_t fetch_pc) const;
-        uint32_t bhtIndex_(uint64_t fetch_pc) const;
+        constexpr uint64_t btbCacheAddress_(uint64_t fetch_pc) const;
+        size_t bhtIndex_(uint64_t fetch_pc) const;
 
         BTBEntry* btbLookup_(uint64_t fetch_pc);
         void btbUpdate_(uint64_t fetch_pc, const BTBEntry & entry);

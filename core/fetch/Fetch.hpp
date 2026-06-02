@@ -131,11 +131,6 @@ namespace olympia
         // Kept for logging/debug visibility (normalized to lowercase in ctor).
         std::string branch_predictor_name_;
 
-        // Geometry knobs consumed when enhanced predictor is selected.
-        const uint32_t enhanced_btb_entries_;
-        const uint32_t enhanced_btb_ways_;
-        const uint32_t enhanced_bht_entries_;
-
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
 
@@ -216,25 +211,6 @@ namespace olympia
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;
-
-        // Fetch-side branch prediction accounting.
-        sparta::Counter branch_predictions_{
-            getStatisticSet(),
-            "branch_predictions",
-            "Number of branches evaluated against predictor output",
-            sparta::Counter::COUNT_NORMAL};
-
-        sparta::Counter branch_correct_predictions_{
-            getStatisticSet(),
-            "branch_correct_predictions",
-            "Number of correctly predicted branches",
-            sparta::Counter::COUNT_NORMAL};
-
-        sparta::Counter branch_mispredictions_{
-            getStatisticSet(),
-            "branch_mispredictions",
-            "Number of mispredicted branches",
-            sparta::Counter::COUNT_NORMAL};
     };
 
 }

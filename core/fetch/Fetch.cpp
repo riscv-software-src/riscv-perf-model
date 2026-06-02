@@ -26,9 +26,6 @@ namespace olympia
         my_clk_(getClock()),
         num_insts_to_fetch_(p->num_to_fetch),
         branch_predictor_name_(p->branch_predictor),
-        enhanced_btb_entries_(p->enhanced_btb_entries),
-        enhanced_btb_ways_(p->enhanced_btb_ways),
-        enhanced_bht_entries_(p->enhanced_bht_entries),
         skip_nonuser_mode_(p->skip_nonuser_mode),
         icache_block_shift_(sparta::utils::floor_log2(p->block_width.getValue())),
         ibuf_capacity_(std::ceil(p->block_width / 2)), // buffer up instructions read from trace
@@ -68,21 +65,11 @@ namespace olympia
         if (branch_predictor_name_ == "simple") {
             branch_predictor_.reset(new BranchPredictor::SimpleBranchPredictor(num_insts_to_fetch_));
         } else if (branch_predictor_name_ == "enhanced") {
-            sparta_assert(enhanced_btb_entries_ > 0, "enhanced_btb_entries must be > 0");
-            sparta_assert(enhanced_btb_ways_ > 0, "enhanced_btb_ways must be > 0");
-            sparta_assert(enhanced_bht_entries_ > 0, "enhanced_bht_entries must be > 0");
-            sparta_assert((enhanced_btb_entries_ % enhanced_btb_ways_) == 0,
-                          "enhanced_btb_entries must be divisible by enhanced_btb_ways");
-            sparta_assert(sparta::utils::is_power_of_2(enhanced_btb_entries_ / enhanced_btb_ways_),
-                          "enhanced BTB set count must be power-of-two");
-            sparta_assert(sparta::utils::is_power_of_2(enhanced_bht_entries_),
-                          "enhanced_bht_entries must be power-of-two");
-
             branch_predictor_.reset(new BranchPredictor::EnhancedBranchPredictor(
                 num_insts_to_fetch_,
-                enhanced_btb_entries_,
-                enhanced_btb_ways_,
-                enhanced_bht_entries_));
+                p->enhanced_btb_entries,
+                p->enhanced_btb_ways,
+                p->enhanced_bht_entries));
         } else {
             sparta_assert(false,
                           "Unsupported fetch.params.branch_predictor='" << p->branch_predictor
@@ -264,10 +251,9 @@ namespace olympia
             (prediction.branch_idx != actual_branch_idx) ||
             (prediction.predicted_PC != actual_next_pc);
 
-        // Track end-to-end prediction quality at fetch integration level.
-        ++branch_predictions_;
+        // Mark instruction as mispredicted for pipeline handling.
+        // Actual misprediction counting is done by the predictor itself.
         if (mispredicted) {
-            ++branch_mispredictions_;
             actual_branch_inst->setMispredicted();
             ILOG("Branch mispredicted by '" << branch_predictor_name_
                  << "' at PC 0x" << std::hex << input.fetch_PC
@@ -275,8 +261,6 @@ namespace olympia
                  << " next_pc=0x" << std::hex << prediction.predicted_PC
                  << ", actual idx=" << std::dec << actual_branch_idx
                  << " next_pc=0x" << std::hex << actual_next_pc);
-        } else {
-            ++branch_correct_predictions_;
         }
     }
 

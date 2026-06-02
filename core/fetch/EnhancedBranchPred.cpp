@@ -45,14 +45,14 @@ namespace BranchPredictor
             *btb_replacement_policy_);
     }
 
-    uint64_t EnhancedBranchPredictor::btbCacheAddress_(uint64_t fetch_pc) const {
+    constexpr uint64_t EnhancedBranchPredictor::btbCacheAddress_(uint64_t fetch_pc) const {
         // Convert instruction-addressed fetch PC into the cache-line address
         // expected by SimpleCache2 while preserving intended BTB indexing.
         return fetch_pc << (kBTBCacheLineShift - kCompressedIndexShift);
     }
 
-    uint32_t EnhancedBranchPredictor::bhtIndex_(uint64_t fetch_pc) const {
-        return static_cast<uint32_t>((fetch_pc >> 1) & (bht_entries_ - 1));
+    size_t EnhancedBranchPredictor::bhtIndex_(uint64_t fetch_pc) const {
+        return (fetch_pc >> 1) & (bht_entries_ - 1);
     }
 
     BTBEntry* EnhancedBranchPredictor::btbLookup_(uint64_t fetch_pc) {
@@ -76,11 +76,11 @@ namespace BranchPredictor
     }
 
     bool EnhancedBranchPredictor::bhtPredict_(uint64_t fetch_pc) const {
-        return branch_history_table_[bhtIndex_(fetch_pc)] > 1;
+        return branch_history_table_.at(bhtIndex_(fetch_pc)) > 1;
     }
 
     void EnhancedBranchPredictor::bhtUpdate_(uint64_t fetch_pc, bool actually_taken) {
-        auto & counter = branch_history_table_[bhtIndex_(fetch_pc)];
+        auto & counter = branch_history_table_.at(bhtIndex_(fetch_pc));
         if (actually_taken) {
             counter = (counter == 3) ? 3 : counter + 1;
         } else {
@@ -132,18 +132,21 @@ namespace BranchPredictor
 
         bhtUpdate_(update.fetch_PC, update.actually_taken);
 
-        // Optimization: Only allocate BTB entries for taken branches that were mispredicted
-        // or for updating existing BTB entries
+        // BTB Allocation Policy:
+        // - On BTB hit: Always update the existing entry with latest branch metadata
+        // - On BTB miss: Only allocate for taken branches (optimization to reduce pollution)
+        // - Not-taken branches don't allocate BTB entries (they follow straight-line fetch)
         BTBEntry* existing_entry = btbLookup_(update.fetch_PC);
         
         if (existing_entry != nullptr) {
-            // Update existing BTB entry
+            // Update existing BTB entry with resolved branch information
             existing_entry->branch_idx = update.branch_idx;
             if (update.actually_taken) {
                 existing_entry->predicted_PC = update.corrected_PC;
             }
         } else if (update.actually_taken) {
-            // Only allocate new BTB entry for taken branches
+            // Allocate new BTB entry only for taken branches
+            // This reduces BTB pollution from not-taken branches
             BTBEntry new_entry(update.branch_idx, update.corrected_PC);
             btbUpdate_(update.fetch_PC, new_entry);
         }

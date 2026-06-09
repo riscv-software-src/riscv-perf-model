@@ -61,15 +61,20 @@ namespace olympia
         std::for_each(branch_predictor_name_.begin(), branch_predictor_name_.end(),
                       [](char& ch) { ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch))); });
 
+        // Read all enhanced predictor parameters to satisfy SPARTA parameter validation
+        const auto enhanced_btb_entries = p->enhanced_btb_entries.getValue();
+        const auto enhanced_btb_ways = p->enhanced_btb_ways.getValue();
+        const auto enhanced_bht_entries = p->enhanced_bht_entries.getValue();
+
         // Keep predictor selection explicit here so config errors fail fast.
         if (branch_predictor_name_ == "simple") {
             branch_predictor_.reset(new BranchPredictor::SimpleBranchPredictor(num_insts_to_fetch_));
         } else if (branch_predictor_name_ == "enhanced") {
             branch_predictor_.reset(new BranchPredictor::EnhancedBranchPredictor(
                 num_insts_to_fetch_,
-                p->enhanced_btb_entries,
-                p->enhanced_btb_ways,
-                p->enhanced_bht_entries));
+                enhanced_btb_entries,
+                enhanced_btb_ways,
+                enhanced_bht_entries));
         } else {
             sparta_assert(false,
                           "Unsupported fetch.params.branch_predictor='" << p->branch_predictor

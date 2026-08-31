@@ -1,6 +1,7 @@
 // <Inst.cpp> -*- C++ -*-
 
 #include "Inst.hpp"
+#include "InstGenerator.hpp"
 #include "rename/RenameData.hpp"
 #include "CoreUtils.hpp"
 #include <unordered_map>
@@ -103,6 +104,7 @@ namespace olympia
             is_vector_ && opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::WHOLE)),
         status_state_(Status::BEFORE_FETCH)
     {
+        (void)clk;
         sparta_assert(inst_arch_info_ != nullptr,
                       "Mavis decoded the instruction, but Olympia has no uarch data for it: "
                           << getDisasm() << " " << std::hex << " opc: 0x" << getOpCode());
@@ -113,4 +115,37 @@ namespace olympia
         sparta_assert(getExecuteTime() != 0,
                       "Unknown execution time (latency) for " << getMnemonic());
     }
+#ifdef EDM_ENABLED
+
+    void Inst::notifyFlush(const InstPtr & self){
+        if(edm_generator_)
+        {
+            edm_generator_->onFlush(self);
+        }
+    }
+
+    void Inst::notifyRetire(const InstPtr & self)
+    {
+        if(edm_generator_)
+        {
+            edm_generator_->onRetire(self);
+        }
+    }
+
+    void Inst::notifyStoreCommit(const InstPtr & self)
+    {
+        if(edm_generator_)
+        {
+            edm_generator_->onRetireStore(self);
+        }
+    }
+
+    void Inst::notifyStoreDrop(const InstPtr & self)
+    {
+        if(edm_generator_)
+        {
+            edm_generator_->onDropStore(self);
+        }
+    }
+#endif
 } // namespace olympia

@@ -6,6 +6,8 @@ top.cpu.params.topology: simple
 
 top.cpu.core0:
   fetch.params.num_to_fetch:   2
+  fetch.params.backend: "pegasus"
+  fetch.params.backend_config_file: "config/pegasus.yaml"
   decode.params.num_to_decode: 2
   rename.params.num_to_rename: 2
   dispatch.params.num_to_dispatch: 2

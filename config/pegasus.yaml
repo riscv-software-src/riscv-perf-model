@@ -1,0 +1,5 @@
+ilimit : 10000
+params: {top.core0.params.isa: "rv64imafdcbv_zicsr_zifencei_zbkx"}
+pegasus_loggers: []
+db_file: "pegasus-cosim-work.db" 
+snapshot_threshold: 1000

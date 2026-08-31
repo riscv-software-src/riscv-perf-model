@@ -59,6 +59,8 @@ namespace olympia
             PARAMETER(bool,     skip_nonuser_mode, false, "For STF traces, skip system instructions if present")
             PARAMETER(uint32_t, block_width,          16, "Block width of memory read requests, in bytes")
             PARAMETER(uint32_t, fetch_buffer_size,     8, "Size of fetch buffer in blocks")
+            PARAMETER(std::string, backend, "", "Name of the EDM Backend")
+            PARAMETER(std::string, backend_config_file, "", "Path to the EDM config file")
         };
 
         /**
@@ -110,6 +112,11 @@ namespace olympia
         const sparta::Clock * my_clk_ = nullptr;
         // Number of instructions to fetch
         const uint32_t num_insts_to_fetch_;
+
+        // EDM backend name
+        std::string backend_;
+        // EDM configuration file
+        std::string backend_config_file_;
 
         // For traces with system instructions, skip them
         const bool skip_nonuser_mode_;
@@ -185,6 +192,7 @@ namespace olympia
         void onROBTerminate_(const bool&);
         void onStartingTeardown_() override;
         void dumpDebugContent_(std::ostream&) const override final;
+
 
         // Are we fetching a speculative path?
         bool speculative_path_ = false;

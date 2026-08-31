@@ -85,3 +85,137 @@ jobs:
       #  # Run CTests without Valgrind tests otherwise the runtime will be TOO long
       #  if: ${{ env.DABBLE_BUILD_TYPE == 'release' }} && ${{ env.VALGRIND == 'false' }}
       #  uses: ./.github/actions/ctest  # Uses an action.yml in directory
+
+  build_test_edm_pegasus_gcc:
+      name: Ubuntu-Release-gcc-EDM-Pegasus
+      runs-on: ubuntu-latest
+
+      env:
+        OLYMPIA_BUILD_TYPE: Release
+        COMPILER: gcc
+
+      steps:
+        - name: Configure git to use HTTPS instead of SSH
+          run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+        - name: Checkout Olympia
+          uses: actions/checkout@v3
+          with:
+            submodules: recursive
+
+        - name: Checkout Sparta
+          uses: actions/checkout@v3
+          with:
+            repository: sparcians/map
+            path: map
+            ref: map_v2.2.3
+            submodules: recursive
+
+        - name: Grab Python v3.8
+          uses: actions/setup-python@v3
+          with:
+            python-version: 3.8
+
+        - name: ccache
+          uses: hendrikmuhs/ccache-action@v1.2
+          with:
+            key: ubuntu-latest-Release-gcc-edm-pegasus-ccache-${{ github.ref_name }}
+            restore-keys: |
+              ubuntu-latest-Release-gcc-edm-pegasus-ccache-master
+              ubuntu-latest-Release-gcc-edm-pegasus-ccache
+
+        # Install packages for pegasus
+        - name: Install packages needed for sparta/olympia
+          run: |
+            sudo apt-get update --fix-missing
+            sudo apt-get install libboost-all-dev libyaml-cpp-dev rapidjson-dev libhdf5-dev llvm lld flex bison
+
+        - name: Build Sparta
+          run: |
+            cd ${GITHUB_WORKSPACE}/map/sparta
+            mkdir -p release && cd release
+            CC=gcc CXX=g++ cmake .. -DCMAKE_BUILD_TYPE=Release -DGEN_DEBUG_INFO=OFF
+            sudo make -j$(nproc) install
+
+        # Building Olympia with EDM support
+        - name: Build Olympia EDM Pegasus
+          run: |
+            cd ${GITHUB_WORKSPACE}
+            mkdir -p Release && cd Release
+            CC=gcc CXX=g++ cmake .. \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DEDM_ENABLED=ON \
+              -DDEFAULT_BACKEND=pegasus \
+              -DSPARTA_SEARCH_DIR=/usr/local
+            make -j$(nproc) VERBOSE=1
+
+        - name: Save artifacts
+          if: failure()
+          uses: actions/upload-artifact@main
+          with:
+            name: ErrorLogs-Release-gcc-EDM-Pegasus
+            path: Release/test/edm
+
+  build_test_edm_pegasus_clang:
+      name: Ubuntu-Release-clang-EDM-Pegasus
+      runs-on: ubuntu-latest
+
+      env:
+        OLYMPIA_BUILD_TYPE: Release
+        COMPILER: clang
+
+      steps:
+        - name: Configure git to use HTTPS instead of SSH
+          run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+        - name: Checkout Olympia
+          uses: actions/checkout@v3
+          with:
+            submodules: recursive
+
+        - name: Checkout Sparta
+          uses: actions/checkout@v3
+          with:
+            repository: sparcians/map
+            path: map
+            ref: map_v2.2.3
+            submodules: recursive
+
+        - name: ccache
+          uses: hendrikmuhs/ccache-action@v1.2
+          with:
+            key: ubuntu-latest-Release-clang-edm-pegasus-ccache-${{ github.ref_name }}
+            restore-keys: |
+              ubuntu-latest-Release-clang-edm-pegasus-ccache-master
+              ubuntu-latest-Release-clang-edm-pegasus-ccache
+ 
+        - name: Grab Python v3.8
+          uses: hendrikmuhs/ccache-action@v1.2
+          with:
+            key: ubuntu-latest-Release-clang-edm-pegasus-ccache-${{ github.ref_name }}
+            restore-keys: |
+              ubuntu-latest-Release-clang-edm-pegasus-ccache-master
+              ubuntu-latest-Release-clang-edm-pegasus-ccache
+
+        - name: Install packages needed for sparta/olympia
+          run: |
+            sudo apt-get update --fix-missing
+            sudo apt-get install libboost-all-dev libyaml-cpp-dev rapidjson-dev libhdf5-dev llvm lld flex bison
+
+        - name: Build Sparta
+          run: |
+            cd ${GITHUB_WORKSPACE}/map/sparta
+            mkdir -p release && cd release
+            CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Release -DGEN_DEBUG_INFO=OFF
+            sudo make -j$(nproc) install
+
+        - name: Build Olympia EDM Pegasus
+          run: |
+            cd ${GITHUB_WORKSPACE}
+            mkdir -p Release && cd Release
+            CC=clang CXX=clang++ cmake .. \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DEDM_ENABLED=ON \
+              -DDEFAULT_BACKEND=pegasus \
+              -DSPARTA_SEARCH_DIR=/usr/local
+            make -j$(nproc)

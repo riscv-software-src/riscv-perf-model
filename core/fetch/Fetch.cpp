@@ -23,6 +23,8 @@ namespace olympia
         sparta::Unit(node),
         my_clk_(getClock()),
         num_insts_to_fetch_(p->num_to_fetch),
+        backend_(p->backend),
+        backend_config_file_(p->backend_config_file),
         skip_nonuser_mode_(p->skip_nonuser_mode),
         icache_block_shift_(sparta::utils::floor_log2(p->block_width.getValue())),
         ibuf_capacity_(std::ceil(p->block_width / 2)), // buffer up instructions read from trace
@@ -65,11 +67,9 @@ namespace olympia
         auto cpu_node   = getContainer()->getParent()->getParent();
         auto extension  = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
         auto workload   = extension->getParameters()->getParameter("workload");
-        inst_generator_ = InstGenerator::createGenerator(info_logger_,
-                                                         getMavis(getContainer()),
-                                                         workload->getValueAsString(),
-                                                         skip_nonuser_mode_);
 
+        inst_generator_ = InstGenerator::createGenerator(info_logger_, getMavis(getContainer()), workload->getValueAsString(), skip_nonuser_mode_, backend_, backend_config_file_);
+ 
         ev_fetch_insts->schedule(1);
     }
 

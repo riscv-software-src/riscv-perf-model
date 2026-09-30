@@ -89,7 +89,7 @@ Interactive mode asks all settings up-front (workload vs wrapper-link, emulator,
 ### 3. Interactive Container Access
 ```bash
 # Option 1: Helper script, mounts the output to the host for easy access.
-./run_interactive.sh
+./scripts/run_interactive.sh
 ```
 
 
@@ -231,9 +231,8 @@ python3 flow/build_workload.py --workload embench-iot --emulator spike --arch rv
 # Run on Spike, generate BBV + STF
 python3 flow/run_workload.py --emulator spike --arch rv32 --workload embench-iot --bbv --trace --clean
 
-# Run on QEMU, generate BBV and STF via plugin (configurable num instructions)
-python3 flow/run_workload.py --emulator qemu --arch rv64 --workload riscv-tests --bbv --trace \
-  --trace-num-instructions 2000000 --trace-start-instruction 0
+# Run on QEMU, generate BBV and STF via plugin 
+python3 flow/run_workload.py --emulator qemu --arch rv64 --workload riscv-tests --bbv --trace 
 ```
 
 Important: BBV Interval Size

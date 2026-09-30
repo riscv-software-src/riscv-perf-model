@@ -187,7 +187,7 @@ def _qemu_command(
             trace_file = paths.trace_dir / f"{target.benchmark}.full.zstf"
             cmd.extend([
                 "-plugin",
-                f"{plugin},mode=dyn_insn_count,start_dyn_insn=0,num_instructions=18446744073709551615,outfile={trace_file}",
+                f"{plugin},mode=dyn_insn_count,start_dyn_insn=1,num_instructions=18446744073709551615,outfile={trace_file}",
                 "-d",
                 "plugin",
             ])

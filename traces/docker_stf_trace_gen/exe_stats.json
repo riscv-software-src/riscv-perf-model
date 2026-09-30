@@ -1,0 +1,14 @@
+{
+  "stats" : {
+    "traced_instructions" : 1379785,
+    "executed_instructions" : 2770000,
+    "instructions_retired" : 2770000,
+    "executed_roi_umode_instructions" : 0,
+    "duration_ms" : 1529.000,
+    "wall_clock_mips" : 1.812,
+    "cpu0_bbv_total_isns" : 1379787,
+    "cpu0_bbv_roi_started" : 1380942,
+    "cpu0_benchmark_ppn" : 0,
+    "warmup_region_instructions" : 0
+  }
+}

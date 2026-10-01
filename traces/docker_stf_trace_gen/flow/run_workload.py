@@ -30,6 +30,7 @@ class RunTarget:
     benchmark: str
     binary: Path
     build_meta: Dict[str, Any]
+    binary_args: List[str]
 
     @property
     def isa(self) -> Optional[str]:
@@ -77,7 +78,7 @@ def _discover_from_outputs(args: argparse.Namespace) -> List[RunTarget]:
             if not binary.exists():
                 continue
             meta = _load_build_meta(bench_dir)
-            targets.append(RunTarget(workload_dir.name, bench_name, binary, meta))
+            targets.append(RunTarget(workload_dir.name, bench_name, binary, meta, []))
     if not targets:
         raise SystemExit("No matching binaries found. Did you run build_workload.py?")
     return targets
@@ -94,7 +95,7 @@ def _target_from_binary(args: argparse.Namespace) -> RunTarget:
     meta_path = bench_dir / "build_meta.json"
     if meta_path.exists():
         meta = _load_build_meta(bench_dir)
-    return RunTarget(args.workload, args.benchmark, binary, meta)
+    return RunTarget(args.workload, args.benchmark, binary, meta, args.binary_args)
 
 
 # -----------------------------------------------------------------------------
@@ -164,7 +165,7 @@ def _qemu_command(
     if platform == "baremetal":
         cmd = [f"qemu-system-riscv{bits}", "-nographic", "-machine", "virt", "-bios", "none", "-kernel", str(target.binary)]
     else:
-        cmd = [f"qemu-riscv{bits}", str(target.binary)]
+        cmd = [f"qemu-riscv{bits}"]
 
     if bbv:
         plugin = "/usr/lib/libbbv.so"
@@ -191,6 +192,10 @@ def _qemu_command(
                 "-d",
                 "plugin",
             ])
+
+    cmd.append(str(target.binary))
+    cmd.extend(target.binary_args)
+    
     return {
         "argv": cmd,
         "bbv_file": bbv_file,
@@ -270,6 +275,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trace", dest="trace", action="store_true", help="Generate full STF traces during run")
     parser.add_argument("--no-trace", dest="trace", action="store_false", help="Disable trace generation")
     parser.add_argument("--isa", help="Override ISA passed to Spike (defaults to build metadata or arch mapping)")
+    parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
     return parser.parse_args()
 
 

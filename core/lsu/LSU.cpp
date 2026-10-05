@@ -139,7 +139,7 @@ namespace olympia
         if ((false == rob_stopped_simulation_) && (false == ldst_inst_queue_.empty()))
         {
             dumpDebugContent_(std::cerr);
-            sparta_assert(false, "Issue queue has pending instructions");
+            sparta_assert(false, "LSU queue has pending instructions");
         }
     }
 

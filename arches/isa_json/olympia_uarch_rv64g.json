@@ -391,7 +391,7 @@
     },
     {
         "mnemonic" : "sc.w",
-        "pipe" : "int",
+        "pipe" : "lsu",
         "latency" : 1
     },
     {
@@ -446,7 +446,7 @@
     },
     {
         "mnemonic" : "sc.d",
-        "pipe" : "int",
+        "pipe" : "lsu",
         "latency" : 1
     },
     {

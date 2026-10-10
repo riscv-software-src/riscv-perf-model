@@ -30,6 +30,7 @@ class RunTarget:
     benchmark: str
     binary: Path
     build_meta: Dict[str, Any]
+    working_dir: str
     binary_args: List[str]
 
     @property
@@ -78,7 +79,7 @@ def _discover_from_outputs(args: argparse.Namespace) -> List[RunTarget]:
             if not binary.exists():
                 continue
             meta = _load_build_meta(bench_dir)
-            targets.append(RunTarget(workload_dir.name, bench_name, binary, meta, []))
+            targets.append(RunTarget(workload_dir.name, bench_name, binary, meta, "", []))
     if not targets:
         raise SystemExit("No matching binaries found. Did you run build_workload.py?")
     return targets
@@ -95,7 +96,7 @@ def _target_from_binary(args: argparse.Namespace) -> RunTarget:
     meta_path = bench_dir / "build_meta.json"
     if meta_path.exists():
         meta = _load_build_meta(bench_dir)
-    return RunTarget(args.workload, args.benchmark, binary, meta, args.binary_args)
+    return RunTarget(args.workload, args.benchmark, binary, meta, args.working_dir, args.binary_args)
 
 
 # -----------------------------------------------------------------------------
@@ -144,6 +145,7 @@ def _spike_command(
         "argv": cmd + binary_cmd,
         "bbv_file": bbv_file,
         "trace_file": trace_file,
+        "working_dir": target.working_dir
     }
 
 
@@ -200,6 +202,7 @@ def _qemu_command(
         "argv": cmd,
         "bbv_file": bbv_file,
         "trace_file": trace_file,
+        "working_dir": target.working_dir 
     }
 
 
@@ -210,7 +213,12 @@ def _qemu_command(
 def _write_logs(paths: BenchmarkPaths, target: RunTarget, result: CommandResult) -> None:
     paths.logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = paths.logs_dir / f"{target.benchmark}.log"
-    log_path.write_text(result.stdout + ("\n" + result.stderr if result.stderr else ""))
+
+    if not result.ok:
+         log_path.write_text("Error: " + result.stderr)
+         return
+    
+    log_path.write_text(result.stdout)
 
 
 def _clean_outputs(paths: BenchmarkPaths) -> None:
@@ -275,6 +283,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trace", dest="trace", action="store_true", help="Generate full STF traces during run")
     parser.add_argument("--no-trace", dest="trace", action="store_false", help="Disable trace generation")
     parser.add_argument("--isa", help="Override ISA passed to Spike (defaults to build metadata or arch mapping)")
+    parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is especially useful if your binary relies on files in the working directory.")
     parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
     return parser.parse_args()
 
@@ -312,26 +321,25 @@ def run_targets(args: argparse.Namespace, targets: List[RunTarget]) -> None:
         argv = command_info["argv"]
         bbv_file = command_info.get("bbv_file")
         trace_file = command_info.get("trace_file")
+        working_dir = command_info["working_dir"]
 
         Util.info(f"Running {target.workload}/{target.benchmark}")
         Util.info("Command: " + " ".join(shlex.quote(arg) for arg in argv))
 
         start = time.time()
-        try:
-            result = Util.run_cmd(argv)
-        except CommandError as err:
-            raise SystemExit(str(err))
+        result = Util.run_cmd(argv, cwd=None if working_dir=="" else working_dir, check=False)
         elapsed = time.time() - start
 
         # Spike appends suffixes like _cpu0 to BBV files; capture the file that actually exists.
-        if bbv and bbv_file and not bbv_file.exists():
-            candidates = sorted(paths.bbv_dir.glob(f"{target.benchmark}.bbv*"))
-            if candidates:
-                bbv_file = candidates[0]
-        if trace and trace_file and not trace_file.exists():
-            candidates = sorted(paths.trace_dir.glob(f"{target.benchmark}*.zstf"))
-            if candidates:
-                trace_file = candidates[0]
+        if result.ok:
+            if bbv and bbv_file and not bbv_file.exists():
+                candidates = sorted(paths.bbv_dir.glob(f"{target.benchmark}.bbv*"))
+                if candidates:
+                    bbv_file = candidates[0]
+            if trace and trace_file and not trace_file.exists():
+                candidates = sorted(paths.trace_dir.glob(f"{target.benchmark}*.zstf"))
+                if candidates:
+                    trace_file = candidates[0]
 
         _write_logs(paths, target, result)
         _write_run_metadata(

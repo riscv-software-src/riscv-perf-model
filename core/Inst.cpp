@@ -113,4 +113,58 @@ namespace olympia
         sparta_assert(getExecuteTime() != 0,
                       "Unknown execution time (latency) for " << getMnemonic());
     }
+
+    void Inst::finalizeCPIBreakdown()
+    {
+        auto& breakdown = cpi_breakdown_;
+        const auto ts_fetch = getTimestamp(Status::FETCHED);
+        const auto ts_decode = getTimestamp(Status::DECODED);
+        const auto ts_rename = getTimestamp(Status::RENAMED);
+        const auto ts_dispatch = getTimestamp(Status::DISPATCHED);
+        const auto ts_execute = getTimestamp(Status::SCHEDULED);
+        const auto ts_complete = getTimestamp(Status::COMPLETED);
+        const auto ts_retire = getTimestamp(Status::RETIRED);
+
+        if (ts_fetch != 0 && ts_decode != 0)
+        {
+            sparta_assert(ts_decode >= ts_fetch,
+                "Decode timestamp " << ts_decode << " < Fetch timestamp " << ts_fetch << " for inst " << *this);
+            breakdown.fetch_stall_cycles = ts_decode - ts_fetch;
+        }
+
+        if (ts_decode != 0 && ts_rename != 0)
+        {
+            sparta_assert(ts_rename >= ts_decode,
+                "Rename timestamp " << ts_rename << " < Decode timestamp " << ts_decode << " for inst " << *this);
+            breakdown.decode_stall_cycles = ts_rename - ts_decode;
+        }
+
+        if (ts_rename != 0 && ts_dispatch != 0)
+        {
+            sparta_assert(ts_dispatch >= ts_rename,
+                "Dispatch timestamp " << ts_dispatch << " < Rename timestamp " << ts_rename << " for inst " << *this);
+            breakdown.rename_stall_cycles = ts_dispatch - ts_rename;
+        }
+
+        if (ts_dispatch != 0 && ts_execute != 0)
+        {
+            sparta_assert(ts_execute >= ts_dispatch,
+                "Execute timestamp " << ts_execute << " < Dispatch timestamp " << ts_dispatch << " for inst " << *this);
+            breakdown.dispatch_stall_cycles = ts_execute - ts_dispatch;
+        }
+
+        if (ts_execute != 0 && ts_complete != 0)
+        {
+            sparta_assert(ts_complete >= ts_execute,
+                "Complete timestamp " << ts_complete << " < Execute timestamp " << ts_execute << " for inst " << *this);
+            breakdown.execute_cycles = ts_complete - ts_execute;
+        }
+
+        if (ts_complete != 0 && ts_retire != 0)
+        {
+            sparta_assert(ts_retire >= ts_complete,
+                "Retire timestamp " << ts_retire << " < Complete timestamp " << ts_complete << " for inst " << *this);
+            breakdown.rob_stall_cycles = ts_retire - ts_complete;
+        }
+    }
 } // namespace olympia

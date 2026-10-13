@@ -6,7 +6,9 @@
 //!
 
 #include <algorithm>
+#include <cctype>
 #include "fetch/Fetch.hpp"
+#include "fetch/EnhancedBranchPred.hpp"
 #include "InstGenerator.hpp"
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
@@ -23,6 +25,7 @@ namespace olympia
         sparta::Unit(node),
         my_clk_(getClock()),
         num_insts_to_fetch_(p->num_to_fetch),
+        branch_predictor_name_(p->branch_predictor),
         skip_nonuser_mode_(p->skip_nonuser_mode),
         icache_block_shift_(sparta::utils::floor_log2(p->block_width.getValue())),
         ibuf_capacity_(std::ceil(p->block_width / 2)), // buffer up instructions read from trace
@@ -54,6 +57,29 @@ namespace olympia
         // Capture when the simulation is stopped prematurely by the ROB i.e. hitting retire limit
         node->getParent()->registerForNotification<bool, Fetch, &Fetch::onROBTerminate_>(
             this, "rob_stopped_notif_channel", false /* ROB maybe not be constructed yet */);
+
+        std::for_each(branch_predictor_name_.begin(), branch_predictor_name_.end(),
+                      [](char& ch) { ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch))); });
+
+        // Read all enhanced predictor parameters to satisfy SPARTA parameter validation
+        const auto enhanced_btb_entries = p->enhanced_btb_entries.getValue();
+        const auto enhanced_btb_ways = p->enhanced_btb_ways.getValue();
+        const auto enhanced_bht_entries = p->enhanced_bht_entries.getValue();
+
+        // Keep predictor selection explicit here so config errors fail fast.
+        if (branch_predictor_name_ == "simple") {
+            branch_predictor_.reset(new BranchPredictor::SimpleBranchPredictor(num_insts_to_fetch_));
+        } else if (branch_predictor_name_ == "enhanced") {
+            branch_predictor_.reset(new BranchPredictor::EnhancedBranchPredictor(
+                num_insts_to_fetch_,
+                enhanced_btb_entries,
+                enhanced_btb_ways,
+                enhanced_bht_entries));
+        } else {
+            sparta_assert(false,
+                          "Unsupported fetch.params.branch_predictor='" << p->branch_predictor
+                          << "'. Expected simple|enhanced");
+        }
 
     }
 
@@ -177,6 +203,10 @@ namespace olympia
             }
         }
 
+        if (!insts_to_send->empty()) {
+            evaluateBranchPrediction_(insts_to_send);
+        }
+
         credits_inst_queue_ -= static_cast<uint32_t>(insts_to_send->size());
         out_fetch_queue_write_.send(insts_to_send);
 
@@ -186,6 +216,57 @@ namespace olympia
 
         ev_fetch_insts->schedule(1);
 
+    }
+
+    void Fetch::evaluateBranchPrediction_(const InstGroupPtr & insts_to_send)
+    {
+        if (SPARTA_EXPECT_FALSE(!branch_predictor_ || insts_to_send->empty())) {
+            return;
+        }
+
+        // Early exit if no branches in this fetch packet
+        auto branch_it = std::find_if(insts_to_send->begin(), insts_to_send->end(),
+                                       [](const InstPtr& inst) { return inst->isBranch(); });
+        
+        if (branch_it == insts_to_send->end()) {
+            return;
+        }
+
+        BranchPredictor::DefaultInput input;
+        input.fetch_PC = (*insts_to_send->begin())->getPC();
+        const auto prediction = branch_predictor_->getPrediction(input);
+
+        // Predictor contract: one prediction per fetch packet, keyed by fetch PC.
+        // We therefore train/evaluate against the first branch in this packet.
+        const uint32_t actual_branch_idx = std::distance(insts_to_send->begin(), branch_it);
+        const InstPtr actual_branch_inst = *branch_it;
+        
+        const uint64_t actual_next_pc = actual_branch_inst->isTakenBranch() ?
+            actual_branch_inst->getTargetVAddr() :
+            (actual_branch_inst->getPC() + BranchPredictorIFType::bytes_per_inst);
+
+        BranchPredictor::DefaultUpdate update;
+        update.fetch_PC = input.fetch_PC;
+        update.branch_idx = actual_branch_idx;
+        update.corrected_PC = actual_next_pc;
+        update.actually_taken = actual_branch_inst->isTakenBranch();
+        branch_predictor_->updatePredictor(update);
+
+        const bool mispredicted =
+            (prediction.branch_idx != actual_branch_idx) ||
+            (prediction.predicted_PC != actual_next_pc);
+
+        // Mark instruction as mispredicted for pipeline handling.
+        // Actual misprediction counting is done by the predictor itself.
+        if (mispredicted) {
+            actual_branch_inst->setMispredicted();
+            ILOG("Branch mispredicted by '" << branch_predictor_name_
+                 << "' at PC 0x" << std::hex << input.fetch_PC
+                 << ": predicted idx=" << std::dec << prediction.branch_idx
+                 << " next_pc=0x" << std::hex << prediction.predicted_PC
+                 << ", actual idx=" << std::dec << actual_branch_idx
+                 << " next_pc=0x" << std::hex << actual_next_pc);
+        }
     }
 
     void Fetch::receiveCacheResponse_(const MemoryAccessInfoPtr &response)

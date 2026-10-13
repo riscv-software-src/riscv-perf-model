@@ -1,0 +1,52 @@
+[
+  {
+    "mnemonic": "vsetvli",
+    "rd": 0,
+    "rs1": 3,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 1
+  },
+  {
+    "mnemonic": "vsetvl",
+    "rd": 0,
+    "rs1": 3,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 1
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "rs1": 3,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 1,
+    "imm": 5
+  },
+  {
+    "mnemonic": "vsetvli",
+    "rd": 0,
+    "rs1": 3,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 1
+  },
+  {
+    "mnemonic": "vsetvl",
+    "rd": 0,
+    "rs1": 3,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 1
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "rs1": 3,
+    "vtype": "0x10",
+    "vl": 32,
+    "vta": 1,
+    "imm": 5
+  }
+]

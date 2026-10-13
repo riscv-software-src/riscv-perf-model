@@ -1,0 +1,312 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.v.x",
+    "vd": 8,
+    "rs1": 3
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.v.v",
+    "vd": 8,
+    "vs1": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.v.i",
+    "vd": 8
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv1r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv2r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv4r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv8r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.x.s",
+    "rd": 0,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.s.x",
+    "vd": 8,
+    "rs1": 3
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.v.x",
+    "vd": 8,
+    "rs1": 3
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.v.v",
+    "vd": 8,
+    "vs1": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.v.i",
+    "vd": 8
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv1r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv2r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv4r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv8r.v",
+    "vd": 8,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.x.s",
+    "rd": 0,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmv.s.x",
+    "vd": 8,
+    "rs1": 3
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmv.s.f",
+    "vd": 8,
+    "fs1": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmv.v.f",
+    "vd": 8,
+    "fs1": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmv.f.s",
+    "rd": 0,
+    "vs2": 8
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmv.s.f",
+    "vd": 8,
+    "fs1": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmv.v.f",
+    "vd": 8,
+    "fs1": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmv.f.s",
+    "rd": 0,
+    "vs2": 8
+  }
+]

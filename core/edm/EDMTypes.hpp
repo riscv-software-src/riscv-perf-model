@@ -113,6 +113,11 @@ namespace olympia::edm
         bool endsSimulation() const { return ends_simulation_; }
         bool isWrongPath() const { return is_wrong_path_; }
         bool isFaulted() const { return faulted_; }
+
+        // When there is a page fault the opcode provided is 0 as the fetch fails
+        // This causes the mavis (in olympia) to give reserved-illegal c.addi4spn and throws
+        bool isUndecodable() const { return opcode_ == 0; }
+
         uint64_t getIssUid() const { return iss_uid_; }
         const std::vector<RegAccess> & getRegReads() const { return reg_reads_; }
         const std::vector<RegAccess> & getRegWrites() const { return reg_writes_; }

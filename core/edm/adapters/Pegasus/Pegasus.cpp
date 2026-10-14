@@ -66,7 +66,19 @@ namespace olympia::edm
         {
             info.setFaulted(event->getExceptionType() != pegasus::ExcpType::INVALID);
         }
-        pending_events_.emplace(info.getIssUid(), std::move(evt));
+        // Only track events in pending_events_ when olympia will materialize an
+        // InstPtr for them. An undecodable event (opcode_ == 0, which pegasus
+        // uses as a silent fallback when its fetch unit cannot decode) is going
+        // to be discarded at the InstGenerator layer, and we must not leave a
+        // dangling bookkeeping entry here: pending_events_ is keyed by iss_uid,
+        // and if the generator never produces that uid, commitInstruction will
+        // never fire for it. The event itself remains in pegasus's own
+        // uncommitted_evts_buffer_ -- commitUpTo() will drain it along with its
+        // real architectural successor whenever olympia commits a later uid.
+        if (!info.isUndecodable())
+        {
+            pending_events_.emplace(info.getIssUid(), std::move(evt));
+        }
         return info;
     }
 
@@ -81,7 +93,11 @@ namespace olympia::edm
             info.setFaulted(event->getExceptionType() != pegasus::ExcpType::INVALID);
         }
         info.setWrongPath(true);
-        pending_events_.emplace(info.getIssUid(), std::move(evt));
+        // See step(): skip pending_events_ bookkeeping for undecodable fetches.
+        if (!info.isUndecodable())
+        {
+            pending_events_.emplace(info.getIssUid(), std::move(evt));
+        }
         return info;
     }
 

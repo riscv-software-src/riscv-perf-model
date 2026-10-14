@@ -352,6 +352,16 @@ namespace olympia
             break;
         } 
 
+        // If the opcode is 0, we stall the fetch - most probably 
+        // a page fault has occurred
+        if (SPARTA_EXPECT_FALSE(info.isUndecodable()))
+        {
+            ILOG("EDM returned undecodable event at PC=0x"
+                 << std::hex << info.getPC() << std::dec
+                 << " iss_uid=" << info.getIssUid());
+            return nullptr;
+        }
+
         // checkpoint on all the instructions cause ROB flushes on:
         // 1. branchs and
         // 2. CSR register writes - ( could be more need to look

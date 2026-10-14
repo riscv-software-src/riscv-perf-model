@@ -9,6 +9,8 @@ add_compile_options ( -Werror
   -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
   -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
 
+add_compile_options(-Wno-unused-parameter -Wno-error=unused-parameter)
+
 ################################################################################
 # Set up Sparta
 if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})
@@ -37,6 +39,7 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
 set (DISABLE_STF_TESTS ON)
+set (NO_STF_LTO True)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)
@@ -57,10 +60,21 @@ set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g -U_FORTIFY_SOURCE")
 
+option(EDM_ENABLED "Enable Execution Driven Mode" OFF)
+set(DEFAULT_BACKEND "" CACHE STRING "Default EDM Backend Name")
+
+if(EDM_ENABLED)
+  add_compile_definitions(EDM_ENABLED)
+
+  if(DEFAULT_BACKEND)
+    add_compile_definitions(DEFAULT_EDM_BACKEND="${DEFAULT_BACKEND}")
+  endif()
+endif()
+
 # Include directories
 include_directories (core mss sim)
 include_directories (SYSTEM fsl)
-include_directories (SYSTEM mavis mavis/elfio)
+include_directories (SYSTEM mavis mavis/elfio mavis/simde mavis/int128/include)
 include_directories (SYSTEM stf_lib)
 
 # Include dead header files that we can't remove just yet

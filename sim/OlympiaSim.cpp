@@ -7,6 +7,7 @@
 #include "sparta/simulation/Clock.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/utils/StringUtils.hpp"
+#include "sparta/kernel/SleeperThread.hpp"
 
 #include "CPUFactory.hpp"
 #include "SimulationConfiguration.hpp"
@@ -25,6 +26,9 @@ OlympiaSim::OlympiaSim(sparta::Scheduler & scheduler,
     show_factories_(show_factories)
 {
     // Set up the CPU Resource Factory to be available through ResourceTreeNode
+#ifdef PEGASUS_AVAILABLE
+    sparta::SleeperThread::disableForever();
+#endif
     getResourceSet()->addResourceFactory<olympia::CPUFactory>();
 }
 

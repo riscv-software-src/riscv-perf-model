@@ -16,6 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--emulator", choices=["spike", "qemu"], default="spike")
     parser.add_argument("--arch", choices=["rv32", "rv64"], default="rv32")
     parser.add_argument("--platform", choices=["baremetal", "linux"], default="baremetal")
+    parser.add_argument("--binary", help="Run a specific binary instead of discovered outputs")
 
     parser.add_argument("--bbv", action="store_true", help="Compile/run with BBV support")
     parser.add_argument("--trace", action="store_true", help="Compile/run with trace macros")
@@ -35,6 +36,9 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--image-name", default=Const.DOCKER_IMAGE_NAME)
     parser.add_argument("--list-benchmarks", action="store_true", help="List available workloads/benchmarks inside container")
+    
+    parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is especially useful if your binary relies on files in the working directory.")
+    parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
     return parser.parse_args()
 
 
@@ -83,19 +87,26 @@ def main() -> None:
             args.emulator,
             "--platform",
             args.platform,
+            "--binary",
+            args.binary,
             "--arch",
             args.arch,
             "--interval-size",
             str(args.interval_size),
             "--workload",
             args.workload,
+            "--working_dir",
+            args.working_dir       
         ]
+        
         if args.benchmark:
             run_cmd.extend(["--benchmark", args.benchmark])
         if args.bbv:
             run_cmd.append("--bbv")
         if args.trace:
             run_cmd.append("--trace")
+        if args.binary_args:
+            run_cmd.extend(["--", *args.binary_args])
         run_command(orchestrator, run_cmd)
 
     if args.simpoint:

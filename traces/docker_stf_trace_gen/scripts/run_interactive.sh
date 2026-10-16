@@ -27,7 +27,7 @@ fi
 echo ""
 
 # Run Docker with all mounts
-docker run -it \
+docker run --rm -it \
     -u $(id -u):$(id -g) \
     -v "${OUTPUT_DIR}:/outputs" \
     -v "${CURRENT_DIR}:/flow" \

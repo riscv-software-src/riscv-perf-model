@@ -2,6 +2,7 @@
 """Launch helper for running commands inside the project Docker image."""
 from __future__ import annotations
 
+import os
 import shlex
 from pathlib import Path
 from typing import Sequence
@@ -53,6 +54,7 @@ class DockerOrchestrator:
         inner_cmd = shlex.join(argv)
         Util.info(f"Docker exec ({workdir}): {inner_cmd}")
 
+        user_spec = f"{os.getuid()}:{os.getgid()}"
         container = None
         stdout = ""
         stderr = ""
@@ -64,6 +66,7 @@ class DockerOrchestrator:
                 volumes=self._volume_bindings(),
                 tty=interactive,
                 stdin_open=interactive,
+                user=user_spec,
                 detach=True,
             )
             exit_status = container.wait()
@@ -72,6 +75,14 @@ class DockerOrchestrator:
             result = CommandResult(argv, exit_status.get("StatusCode", 1), stdout, stderr)
         except DockerException as exc:
             result = CommandResult(argv, 1, stdout, f"Docker error: {exc}")
+        except (BaseException) as err:
+            Util.warn(f"Session disconnected or interrupted ({type(err).__name__}). Detaching container...")
+            # Prevent finally block from removing the container so it stays running on host
+            running_container_id = container.short_id if container else "unknown"
+            container = None
+            raise CommandError(
+                CommandResult(argv, 129, "", f"Detached container {running_container_id} due to session disconnect.")
+            )
         finally:
             if container is not None:
                 try:

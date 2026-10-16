@@ -330,6 +330,7 @@ def run_targets(args: argparse.Namespace, targets: List[RunTarget]) -> None:
         result = Util.run_cmd(argv, cwd=None if working_dir=="" else working_dir, check=False)
         elapsed = time.time() - start
 
+        Util.info(f"Completed execution with result: {result}")
         # Spike appends suffixes like _cpu0 to BBV files; capture the file that actually exists.
         if result.ok:
             if bbv and bbv_file and not bbv_file.exists():

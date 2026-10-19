@@ -1,0 +1,19 @@
+[
+  { "mnemonic": "vsetivli", "rd": 0, "imm": 16, "vtype": "0x12", "vl": 16, "vta": 1 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 },
+  { "mnemonic": "vfwmacc.vv", "vd": 0, "vs1": 4, "vs2": 8 }
+]

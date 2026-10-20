@@ -335,11 +335,7 @@ olympia::CoreTopologySimple::CoreTopologySimple(){
         {
             "cpu.core*.flushmanager.ports.out_flush_upper",
             "cpu.core*.fetch.ports.in_fetch_flush_redirect"
-        },
-        {
-            "cpu.core*.flushmanager.ports.out_flush_lower",
-            "cpu.core*.fetch.ports.in_fetch_flush_redirect"
-        }
+        }, 
     };
 }
 

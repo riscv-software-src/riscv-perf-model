@@ -100,8 +100,8 @@ class Util:
             cwd=None if cwd is None else str(cwd),
             env=None if env is None else dict(env),
             timeout=timeout,
-            stdout=subprocess.DEVNULL,   # Discards heavy stdout so it never touches RAM
-            stderr=subprocess.PIPE,      # Captures stderr in memory for error logs
+            stdout=subprocess.DEVNULL,  
+            stderr=subprocess.PIPE, 
             text=text,
             check=False,
         )

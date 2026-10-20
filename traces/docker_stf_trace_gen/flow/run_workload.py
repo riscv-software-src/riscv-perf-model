@@ -218,7 +218,7 @@ def _write_logs(paths: BenchmarkPaths, target: RunTarget, result: CommandResult)
          log_path.write_text("Error: " + result.stderr)
          return
     
-    log_path.write_text(result.stdout)
+    log_path.write_text(f"Ran {target.benchmark} to completion.")
 
 
 def _clean_outputs(paths: BenchmarkPaths) -> None:
@@ -283,7 +283,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trace", dest="trace", action="store_true", help="Generate full STF traces during run")
     parser.add_argument("--no-trace", dest="trace", action="store_false", help="Disable trace generation")
     parser.add_argument("--isa", help="Override ISA passed to Spike (defaults to build metadata or arch mapping)")
-    parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is especially useful if your binary relies on files in the working directory.")
+    parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is useful if your binary reads input files from the working directory.")
     parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
     return parser.parse_args()
 

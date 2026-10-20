@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--image-name", default=Const.DOCKER_IMAGE_NAME)
     parser.add_argument("--list-benchmarks", action="store_true", help="List available workloads/benchmarks inside container")
     
-    parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is especially useful if your binary relies on files in the working directory.")
+    parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is useful if your binary reads input files from the working directory.")
     parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
     return parser.parse_args()
 

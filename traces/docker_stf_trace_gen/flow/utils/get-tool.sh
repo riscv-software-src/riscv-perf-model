@@ -7,7 +7,7 @@
 set -euo pipefail
 
 REPO="riscv-collab/riscv-gnu-toolchain"
-ASSET_PATTERNS=("riscv32-elf-ubuntu-24.04-gcc-nightly" "riscv64-elf-ubuntu-24.04-gcc-nightly" "riscv32-glibc-ubuntu-24.04-gcc")
+ASSET_PATTERNS=("riscv32-elf-ubuntu-24.04-gcc" "riscv64-elf-ubuntu-24.04-gcc" "riscv32-glibc-ubuntu-24.04-gcc")
 INSTALL_DIR="/opt/riscv"
 LOG_FILE="/opt/riscv/toolchain_install.log"
 
@@ -37,6 +37,21 @@ extract_archive() {
             ;;
     esac
 }
+
+get_gcc_name() {
+    local arch="$1"
+
+    case "$arch" in
+        riscv32-elf)   echo "riscv32-unknown-elf-gcc" ;;
+        riscv64-elf)   echo "riscv64-unknown-elf-gcc" ;;
+        riscv32-glibc) echo "riscv32-unknown-linux-gnu-gcc" ;;
+        *)
+            log "Error: Unknown arch format: $arch" >&2
+            return 1
+            ;;
+    esac
+}
+
 
 for pattern in "${ASSET_PATTERNS[@]}"; do
     log "Fetching latest release for $pattern"
@@ -79,7 +94,11 @@ done
 log "Toolchain versions:"
 cd /opt/riscv/
 for arch in riscv32-elf riscv64-elf riscv32-glibc; do
-    TOOLCHAIN_BIN="$INSTALL_DIR/$arch/bin/${arch}-gcc"
+    if ! ARCH_BIN="$(get_gcc_name "$arch")"; then
+            exit 1
+    fi
+    
+    TOOLCHAIN_BIN="$INSTALL_DIR/$arch/bin/${ARCH_BIN}" 
     if [ -x "$TOOLCHAIN_BIN" ]; then
         VERSION=$("$TOOLCHAIN_BIN" --version | head -n 1)
         log "$arch: $VERSION"

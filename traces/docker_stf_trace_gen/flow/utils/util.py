@@ -100,7 +100,8 @@ class Util:
             cwd=None if cwd is None else str(cwd),
             env=None if env is None else dict(env),
             timeout=timeout,
-            capture_output=capture_output,
+            stdout=subprocess.DEVNULL,  
+            stderr=subprocess.PIPE, 
             text=text,
             check=False,
         )

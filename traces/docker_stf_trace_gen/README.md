@@ -232,7 +232,8 @@ python3 flow/build_workload.py --workload embench-iot --emulator spike --arch rv
 python3 flow/run_workload.py --emulator spike --arch rv32 --workload embench-iot --bbv --trace --clean
 
 # Run on QEMU, generate BBV and STF via plugin 
-python3 flow/run_workload.py --emulator qemu --arch rv64 --workload riscv-tests --bbv --trace 
+python3 flow/run_workload.py --emulator qemu --arch rv64 --workload riscv-tests --bbv --trace \
+  --trace-num-instructions 2000000 --trace-start-instruction 0
 ```
 
 Important: BBV Interval Size

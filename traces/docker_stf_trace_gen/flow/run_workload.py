@@ -158,6 +158,8 @@ def _qemu_command(
     bbv: bool,
     trace: bool,
     interval_size: int,
+    num_instructions: int,
+    start_instruction_index: int
 ) -> Dict[str, Any]:
     bits = 32 if arch == "rv32" else 64
     cmd: List[str]
@@ -190,7 +192,7 @@ def _qemu_command(
             trace_file = paths.trace_dir / f"{target.benchmark}.full.zstf"
             cmd.extend([
                 "-plugin",
-                f"{plugin},mode=dyn_insn_count,start_dyn_insn=1,num_instructions=18446744073709551615,outfile={trace_file}",
+                f"{plugin},mode=dyn_insn_count,start_dyn_insn={start_instruction_index},num_instructions={num_instructions},outfile={trace_file}",
                 "-d",
                 "plugin",
             ])
@@ -285,6 +287,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--isa", help="Override ISA passed to Spike (defaults to build metadata or arch mapping)")
     parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is useful if your binary reads input files from the working directory.")
     parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
+    parser.add_argument("--trace-num-instructions", default=18446744073709551615, type=int, help="How many instructions to trace for the QEMU STF plugin")
+    parser.add_argument("--trace-start-instruction", default=1, type=int, help="Starting instruction index for the QEMU STF plugin. Must be > 0")
     return parser.parse_args()
 
 
@@ -316,7 +320,8 @@ def run_targets(args: argparse.Namespace, targets: List[RunTarget]) -> None:
             command_info = _spike_command(target, paths, isa=isa, bbv=bbv, trace=trace, interval_size=args.interval_size, platform=args.platform)
         else:
             isa = args.isa or target.isa or DEFAULT_ISA.get(args.arch, args.arch)
-            command_info = _qemu_command(target, paths, arch=args.arch, platform=args.platform, bbv=bbv, trace=trace, interval_size=args.interval_size)
+            command_info = _qemu_command(target, paths, arch=args.arch, platform=args.platform, bbv=bbv, trace=trace, interval_size=args.interval_size, 
+                                         num_instructions=args.trace_num_instructions, start_instruction_index=args.trace_start_instruction)
 
         argv = command_info["argv"]
         bbv_file = command_info.get("bbv_file")

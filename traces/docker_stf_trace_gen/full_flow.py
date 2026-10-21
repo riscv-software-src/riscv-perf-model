@@ -39,6 +39,9 @@ def parse_args() -> argparse.Namespace:
     
     parser.add_argument("--working_dir", help="Where to run the binary from, if applicable. This is useful if your binary reads input files from the working directory.")
     parser.add_argument("binary_args", metavar="binary-args", help="Optional arguments to the binary file, if applicable", nargs='*', default=[])
+
+    parser.add_argument("--trace-num-instructions", default=18446744073709551615, type=int, help="How many instructions to trace for the QEMU STF plugin")
+    parser.add_argument("--trace-start-instruction", default=1, type=int, help="Starting instruction index for the QEMU STF plugin. Must be > 0")
     return parser.parse_args()
 
 

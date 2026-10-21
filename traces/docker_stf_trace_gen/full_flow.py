@@ -99,7 +99,11 @@ def main() -> None:
             "--workload",
             args.workload,
             "--working_dir",
-            args.working_dir       
+            args.working_dir,
+            "--trace-num-instructions",
+            str(args.trace_num_instructions),
+            "--trace-start-instruction",
+            str(args.trace_start_instruction)       
         ]
         
         if args.benchmark:

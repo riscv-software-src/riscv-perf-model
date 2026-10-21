@@ -75,7 +75,7 @@ class DockerOrchestrator:
             result = CommandResult(argv, exit_status.get("StatusCode", 1), stdout, stderr)
         except DockerException as exc:
             result = CommandResult(argv, 1, stdout, f"Docker error: {exc}")
-        except (BaseException) as err:
+        except OSError as err:
             Util.warn(f"Session disconnected or interrupted ({type(err).__name__}), but container {container.short_id} is still running.")
             # Prevent finally block from removing the container so it stays running on host
             container = None

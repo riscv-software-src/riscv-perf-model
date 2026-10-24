@@ -1,0 +1,702 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhsu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulh.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulsu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhsu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulh.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulsu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmulh.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmulh.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmulh.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vclmulh.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vsmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhsu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulh.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulsu.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulhsu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vmulh.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmulsu.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vwmul.vx",
+    "vd": 8,
+    "rs1": 3,
+    "vs2": 12
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vgmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmul.vf",
+    "vd": 8,
+    "fs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfwmul.vf",
+    "vd": 8,
+    "fs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfwmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfwmul.vf",
+    "vd": 8,
+    "fs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfwmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmul.vf",
+    "vd": 8,
+    "fs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vfmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 260,
+    "vtype": "0x12",
+    "vl": 128,
+    "vta": 0
+  },
+  {
+    "mnemonic": "vgmul.vv",
+    "vd": 8,
+    "vs1": 12,
+    "vs2": 16
+  }
+]

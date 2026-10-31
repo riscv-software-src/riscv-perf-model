@@ -9,6 +9,8 @@ endif()
 
 set(EDM_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/EDMFactory.cpp)
 
+file(CREATE_LINK ${CMAKE_SOURCE_DIR}/config ${CMAKE_BINARY_DIR}/config SYMBOLIC)
+
 ## pegasus
 if(DEFAULT_BACKEND STREQUAL "all" OR DEFAULT_BACKEND STREQUAL "pegasus" OR NOT DEFAULT_BACKEND)
 
@@ -54,7 +56,6 @@ if(DEFAULT_BACKEND STREQUAL "all" OR DEFAULT_BACKEND STREQUAL "pegasus" OR NOT D
     # Symlink pegasus sim artifacts into the build root
     file(CREATE_LINK ${CMAKE_BINARY_DIR}/_deps/pegasus-build/sim/mavis_json ${CMAKE_BINARY_DIR}/mavis_json SYMBOLIC)
     file(CREATE_LINK ${CMAKE_BINARY_DIR}/_deps/pegasus-build/sim/arch ${CMAKE_BINARY_DIR}/arch SYMBOLIC)
-    file(CREATE_LINK ${CMAKE_SOURCE_DIR}/config ${CMAKE_BINARY_DIR}/config SYMBOLIC)
 
     add_dependencies(pegasuslibs softfloat_build)
 
@@ -63,17 +64,96 @@ endif()
 
 ## whisper
 if(DEFAULT_BACKEND STREQUAL "all" OR DEFAULT_BACKEND STREQUAL "whisper" OR NOT DEFAULT_BACKEND)
-    message(STATUS "EDM: Fetching Whisper into ${CMAKE_BINARY_DIR}/_deps/whisper-src")
+    include(ExternalProject)
 
-    fetchcontent_declare(whisper
+    set(WHISPER_ADAPTER_DIR ${CMAKE_SOURCE_DIR}/core/edm/adapters/Whisper)
+    set(WHISPER_SOURCE_DIR ${WHISPER_ADAPTER_DIR}/whisper)
+
+    if(NOT DEFINED WHISPER_BUILD_JOBS)
+        include(ProcessorCount)
+        ProcessorCount(WHISPER_BUILD_JOBS)
+        if(WHISPER_BUILD_JOBS EQUAL 0)
+            set(WHISPER_BUILD_JOBS 2)
+        endif()
+    endif()
+
+    if(DEFINED Boost_INCLUDE_DIR)
+        get_filename_component(WHISPER_BOOST_ROOT ${Boost_INCLUDE_DIR} DIRECTORY)
+    elseif(DEFINED ENV{CONDA_PREFIX})
+        set(WHISPER_BOOST_DIR $ENV{CONDA_PREFIX})
+    else()
+        message(FATAL_ERROR "EDM: cannot determine the boost root for whisper build")
+    endif()
+
+
+    set(WHISPER_LIB "${WHISPER_SOURCE_DIR}/build-Linux/librvcore.a")
+    set(WHISPER_VIRTMEM_LIB "${WHISPER_SOURCE_DIR}/virtual_memory/libvirtual_memory.a")
+    set(WHISPER_SOFTFLOAT_LIB "${WHISPER_SOURCE_DIR}/third_party/softfloat/build/RISCV-GCC/softfloat.a")
+    set(WHISPER_PCI_LIB "${WHISPER_SOURCE_DIR}/pci/libpci.a")
+
+
+    ExternalProject_Add(whisper_external
         GIT_REPOSITORY https://github.com/tenstorrent/whisper.git
-        GIT_TAG master
+        GIT_TAG f989924823fa6fb8c5c1116b8a81930a813a5a15
         GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
+        GIT_PROGRESS TRUE 
+        PREFIX ${CMAKE_BINARY_DIR}/whisper-build
+        SOURCE_DIR ${WHISPER_SOURCE_DIR}
+        BUILD_IN_SOURCE 1 
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -C ${WHISPER_SOURCE_DIR}
+            -j ${WHISPER_BUILD_JOBS}
+            CXX=${CMAKE_CXX_COMPILER}
+            CXX_STD=c++20
+            BOOST_ROOT=${WHISPER_BOOST_ROOT}
+            MEM_CALLBACK=0
+        INSTALL_COMMAND ""
+        CONFIGURE_COMMAND ""
+        UPDATE_COMMAND ""
+        BUILD_BYPRODUCTS ${WHISPER_LIB} ${WHISPER_VIRTMEM_LIB} ${WHISPER_SOFTFLOAT_LIB} ${WHISPER_PCI_LIB}
+        LOG_DOWNLOAD ON 
+        LOG_BUILD ON
     )
-    fetchcontent_makeavailable(whisper)
 
-    # list(APPEND EDM_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/adapters/Whisper/Whisper.cpp)
+    # Create the runtime plugin .so file
+    add_library(edm_whisper_plugin SHARED
+        ${WHISPER_ADAPTER_DIR}/Whisper.cpp
+        ${WHISPER_ADAPTER_DIR}/WhisperPlugin.cpp
+    )
+
+    add_dependencies(edm_whisper_plugin whisper_external)
+
+    set_target_properties(edm_whisper_plugin PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins
+        OUTPUT_NAME edm_whisper_plugin
+        CXX_VISIBILITY_PRESENT hidden
+        VISIBILITY_INLINES_HIDDEN ON
+    )
+
+    target_compile_options(edm_whisper_plugin PRIVATE -Wno-error=attributes)
+
+    target_include_directories(edm_whisper_plugin PRIVATE 
+        ${CMAKE_CURRENT_SORUCE_DIR}
+        ${WHISPER_ADAPTER_DIR}
+        ${WHISPER_SOURCE_DIR}
+    )
+
+
+    target_link_options(edm_whisper_plugin PRIVATE 
+        -Wl,--whole-archive 
+        ${WHISPER_LIB}
+        ${WHISPER_VIRTMEM_LIB}
+        ${WHISPER_SOFTFLOAT_LIB}
+        ${WHISPER_PCI_LIB}
+        -Wl,--no-whole-archive
+        -Wl,-Bsymbolic 
+        -Wl,--exclude-libs,ALL
+    )
+
+    target_link_libraries(edm_whisper_plugin PRIVATE 
+        Boost::program_options 
+        Threads::Threads 
+        z dl rt util m
+    )
 endif()
 
 add_library(edm STATIC ${EDM_SOURCES})
@@ -102,9 +182,12 @@ endif()
 
 ## whisper
 if(DEFAULT_BACKEND STREQUAL "all" OR DEFAULT_BACKEND STREQUAL "whisper" OR NOT DEFAULT_BACKEND)
-    target_link_libraries(edm PUBLIC whisper)
-    target_compile_definitions(edm PUBLIC
-        WHISPER_AVAILABLE
-        DEFAULT_WHISPER
+    target_link_libraries(edm PUBLIC ${CMAKE_DL_LIBS})
+    target_compile_definitions(edm PRIVATE 
+        EDM_PLUGIN_DIR="${CMAKE_BINARY_DIR}/plugins"
     )
+    target_compile_definitions(edm PUBLIC
+        WHISPER_AVAILABLE  
+    )
+    add_dependencies(edm edm_whisper_plugin) 
 endif()

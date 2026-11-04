@@ -34,6 +34,8 @@ file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vstore.json ${CMAKE_CURRENT_BINARY_
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vfirst.json ${CMAKE_CURRENT_BINARY_DIR}/vfirst.json SYMBOLIC)
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/vmv4r.json  ${CMAKE_CURRENT_BINARY_DIR}/vmv4r.json SYMBOLIC)
 
+file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/fetchqueue_credit_overflow.json ${CMAKE_CURRENT_BINARY_DIR}/fetchqueue_credit_overflow.json SYMBOLIC)
+
 # Vset tests
 sparta_named_test(Vector_test_vsetivli      Vector_test -l top info vsetivli.out      -c test_cores/test_big_core.yaml --input-file vsetivli_vaddvv_e8m4.json        --expected-num-uops 4)
 sparta_named_test(Vector_test_vsetvli       Vector_test -l top info vsetvli.out       -c test_cores/test_big_core.yaml --input-file vsetvli_vaddvv_e32m1ta.json      --expected-num-uops 1)
@@ -64,3 +66,5 @@ sparta_named_test(Vector_test_slide          Vector_test -l top info vuop_slide.
 #sparta_named_test(Vector_test_vstore Vector_test -l top info vstore.out -c test_cores/test_big_core.yaml --input-file vstore.json --expected-num-uops 8)
 sparta_named_test(Vector_test_vfirst Vector_test -l top info vfirst.out -c test_cores/test_big_core.yaml --input-file vfirst.json --expected-num-uops 0)
 sparta_named_test(Vector_test_vmv4r  Vector_test -l top info vmv4r.out  -c test_cores/test_big_core.yaml --input-file vmv4r.json  --expected-num-uops 4)
+
+sparta_named_test(Vector_test_bug_fetchqueue_credit_overflow Vector_test -l top info fetchqueue_credit_overflow.out -c test_cores/test_big_core.yaml --input-file fetchqueue_credit_overflow.json --expected-num-uops 32)

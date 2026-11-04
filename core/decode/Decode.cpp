@@ -109,7 +109,7 @@ namespace olympia
     void Decode::receiveUopQueueCredits_(const uint32_t & credits)
     {
         uop_queue_credits_ += credits;
-        if (fetch_queue_.size() > 0)
+        if ((fetch_queue_.size() + getNumVecUopsRemaining()) > 0)
         {
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
         }
@@ -204,6 +204,9 @@ namespace olympia
         InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         // if we have a waiting on vset followed by more instructions, we decode
         // vset and stall anything else
+
+        uint32_t num_fetch_entries_consumed = 0;
+        
         while ((insts->size() < num_to_decode) && !waiting_on_vset_)
         {
             if (vec_uop_gen_->getNumUopsRemaining() > 0)
@@ -280,6 +283,7 @@ namespace olympia
 
                 // Remove from Fetch Queue
                 fetch_queue_.pop();
+                ++num_fetch_entries_consumed;
             }
             else
             {
@@ -325,7 +329,10 @@ namespace olympia
         uop_queue_credits_ -= insts->size();
 
         // Send credits back to Fetch to get more instructions
-        fetch_queue_credits_outp_.send(insts->size());
+        if (num_fetch_entries_consumed > 0)
+        {
+            fetch_queue_credits_outp_.send(num_fetch_entries_consumed);
+        }
 
         // If we still have credits to send instructions as well as
         // instructions in the queue, schedule another decode session

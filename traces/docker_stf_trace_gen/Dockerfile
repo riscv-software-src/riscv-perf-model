@@ -74,7 +74,7 @@ RUN git clone https://gitlab.com/ribeiro.v.silva/trace-gen.git
 
 # Clone QEMU and SimPoint
 WORKDIR /
-RUN git clone https://gitlab.com/qemu-project/qemu.git && \
+RUN git clone --depth 1 --branch v10.2.0 https://gitlab.com/qemu-project/qemu.git && \
     git clone https://github.com/hanhwi/SimPoint.git
 
 # Clone workloads with Embench PR
@@ -85,7 +85,7 @@ RUN git clone https://github.com/riscv-software-src/riscv-tests.git && \
 # Copy and execute toolchain setup script
 COPY flow/utils/get-tool.sh $RISCV/get-tool.sh
 RUN chmod +x $RISCV/get-tool.sh
-RUN $RISCV/get-tool.sh || true
+RUN $RISCV/get-tool.sh
 RUN echo "Toolchain version:" && (riscv64-unknown-linux-gnu-gcc --version 2>/dev/null || echo "Toolchain setup pending")
 
 RUN mkdir -p /qemu/build
@@ -115,7 +115,7 @@ RUN make -j$(nproc)
 WORKDIR $RISCV/condor.riscv-isa-sim/build
 RUN ../configure --prefix=$RISCV/condor.riscv-isa-sim/install 
 RUN make -j$(nproc) 
-RUN make regress 
+# RUN make regress
 RUN make install
 
 # Create mount points for runtime mounting

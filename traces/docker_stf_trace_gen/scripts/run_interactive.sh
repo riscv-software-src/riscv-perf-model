@@ -28,6 +28,7 @@ echo ""
 
 # Run Docker with all mounts
 docker run --rm -it \
+    -u $(id -u):$(id -g) \
     -v "${OUTPUT_DIR}:/outputs" \
     -v "${CURRENT_DIR}:/flow" \
     -v "${CURRENT_DIR}/environment:/default/environment" \

@@ -10,41 +10,8 @@ namespace olympia::edm
 {
     /**
     @brief Factory that creates the EDM backend instance by name.
+    */
 
-    :--- HOW TO ADD A NEW BACKEND ---:
-
-    1. Implement the adapter
-        Create a class ( e.g. WhisperAdapter) that inherits from EDMInterface and lives under core/edm/adapters/Whisper.
-
-        Its constructor must accept (const std::string& config_file, const std::string& filename )
-        
-        Here, config_file -: path to the config file for the backend, and
-        filename -: workload path
-
-    2. Register it inside EDMFactory.cpp
-
-        In the static lamdba EDMBackendFactory::create(), add:
-
-        EDMBackendFactory::registerBackend(
-            "whisper",
-            [](const std::string & cfg, const std::string& fn){
-                return std::make_unique<WhisperAdapter>(cfg, fn);
-            }
-        )
-
-    3. Guard with a CMake feature flag (optional but recommended)
-        Wrap the include and registration in something like #ifdef WHISPER_AVAILABLE so the build process is smooth
-
-    4. Write it into CMakeLists.txt
-        Add a FetchContent block or whatever is the method through which you would like to pull in the backend. Make sure to append the .cpp files of the adapter to the EDM_SOURCES
-
-    5. Select the backend at runtime
-
-        In arches YAML ( small_core, medium_core or large_core ) set:
-        fetch.params.backend = "whisper"
-        fetch.params.backend_config_file: "config/whisper.yaml"
-
-     */
     class EDMBackendFactory
     {
       public:
@@ -68,11 +35,20 @@ namespace olympia::edm
          */
         static void registerBackend(const std::string & name, BackendCreator creator);
 
+        static std::string loadPlugin(const std::string &plugin_path);
+
+        /**
+        Function to scan a directory for libedm_*_plugin.so and load each one.
+        If no directory is given then we no-op
+        */
+        static void loadPluginFromDir(const std::string & dir);
+
         static std::string & getDefaultBackend();
         static std::string & getDefault();
 
       private:
         static std::map<std::string, BackendCreator> & getRegistry_();
+        static std::vector<void*> & getPluginHandles_();
     };
 
     /**

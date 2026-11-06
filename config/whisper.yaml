@@ -1,0 +1,41 @@
+{
+  "isa": "rv64imafdcsuv_zicsr_zifencei",
+
+  "cores": 1,
+  "harts": 1,
+  "core_hart_id_offset": 1,
+
+  "memap":
+    {
+      "size": "0x100000000",
+      "page_size": 4096,
+
+      "inst": [["0x80000000", "0xbfffffff"]],
+
+      "pma":
+        [
+          {
+            "low": "0x80000000",
+            "high": "0xbfffffff",
+            "attribs": ["read", "write", "exec", "amo", "rsrv", "idempotent"]
+          },
+          {
+            "low": "0x00000000",
+            "high": "0x7fffffff",
+            "attribs": ["read", "write", "amo", "rsrv", "idempotent"]
+          }
+        ]
+    },
+
+  "enable_misaligned_data": "false",
+  "enable_performance_counters": "true",
+  "perf_count_atomic_load_store": "true",
+  "perf_count_fp_load_store": "true",
+  "abi_names": "true",
+  "print_load_store_address": "true",
+  "num_mmode_perf_regs": 2,
+
+  "force_rounding_mode": "rne",
+  "round_after_fused_multiply": "true",
+  "force_subnormal_to_zero": "true"
+}

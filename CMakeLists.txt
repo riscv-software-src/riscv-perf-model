@@ -67,7 +67,7 @@ include_directories (SYSTEM stf_lib)
 include_directories (deprecated)
 
 # Mavis
-add_subdirectory (mavis)
+add_subdirectory (mavis SYSTEM)
 
 # Tell FSL to use the top mavis submodule, instead of fsl's submodule
 set(FSL_MAVIS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/mavis")
@@ -88,7 +88,7 @@ add_executable(olympia
   sim/OlympiaSim.cpp
   sim/main.cpp
 )
-target_link_libraries (olympia core mss SPARTA::sparta stf)
+target_link_libraries (olympia core mss SPARTA::sparta stf mavis)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   target_compile_options (core    PUBLIC -flto)

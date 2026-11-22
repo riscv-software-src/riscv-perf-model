@@ -30,19 +30,20 @@ add_library(core
   CPUTopology.cpp
 )
 
-add_library(instgen
+add_library(instruction
   Inst.cpp
   InstArchInfo.cpp
   InstGroup.cpp
+)
+
+add_library(instgen
   InstGenerator.cpp
 )
 
 find_package(Boost REQUIRED COMPONENTS json)
 
-target_link_libraries(instgen PUBLIC stf  mavis Boost::json)
-
-get_property(SPARTA_INCLUDE_PROP TARGET SPARTA::sparta PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(core SYSTEM PRIVATE ${SPARTA_INCLUDE_PROP})
+target_link_libraries(instruction PUBLIC stf mavis Boost::json)
+target_link_libraries(instgen PUBLIC instruction)
 
 # Make core library depend on git_version_target
 add_dependencies(core git_version_target)
@@ -56,4 +57,6 @@ add_subdirectory(execute)
 add_subdirectory(vector)
 add_subdirectory(lsu)
 
-target_link_libraries(core fetch decode rename dispatch execute vector lsu instgen)
+target_link_libraries(core
+  PUBLIC fetch decode rename dispatch execute vector lsu instruction
+)

@@ -1,7 +1,7 @@
 project(IssueQueue_test)
 
 add_executable(IssueQueue_test IssueQueue_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
-target_link_libraries(IssueQueue_test core common_test stf mavis SPARTA::sparta)
+target_link_libraries(IssueQueue_test PRIVATE olympia_test_support)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)

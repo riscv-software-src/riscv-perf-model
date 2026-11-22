@@ -22,8 +22,6 @@ add_custom_target (regress_valgrind)
 add_custom_command(TARGET regress          POST_BUILD COMMAND ctest -E ${VALGRIND_TEST_PREFIX} -j${NUM_CORES})
 add_custom_command(TARGET regress_valgrind POST_BUILD COMMAND ctest -R ${VALGRIND_TEST_PREFIX} -D ExperimentalMemCheck -j${NUM_CORES})
 
-include_directories(${PROJECT_SOURCE_DIR}/..)
-
 # Now the tests...
 add_subdirectory(sim)
 add_subdirectory(core/common)

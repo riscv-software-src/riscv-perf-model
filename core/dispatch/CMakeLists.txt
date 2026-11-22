@@ -2,4 +2,4 @@ add_library(dispatch
   Dispatch.cpp
   Dispatcher.cpp
 )
-target_link_libraries(dispatch instgen)
+target_link_libraries(dispatch PUBLIC instruction)

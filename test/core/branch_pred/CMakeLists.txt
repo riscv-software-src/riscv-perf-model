@@ -1,7 +1,7 @@
 project(BranchPred_test)
 
 add_executable(BranchPred_test BranchPred_test.cpp)
-target_link_libraries(BranchPred_test core common_test SPARTA::sparta)
+target_link_libraries(BranchPred_test PRIVATE olympia_test_support)
 
 set (VALGRIND_REGRESS_ENABLED ON)
 set (VALGRIND_TEST_LABEL valgrind_test)

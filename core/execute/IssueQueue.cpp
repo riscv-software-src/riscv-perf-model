@@ -2,6 +2,7 @@
 
 #include "execute/IssueQueue.hpp"
 #include "CoreUtils.hpp"
+#include "sparta/events/StartupEvent.hpp"
 
 namespace olympia
 {

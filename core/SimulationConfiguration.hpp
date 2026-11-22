@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include <cinttypes>
-#include <vector>
+#include <memory>
 #include <string>
 
 #include "sparta/simulation/Parameter.hpp"

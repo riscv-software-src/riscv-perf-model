@@ -1,7 +1,6 @@
 // <ROB.hpp> -*- C++ -*-
 
 #pragma once
-#include <string>
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"

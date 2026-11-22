@@ -10,7 +10,6 @@
 #pragma once
 
 #include <cinttypes>
-#include <string>
 
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"

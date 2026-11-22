@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include <vector>
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/utils/Utils.hpp"
 

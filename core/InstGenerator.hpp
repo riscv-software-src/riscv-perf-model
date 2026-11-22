@@ -13,9 +13,7 @@
 #include "Inst.hpp"
 #include "decode/MavisUnit.hpp"
 #include "mavis/JSONUtils.hpp"
-#include "sparta/utils/SpartaAssert.hpp"
 #include "sparta/log/MessageSource.hpp"
-#include "sparta/utils/LogUtils.hpp"
 
 #include "stf-inc/stf_inst_reader.hpp"
 

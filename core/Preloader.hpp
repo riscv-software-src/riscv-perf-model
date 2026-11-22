@@ -3,7 +3,6 @@
 #pragma once
 
 #include "sparta/simulation/Resource.hpp"
-#include "sparta/simulation/RootTreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
 #include "cache/preload/PreloaderIF.hpp"

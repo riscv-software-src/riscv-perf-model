@@ -8,10 +8,8 @@
 
 #pragma once
 
-#include <string>
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
-#include "sparta/collection/Collectable.hpp"
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"

@@ -7,16 +7,15 @@
 
 #pragma once
 
+#include <deque>
+
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
-#include "sparta/ports/SignalPort.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/resources/Buffer.hpp"
-#include "sparta/utils/LogUtils.hpp"
 
 #include "CacheFuncModel.hpp"
 #include "Inst.hpp"
-#include "cache/TreePLRUReplacement.hpp"
 #include "MemoryAccessInfo.hpp"
 
 namespace olympia

@@ -13,6 +13,7 @@
 #include "dispatch/Dispatch.hpp"
 #include "execute/Execute.hpp"
 #include "lsu/LSU.hpp"
+#include "lsu/DCache.hpp"
 #include "MMU.hpp"
 #include "SimpleTLB.hpp"
 #include "BIU.hpp"

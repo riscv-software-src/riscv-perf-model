@@ -3,8 +3,6 @@
 #pragma once
 
 #include "sparta/collection/Collectable.hpp"
-#include "sparta/events/EventSet.hpp"
-#include "sparta/events/StartupEvent.hpp"
 #include "sparta/events/UniqueEvent.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/PortSet.hpp"

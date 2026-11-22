@@ -2,6 +2,8 @@
 #include "InstGenerator.hpp"
 #include "mavis/Mavis.h"
 #include "mavis/JSONUtils.hpp"
+#include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 namespace olympia
 {

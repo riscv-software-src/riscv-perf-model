@@ -6,4 +6,4 @@
 	url = git@github.com:riscv-software-src/riscv-mirror-stf-library
 [submodule "fsl"]
 	path = fsl
-	url = https://github.com/riscv-software-src/riscv-mirror-fsl
+	url = git@github.com:riscv-software-src/riscv-mirror-fsl

@@ -89,7 +89,7 @@ Interactive mode asks all settings up-front (workload vs wrapper-link, emulator,
 ### 3. Interactive Container Access
 ```bash
 # Option 1: Helper script, mounts the output to the host for easy access.
-./run_interactive.sh
+./scripts/run_interactive.sh
 ```
 
 

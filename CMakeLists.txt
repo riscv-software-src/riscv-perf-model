@@ -4,6 +4,8 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(olympia CXX)
 
+add_compile_options(-Wno-unused-parameter -Wno-error=unused-parameter)
+
 ################################################################################
 # Set up Sparta
 if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})
@@ -29,6 +31,7 @@ endif()
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
 set (DISABLE_STF_TESTS ON)
+set (NO_STF_LTO True)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   set (FULL_LTO true)
@@ -65,6 +68,17 @@ target_link_libraries(olympia_common INTERFACE SPARTA::sparta)
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g -U_FORTIFY_SOURCE")
+
+option(EDM_ENABLED "Enable Execution Driven Mode" OFF)
+set(DEFAULT_BACKEND "" CACHE STRING "Default EDM Backend Name")
+
+if(EDM_ENABLED)
+  add_compile_definitions(EDM_ENABLED)
+
+  if(DEFAULT_BACKEND)
+    add_compile_definitions(DEFAULT_EDM_BACKEND="${DEFAULT_BACKEND}")
+  endif()
+endif()
 
 # Mavis
 add_subdirectory (mavis SYSTEM)

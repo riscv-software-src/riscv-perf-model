@@ -63,3 +63,8 @@ add_subdirectory(lsu)
 target_link_libraries(core
   PUBLIC fetch decode rename dispatch execute vector lsu instruction
 )
+if(EDM_ENABLED)
+  add_subdirectory(edm)
+  target_link_libraries(instgen PUBLIC edm)
+endif()
+

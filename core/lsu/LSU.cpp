@@ -141,7 +141,7 @@ namespace olympia
         if ((false == rob_stopped_simulation_) && (false == ldst_inst_queue_.empty()))
         {
             dumpDebugContent_(std::cerr);
-            sparta_assert(false, "Issue queue has pending instructions");
+            sparta_assert(false, "LSU queue has pending instructions");
         }
     }
 
@@ -293,6 +293,9 @@ namespace olympia
             // Remove from store buffer -> don't actually need to send cache request
             store_buffer_.erase(store_buffer_.begin());
             ++stores_retired_;
+	 #ifdef EDM_ENABLED
+            inst_ptr->notifyStoreCommit(inst_ptr);
+	 #endif
         }
 
         updateIssuePriorityAfterStoreInstRetire_(inst_ptr);
@@ -1512,6 +1515,9 @@ namespace olympia
                 auto delete_iter = sb_iter++;
                 // store buffer didn't return an iterator
                 store_buffer_.erase(delete_iter);
+	#ifdef EDM_ENABLED
+                inst_ptr->notifyStoreDrop(inst_ptr);
+	#endif
                 ILOG("Flushed store from store buffer: " << inst_ptr);
             }
             else

@@ -49,10 +49,10 @@ jobs:
           submodules: recursive
 
       # Setup build environment
-      - name: Grab Python v3.8
-        uses: actions/setup-python@v3
+      - name: Grab Python v3.11
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: '3.11'
 
       # Setup CCache to cache builds
       - name: ccache
@@ -188,7 +188,7 @@ jobs:
             restore-keys: |
               ubuntu-latest-Release-clang-edm-pegasus-ccache-master
               ubuntu-latest-Release-clang-edm-pegasus-ccache
- 
+
         - name: Grab Python v3.8
           uses: hendrikmuhs/ccache-action@v1.2
           with:

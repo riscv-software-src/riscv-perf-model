@@ -15,7 +15,6 @@
 #include "sparta/resources/Buffer.hpp"
 
 #include "CacheFuncModel.hpp"
-#include "Inst.hpp"
 #include "MemoryAccessInfo.hpp"
 
 namespace olympia

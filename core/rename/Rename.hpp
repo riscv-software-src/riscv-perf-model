@@ -26,6 +26,7 @@
 #include "sparta/resources/Scoreboard.hpp"
 
 #include "CoreTypes.hpp"
+#include "Inst.hpp"
 #include "FlushManager.hpp"
 #include "InstGroup.hpp"
 

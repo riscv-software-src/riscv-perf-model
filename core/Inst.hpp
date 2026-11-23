@@ -10,6 +10,7 @@
 #include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
+#include "InstFwd.hpp"
 #include "mavis/OpcodeInfo.h"
 
 #include "stf-inc/stf_inst_reader.hpp"
@@ -543,7 +544,6 @@ namespace olympia
         static const std::unordered_map<Inst::Status, std::string> status2String;
     };
 
-    using InstPtr = Inst::PtrType;
     using InstWeakPtr = Inst::WeakPtrType;
     using InstQueue = sparta::Queue<InstPtr>;
     using InstBuffer = sparta::Buffer<InstPtr>;

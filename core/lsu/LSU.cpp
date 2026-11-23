@@ -2,6 +2,7 @@
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/events/StartupEvent.hpp"
 #include "CoreUtils.hpp"
+#include "Inst.hpp"
 #include "LSU.hpp"
 
 #include "OlympiaAllocators.hpp"

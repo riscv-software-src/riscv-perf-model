@@ -15,6 +15,7 @@
 #include "sparta/statistics/StatisticInstance.hpp"
 
 #include "CoreTypes.hpp"
+#include "Inst.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
 

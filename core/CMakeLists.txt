@@ -34,6 +34,9 @@ add_library(instruction
   Inst.cpp
   InstArchInfo.cpp
   InstGroup.cpp
+  FlushManager.cpp
+  LoadStoreInstInfo.cpp
+  MemoryAccessInfo.cpp
 )
 
 add_library(instgen

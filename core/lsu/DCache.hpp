@@ -7,7 +7,6 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "CacheFuncModel.hpp"
-#include "Inst.hpp"
 #include "MemoryAccessInfo.hpp"
 #include "MSHREntryInfo.hpp"
 

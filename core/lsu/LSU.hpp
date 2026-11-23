@@ -15,7 +15,7 @@
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 
-#include "Inst.hpp"
+#include "InstFwd.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
 #include "MemoryAccessInfo.hpp"
@@ -89,7 +89,7 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
+        sparta::DataInPort<InstPtr> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
 
         sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
 

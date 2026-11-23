@@ -21,6 +21,7 @@
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/resources/Pipe.hpp"
 #include "sparta/resources/Pipeline.hpp"
+#include "sparta/resources/Queue.hpp"
 
 #include "CoreTypes.hpp"
 #include "MemoryAccessInfo.hpp"

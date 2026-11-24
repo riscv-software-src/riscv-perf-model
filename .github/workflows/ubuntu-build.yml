@@ -113,7 +113,7 @@ jobs:
         with:
           repository: sparcians/map
           path: map
-          ref: map_v2.2.3
+          ref: map_v3.0.6
           submodules: recursive
 
       - name: Grab Python v3.11

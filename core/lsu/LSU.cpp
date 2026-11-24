@@ -1049,6 +1049,8 @@ namespace olympia
     // Only called if allow_spec_load_exec is true
     void LSU::readyDependentLoads_(const LoadStoreInstInfoPtr & store_inst_ptr)
     {
+        (void)store_inst_ptr;
+
         bool found = false;
         for (auto & ldst_inst_ptr : ldst_inst_queue_)
         {

@@ -14,6 +14,8 @@ namespace olympia
         vuops_generated_(&unit_stat_set_, "vector_uops_generated",
                          "Number of vector uops generated", sparta::Counter::COUNT_NORMAL)
     {
+        (void)p;
+
         // Vector elementwise uop generator, increment all src and dest register numbers
         // For a "vadd.vv v12, v4,v8" with an LMUL of 4:
         //    Uop 1: vadd.vv v12, v4, v8

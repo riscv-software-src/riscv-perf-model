@@ -65,6 +65,5 @@ target_link_libraries(core
 )
 if(EDM_ENABLED)
   add_subdirectory(edm)
-  target_link_libraries(instgen PUBLIC edm)
+  target_link_libraries(instruction PUBLIC edm)
 endif()
-

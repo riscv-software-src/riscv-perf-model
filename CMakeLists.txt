@@ -4,8 +4,6 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(olympia CXX)
 
-add_compile_options(-Wno-unused-parameter -Wno-error=unused-parameter)
-
 ################################################################################
 # Set up Sparta
 if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})

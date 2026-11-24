@@ -57,7 +57,7 @@ namespace olympia
     {
         if (matches.size() == 0)
             return;
-
+        (void) inputUids;
         // Kept for upcoming additional work on reducing ROB entry requirements
         // DLOG("PROCESS MATCHES "<<matches.size());
         // DLOG("FUSION: REF   UIDS:");
@@ -114,6 +114,8 @@ namespace olympia
                                     InstUidListType & inputUids,
                                     FusionGroupContainerType & fusionGroups)
     {
+        (void) insts;
+
         matches.clear(); // Clear any existing matches
 
         // The cache is a map of cachelines, indexed by size,

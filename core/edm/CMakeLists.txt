@@ -23,6 +23,7 @@ if("pegasus" IN_LIST EDM_BACKENDS)
     set(PEGASUS_USE_PARENT_MAVIS TRUE CACHE BOOL "" FORCE)
     set(PEGASUS_USE_PARENT_STF_LIB TRUE CACHE BOOL "" FORCE)
     set(PEGASUS_USE_PARENT_SOFTFLOAT TRUE CACHE BOOL "" FORCE)
+    set(PEGASUS_DISABLE_STANDALONE TRUE)
     set(FETCHCONTENT_QUIET FALSE)
 
     FetchContent_Declare(pegasus
@@ -92,7 +93,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 target_compile_features(edm PUBLIC cxx_std_17)
-target_include_directories(edm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(edm PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/.."
+)
 
 # Pegasus backend
 if("pegasus" IN_LIST EDM_BACKENDS)

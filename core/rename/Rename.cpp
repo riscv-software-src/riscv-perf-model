@@ -474,7 +474,7 @@ namespace olympia
             renameSources_(inst_to_rename);
             renameDests_(inst_to_rename);
             // Record rename timestamp for CPI attribution
-            inst_to_rename->setStatus(Inst::Status::RENAMED, getClock()->currentCycle());
+            inst_to_rename->setStatus(Inst::Status::RENAMED);
             insts->emplace_back(std::move(uop_queue_.access(0)));
 
             // Remove it from uop queue

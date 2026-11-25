@@ -1,6 +1,8 @@
 // <ROB.cpp> -*- C++ -*-
 
 #include <algorithm>
+#include <array>
+#include <utility>
 #include "ROB.hpp"
 
 #include "sparta/utils/LogUtils.hpp"
@@ -26,36 +28,29 @@ namespace olympia
                      sparta::Counter::COUNT_NORMAL),
         overall_ipc_si_(&stat_ipc_),
         period_ipc_si_(&stat_ipc_),
-        // CPI breakdown counters initialization
-        cpi_fetch_stalls_(&unit_stat_set_, "cpi_fetch_stalls",
-                          "Total cycles stalled in fetch across all instructions",
-                          sparta::Counter::COUNT_NORMAL),
-        cpi_decode_stalls_(&unit_stat_set_, "cpi_decode_stalls",
-                           "Total cycles stalled in decode across all instructions",
-                           sparta::Counter::COUNT_NORMAL),
-        cpi_rename_stalls_(&unit_stat_set_, "cpi_rename_stalls",
-                           "Total cycles stalled in rename across all instructions",
-                           sparta::Counter::COUNT_NORMAL),
-        cpi_dispatch_stalls_(&unit_stat_set_, "cpi_dispatch_stalls",
-                             "Total cycles stalled in dispatch across all instructions",
-                             sparta::Counter::COUNT_NORMAL),
-        cpi_issue_queue_stalls_(&unit_stat_set_, "cpi_issue_queue_stalls",
-                                "Total cycles waiting for operands in issue queue",
-                                sparta::Counter::COUNT_NORMAL),
-        cpi_execute_cycles_(&unit_stat_set_, "cpi_execute_cycles",
-                            "Total cycles in execution across all instructions",
-                            sparta::Counter::COUNT_NORMAL),
-        cpi_memory_stalls_(&unit_stat_set_, "cpi_memory_stalls",
-                           "Total cycles stalled on memory operations",
-                           sparta::Counter::COUNT_NORMAL),
-        cpi_rob_stalls_(&unit_stat_set_, "cpi_rob_stalls", "Total cycles waiting in ROB",
-                        sparta::Counter::COUNT_NORMAL),
         retire_timeout_interval_(p->retire_timeout_interval),
         num_to_retire_(p->num_to_retire),
         num_insts_to_retire_(p->num_insts_to_retire),
         retire_heartbeat_(p->retire_heartbeat),
         reorder_buffer_("ReorderBuffer", p->retire_queue_depth, node->getClock(), &unit_stat_set_)
     {
+        constexpr std::array<std::pair<const char*, const char*>,
+                             static_cast<size_t>(Inst::CPIStallType::NUM_TYPES)>
+            cpi_counter_info = {{
+                {"cpi_fetch_stalls", "Total cycles stalled in fetch across all instructions"},
+                {"cpi_decode_stalls", "Total cycles stalled in decode across all instructions"},
+                {"cpi_rename_stalls", "Total cycles stalled in rename across all instructions"},
+                {"cpi_dispatch_stalls", "Total cycles stalled in dispatch across all instructions"},
+                {"cpi_execute_cycles", "Total cycles in execution across all instructions"},
+                {"cpi_rob_stalls", "Total cycles waiting in ROB"},
+            }};
+        cpi_counters_.reserve(cpi_counter_info.size());
+        for (const auto & counter_info : cpi_counter_info)
+        {
+            cpi_counters_.emplace_back(&unit_stat_set_, counter_info.first, counter_info.second,
+                                       sparta::Counter::COUNT_NORMAL);
+        }
+
         // Set a cycle delay on the retire, just for kicks
         ev_retire_.setDelay(1);
 
@@ -126,7 +121,7 @@ namespace olympia
 	#ifdef EDM_ENABLED
                 youngest_inst->notifyFlush(youngest_inst);
 	#endif
-                reorder_buffer_.pop_back();  
+                reorder_buffer_.pop_back();
                 ++credits_to_send;
             }
             else
@@ -165,7 +160,7 @@ namespace olympia
             if (ex_inst.getStatus() == Inst::Status::COMPLETED)
             {
                 // UPDATE:
-                ex_inst.setStatus(Inst::Status::RETIRED, getClock()->currentCycle());
+                ex_inst.setStatus(Inst::Status::RETIRED);
                 if (ex_inst.isStoreInst())
                 {
                     out_rob_retire_ack_.send(ex_inst_ptr);
@@ -204,17 +199,11 @@ namespace olympia
 
                 // Aggregate CPI breakdown from this instruction
                 const auto & breakdown = ex_inst.getCPIBreakdown();
-                cpi_fetch_stalls_ +=
-                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::FETCH)];
-                cpi_decode_stalls_ +=
-                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::DECODE)];
-                cpi_rename_stalls_ +=
-                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::RENAME)];
-                cpi_dispatch_stalls_ +=
-                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::DISPATCH)];
-                cpi_execute_cycles_ +=
-                    breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::EXECUTE)];
-                cpi_rob_stalls_ += breakdown.cycles[static_cast<size_t>(Inst::CPIStallType::ROB)];
+                const auto breakdown_size = breakdown.cycles.size();
+                for (size_t i = 0; i < breakdown_size; ++i)
+                {
+                    cpi_counters_[i] += breakdown.cycles[i];
+                }
 
                 retire_event_.collect(*ex_inst_ptr);
                 last_inst_retired_ = ex_inst_ptr;

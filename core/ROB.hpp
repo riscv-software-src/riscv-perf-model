@@ -2,6 +2,7 @@
 
 #pragma once
 #include <string>
+#include <vector>
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"
@@ -79,15 +80,8 @@ namespace olympia
         sparta::StatisticInstance  overall_ipc_si_;   // An overall IPC statistic instance starting at time == 0
         sparta::StatisticInstance  period_ipc_si_;    // An IPC counter for the period between retirement heartbeats
 
-        // CPI breakdown counters (accumulate cycles across all retired instructions)
-        sparta::Counter            cpi_fetch_stalls_;           //! Cycles stalled in fetch stage
-        sparta::Counter            cpi_decode_stalls_;          //! Cycles stalled in decode stage
-        sparta::Counter            cpi_rename_stalls_;          //! Cycles stalled in rename stage
-        sparta::Counter            cpi_dispatch_stalls_;        //! Cycles stalled in dispatch stage
-        sparta::Counter            cpi_issue_queue_stalls_;     //! Cycles waiting for operands
-        sparta::Counter            cpi_execute_cycles_;         //! Cycles in execution
-        sparta::Counter            cpi_memory_stalls_;          //! Cycles stalled on memory
-        sparta::Counter            cpi_rob_stalls_;             //! Cycles waiting in ROB
+        // CPI counters are indexed by Inst::CPIStallType
+        std::vector<sparta::Counter> cpi_counters_;
 
         // Parameter constants
         const sparta::Clock::Cycle retire_timeout_interval_;

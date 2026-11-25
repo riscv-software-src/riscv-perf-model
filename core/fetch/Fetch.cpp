@@ -197,7 +197,7 @@ namespace olympia
             // Mark instructions as fetched
             for(auto & inst : *fetched_insts) {
                 // Record fetch timestamp for CPI attribution
-                inst->setStatus(Inst::Status::FETCHED, my_clk_->currentCycle());
+                inst->setStatus(Inst::Status::FETCHED);
             }
             ev_send_insts->schedule(sparta::Clock::Cycle(0));
         }

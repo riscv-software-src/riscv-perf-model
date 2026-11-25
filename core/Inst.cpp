@@ -82,6 +82,7 @@ namespace olympia
                const InstArchInfo::PtrType & inst_arch_info, const sparta::Clock* clk) :
         opcode_info_(opcode_info),
         inst_arch_info_(inst_arch_info),
+        clk_(clk),
         dest_opcode_info_with_reg_file_(
             getOpcodeInfoWithRegFileInfo<RenameData::DestOpInfoWithRegfileList>(opcode_info_->getDestOpInfoList())),
         src_opcode_info_with_reg_file_(
@@ -104,7 +105,7 @@ namespace olympia
             is_vector_ && opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::WHOLE)),
         status_state_(Status::BEFORE_FETCH)
     {
-        (void)clk;
+        sparta_assert(clk_ != nullptr, "Inst requires a valid clock");
         sparta_assert(inst_arch_info_ != nullptr,
                       "Mavis decoded the instruction, but Olympia has no uarch data for it: "
                           << getDisasm() << " " << std::hex << " opc: 0x" << getOpCode());
@@ -152,54 +153,26 @@ namespace olympia
     void Inst::finalizeCPIBreakdown()
     {
         auto& breakdown = cpi_breakdown_;
-        const auto ts_fetch = getTimestamp(Status::FETCHED);
-        const auto ts_decode = getTimestamp(Status::DECODED);
-        const auto ts_rename = getTimestamp(Status::RENAMED);
-        const auto ts_dispatch = getTimestamp(Status::DISPATCHED);
-        const auto ts_execute = getTimestamp(Status::SCHEDULED);
-        const auto ts_complete = getTimestamp(Status::COMPLETED);
-        const auto ts_retire = getTimestamp(Status::RETIRED);
+        constexpr std::array<Status, static_cast<size_t>(CPIStallType::NUM_TYPES) + 1>
+            cpi_statuses = {Status::FETCHED, Status::DECODED, Status::RENAMED,
+                            Status::DISPATCHED, Status::SCHEDULED, Status::COMPLETED,
+                            Status::RETIRED};
 
-        if (ts_fetch != 0 && ts_decode != 0)
-        {
-            sparta_assert(ts_decode >= ts_fetch,
-                "Decode timestamp " << ts_decode << " < Fetch timestamp " << ts_fetch << " for inst " << *this);
-            breakdown.cycles[static_cast<size_t>(CPIStallType::FETCH)] = ts_decode - ts_fetch;
-        }
+        sparta_assert(getStatus() == Status::RETIRED,
+                      "CPI breakdown can only be finalized for retired instructions: " << *this);
 
-        if (ts_decode != 0 && ts_rename != 0)
+        for (size_t i = 0; i < breakdown.cycles.size(); ++i)
         {
-            sparta_assert(ts_rename >= ts_decode,
-                "Rename timestamp " << ts_rename << " < Decode timestamp " << ts_decode << " for inst " << *this);
-            breakdown.cycles[static_cast<size_t>(CPIStallType::DECODE)] = ts_rename - ts_decode;
-        }
+            const auto start_status = cpi_statuses[i];
+            const auto end_status = cpi_statuses[i + 1];
+            const auto start_cycle = getTimestamp(start_status);
+            const auto end_cycle = getTimestamp(end_status);
 
-        if (ts_rename != 0 && ts_dispatch != 0)
-        {
-            sparta_assert(ts_dispatch >= ts_rename,
-                "Dispatch timestamp " << ts_dispatch << " < Rename timestamp " << ts_rename << " for inst " << *this);
-            breakdown.cycles[static_cast<size_t>(CPIStallType::RENAME)] = ts_dispatch - ts_rename;
-        }
-
-        if (ts_dispatch != 0 && ts_execute != 0)
-        {
-            sparta_assert(ts_execute >= ts_dispatch,
-                "Execute timestamp " << ts_execute << " < Dispatch timestamp " << ts_dispatch << " for inst " << *this);
-            breakdown.cycles[static_cast<size_t>(CPIStallType::DISPATCH)] = ts_execute - ts_dispatch;
-        }
-
-        if (ts_execute != 0 && ts_complete != 0)
-        {
-            sparta_assert(ts_complete >= ts_execute,
-                "Complete timestamp " << ts_complete << " < Execute timestamp " << ts_execute << " for inst " << *this);
-            breakdown.cycles[static_cast<size_t>(CPIStallType::EXECUTE)] = ts_complete - ts_execute;
-        }
-
-        if (ts_complete != 0 && ts_retire != 0)
-        {
-            sparta_assert(ts_retire >= ts_complete,
-                "Retire timestamp " << ts_retire << " < Complete timestamp " << ts_complete << " for inst " << *this);
-            breakdown.cycles[static_cast<size_t>(CPIStallType::ROB)] = ts_retire - ts_complete;
+            sparta_assert(end_cycle >= start_cycle,
+                          "CPI timestamp for status "
+                              << static_cast<uint32_t>(end_status) << " precedes status "
+                              << static_cast<uint32_t>(start_status) << " for inst " << *this);
+            breakdown.cycles[i] = end_cycle - start_cycle;
         }
     }
 } // namespace olympia

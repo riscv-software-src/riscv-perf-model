@@ -23,6 +23,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <array>
+#include <numeric>
 #include <ostream>
 #include <unordered_map>
 #include <variant>
@@ -109,12 +110,7 @@ namespace olympia
             //! Get total cycles across all categories
             uint64_t getTotalCycles() const
             {
-                uint64_t total = 0;
-                for (const auto c : cycles)
-                {
-                    total += c;
-                }
-                return total;
+                return std::accumulate(cycles.begin(), cycles.end(), uint64_t{0});
             }
         };
 
@@ -146,7 +142,7 @@ namespace olympia
 
         bool getFlushedStatus() const { return getStatus() == olympia::Inst::Status::FLUSHED; }
 
-        void setStatus(Status status, sparta::Clock::Cycle timestamp)
+        void setStatus(Status status)
         {
             sparta_assert(status_state_ != status,
                           "Status being set twice to the same value: " << status << " " << *this);
@@ -154,7 +150,7 @@ namespace olympia
                                                       << status_state_ << " New: " << status
                                                       << *this);
             status_state_ = status;
-            timestamps_[static_cast<uint32_t>(status)] = timestamp;
+            timestamps_[static_cast<uint32_t>(status)] = clk_->currentCycle();
 
             if (getStatus() == Status::COMPLETED)
             {
@@ -164,8 +160,6 @@ namespace olympia
                 }
             }
         }
-
-        void setStatus(Status status) { setStatus(status, 0); }
 
         sparta::Clock::Cycle getTimestamp(Status status) const
         {
@@ -548,6 +542,7 @@ namespace olympia
     #ifdef EDM_ENABLED
         EDMInstGenerator* edm_generator_ = nullptr;
     #endif
+        const sparta::Clock* clk_;
 
         // Handy list that extends Mavis' opcode info with register
         // file type.

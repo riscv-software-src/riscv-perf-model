@@ -325,7 +325,7 @@ namespace olympia
         // Keep the original execution-start timestamp on those reissues.
         if (win_ptr->getInstPtr()->getStatus() == Inst::Status::DISPATCHED)
         {
-            win_ptr->getInstPtr()->setStatus(Inst::Status::SCHEDULED, getClock()->currentCycle());
+            win_ptr->getInstPtr()->setStatus(Inst::Status::SCHEDULED);
         }
 
         // We append to replay queue to prevent ref count of the shared pointer to drop before
@@ -510,7 +510,7 @@ namespace olympia
         {
             ILOG("Store marked as completed " << inst_ptr);
             // Record execution complete timestamp for CPI attribution
-            inst_ptr->setStatus(Inst::Status::COMPLETED, getClock()->currentCycle());
+            inst_ptr->setStatus(Inst::Status::COMPLETED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
             if (allow_speculative_load_exec_)
@@ -747,7 +747,7 @@ namespace olympia
 
             // Mark instruction as completed
             // Record execution complete timestamp for CPI attribution
-            inst_ptr->setStatus(Inst::Status::COMPLETED, getClock()->currentCycle());
+            inst_ptr->setStatus(Inst::Status::COMPLETED);
 
             // Remove completed instruction from queues
             ILOG("Removed issue queue " << inst_ptr);

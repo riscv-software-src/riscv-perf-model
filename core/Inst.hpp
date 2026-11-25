@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <array>
 #include <ostream>
 #include <unordered_map>
 #include <variant>
@@ -88,6 +89,41 @@ namespace olympia
         void notifyFlush(const PtrType & self); 
 #endif
 
+        enum class CPIStallType : std::uint32_t
+        {
+            FETCH = 0, //! I-cache miss, branch mispred wait
+            DECODE,    //! VSET blocking, fusion wait
+            RENAME,    //! No free PRFs, no dispatch credits
+            DISPATCH,  //! Issue queue full, ROB full
+            EXECUTE,   //! Actual execution time
+            ROB,       //! Waiting to become oldest
+            NUM_TYPES
+        };
+
+        //! \brief CPI breakdown tracking structure
+        //! Tracks cycles attributed to different microarchitectural events
+        struct CPIBreakdown
+        {
+            std::array<uint64_t, static_cast<size_t>(CPIStallType::NUM_TYPES)> cycles = {0};
+
+            //! Get total cycles across all categories
+            uint64_t getTotalCycles() const
+            {
+                uint64_t total = 0;
+                for (const auto c : cycles)
+                {
+                    total += c;
+                }
+                return total;
+            }
+        };
+
+        //! \brief Pipeline stage timestamp tracking
+        //! Records cycle counts when instruction enters/exits each stage
+        //! Indexed by Status enum
+        using TimestampContainer =
+            std::array<sparta::Clock::Cycle, static_cast<uint32_t>(Status::__LAST)>;
+
         /*!
          * \brief Construct an Instruction
          * \param opcode_info    Mavis Opcode information
@@ -110,7 +146,7 @@ namespace olympia
 
         bool getFlushedStatus() const { return getStatus() == olympia::Inst::Status::FLUSHED; }
 
-        void setStatus(Status status)
+        void setStatus(Status status, sparta::Clock::Cycle timestamp)
         {
             sparta_assert(status_state_ != status,
                           "Status being set twice to the same value: " << status << " " << *this);
@@ -118,6 +154,8 @@ namespace olympia
                                                       << status_state_ << " New: " << status
                                                       << *this);
             status_state_ = status;
+            timestamps_[static_cast<uint32_t>(status)] = timestamp;
+
             if (getStatus() == Status::COMPLETED)
             {
                 if (ev_retire_ != 0)
@@ -125,6 +163,13 @@ namespace olympia
                     ev_retire_->schedule();
                 }
             }
+        }
+
+        void setStatus(Status status) { setStatus(status, 0); }
+
+        sparta::Clock::Cycle getTimestamp(Status status) const
+        {
+            return timestamps_[static_cast<uint32_t>(status)];
         }
 
         const Status & getExtendedStatus() const { return extended_status_state_; }
@@ -238,10 +283,7 @@ namespace olympia
         // ROB target information
         void setTargetROB(bool tgt = true) { rob_targeted_ = tgt; }
 
-        bool isTargetROB() const
-        {
-            return rob_targeted_;
-        }
+        bool isTargetROB() const { return rob_targeted_; }
 
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
@@ -251,7 +293,10 @@ namespace olympia
         uint32_t getOpCode() const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
         // Get the data size in bytes
-        uint32_t getMemAccessSize() const { return static_cast<uint32_t>(opcode_info_->getDataSize() / 8); }  // opcode_info's data size is in bits
+        uint32_t getMemAccessSize() const
+        {
+            return static_cast<uint32_t>(opcode_info_->getDataSize() / 8);
+        } // opcode_info's data size is in bits
 
         mavis::InstructionUniqueID getMavisUid() const
         {
@@ -266,10 +311,7 @@ namespace olympia
             return opcode_info_->getSourceOpInfoList();
         }
 
-        const OpInfoList & getDestOpInfoList() const
-        {
-            return opcode_info_->getDestOpInfoList();
-        }
+        const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
 
         const RenameData::DestOpInfoWithRegfileList & getDestOpInfoListWithRegfile() const
         {
@@ -291,8 +333,7 @@ namespace olympia
         bool hasZeroRegDest() const
         {
             return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
-                               [](const auto & elem)
-                               { return elem.field_value == 0; });
+                               [](const auto & elem) { return elem.field_value == 0; });
         }
 
         uint64_t getImmediate() const
@@ -369,7 +410,6 @@ namespace olympia
 
             getRenameData().addSource(std::forward<RenameData::Reg>(reg));
         }
-
 
         // Static instruction information
         bool isStoreInst() const { return is_store_; }
@@ -460,6 +500,15 @@ namespace olympia
 
         mavis::OpcodeInfo::PtrType getOpCodeInfo() { return opcode_info_; }
 
+        // CPI breakdown accessors
+        CPIBreakdown & getCPIBreakdown() { return cpi_breakdown_; }
+
+        const CPIBreakdown & getCPIBreakdown() const { return cpi_breakdown_; }
+
+        //! \brief Finalize CPI breakdown by calculating cycle durations from timestamps
+        //! This should be called when the instruction is ready to retire
+        void finalizeCPIBreakdown();
+
         // Duplicates stream operator but does not change EXPECT logs
         std::string info()
         {
@@ -503,7 +552,7 @@ namespace olympia
         // Handy list that extends Mavis' opcode info with register
         // file type.
         RenameData::DestOpInfoWithRegfileList dest_opcode_info_with_reg_file_;
-        RenameData::SrcOpInfoWithRegfileList  src_opcode_info_with_reg_file_;
+        RenameData::SrcOpInfoWithRegfileList src_opcode_info_with_reg_file_;
 
         sparta::memory::addr_t inst_pc_ = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_ =
@@ -564,6 +613,11 @@ namespace olympia
         RegisterBitMaskArray dest_reg_bit_masks_;
         RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
+
+        // CPI attribution tracking
+        CPIBreakdown cpi_breakdown_;
+        TimestampContainer timestamps_ = {0};
+
         static const std::unordered_map<Inst::Status, std::string> status2String;
     };
 

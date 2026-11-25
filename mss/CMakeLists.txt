@@ -4,5 +4,4 @@ add_library(mss
   L2Cache.cpp
   MSS.cpp
   )
-
-target_link_libraries(mss mavis)
+target_link_libraries(mss PUBLIC instruction)

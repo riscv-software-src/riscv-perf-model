@@ -1,5 +1,6 @@
 #include "DCache.hpp"
 #include "OlympiaAllocators.hpp"
+#include "Inst.hpp"
 
 namespace olympia
 {

@@ -1,15 +1,8 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.25)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(olympia CXX)
-
-add_compile_options ( -Werror
-  -Wall -Wextra -Winline -Winit-self -Wno-unused-function
-  -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
-  -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe)
-
-add_compile_options(-Wno-unused-parameter -Wno-error=unused-parameter)
 
 ################################################################################
 # Set up Sparta
@@ -31,9 +24,6 @@ else()
   message (STATUS "Sparta was found in ${SPARTA_SEARCH_DIR}")
 endif()
 
-include_directories(${SPARTA_INCLUDE_DIRS})
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
 ################################################################################
 # Set up STF library
 set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
@@ -53,7 +43,24 @@ endif ()
 
 set (SIM_BASE ${PROJECT_SOURCE_DIR})
 set (OLYMPIA_VERSION "v0.1.0")
-add_definitions(-DOLYMPIA_VERSION=\"${OLYMPIA_VERSION}\")
+
+add_library(olympia_options INTERFACE)
+target_compile_definitions(olympia_options INTERFACE OLYMPIA_VERSION="${OLYMPIA_VERSION}")
+target_compile_options(olympia_options INTERFACE
+  -Werror
+  -Wall -Wextra -Winline -Winit-self -Wno-unused-function
+  -Wuninitialized -Wno-sequence-point -Wno-inline -Wno-unknown-pragmas
+  -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers -pipe
+)
+
+add_library(olympia_common INTERFACE)
+target_include_directories(olympia_common INTERFACE
+  ${PROJECT_SOURCE_DIR}/core
+  ${PROJECT_SOURCE_DIR}/mss
+  ${PROJECT_SOURCE_DIR}/sim
+  ${PROJECT_SOURCE_DIR}/deprecated
+)
+target_link_libraries(olympia_common INTERFACE SPARTA::sparta)
 
 # Profile build flags
 set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
@@ -71,28 +78,29 @@ if(EDM_ENABLED)
   endif()
 endif()
 
-# Include directories
-include_directories (core mss sim)
-include_directories (SYSTEM fsl)
-include_directories (SYSTEM mavis mavis/elfio mavis/simde mavis/int128/include)
-include_directories (SYSTEM stf_lib)
-
-# Include dead header files that we can't remove just yet
-include_directories (deprecated)
-
 # Mavis
-add_subdirectory (mavis)
+add_subdirectory (mavis SYSTEM)
 
 # Tell FSL to use the top mavis submodule, instead of fsl's submodule
 set(FSL_MAVIS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/mavis")
 add_subdirectory (fsl)
+add_library(fsl_api_headers INTERFACE)
+add_library(FSL::api ALIAS fsl_api_headers)
+target_include_directories(fsl_api_headers SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/fsl")
 
 # Add STF library to the build
 add_subdirectory (${STF_LIB_BASE})
+target_include_directories(stf SYSTEM PUBLIC ${STF_LIB_BASE})
 
 # The Core and MSS
 add_subdirectory (core)
 add_subdirectory (mss)
+target_link_libraries(core PUBLIC mss)
+
+# Apply the common project settings to Olympia targets only.
+foreach(target core instruction instgen fetch decode rename dispatch execute vector lsu mss)
+  target_link_libraries(${target} PUBLIC olympia_common olympia_options)
+endforeach()
 
 # Add testing, but do not build as part of the 'all' target
 add_subdirectory (test EXCLUDE_FROM_ALL)
@@ -102,7 +110,7 @@ add_executable(olympia
   sim/OlympiaSim.cpp
   sim/main.cpp
 )
-target_link_libraries (olympia core mss SPARTA::sparta stf)
+target_link_libraries(olympia PRIVATE core olympia_common olympia_options)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
   target_compile_options (core    PUBLIC -flto)

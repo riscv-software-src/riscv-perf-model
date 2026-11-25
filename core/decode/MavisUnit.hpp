@@ -10,10 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/Unit.hpp"
-#include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
 #include "mavis/DecoderTypes.h"

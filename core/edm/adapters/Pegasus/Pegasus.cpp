@@ -28,10 +28,11 @@ namespace olympia::edm
             config["pegasus_loggers"].as<std::vector<std::vector<std::string>>>();
         const std::string db_file = config["db_file"].as<std::string>();
         const uint64_t snapshot_threshold = config["snapshot_threshold"].as<uint64_t>();
+        const std::vector<std::vector<std::string>> workloads = {{filename}};
 
         // read the config file and handle it
         cosim_ = std::make_unique<pegasus::cosim::PegasusCoSim>(
-            ilimit, filename, pegasus_params,
+            ilimit, workloads, pegasus_params,
             std::vector<std::vector<std::string>>{}, // empty pegasus_loggers
             db_file, snapshot_threshold);
     }
@@ -120,7 +121,7 @@ namespace olympia::edm
     void PegasusAdapter::dropStoreWrite(CoreId /*core_id*/, HartId /*hart_id*/, uint64_t iss_uid)
     {
         /*TODO: This method has not been implemented in pegasus*/
-        (void)iss_uid; 
+        (void)iss_uid;
     }
 
     void PegasusAdapter::flush(CoreId /*core_id*/, HartId /*hart_id*/,

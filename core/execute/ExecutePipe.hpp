@@ -10,8 +10,6 @@
 #pragma once
 
 #include "sparta/collection/Collectable.hpp"
-#include "sparta/events/EventSet.hpp"
-#include "sparta/events/StartupEvent.hpp"
 #include "sparta/events/UniqueEvent.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/PortSet.hpp"
@@ -21,8 +19,6 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/Unit.hpp"
-#include "sparta/collection/Collectable.hpp"
-#include "sparta/resources/Scoreboard.hpp"
 #include "sparta/pevents/PeventCollector.hpp"
 
 #include "CoreTypes.hpp"

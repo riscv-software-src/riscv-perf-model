@@ -2,6 +2,7 @@
 
 #include "execute/ExecutePipe.hpp"
 #include "CoreUtils.hpp"
+#include "sparta/events/StartupEvent.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
 

@@ -5,11 +5,8 @@
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/resources/Pipeline.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
-#include "sparta/simulation/Unit.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "CacheFuncModel.hpp"
-#include "Inst.hpp"
-#include "cache/TreePLRUReplacement.hpp"
 #include "MemoryAccessInfo.hpp"
 #include "MSHREntryInfo.hpp"
 

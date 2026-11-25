@@ -1,5 +1,7 @@
 #include "MMU.hpp"
 
+#include "Inst.hpp"
+
 namespace olympia
 {
     const char MMU::name[] = "mmu";

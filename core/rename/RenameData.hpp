@@ -8,8 +8,9 @@
 #include "CoreTypes.hpp"
 #include "MiscUtils.hpp"
 
-#include <map>
-#include <functional>
+#include <limits>
+#include <ostream>
+#include <utility>
 
 #include <boost/container/small_vector.hpp>
 

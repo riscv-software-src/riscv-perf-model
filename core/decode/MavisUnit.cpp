@@ -17,6 +17,9 @@ namespace olympia
     std::vector<std::string> getUArchFiles(sparta::TreeNode *n, const MavisUnit::MavisParameters* p,
                                            const std::string & uarch_file_path, const std::string& pseudo_file_path)
     {
+        (void)n;
+        (void)pseudo_file_path;
+
         std::vector<std::string> uarch_files = {uarch_file_path + "/olympia_uarch_rv64g.json",
                                                 uarch_file_path + "/olympia_uarch_rv64c.json",
                                                 uarch_file_path + "/olympia_uarch_rv64b.json",

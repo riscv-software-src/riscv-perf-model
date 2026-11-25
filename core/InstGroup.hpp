@@ -2,15 +2,12 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <vector>
-#include <iostream>
-#include "CoreTypes.hpp"
 
-#include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
-
-#include "Inst.hpp"
+#include "InstFwd.hpp"
 
 namespace olympia
 {
@@ -20,12 +17,12 @@ namespace olympia
     //! than to pass copies of the vectors contained
     class InstGroup
     {
-        using InstVector = std::vector<InstQueue::value_type>;
+        using InstVector = std::vector<InstPtr>;
     public:
         using iterator       = InstVector::iterator;
         using const_iterator = InstVector::const_iterator;
 
-        void emplace_back(const typename InstQueue::value_type & inst) {
+        void emplace_back(const InstPtr & inst) {
             insts_.emplace_back(inst);
         }
 
@@ -50,21 +47,7 @@ namespace olympia
         InstVector insts_;
     };
     extern sparta::SpartaSharedPointerAllocator<InstGroup> instgroup_allocator;
-    using InstGroupPtr = sparta::SpartaSharedPointer<InstGroup>;
 
-    inline std::ostream & operator<<(std::ostream & os, const InstGroup & inst_grp) {
-        std::string next = "";
-        std::stringstream str;
-        for(auto inst : inst_grp) {
-            str << next << HEX8(inst->getPC())
-               << " UID(" << inst->getUniqueID() << ") "
-               << " PID(" << inst->getProgramID() << ") "
-               << " " << inst->getMnemonic();
-            next = ", ";
-        }
-        return (os << str.str());
-    }
-    inline std::ostream & operator<<(std::ostream & os, const InstGroupPtr & inst_grp_ptr) {
-        return os << *inst_grp_ptr;
-    }
+    std::ostream & operator<<(std::ostream & os, const InstGroup & inst_grp);
+    std::ostream & operator<<(std::ostream & os, const InstGroupPtr & inst_grp_ptr);
 }

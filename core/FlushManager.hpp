@@ -10,14 +10,13 @@
 #pragma once
 
 #include <cinttypes>
-#include <string>
 
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/utils/LogUtils.hpp"
 #include "sparta/utils/ValidValue.hpp"
 
-#include "Inst.hpp"
+#include "InstFwd.hpp"
 
 namespace olympia
 {
@@ -89,12 +88,7 @@ namespace olympia
             bool isInclusiveFlush() const { return is_inclusive_; }
             bool isLowerPipeFlush() const { return cause_ == FlushCause::MISFETCH; }
 
-            bool includedInFlush(const InstPtr& other) const
-            {
-                return isInclusiveFlush() ?
-                    inst_ptr_->getUniqueID() <= other->getUniqueID() :
-                    inst_ptr_->getUniqueID() < other->getUniqueID();
-            }
+            bool includedInFlush(const InstPtr & other) const;
 
         private:
             // Cannot be const since these are copied into the PLE
@@ -212,8 +206,5 @@ namespace olympia
         return os;
     }
 
-    inline std::ostream & operator<<(std::ostream & os, const FlushManager::FlushingCriteria & criteria) {
-        os << criteria.getInstPtr() << " " << criteria.getCause();
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const FlushManager::FlushingCriteria & criteria);
 }

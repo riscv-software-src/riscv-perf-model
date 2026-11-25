@@ -2,6 +2,7 @@
 
 #include "execute/IssueQueue.hpp"
 #include "CoreUtils.hpp"
+#include "sparta/events/StartupEvent.hpp"
 
 namespace olympia
 {
@@ -115,6 +116,8 @@ namespace olympia
             // Returns false and registers a callback if source is not ready.
             auto check_src_ready = [this, ex_inst](const RenameData::Reg & src, auto reg_file)
             {
+                (void)src;
+
                 // vector-scalar operations have 1 vector src and 1
                 // scalar src that need to be checked, so can't assume
                 // the register files are the same for every source
@@ -170,6 +173,8 @@ namespace olympia
 
     void IssueQueue::readyExeUnit_(const uint32_t & readyExe)
     {
+        (void)readyExe;
+
         /*
           TODO:
           have a map/mask to see which execution units are ready

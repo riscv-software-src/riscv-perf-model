@@ -1,9 +1,5 @@
 
-#include <string>
-
 #include "sparta/simulation/TreeNode.hpp"
-#include "sparta/statistics/Counter.hpp"
-#include "sparta/functional/Register.hpp"
 
 #include "Core.hpp"
 
@@ -13,6 +9,8 @@ namespace olympia
                const CoreParameterSet * p) : // Core::ParameterSet, not generic SPARTA set
         sparta::Unit(node)
     {
+        (void)p;
+
         // Now parameters and ports are fixed and sparta device tree is
         // now finalizing, so the parameters and ports can be used to
         // initialize this unit once and permanently.  The TreeNode

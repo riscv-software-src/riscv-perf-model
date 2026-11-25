@@ -116,7 +116,7 @@ namespace olympia
         static std::unique_ptr<CPUTopology> allocateTopology(const std::string & topology);
 
         //! Post binding/final setup specific to a topology
-        virtual void bindTree(sparta::RootTreeNode* root_node) {}
+        virtual void bindTree(sparta::RootTreeNode* root_node) { (void)root_node; }
 
         //! Public members used by CPUFactory to build and bind tree
         uint32_t num_cores = 1;

@@ -20,13 +20,13 @@
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
-#include "sparta/utils/SpartaTester.hpp"
 #include "sparta/statistics/Histogram.hpp"
 #include "sparta/statistics/BasicHistogram.hpp"
 #include "sparta/pevents/PeventCollector.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 
 #include "CoreTypes.hpp"
+#include "Inst.hpp"
 #include "FlushManager.hpp"
 #include "InstGroup.hpp"
 

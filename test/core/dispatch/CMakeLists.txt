@@ -1,7 +1,7 @@
 project(Dispatch_test)
 
 add_executable(Dispatch_test Dispatch_test.cpp)
-target_link_libraries(Dispatch_test core common_test stf mavis SPARTA::sparta)
+target_link_libraries(Dispatch_test PRIVATE olympia_test_support)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)

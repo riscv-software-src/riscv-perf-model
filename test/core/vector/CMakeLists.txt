@@ -1,7 +1,7 @@
 project(Vector_test)
 
 add_executable(Vector_test Vector_test.cpp ${SIM_BASE}/sim/OlympiaSim.cpp)
-target_link_libraries(Vector_test core common_test stf mavis SPARTA::sparta)
+target_link_libraries(Vector_test PRIVATE olympia_test_support)
 
 file(CREATE_LINK ${SIM_BASE}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${SIM_BASE}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)

@@ -9,6 +9,7 @@
 #include "ICache.hpp"
 
 #include "OlympiaAllocators.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
 
 namespace olympia {

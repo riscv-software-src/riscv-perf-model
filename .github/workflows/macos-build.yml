@@ -38,14 +38,14 @@ jobs:
         with:
           repository: sparcians/map
           path: map
-          ref: map_v2.2.3
+          ref: map_v3.0.6
           submodules: recursive
 
       # Setup build environment
-      - name: Grab Python v3.8
-        uses: actions/setup-python@v3
+      - name: Grab Python v3.11
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       # Setup CCache to cache builds
       - name: ccache

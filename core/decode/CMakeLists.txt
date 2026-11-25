@@ -3,4 +3,4 @@ add_library(decode
   Decode.cpp
   MavisUnit.cpp
 )
-target_link_libraries(decode instgen mavis)
+target_link_libraries(decode PUBLIC instruction FSL::api)

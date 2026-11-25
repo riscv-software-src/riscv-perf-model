@@ -1,7 +1,9 @@
 #include "sparta/utils/SpartaAssert.hpp"
+#include "sparta/utils/LogUtils.hpp"
+#include "sparta/events/StartupEvent.hpp"
 #include "CoreUtils.hpp"
+#include "Inst.hpp"
 #include "LSU.hpp"
-#include <string>
 
 #include "OlympiaAllocators.hpp"
 
@@ -1047,6 +1049,8 @@ namespace olympia
     // Only called if allow_spec_load_exec is true
     void LSU::readyDependentLoads_(const LoadStoreInstInfoPtr & store_inst_ptr)
     {
+        (void)store_inst_ptr;
+
         bool found = false;
         for (auto & ldst_inst_ptr : ldst_inst_queue_)
         {

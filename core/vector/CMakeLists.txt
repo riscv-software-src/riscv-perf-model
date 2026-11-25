@@ -1,4 +1,4 @@
 add_library(vector
   VectorUopGenerator.cpp
 )
-target_link_libraries(vector mavis)
+target_link_libraries(vector PUBLIC instruction)

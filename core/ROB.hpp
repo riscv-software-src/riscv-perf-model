@@ -1,7 +1,6 @@
 // <ROB.hpp> -*- C++ -*-
 
 #pragma once
-#include <string>
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"
@@ -16,6 +15,7 @@
 #include "sparta/statistics/StatisticInstance.hpp"
 
 #include "CoreTypes.hpp"
+#include "Inst.hpp"
 #include "InstGroup.hpp"
 #include "FlushManager.hpp"
 

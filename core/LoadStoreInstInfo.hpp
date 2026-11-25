@@ -88,7 +88,7 @@ namespace olympia
 
         bool isReady() const { return (getState() == IssueState::READY); }
 
-        bool isRetired() const { return getInstPtr()->getStatus() == Inst::Status::RETIRED; }
+        bool isRetired() const;
 
         bool winArb(const LoadStoreInstInfoPtr & that) const
         {

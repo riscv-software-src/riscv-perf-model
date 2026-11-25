@@ -4,32 +4,22 @@
 #include "sparta/ports/PortSet.hpp"
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/ports/DataPort.hpp"
-#include "sparta/events/EventSet.hpp"
 #include "sparta/events/UniqueEvent.hpp"
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/collection/Collectable.hpp"
-#include "sparta/events/StartupEvent.hpp"
 #include "sparta/resources/Pipeline.hpp"
 #include "sparta/resources/Buffer.hpp"
 #include "sparta/resources/PriorityQueue.hpp"
-#include "sparta/pairs/SpartaKeyPairs.hpp"
-#include "sparta/simulation/State.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
-#include "sparta/utils/LogUtils.hpp"
 #include "sparta/resources/Scoreboard.hpp"
 
-#include "cache/TreePLRUReplacement.hpp"
-
-#include "Inst.hpp"
+#include "InstFwd.hpp"
 #include "CoreTypes.hpp"
 #include "FlushManager.hpp"
-#include "CacheFuncModel.hpp"
 #include "MemoryAccessInfo.hpp"
 #include "LoadStoreInstInfo.hpp"
-#include "MMU.hpp"
-#include "DCache.hpp"
 
 namespace olympia
 {
@@ -99,7 +89,7 @@ namespace olympia
         ////////////////////////////////////////////////////////////////////////////////
         // Input Ports
         ////////////////////////////////////////////////////////////////////////////////
-        sparta::DataInPort<InstQueue::value_type> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
+        sparta::DataInPort<InstPtr> in_lsu_insts_{&unit_port_set_, "in_lsu_insts", 1};
 
         sparta::DataInPort<InstPtr> in_rob_retire_ack_{&unit_port_set_, "in_rob_retire_ack", 1};
 

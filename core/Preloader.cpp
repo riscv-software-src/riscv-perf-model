@@ -1,6 +1,7 @@
 
 #include "Preloader.hpp"
 #include "sparta/app/Simulation.hpp"
+#include "sparta/simulation/RootTreeNode.hpp"
 #include "cache/preload/PreloadableIF.hpp"
 
 namespace olympia

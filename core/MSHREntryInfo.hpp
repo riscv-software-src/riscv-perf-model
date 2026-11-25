@@ -10,6 +10,7 @@ namespace olympia
         MSHREntryInfo(const uint64_t & line_size, const sparta::Clock* clock) :
             line_fill_buffer_(line_size)
         {
+            (void)clock;
             line_fill_buffer_.setValid(true);
         }
 

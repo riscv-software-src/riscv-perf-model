@@ -3,6 +3,7 @@
 
 #include "core/MemoryAccessInfo.hpp"
 #include "sparta/simulation/TreeNode.hpp"
+#include "sparta/simulation/Unit.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/SingleCycleUniqueEvent.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"

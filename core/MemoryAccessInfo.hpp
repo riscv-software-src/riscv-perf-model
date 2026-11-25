@@ -2,13 +2,16 @@
 
 #pragma once
 
-#include "sparta/resources/Scoreboard.hpp"
+#include <cstdint>
+#include <ostream>
+#include <string>
+
+#include "sparta/memory/AddressTypes.hpp"
 #include "sparta/resources/Buffer.hpp"
 #include "sparta/pairs/SpartaKeyPairs.hpp"
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
-#include "Inst.hpp"
-#include "InstGroup.hpp"
+#include "InstFwd.hpp"
 
 namespace olympia
 {
@@ -86,23 +89,9 @@ namespace olympia
         {}
 
 
-        MemoryAccessInfo(const InstPtr & inst_ptr) :
-            ldst_inst_ptr_(inst_ptr),
-            phy_addr_ready_(false),
-            mmu_access_state_(MMUState::NO_ACCESS),
+        MemoryAccessInfo(const InstPtr & inst_ptr);
 
-            // Construct the State object here
-            cache_access_state_(CacheState::NO_ACCESS),
-            cache_data_ready_(false),
-            is_refill_(false),
-            src_(ArchUnit::NO_ACCESS),
-            dest_(ArchUnit::NO_ACCESS),
-            vaddr_(inst_ptr->getTargetVAddr()),
-            paddr_(inst_ptr->getRAdr())
-        {
-        }
-
-        virtual ~MemoryAccessInfo() {}
+        virtual ~MemoryAccessInfo();
 
         // This Inst pointer will act as our portal to the Inst class
         // and we will use this pointer to query values from functions of Inst class
@@ -110,17 +99,10 @@ namespace olympia
 
         // Get the mnemonic of the instruction this load/store is
         // associated.  Will return <unassoc> if not associated
-        std::string getMnemonic() const {
-            return (ldst_inst_ptr_ != nullptr ?
-                    ldst_inst_ptr_->getMnemonic() : "<unassoc>");
-        }
+        std::string getMnemonic() const;
 
         // This is a function which will be added in the SPARTA_ADDPAIRs API.
-        uint64_t getInstUniqueID() const
-        {
-            const InstPtr & inst_ptr = getInstPtr();
-            return inst_ptr == nullptr ? 0 : inst_ptr->getUniqueID();
-        }
+        uint64_t getInstUniqueID() const;
 
         void setPhyAddrStatus(bool is_ready) { phy_addr_ready_ = is_ready; }
 
@@ -230,9 +212,6 @@ namespace olympia
         MSHREntryInfoIterator mshr_entry_info_iterator_;
     };
 
-    using MemoryAccessInfoPtr = sparta::SpartaSharedPointer<MemoryAccessInfo>;
-    using MemoryAccessInfoAllocator = sparta::SpartaSharedPointerAllocator<MemoryAccessInfo>;
-
     inline std::ostream & operator<<(std::ostream & os,
                                      const olympia::MemoryAccessInfo::ArchUnit & unit)
     {
@@ -306,21 +285,8 @@ namespace olympia
         return os;
     }
 
-    inline std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem)
-    {
-        os << "memptr: " << std::hex << mem.getPhyAddr() << std::dec;
-        if (mem.getInstPtr() != nullptr) {
-            os << " " << mem.getInstPtr();
-        }
-        return os;
-    }
-
-    inline std::ostream & operator<<(std::ostream & os,
-                                     const olympia::MemoryAccessInfoPtr & mem_ptr)
-    {
-        os << *mem_ptr;
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfo & mem);
+    std::ostream & operator<<(std::ostream & os, const olympia::MemoryAccessInfoPtr & mem_ptr);
 
     /*!
      * \class MemoryAccessInfoPairDef

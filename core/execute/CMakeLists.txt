@@ -3,4 +3,4 @@ add_library(execute
   ExecutePipe.cpp
   IssueQueue.cpp
 )
-target_link_libraries(execute mavis)
+target_link_libraries(execute PUBLIC instruction)

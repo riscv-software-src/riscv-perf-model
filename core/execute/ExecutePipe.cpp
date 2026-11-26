@@ -56,6 +56,7 @@ namespace olympia
     {
         if (num_passes_needed_ == 0)
         {
+            // Record execution start timestamp for CPI attribution
             ex_inst->setStatus(Inst::Status::SCHEDULED);
             // we only need to check if unit_busy_ if instruction doesn't have multiple passes
             // if it does need multiple passes, we need to keep unit_busy_ blocked so no instruction
@@ -175,6 +176,7 @@ namespace olympia
     // Called by the scheduler, scheduled by complete_inst_.
     void ExecutePipe::completeInst_(const InstPtr & ex_inst)
     {
+        // Record execution complete timestamp for CPI attribution
         ex_inst->setStatus(Inst::Status::COMPLETED);
         complete_event_.collect(*ex_inst);
         ILOG("Completing inst: " << ex_inst);

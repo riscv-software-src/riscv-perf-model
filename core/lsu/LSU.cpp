@@ -323,6 +323,13 @@ namespace olympia
         // Append load/store pipe
         ldst_pipeline_.append(win_ptr);
 
+        // A cache miss can put the instruction back in the issue queue after its first issue.
+        // Keep the original execution-start timestamp on those reissues.
+        if (win_ptr->getInstPtr()->getStatus() == Inst::Status::DISPATCHED)
+        {
+            win_ptr->getInstPtr()->setStatus(Inst::Status::SCHEDULED);
+        }
+
         // We append to replay queue to prevent ref count of the shared pointer to drop before
         // calling pop below
         if (allow_speculative_load_exec_)
@@ -504,6 +511,7 @@ namespace olympia
         if (inst_ptr->isStoreInst() && (inst_ptr->getStatus() == Inst::Status::SCHEDULED))
         {
             ILOG("Store marked as completed " << inst_ptr);
+            // Record execution complete timestamp for CPI attribution
             inst_ptr->setStatus(Inst::Status::COMPLETED);
             load_store_info_ptr->setState(LoadStoreInstInfo::IssueState::READY);
             ldst_pipeline_.invalidateStage(cache_lookup_stage_);
@@ -740,6 +748,7 @@ namespace olympia
             }
 
             // Mark instruction as completed
+            // Record execution complete timestamp for CPI attribution
             inst_ptr->setStatus(Inst::Status::COMPLETED);
 
             // Remove completed instruction from queues

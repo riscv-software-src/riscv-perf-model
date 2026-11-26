@@ -22,6 +22,8 @@
 #include "rename/RenameData.hpp"
 
 #include <cstdint>
+#include <array>
+#include <numeric>
 #include <ostream>
 #include <unordered_map>
 #include <variant>
@@ -79,14 +81,44 @@ namespace olympia
             edm_generator_ = edm_gen_;
         }
 
-        void notifyRetire(const PtrType & self); 
+        void notifyRetire(const PtrType & self);
 
-        void notifyStoreCommit(const PtrType & self); 
+        void notifyStoreCommit(const PtrType & self);
 
-        void notifyStoreDrop(const PtrType & self); 
+        void notifyStoreDrop(const PtrType & self);
 
-        void notifyFlush(const PtrType & self); 
+        void notifyFlush(const PtrType & self);
 #endif
+
+        enum class CPIStallType : std::uint32_t
+        {
+            FETCH = 0, //! I-cache miss, branch mispred wait
+            DECODE,    //! VSET blocking, fusion wait
+            RENAME,    //! No free PRFs, no dispatch credits
+            DISPATCH,  //! Issue queue full, ROB full
+            EXECUTE,   //! Actual execution time
+            ROB,       //! Waiting to become oldest
+            NUM_TYPES
+        };
+
+        //! \brief CPI breakdown tracking structure
+        //! Tracks cycles attributed to different microarchitectural events
+        struct CPIBreakdown
+        {
+            std::array<uint64_t, static_cast<size_t>(CPIStallType::NUM_TYPES)> cycles = {0};
+
+            //! Get total cycles across all categories
+            uint64_t getTotalCycles() const
+            {
+                return std::accumulate(cycles.begin(), cycles.end(), uint64_t{0});
+            }
+        };
+
+        //! \brief Pipeline stage timestamp tracking
+        //! Records cycle counts when instruction enters/exits each stage
+        //! Indexed by Status enum
+        using TimestampContainer =
+            std::array<sparta::Clock::Cycle, static_cast<uint32_t>(Status::__LAST)>;
 
         /*!
          * \brief Construct an Instruction
@@ -118,6 +150,8 @@ namespace olympia
                                                       << status_state_ << " New: " << status
                                                       << *this);
             status_state_ = status;
+            timestamps_[static_cast<uint32_t>(status)] = clk_->currentCycle();
+
             if (getStatus() == Status::COMPLETED)
             {
                 if (ev_retire_ != 0)
@@ -125,6 +159,11 @@ namespace olympia
                     ev_retire_->schedule();
                 }
             }
+        }
+
+        sparta::Clock::Cycle getTimestamp(Status status) const
+        {
+            return timestamps_[static_cast<uint32_t>(status)];
         }
 
         const Status & getExtendedStatus() const { return extended_status_state_; }
@@ -238,10 +277,7 @@ namespace olympia
         // ROB target information
         void setTargetROB(bool tgt = true) { rob_targeted_ = tgt; }
 
-        bool isTargetROB() const
-        {
-            return rob_targeted_;
-        }
+        bool isTargetROB() const { return rob_targeted_; }
 
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
@@ -251,7 +287,10 @@ namespace olympia
         uint32_t getOpCode() const { return static_cast<uint32_t>(opcode_info_->getOpcode()); }
 
         // Get the data size in bytes
-        uint32_t getMemAccessSize() const { return static_cast<uint32_t>(opcode_info_->getDataSize() / 8); }  // opcode_info's data size is in bits
+        uint32_t getMemAccessSize() const
+        {
+            return static_cast<uint32_t>(opcode_info_->getDataSize() / 8);
+        } // opcode_info's data size is in bits
 
         mavis::InstructionUniqueID getMavisUid() const
         {
@@ -266,10 +305,7 @@ namespace olympia
             return opcode_info_->getSourceOpInfoList();
         }
 
-        const OpInfoList & getDestOpInfoList() const
-        {
-            return opcode_info_->getDestOpInfoList();
-        }
+        const OpInfoList & getDestOpInfoList() const { return opcode_info_->getDestOpInfoList(); }
 
         const RenameData::DestOpInfoWithRegfileList & getDestOpInfoListWithRegfile() const
         {
@@ -291,8 +327,7 @@ namespace olympia
         bool hasZeroRegDest() const
         {
             return std::any_of(getDestOpInfoList().begin(), getDestOpInfoList().end(),
-                               [](const auto & elem)
-                               { return elem.field_value == 0; });
+                               [](const auto & elem) { return elem.field_value == 0; });
         }
 
         uint64_t getImmediate() const
@@ -369,7 +404,6 @@ namespace olympia
 
             getRenameData().addSource(std::forward<RenameData::Reg>(reg));
         }
-
 
         // Static instruction information
         bool isStoreInst() const { return is_store_; }
@@ -460,6 +494,15 @@ namespace olympia
 
         mavis::OpcodeInfo::PtrType getOpCodeInfo() { return opcode_info_; }
 
+        // CPI breakdown accessors
+        CPIBreakdown & getCPIBreakdown() { return cpi_breakdown_; }
+
+        const CPIBreakdown & getCPIBreakdown() const { return cpi_breakdown_; }
+
+        //! \brief Finalize CPI breakdown by calculating cycle durations from timestamps
+        //! This should be called when the instruction is ready to retire
+        void finalizeCPIBreakdown();
+
         // Duplicates stream operator but does not change EXPECT logs
         std::string info()
         {
@@ -499,11 +542,12 @@ namespace olympia
     #ifdef EDM_ENABLED
         EDMInstGenerator* edm_generator_ = nullptr;
     #endif
+        const sparta::Clock* clk_;
 
         // Handy list that extends Mavis' opcode info with register
         // file type.
         RenameData::DestOpInfoWithRegfileList dest_opcode_info_with_reg_file_;
-        RenameData::SrcOpInfoWithRegfileList  src_opcode_info_with_reg_file_;
+        RenameData::SrcOpInfoWithRegfileList src_opcode_info_with_reg_file_;
 
         sparta::memory::addr_t inst_pc_ = 0; // Instruction's PC
         sparta::memory::addr_t target_vaddr_ =
@@ -564,84 +608,23 @@ namespace olympia
         RegisterBitMaskArray dest_reg_bit_masks_;
         RegisterBitMaskArray store_data_mask_;
         RenameData rename_data;
-        static const std::unordered_map<Inst::Status, std::string> status2String;
+
+        // CPI attribution tracking
+        CPIBreakdown cpi_breakdown_;
+        TimestampContainer timestamps_ = {0};
     };
 
     using InstWeakPtr = Inst::WeakPtrType;
     using InstQueue = sparta::Queue<InstPtr>;
     using InstBuffer = sparta::Buffer<InstPtr>;
 
-    inline std::ostream & operator<<(std::ostream & os, const Inst::Status & status)
-    {
-        switch (status)
-        {
-        case Inst::Status::BEFORE_FETCH:
-            os << "BEFORE_FETCH";
-            break;
-        case Inst::Status::FETCHED:
-            os << "FETCHED";
-            break;
-        case Inst::Status::DECODED:
-            os << "DECODED";
-            break;
-        case Inst::Status::RENAMED:
-            os << "RENAMED";
-            break;
-        case Inst::Status::DISPATCHED:
-            os << "DISPATCHED";
-            break;
-        case Inst::Status::SCHEDULED:
-            os << "SCHEDULED";
-            break;
-        case Inst::Status::COMPLETED:
-            os << "COMPLETED";
-            break;
-        case Inst::Status::RETIRED:
-            os << "RETIRED";
-            break;
-        case Inst::Status::FLUSHED:
-            os << "FLUSHED";
-            break;
-        // Used in extended_status_state as default case
-        case Inst::Status::UNMOD:
-            os << "UNMOD";
-            break;
-        // The new opcode/instruction as a result of fusion
-        case Inst::Status::FUSED:
-            os << "FUSED";
-            break;
-        // The opcodes/instruction no longer present due to fusion
-        case Inst::Status::FUSION_GHOST:
-            os << "FUSION_GHOST";
-            break;
-        case Inst::Status::__LAST:
-            throw sparta::SpartaException("__LAST cannot be a valid enum state.");
-        }
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const Inst::Status & status);
 
     // Expect log info system uses simple diff
     //   - any changes here will break EXPECT
-    inline std::ostream & operator<<(std::ostream & os, const Inst & inst)
-    {
-        os << "uid:" << inst.getUniqueID() << " " << std::setw(10) << inst.getStatus() << " "
-           << std::hex << inst.getPC() << std::dec << " pid:" << inst.getProgramID()
-           << " uopid:" << inst.getUOpID() << " '" << inst.getDisasm() << "' ";
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const Inst & inst);
 
-    inline std::ostream & operator<<(std::ostream & os, const InstPtr & inst)
-    {
-        if (inst)
-        {
-            os << *inst;
-        }
-        else
-        {
-            os << "nullptr";
-        }
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const InstPtr & inst);
 
     /*!
      * \class InstPairDef

@@ -81,13 +81,13 @@ namespace olympia
             edm_generator_ = edm_gen_;
         }
 
-        void notifyRetire(const PtrType & self); 
+        void notifyRetire(const PtrType & self);
 
-        void notifyStoreCommit(const PtrType & self); 
+        void notifyStoreCommit(const PtrType & self);
 
-        void notifyStoreDrop(const PtrType & self); 
+        void notifyStoreDrop(const PtrType & self);
 
-        void notifyFlush(const PtrType & self); 
+        void notifyFlush(const PtrType & self);
 #endif
 
         enum class CPIStallType : std::uint32_t
@@ -612,85 +612,19 @@ namespace olympia
         // CPI attribution tracking
         CPIBreakdown cpi_breakdown_;
         TimestampContainer timestamps_ = {0};
-
-        static const std::unordered_map<Inst::Status, std::string> status2String;
     };
 
     using InstWeakPtr = Inst::WeakPtrType;
     using InstQueue = sparta::Queue<InstPtr>;
     using InstBuffer = sparta::Buffer<InstPtr>;
 
-    inline std::ostream & operator<<(std::ostream & os, const Inst::Status & status)
-    {
-        switch (status)
-        {
-        case Inst::Status::BEFORE_FETCH:
-            os << "BEFORE_FETCH";
-            break;
-        case Inst::Status::FETCHED:
-            os << "FETCHED";
-            break;
-        case Inst::Status::DECODED:
-            os << "DECODED";
-            break;
-        case Inst::Status::RENAMED:
-            os << "RENAMED";
-            break;
-        case Inst::Status::DISPATCHED:
-            os << "DISPATCHED";
-            break;
-        case Inst::Status::SCHEDULED:
-            os << "SCHEDULED";
-            break;
-        case Inst::Status::COMPLETED:
-            os << "COMPLETED";
-            break;
-        case Inst::Status::RETIRED:
-            os << "RETIRED";
-            break;
-        case Inst::Status::FLUSHED:
-            os << "FLUSHED";
-            break;
-        // Used in extended_status_state as default case
-        case Inst::Status::UNMOD:
-            os << "UNMOD";
-            break;
-        // The new opcode/instruction as a result of fusion
-        case Inst::Status::FUSED:
-            os << "FUSED";
-            break;
-        // The opcodes/instruction no longer present due to fusion
-        case Inst::Status::FUSION_GHOST:
-            os << "FUSION_GHOST";
-            break;
-        case Inst::Status::__LAST:
-            throw sparta::SpartaException("__LAST cannot be a valid enum state.");
-        }
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const Inst::Status & status);
 
     // Expect log info system uses simple diff
     //   - any changes here will break EXPECT
-    inline std::ostream & operator<<(std::ostream & os, const Inst & inst)
-    {
-        os << "uid:" << inst.getUniqueID() << " " << std::setw(10) << inst.getStatus() << " "
-           << std::hex << inst.getPC() << std::dec << " pid:" << inst.getProgramID()
-           << " uopid:" << inst.getUOpID() << " '" << inst.getDisasm() << "' ";
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const Inst & inst);
 
-    inline std::ostream & operator<<(std::ostream & os, const InstPtr & inst)
-    {
-        if (inst)
-        {
-            os << *inst;
-        }
-        else
-        {
-            os << "nullptr";
-        }
-        return os;
-    }
+    std::ostream & operator<<(std::ostream & os, const InstPtr & inst);
 
     /*!
      * \class InstPairDef
